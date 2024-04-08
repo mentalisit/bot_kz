@@ -1,0 +1,8 @@
+*.yml
+*.db
+.idea
+*.exe
+*.7z
+bot/log
+bot/config
+bot/rconfig

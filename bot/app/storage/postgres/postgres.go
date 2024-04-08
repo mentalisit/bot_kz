@@ -1,0 +1,165 @@
+package postgres
+
+import (
+	"context"
+	"github.com/mentalisit/logger"
+	"kz_bot/config"
+	"kz_bot/pkg/clientDB/postgresLocal"
+)
+
+type Db struct {
+	db    postgresLocal.Client
+	log   *logger.Logger
+	debug bool
+}
+
+func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
+	db, err := postgresLocal.NewClient(context.Background(), log, 5, cfg)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	d := &Db{
+		db:    db,
+		log:   log,
+		debug: cfg.IsDebug,
+	}
+	go d.createTable()
+	return d
+}
+func (d *Db) createTable() {
+	d.db.Exec(context.Background(), "CREATE SCHEMA IF NOT EXISTS kzbot")
+	// Создание таблиц
+	_, err := d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.config (
+            id             BIGSERIAL PRIMARY KEY,
+            corpname       TEXT,
+            dschannel      TEXT,
+            tgchannel      BIGINT,
+            wachannel      TEXT,
+            mesiddshelp    TEXT,
+            mesidtghelp    BIGINT,
+            delmescomplite BIGINT,
+            guildid        TEXT
+        );
+    `)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.sborkz(
+		id          bigserial        primary key,
+		corpname    text,
+		name        text,
+		mention     text,
+		tip         text,
+		dsmesid     text,    
+		tgmesid     bigint,
+		wamesid     text,    
+		time        text,
+		date        text,    
+		lvlkz       text,
+		numkzn      bigint,    
+		numberkz    bigint,
+		numberevent bigint,
+		eventpoints bigint,    
+		active      bigint,
+		timedown    bigint);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.numkz(
+    	id       bigserial	primary key,
+        lvlkz    text,
+        number   bigint,
+        corpname text
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.rsevent(
+    id          bigserial        primary key,
+	corpname    text,    
+	numevent    bigint,
+	activeevent bigint,    
+	number      bigint
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.subscribe(
+    id        bigserial	primary key,
+    name      text,
+    nameid    text,
+    lvlkz     text,
+    tip       bigint,
+    chatid    text,
+    timestart text,
+    timeend   text
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.timer(
+    id       bigserial primary key,
+    dsmesid  text,
+    dschatid text,
+    tgmesid  bigint,
+    tgchatid bigint,
+    timed    bigint
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	_, err = d.db.Exec(context.Background(),
+		`CREATE TABLE IF NOT EXISTS kzbot.users(
+    id      bigserial primary key,
+    tip     text,
+	name    text,
+	em1     text,
+	em2     text,
+	em3     text,
+	em4     text,
+	module1 text,
+	module2 text,
+	module3 text,
+	weapon  text
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	_, err = d.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS kzbot.rsevent(
+		id          bigserial        primary key,
+		corpname    text,    numevent    bigint,
+		activeevent bigint,    number      bigint
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	_, err = d.db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS kzbot.temptopevent
+	(
+		id     bigserial        primary key,
+		name   text,    numkz  bigint,
+		points bigint
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+}
