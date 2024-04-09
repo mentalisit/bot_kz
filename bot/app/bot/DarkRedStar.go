@@ -217,6 +217,12 @@ func (b *Bot) RsDarkPlus() {
 
 					if b.in.Tip == ds {
 						dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+						if u.User1.Tip == ds {
+							go b.sendDmDark(text, u.User1.Mention)
+						}
+						if u.User2.Tip == ds {
+							go b.sendDmDark(text, u.User2.Mention)
+						}
 					} else {
 						dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 					}
@@ -329,5 +335,14 @@ func (b *Bot) RsSoloPlus() {
 
 	//проверка есть ли игрок в других чатах
 	go b.elseChat([]string{b.in.Name})
+
+}
+func (b *Bot) sendDmDark(text, userMention string) {
+	mentionRegexDs := regexp.MustCompile(`<@(\d+)>`)
+	match := mentionRegexDs.FindStringSubmatch(userMention)
+	if len(match) > 1 {
+		id := match[1]
+		b.client.Ds.SendDmText(text, id)
+	}
 
 }

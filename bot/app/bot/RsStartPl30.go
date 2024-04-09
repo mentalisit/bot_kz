@@ -90,6 +90,9 @@ func (b *Bot) RsStart() {
 						text := text1 + text2
 						if b.in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+							if u.User1.Tip == ds {
+								go b.sendDmDark(text, u.User1.Mention)
+							}
 						} else {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}

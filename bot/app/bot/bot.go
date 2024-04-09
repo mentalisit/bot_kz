@@ -132,7 +132,7 @@ func (b *Bot) logicIfText() bool {
 		if b.Minus() {
 			return true
 		}
-	case "Справка":
+	case "Справка", "Help", "help":
 		b.hhelp()
 	case "update modules", "обновить модули":
 		b.updateCompendiumModules()

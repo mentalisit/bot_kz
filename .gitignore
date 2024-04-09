@@ -6,3 +6,4 @@
 bot/log
 bot/config
 bot/rconfig
+*.pem

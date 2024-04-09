@@ -270,3 +270,12 @@ func (d *Discord) ChannelTyping(ChannelID string) {
 		return
 	}
 }
+
+func (d *Discord) SendDmText(text, AuthorID string) {
+	dm := d.dmChannel(AuthorID)
+	_, err := d.S.ChannelMessageSend(dm, text)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+}
