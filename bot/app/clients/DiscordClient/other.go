@@ -39,7 +39,11 @@ func (d *Discord) RoleToIdPing(rolePing, guildid string) (string, error) {
 	exist, role := d.roleExists(g, rolePing)
 	if !exist {
 		//создаем роль и возврашаем пинг
-		role = d.createRole(rolePing, guildid)
+		role, err = d.createRole(rolePing, guildid)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return rolePing, err
+		}
 		return role.Mention(), nil
 	} else {
 		return role.Mention(), nil
@@ -111,7 +115,7 @@ func (d *Discord) GuildChatName(chatid, guildid string) string {
 	return chatName
 }
 
-func (d *Discord) createRole(rolPing, guildid string) *discordgo.Role {
+func (d *Discord) createRole(rolPing, guildid string) (*discordgo.Role, error) {
 	t := true
 	perm := int64(37080064)
 	create, err := d.S.GuildRoleCreate(guildid, &discordgo.RoleParams{
@@ -120,10 +124,9 @@ func (d *Discord) createRole(rolPing, guildid string) *discordgo.Role {
 		Mentionable: &t,
 	})
 	if err != nil {
-		d.log.ErrorErr(err)
-		return nil
+		return nil, err
 	}
-	return create
+	return create, nil
 }
 
 func (d *Discord) getLang(chatId, key string) string {

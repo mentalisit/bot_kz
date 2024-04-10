@@ -33,7 +33,7 @@ func NewClient(ctx context.Context, log *logger.Logger, maxAttempts int, conf *c
 		pool, err = pgxpool.Connect(ctx, dns)
 		if err != nil {
 			dns = fmt.Sprintf("postgres://%s:%s@%s/%s",
-				conf.Postgress.Username, conf.Postgress.Password, "192.168.100.155:5435", conf.Postgress.Name)
+				conf.Postgress.Username, conf.Postgress.Password, "192.168.100.131:5435", conf.Postgress.Name)
 
 			pool, err = pgxpool.Connect(ctx, dns)
 			if err != nil {

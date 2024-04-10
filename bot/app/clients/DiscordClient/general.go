@@ -137,7 +137,10 @@ func (d *Discord) Subscribe(nameid, argRoles, guildid string) int {
 	exist, role := d.roleExists(g, argRoles)
 
 	if !exist { //если нет роли
-		role = d.createRole(argRoles, guildid)
+		role, err = d.createRole(argRoles, guildid)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
 	}
 
 	member, err := d.S.GuildMember(guildid, nameid)
