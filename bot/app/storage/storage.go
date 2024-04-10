@@ -10,6 +10,7 @@ import (
 	"kz_bot/storage/postgres"
 	"kz_bot/storage/reststorage"
 	"kz_bot/storage/words"
+	"time"
 )
 
 type Storage struct {
@@ -27,6 +28,7 @@ type Storage struct {
 	Timers            Timers
 	DbFunc            DbFunc
 	Event             Event
+	LevelCorp         LevelCorp
 	BridgeConfigs     map[string]models.BridgeConfig
 	CorpConfigRS      map[string]models.CorporationConfig
 }
@@ -60,6 +62,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		Timers:            local,
 		DbFunc:            local,
 		Event:             local,
+		LevelCorp:         local,
 		//CorporationHades:  make(map[string]models.CorporationHadesClient),
 		BridgeConfigs: make(map[string]models.BridgeConfig),
 		CorpConfigRS:  make(map[string]models.CorporationConfig),
@@ -84,6 +87,13 @@ func (s *Storage) loadDbArray() {
 	rs := s.ConfigRs.ReadConfigRs()
 	for _, r := range rs {
 		s.CorpConfigRS[r.CorpName] = r
+		s.LevelCorp.InsertUpdateCorpLevel(models.LevelCorp{
+			CorpName: r.CorpName,
+			Level:    0,
+			EndDate:  time.Time{},
+			HCorp:    "",
+			Percent:  0,
+		})
 		c++
 		rslist = rslist + fmt.Sprintf("%s, ", r.CorpName)
 	}
