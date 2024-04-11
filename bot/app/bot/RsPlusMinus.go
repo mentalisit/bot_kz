@@ -3,8 +3,6 @@ package bot
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strconv"
 	"time"
 )
 
@@ -163,6 +161,9 @@ func (b *Bot) RsPlus() {
 			dsmesid = u.User1.Dsmesid
 
 			textEvent, numkzEvent := b.EventText()
+			if textEvent == "" {
+				textEvent = b.percent.GetTextPercent(b.in.Config, false)
+			}
 			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName) //получаем номер ивета если он активен
 			if numberevent > 0 {
 				numkzL = numkzEvent
@@ -225,7 +226,7 @@ func (b *Bot) RsPlus() {
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
 
 			//отправляем сообщение о корпорациях с %
-			go b.SendPercent()
+			go b.percent.SendPercent(b.in.Config)
 
 			//проверка есть ли игрок в других чатах
 			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}
@@ -285,99 +286,4 @@ func (b *Bot) RsMinus() {
 			b.QueueLevel()
 		}
 	}
-}
-func (b *Bot) SendPercent() {
-	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(b.in.Config.CorpName)
-	if err != nil {
-		b.log.ErrorErr(err)
-		return
-	}
-	untilTime := currentCorp.EndDate.AddDate(0, 0, 7).Unix()
-	if time.Now().UTC().Unix() < untilTime {
-		return
-	}
-
-	all, err := b.storage.LevelCorp.ReadCorpLevelAll()
-	if err != nil {
-		b.log.ErrorErr(err)
-		return
-	}
-	var preperingText []string
-	for _, corp := range all {
-		if corp.HCorp != "" && corp.Percent != 0 {
-			untilTime = corp.EndDate.AddDate(0, 0, 7).Unix()
-			if time.Now().UTC().Unix() < untilTime {
-				preperingText = append(preperingText,
-					fmt.Sprintf("%d%% %s %+v\n", percent(corp.Level), corp.HCorp, formatTime(untilTime)))
-			}
-		}
-	}
-	sortText := sortByFirstTwoDigits(preperingText)
-
-	text := ""
-
-	for _, s := range sortText {
-		text += s
-	}
-
-	if b.in.Config.DsChannel != "" {
-		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 180)
-	}
-	if b.in.Config.TgChannel != "" {
-		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, 180)
-	}
-}
-func percent(lvl int) int {
-	p := 22
-	for i := 2; i < lvl; i++ {
-		p += 2
-	}
-	return p
-}
-
-func formatTime(ut int64) string {
-	// Определите целевую дату
-	targetDate := time.Unix(ut, 0)
-
-	// Определите оставшееся время
-	remainingTime := targetDate.Sub(time.Now().UTC())
-
-	text := ""
-
-	// Получите дни, часы и минуты из оставшегося времени
-	days := remainingTime / (24 * time.Hour)
-	if days > 0 {
-		text += fmt.Sprintf("%dд ", days)
-	}
-	remainingTime = remainingTime % (24 * time.Hour)
-	hours := remainingTime / time.Hour
-	if hours > 0 {
-		text += fmt.Sprintf("%dч ", hours)
-	}
-	remainingTime = remainingTime % time.Hour
-	minutes := remainingTime / time.Minute
-	if days == 0 && minutes > 0 {
-		text += fmt.Sprintf("%dм", minutes)
-	}
-	return text
-}
-
-// Функция для сортировки среза строк по убыванию числовых значений первых двух символов
-func sortByFirstTwoDigits(input []string) []string {
-	// Создание кастомного типа для среза строк
-	type sortableStrings []string
-
-	// Реализация интерфейса sort.Interface для кастомного типа
-	// Len возвращает длину среза
-	// Less сравнивает строки по числовым значениям первых двух символов
-	// Swap меняет местами элементы с указанными индексами
-	var ss sortableStrings = input
-	sort.Slice(ss, func(i, j int) bool {
-		numI, _ := strconv.Atoi(ss[i][:2])
-		numJ, _ := strconv.Atoi(ss[j][:2])
-		return numI > numJ // сортировка по убыванию
-	})
-
-	// Преобразование кастомного типа обратно в срез строк
-	return ss
 }

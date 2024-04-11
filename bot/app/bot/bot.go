@@ -29,6 +29,7 @@ type Bot struct {
 	wg         sync.WaitGroup
 	mu         sync.Mutex
 	configCorp map[string]models.CorporationConfig
+	percent    *corpPercent.Percent
 }
 
 func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logger, cfg *config.ConfigBot) *Bot {
@@ -39,6 +40,7 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		debug:      cfg.IsDebug,
 		inbox:      make(chan models.InMessage, 10),
 		configCorp: storage.CorpConfigRS,
+		percent:    corpPercent.NewPercent(log, storage, client),
 	}
 	go b.loadInbox()
 	go b.RemoveMessage()
@@ -75,7 +77,7 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 
 			if now.Minute() == 0 {
 				b.Autohelp() //автозапуск справки
-				go corpPercent.GetHadesStorage(b.log, b.storage)
+				go b.percent.GetHadesStorage()
 			}
 			time.Sleep(1 * time.Second)
 		}

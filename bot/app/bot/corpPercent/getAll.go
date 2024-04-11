@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func getKeyAll() []string {
+func (b *Percent) getKeyAll() []string {
 	var keys []string
 	var marker string
 	for {
@@ -20,14 +20,14 @@ func getKeyAll() []string {
 		fmt.Println("get " + url)
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Error(fmt.Sprintln("Ошибка при загрузке XML:", err))
+			b.log.Error(fmt.Sprintln("Ошибка при загрузке XML:", err))
 		}
 		defer resp.Body.Close()
 
 		// Читаем данные из тела ответа
 		xmlData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Error(fmt.Sprintln("Ошибка при чтении XML:", err))
+			b.log.Error(fmt.Sprintln("Ошибка при чтении XML:", err))
 		}
 
 		// Создаем переменную для хранения данных о содержимом корзины Amazon S3
@@ -36,7 +36,7 @@ func getKeyAll() []string {
 		// Распарсиваем XML-данные
 		err = xml.Unmarshal(xmlData, &listBucketResult)
 		if err != nil {
-			log.Error(fmt.Sprintln("Ошибка при парсинге XML:", err))
+			b.log.Error(fmt.Sprintln("Ошибка при парсинге XML:", err))
 		}
 
 		if listBucketResult.NextMarker != "" {
@@ -50,7 +50,7 @@ func getKeyAll() []string {
 			// Преобразуем строку даты в тип time.Time
 			lastModifiedTime, errp := time.Parse(time.RFC3339, content.LastModified)
 			if errp != nil {
-				log.Error(fmt.Sprintln("Ошибка при преобразовании даты:", errp))
+				b.log.Error(fmt.Sprintln("Ошибка при преобразовании даты:", errp))
 				continue
 			}
 
@@ -63,7 +63,7 @@ func getKeyAll() []string {
 		}
 	}
 	if len(keys) == 0 {
-		log.Error("len(keys) == 0")
+		b.log.Error("len(keys) == 0")
 	}
 	return keys
 }

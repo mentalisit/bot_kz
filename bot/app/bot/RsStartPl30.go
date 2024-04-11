@@ -39,6 +39,9 @@ func (b *Bot) RsStart() {
 		if count > 0 {
 			u := b.storage.DbFunc.ReadAll(ctx, b.in.Lvlkz, b.in.Config.CorpName)
 			textEvent, numkzEvent := b.EventText()
+			if textEvent == "" {
+				textEvent = b.percent.GetTextPercent(b.in.Config, true)
+			}
 			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 			if numberevent > 0 {
 				numberkz = numkzEvent
@@ -154,7 +157,7 @@ func (b *Bot) RsStart() {
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
 
 			//отправляем сообщение о корпорациях с %
-			go b.SendPercent()
+			go b.percent.SendPercent(b.in.Config)
 
 			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}
 			b.elseChat(user)

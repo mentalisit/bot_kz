@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-func getKey(key string) *CorporationsData {
+func (b *Percent) getKey(key string) *CorporationsData {
 	// URL для загрузки JSON-данных
 	url := "https://storage.googleapis.com/hades-star-public-xq8f-d4rg-v0d9/" + key
 	// Получаем JSON-данные с помощью HTTP GET-запроса
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error(fmt.Sprintln("Ошибка при загрузке данных:", err))
+		b.log.Error(fmt.Sprintln("Ошибка при загрузке данных:", err))
 		return nil
 	}
 	defer resp.Body.Close()
@@ -21,7 +21,7 @@ func getKey(key string) *CorporationsData {
 	// Читаем данные из тела ответа
 	jsonData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(fmt.Sprintln("Ошибка при чтении данных:", err))
+		b.log.Error(fmt.Sprintln("Ошибка при чтении данных:", err))
 		return nil
 	}
 
@@ -31,7 +31,7 @@ func getKey(key string) *CorporationsData {
 	// Распаковываем JSON в структуру данных
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
-		log.Error(fmt.Sprintln("Ошибка при распаковке JSON:", err))
+		b.log.Error(fmt.Sprintln("Ошибка при распаковке JSON:", err))
 		return nil
 	}
 
