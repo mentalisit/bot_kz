@@ -152,6 +152,10 @@ func (b *Bot) RsStart() {
 			}
 			b.wg.Wait()
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+
+			//отправляем сообщение о корпорациях с %
+			go b.SendPercent()
+
 			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}
 			b.elseChat(user)
 		}

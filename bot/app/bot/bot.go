@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
+	"kz_bot/bot/corpPercent"
 	"kz_bot/clients"
 	"kz_bot/config"
 	"kz_bot/models"
@@ -74,6 +75,7 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 
 			if now.Minute() == 0 {
 				b.Autohelp() //автозапуск справки
+				go corpPercent.GetHadesStorage(b.log, b.storage)
 			}
 			time.Sleep(1 * time.Second)
 		}

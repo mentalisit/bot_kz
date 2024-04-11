@@ -256,6 +256,9 @@ func (b *Bot) RsDarkPlus() {
 			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", b.in.Config.CorpName, b.in.Name, b.in.NameMention, b.in.Tip, b.in.Lvlkz, b.in.Timekz, tgmesid, numkzN)
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
 
+			//отправляем сообщение о корпорациях с %
+			go b.SendPercent()
+
 			//проверка есть ли игрок в других чатах
 			user := []string{u.User1.Name, u.User2.Name, b.in.Name}
 			go b.elseChat(user)

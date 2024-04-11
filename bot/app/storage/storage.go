@@ -10,7 +10,6 @@ import (
 	"kz_bot/storage/postgres"
 	"kz_bot/storage/reststorage"
 	"kz_bot/storage/words"
-	"time"
 )
 
 type Storage struct {
@@ -87,13 +86,6 @@ func (s *Storage) loadDbArray() {
 	rs := s.ConfigRs.ReadConfigRs()
 	for _, r := range rs {
 		s.CorpConfigRS[r.CorpName] = r
-		s.LevelCorp.InsertUpdateCorpLevel(models.LevelCorp{
-			CorpName: r.CorpName,
-			Level:    0,
-			EndDate:  time.Time{},
-			HCorp:    "",
-			Percent:  0,
-		})
 		c++
 		rslist = rslist + fmt.Sprintf("%s, ", r.CorpName)
 	}
