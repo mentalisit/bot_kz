@@ -322,7 +322,8 @@ func (b *Bot) SendPercent() {
 
 	if b.in.Config.DsChannel != "" {
 		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 180)
-	} else if b.in.Config.TgChannel != "" {
+	}
+	if b.in.Config.TgChannel != "" {
 		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, 180)
 	}
 }

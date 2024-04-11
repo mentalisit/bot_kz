@@ -123,10 +123,10 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			case "weapon":
 				d.handleWeaponCommand(i)
 			}
-			commandHandlers := d.addSlashHandler()
-			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
-			}
+			//commandHandlers := d.addSlashHandler()
+			//if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			//	h(s, i)
+			//}
 		}
 	case discordgo.InteractionMessageComponent:
 		d.handleButtonPressed(i)
@@ -166,30 +166,6 @@ func (d *Discord) removeCommand(guildid string) {
 }
 func (d *Discord) addSlashCommand() []*discordgo.ApplicationCommand {
 	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "help",
-			Description: "Общая справка",
-		},
-		{
-			Name:        "helpqueue",
-			Description: "Очередь КЗ",
-		},
-		{
-			Name:        "helpnotification",
-			Description: "Уведомления",
-		},
-		{
-			Name:        "helpevent",
-			Description: "Ивент КЗ",
-		},
-		{
-			Name:        "helptop",
-			Description: "ТОП лист",
-		},
-		{
-			Name:        "helpicon",
-			Description: "Работа с иконками",
-		},
 		{
 			Name:        "module",
 			Description: "Выберите нужный модуль и уровень / Select the desired module and level",
