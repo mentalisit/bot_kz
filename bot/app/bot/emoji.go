@@ -31,7 +31,7 @@ func (b *Bot) emodjis() {
 	defer cancel()
 	e := b.storage.Emoji.EmojiModuleReadUsers(ctx, b.in.Name, b.in.Tip)
 
-	text := b.GetLang("dly ustanovki") +
+	text := b.getText("dly ustanovki") +
 		"\n1 " + e.Em1 +
 		"\n2 " + e.Em2 +
 		"\n3 " + e.Em3 +
@@ -39,7 +39,7 @@ func (b *Bot) emodjis() {
 	if b.in.Tip == ds {
 		text += fmt.Sprintf("\n %s %s %s %s", e.Module1, e.Module2, e.Module3, e.Weapon)
 	}
-	b.ifTipSendTextDelSecond(b.GetLang("vashiEmodji")+text, 20)
+	b.ifTipSendTextDelSecond(b.getText("vashiEmodji")+text, 20)
 }
 func (b *Bot) instalNick(input string) (ok bool, nick string) {
 	words := strings.Fields(input)

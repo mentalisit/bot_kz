@@ -13,7 +13,7 @@ func (b *Bot) SubscribePing(tipPing int) {
 	defer cancel()
 	men := b.storage.Subscribe.SubscribePing(ctx, b.in.NameMention, b.in.Lvlkz, b.in.Config.CorpName, tipPing, b.in.Config.TgChannel)
 	if len(men) > 0 {
-		men = fmt.Sprintf("%s%s\n%s", b.GetLang("SborNaKz"), b.in.Lvlkz, men)
+		men = fmt.Sprintf("%s%s\n%s", b.getText("SborNaKz"), b.in.Lvlkz, men)
 		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, men, 600)
 	}
 }
@@ -28,12 +28,12 @@ func (b *Bot) Subscribe(tipPing int) {
 	if b.in.Tip == ds {
 		//go b.Ds.DeleteMessage(b.in.Config.DsChannel, b.in.Ds.Mesid)
 		d, result := containsSymbolD(b.in.Lvlkz)
-		argRoles := b.GetLang("kz") + b.in.Lvlkz
+		argRoles := b.getText("kz") + b.in.Lvlkz
 		if d {
-			argRoles = b.GetLang("dkz") + result
+			argRoles = b.getText("dkz") + result
 		}
 		if tipPing == 3 {
-			argRoles = b.GetLang("kz") + b.in.Lvlkz + "+"
+			argRoles = b.getText("kz") + b.in.Lvlkz + "+"
 		}
 		subscribeCode := b.client.Ds.Subscribe(b.in.Ds.Nameid, argRoles, b.in.Config.Guildid)
 		var text string

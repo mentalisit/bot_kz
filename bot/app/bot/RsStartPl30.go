@@ -23,7 +23,7 @@ func (b *Bot) RsStart() {
 		return
 	}
 	if countName == 0 {
-		text := b.GetLang("prinuditelniStartDostupen")
+		text := b.getText("prinuditelniStartDostupen")
 		b.ifTipSendTextDelSecond(text, 10)
 	} else if countName == 1 {
 		numberkz, err1 := b.storage.DbFunc.NumberQueueLvl(ctx, b.in.Lvlkz, b.in.Config.CorpName)
@@ -54,8 +54,8 @@ func (b *Bot) RsStart() {
 					go func() {
 						name1, _, _, _ := b.nameMention(u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz,
-							b.GetLang("bilaZapushenaNe"), name1, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz,
+							b.getText("bilaZapushenaNe"), name1, b.getText("Vigru"), textEvent)
 
 						if b.in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
@@ -76,8 +76,8 @@ func (b *Bot) RsStart() {
 						name1, _, _, _ := b.nameMention(u, tg)
 						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz,
-							b.GetLang("bilaZapushenaNe"), name1, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz,
+							b.getText("bilaZapushenaNe"), name1, b.getText("Vigru"), textEvent)
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
 						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						b.wg.Done()
@@ -90,8 +90,8 @@ func (b *Bot) RsStart() {
 					go func() {
 						name1, name2, _, _ := b.nameMention(u, ds)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz, b.GetLang("bilaZapushenaNe"))
-						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz, b.getText("bilaZapushenaNe"))
+						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("Vigru"), textEvent)
 						text := text1 + text2
 						if b.in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
@@ -113,8 +113,8 @@ func (b *Bot) RsStart() {
 						name1, name2, _, _ := b.nameMention(u, tg)
 						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz, b.GetLang("bilaZapushenaNe"))
-						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz, b.getText("bilaZapushenaNe"))
+						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("Vigru"), textEvent)
 						text := text1 + text2
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
 						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
@@ -128,8 +128,8 @@ func (b *Bot) RsStart() {
 					go func() {
 						name1, name2, name3, _ := b.nameMention(u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz, b.GetLang("bilaZapushenaNe"),
-							name1, name2, name3, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz, b.getText("bilaZapushenaNe"),
+							name1, name2, name3, b.getText("Vigru"), textEvent)
 						if b.in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 						} else {
@@ -146,8 +146,8 @@ func (b *Bot) RsStart() {
 						name1, name2, name3, _ := b.nameMention(u, tg)
 						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
-							b.GetLang("ocheredKz"), b.in.Lvlkz, numberkz, b.GetLang("bilaZapushenaNe"),
-							name1, name2, name3, b.GetLang("Vigru"), textEvent)
+							b.getText("ocheredKz"), b.in.Lvlkz, numberkz, b.getText("bilaZapushenaNe"),
+							name1, name2, name3, b.getText("Vigru"), textEvent)
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
 						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						b.wg.Done()
@@ -175,14 +175,14 @@ func (b *Bot) Pl30() {
 	countName := b.storage.Count.CountNameQueue(ctx, b.in.Name)
 	text := ""
 	if countName == 0 {
-		text = b.in.NameMention + b.GetLang("tiNeVOcheredi")
+		text = b.in.NameMention + b.getText("tiNeVOcheredi")
 	} else if countName > 0 {
 		timedown := b.storage.DbFunc.P30Pl(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)
 		if timedown >= 150 {
 			text = fmt.Sprintf("%s %s %d %s",
-				b.in.NameMention, b.GetLang("maksimalnoeVremya"), timedown, b.GetLang("min."))
+				b.in.NameMention, b.getText("maksimalnoeVremya"), timedown, b.getText("min."))
 		} else {
-			text = b.in.NameMention + b.GetLang("vremyaObnovleno")
+			text = b.in.NameMention + b.getText("vremyaObnovleno")
 			b.storage.DbFunc.UpdateTimedown(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)
 			b.in.Option.Pl30 = true
 			b.in.Option.Edit = true

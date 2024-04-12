@@ -177,7 +177,7 @@ func (b *Bot) Autohelp() {
 				s.MesidDsHelp = b.client.Ds.HelpChannelUpdate(s)
 			}
 			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
-				text := fmt.Sprintf("%s \n%s", b.GetLanguage(s.Country, "botUdalyaet"), b.GetLanguage(s.Country, "hhelpText"))
+				text := fmt.Sprintf("%s \n%s", b.getLanguageText(s.Country, "botUdalyaet"), b.getLanguageText(s.Country, "hhelpText"))
 				if s.MesidTgHelp != "" {
 					mID, err := strconv.Atoi(s.MesidTgHelp)
 					if err != nil {

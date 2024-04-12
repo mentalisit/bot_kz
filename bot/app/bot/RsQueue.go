@@ -25,10 +25,10 @@ func (b *Bot) QueueLevel() {
 	// совподения количество  условие
 	if count == 0 {
 		if !b.in.Option.Queue {
-			text := b.GetLang("ocheredKz") + b.in.Lvlkz + b.GetLang("pusta")
+			text := b.getText("ocheredKz") + b.in.Lvlkz + b.getText("pusta")
 			b.ifTipSendTextDelSecond(text, 10)
 		} else if b.in.Option.Queue {
-			b.ifTipSendTextDelSecond(b.GetLang("netAktivnuh"), 10)
+			b.ifTipSendTextDelSecond(b.getText("netAktivnuh"), 10)
 		}
 		return
 	}
@@ -40,9 +40,9 @@ func (b *Bot) QueueLevel() {
 	darkStar, lvlkz := containsSymbolD(b.in.Lvlkz)
 	if b.in.Config.DsChannel != "" {
 		if darkStar {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.GetLang("dkz")+lvlkz, b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("dkz")+lvlkz, b.in.Config.Guildid)
 		} else {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.GetLang("kz")+b.in.Lvlkz, b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("kz")+b.in.Lvlkz, b.in.Config.Guildid)
 		}
 		if err != nil {
 			b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", b.in.Config, b.in.Lvlkz))
@@ -76,10 +76,10 @@ func (b *Bot) QueueLevel() {
 		if b.in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.GetLang("ocheredKz"), b.in.Lvlkz, numberLvl)
+				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("ocheredKz"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.GetLang("min."), u.User1.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.GetLang("prinuditelniStart"))
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("prinuditelniStart"))
 				text := fmt.Sprintf("%s %s %s", text1, name1, text2)
 				if b.in.Option.Edit {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
@@ -113,12 +113,12 @@ func (b *Bot) QueueLevel() {
 		if b.in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.GetLang("ocheredKz"), b.in.Lvlkz, numberLvl)
+				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("ocheredKz"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.GetLang("min."), u.User1.Numkzn)
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
 				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.GetLang("min."), u.User2.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.GetLang("prinuditelniStart"))
+					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min."), u.User2.Numkzn)
+				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("prinuditelniStart"))
 				text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 				if b.in.Option.Edit {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
@@ -158,14 +158,14 @@ func (b *Bot) QueueLevel() {
 		if b.in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.GetLang("ocheredKz"), b.in.Lvlkz, numberLvl)
+				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("ocheredKz"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.GetLang("min."), u.User1.Numkzn)
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
 				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.GetLang("min."), u.User2.Numkzn)
+					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min."), u.User2.Numkzn)
 				name3 := fmt.Sprintf("3️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.GetLang("min."), u.User3.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.GetLang("prinuditelniStart"))
+					b.emReadName(u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.getText("min."), u.User3.Numkzn)
+				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("prinuditelniStart"))
 				text := fmt.Sprintf("%s %s %s %s %s", text1, name1, name2, name3, text2)
 				if b.in.Option.Edit {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
@@ -201,7 +201,7 @@ func (b *Bot) QueueAll() {
 			}
 		}
 	} else {
-		b.ifTipSendTextDelSecond(b.GetLang("netAktivnuh"), 10)
+		b.ifTipSendTextDelSecond(b.getText("netAktivnuh"), 10)
 		b.iftipdelete()
 	}
 

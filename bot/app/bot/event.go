@@ -10,7 +10,7 @@ func (b *Bot) EventText() (text string, numE int) {
 		return "", 0
 	} else if numberevent > 0 { //активный ивент
 		numE = b.storage.Event.NumberQueueEvents(b.in.Config.CorpName) //номер кз number FROM rsevent
-		text = fmt.Sprintf("\nID %d %s\nㅤ\nㅤ", numE, b.GetLang("dly iventa"))
+		text = fmt.Sprintf("\nID %d %s\nㅤ\nㅤ", numE, b.getText("dly iventa"))
 		return text, numE
 	}
 	return text, numE
@@ -22,9 +22,9 @@ func (b *Bot) EventStart() {
 	b.iftipdelete()
 	//проверяем, есть ли активный ивент
 	event1 := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
-	text := b.GetLang("iventZapushen")
+	text := b.getText("iventZapushen")
 	if event1 > 0 {
-		b.ifTipSendTextDelSecond(b.GetLang("rejimIventaUje"), 10)
+		b.ifTipSendTextDelSecond(b.getText("rejimIventaUje"), 10)
 	} else {
 		if b.in.Tip == ds && (b.in.Name == "Mentalisit" || b.client.Ds.CheckAdmin(b.in.Ds.Nameid, b.in.Config.DsChannel)) {
 			b.storage.Event.EventStartInsert(b.in.Config.CorpName)
@@ -43,7 +43,7 @@ func (b *Bot) EventStart() {
 				b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
 			}
 		} else {
-			text = b.GetLang("zapuskIostanovka")
+			text = b.getText("zapuskIostanovka")
 			b.ifTipSendTextDelSecond(text, 60)
 		}
 	}
@@ -54,8 +54,8 @@ func (b *Bot) EventStop() {
 	}
 	b.iftipdelete()
 	event1 := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
-	eventStop := b.GetLang("IventOstanovlen")
-	eventNull := b.GetLang("iventItakAktiven")
+	eventStop := b.getText("IventOstanovlen")
+	eventNull := b.getText("iventItakAktiven")
 	if b.in.Tip == "ds" && (b.in.Name == "Mentalisit" || b.client.Ds.CheckAdmin(b.in.Ds.Nameid, b.in.Config.DsChannel)) {
 		if event1 > 0 {
 			b.storage.Event.UpdateActiveEvent0(b.in.Config.CorpName, event1)
@@ -71,7 +71,7 @@ func (b *Bot) EventStop() {
 			go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, eventNull, 10)
 		}
 	} else {
-		text := b.GetLang("zapuskIostanovka")
+		text := b.getText("zapuskIostanovka")
 		b.ifTipSendTextDelSecond(text, 20)
 	}
 }
@@ -89,18 +89,18 @@ func (b *Bot) EventPoints(numKZ, points int) {
 		if CountEventNames > 0 || admin {
 			pointsGood := b.storage.Event.CountEventsPoints(b.in.Config.CorpName, numKZ, event1)
 			if pointsGood > 0 && !admin {
-				message = b.GetLang("dannieKzUjeVneseni")
+				message = b.getText("dannieKzUjeVneseni")
 			} else if pointsGood == 0 || admin {
 				countEvent := b.storage.Event.UpdatePoints(b.in.Config.CorpName, numKZ, points, event1) //if error
-				message = fmt.Sprintf("%s %d %s", b.in.Name, points, b.GetLang("ochki vnesen"))
+				message = fmt.Sprintf("%s %d %s", b.in.Name, points, b.getText("ochki vnesen"))
 				b.changeMessageEvent(points, countEvent, numKZ, event1)
 			}
 		} else {
-			message = fmt.Sprintf("%s  %s %d", b.in.NameMention, b.GetLang("dobavlenieOchkovNevozmojno"), numKZ)
+			message = fmt.Sprintf("%s  %s %d", b.in.NameMention, b.getText("dobavlenieOchkovNevozmojno"), numKZ)
 		}
 
 	} else {
-		message = b.GetLang("iventNeZapushen")
+		message = b.getText("iventNeZapushen")
 	}
 	b.ifTipSendTextDelSecond(message, 20)
 }
@@ -109,8 +109,8 @@ func (b *Bot) changeMessageEvent(points, countEvent, numberkz, numberEvent int) 
 		fmt.Println("in changeMessageEvent ", b.in)
 	}
 	nd, nt, t := b.storage.Event.ReadNamesMessage(b.in.Config.CorpName, numberkz, numberEvent)
-	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.GetLang("iventIgra"), t.Numberkz, t.Lvlkz)
-	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.GetLang("vneseno"), b.in.Name, points)
+	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.getText("iventIgra"), t.Numberkz, t.Lvlkz)
+	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText("vneseno"), b.in.Name, points)
 	if countEvent == 1 {
 		if b.in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s \n%s", mes1, nd.Name1, mesOld)

@@ -15,14 +15,14 @@ func (b *Bot) TopLevel() {
 	numEvent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 	if numEvent == 0 {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s %s%s:\n",
-			b.GetLang("topUchastnikov"), b.GetLang("kz"), b.in.Lvlkz)
+			b.getText("topUchastnikov"), b.getText("kz"), b.in.Lvlkz)
 
-		b.ifTipSendTextDelSecond(b.GetLang("ScanDB"), 5)
+		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 5)
 		good := b.storage.Top.TopLevel(ctx, b.in.Config.CorpName, b.in.Lvlkz)
 		if !good {
-			b.ifTipSendTextDelSecond(b.GetLang("noHistory"), 20)
+			b.ifTipSendTextDelSecond(b.getText("noHistory"), 20)
 		} else if good {
-			b.ifTipSendTextDelSecond(b.GetLang("formlist"), 5)
+			b.ifTipSendTextDelSecond(b.getText("formlist"), 5)
 			mest := b.storage.Top.TopTemp(ctx)
 			if b.in.Tip == ds {
 				m := b.client.Ds.SendEmbedText(b.in.Config.DsChannel, mesage, mest)
@@ -33,13 +33,13 @@ func (b *Bot) TopLevel() {
 		}
 	} else {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s %s %s%s\n     ",
-			b.GetLang("topUchastnikov"), b.GetLang("iventa"), b.GetLang("kz"), b.in.Lvlkz)
-		b.ifTipSendTextDelSecond(b.GetLang("ScanDB"), 5)
+			b.getText("topUchastnikov"), b.getText("iventa"), b.getText("kz"), b.in.Lvlkz)
+		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 5)
 		good := b.storage.Top.TopEventLevel(ctx, b.in.Config.CorpName, b.in.Lvlkz, numEvent)
 		if !good {
-			b.ifTipSendTextDelSecond(b.GetLang("noHistory"), 20)
+			b.ifTipSendTextDelSecond(b.getText("noHistory"), 20)
 		} else {
-			b.ifTipSendTextDelSecond(b.GetLang("formlist"), 5)
+			b.ifTipSendTextDelSecond(b.getText("formlist"), 5)
 			mest := b.storage.Top.TopTempEvent(ctx)
 			if b.in.Tip == ds {
 				m := b.client.Ds.SendEmbedText(b.in.Config.DsChannel, mesage, mest)
@@ -56,11 +56,11 @@ func (b *Bot) TopAll() {
 	defer cancel()
 	numEvent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 	if numEvent == 0 {
-		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.GetLang("topUchastnikov"))
-		b.ifTipSendTextDelSecond(b.GetLang("ScanDB"), 5)
+		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText("topUchastnikov"))
+		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 5)
 		good := b.storage.Top.TopAll(ctx, b.in.Config.CorpName)
 		if good {
-			b.ifTipSendTextDelSecond(b.GetLang("formlist"), 5)
+			b.ifTipSendTextDelSecond(b.getText("formlist"), 5)
 			message2 := b.storage.Top.TopTemp(ctx)
 			if b.in.Tip == ds {
 				m := b.client.Ds.SendEmbedText(b.in.Config.DsChannel, mesage, message2)
@@ -69,15 +69,15 @@ func (b *Bot) TopAll() {
 				b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, mesage+message2, 60)
 			}
 		} else if !good {
-			b.ifTipSendTextDelSecond(b.GetLang("noHistory"), 10)
+			b.ifTipSendTextDelSecond(b.getText("noHistory"), 10)
 		}
 	} else if numEvent > 0 {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s %s:\n",
-			b.GetLang("topUchastnikov"), b.GetLang("iventa"))
-		b.ifTipSendTextDelSecond(b.GetLang("ScanDB"), 10)
+			b.getText("topUchastnikov"), b.getText("iventa"))
+		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 10)
 		good := b.storage.Top.TopAllEvent(ctx, b.in.Config.CorpName, numEvent)
 		if good {
-			b.ifTipSendTextDelSecond(b.GetLang("formlist"), 5)
+			b.ifTipSendTextDelSecond(b.getText("formlist"), 5)
 			message2 := b.storage.Top.TopTempEvent(ctx)
 			if b.in.Tip == ds {
 				m := b.client.Ds.SendEmbedText(b.in.Config.DsChannel, mesage, message2)
@@ -86,7 +86,7 @@ func (b *Bot) TopAll() {
 				b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, mesage+message2, 60)
 			}
 		} else if !good {
-			b.ifTipSendTextDelSecond(b.GetLang("noHistory"), 10)
+			b.ifTipSendTextDelSecond(b.getText("noHistory"), 10)
 		}
 	}
 }

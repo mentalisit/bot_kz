@@ -24,10 +24,10 @@ func (b *Bot) Plus() bool {
 		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
 		if t.Timedown > 3 {
 			message = fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.GetLang("ranovatoPlysik"), t.Lvlkz, b.GetLang("budeshEshe"), t.Timedown, b.GetLang("min."))
+				t.Mention, b.getText("ranovatoPlysik"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min."))
 		} else if t.Timedown <= 3 {
 			ins = true
-			message = t.Mention + b.GetLang("vremyaObnovleno")
+			message = t.Mention + b.getText("vremyaObnovleno")
 			b.in.Lvlkz = t.Lvlkz
 			b.in.Option.Reaction = false
 			b.QueueLevel()
@@ -55,7 +55,7 @@ func (b *Bot) Minus() bool {
 		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
 		if t.Name == b.in.Name && t.Timedown > 3 {
 			message := fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.GetLang("ranovatoMinus"), t.Lvlkz, b.GetLang("budeshEshe"), t.Timedown, b.GetLang("min."))
+				t.Mention, b.getText("ranovatoMinus"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min."))
 			b.ifTipSendTextDelSecond(message, 10)
 		} else if t.Name == b.in.Name && t.Timedown <= 3 {
 			b.in.Lvlkz = t.Lvlkz

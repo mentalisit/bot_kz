@@ -213,11 +213,11 @@ func (b *Bot) hhelp() {
 	}
 }
 
-func (b *Bot) GetLang(key string) string {
+func (b *Bot) getText(key string) string {
 	return b.storage.Words.GetWords(b.in.Config.Country, key)
 }
 
-func (b *Bot) GetLanguage(land, key string) string {
+func (b *Bot) getLanguageText(land, key string) string {
 	return b.storage.Words.GetWords(land, key)
 }
 
