@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -40,7 +41,8 @@ func (b *Bot) RsStart() {
 			u := b.storage.DbFunc.ReadAll(ctx, b.in.Lvlkz, b.in.Config.CorpName)
 			textEvent, numkzEvent := b.EventText()
 			if textEvent == "" {
-				textEvent = b.percent.GetTextPercent(b.in.Config, true)
+				DarkFlag := strings.HasPrefix(b.in.Lvlkz, "d")
+				textEvent = b.percent.GetTextPercent(b.in.Config, DarkFlag)
 			}
 			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 			if numberevent > 0 {
