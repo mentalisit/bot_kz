@@ -116,20 +116,9 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	case discordgo.InteractionApplicationCommand:
 		{
 			switch i.ApplicationCommandData().Name {
-			case "module":
-				// Обработка вашей слеш-команды
+			case "module", "модули", "модулі":
 				d.handleModuleCommand(i)
-			case "модули":
-				// Обработка вашей слеш-команды
-				d.handleModuleCommand(i)
-			case "модулі":
-				// Обработка вашей слеш-команды
-				d.handleModuleCommand(i)
-			case "weapon":
-				d.handleWeaponCommand(i)
-			case "оружие":
-				d.handleWeaponCommand(i)
-			case "зброя":
+			case "weapon", "оружие", "зброя":
 				d.handleWeaponCommand(i)
 			}
 			//commandHandlers := d.addSlashHandler()
