@@ -214,15 +214,23 @@ func (b *Bot) hhelp() {
 }
 
 func (b *Bot) getText(key string) string {
+	text := ""
 	if b.in.Config.Country == "en" {
-		return b.storage.Dictionary.GetText(b.in.Config.Country, key)
+		text = b.storage.Dictionary.GetText(b.in.Config.Country, key)
+	}
+	if text == "" {
+		return b.storage.Words.GetWords(b.in.Config.Country, key)
 	}
 	return b.storage.Words.GetWords(b.in.Config.Country, key)
 }
 
 func (b *Bot) getLanguageText(lang, key string) string {
+	text := ""
 	if lang == "en" {
-		return b.storage.Dictionary.GetText(lang, key)
+		text = b.storage.Dictionary.GetText(lang, key)
+	}
+	if text == "" {
+		return b.storage.Words.GetWords(lang, key)
 	}
 	return b.storage.Words.GetWords(lang, key)
 }

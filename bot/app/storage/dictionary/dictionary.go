@@ -51,7 +51,7 @@ func (dict *Dictionary) GetText(lang string, key string) string {
 			dict.log.Error("{'key' not specified}")
 		} else {
 			dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
-			text = "{" + key + "}"
+			//text = "{" + key + "}"
 		}
 	}
 
