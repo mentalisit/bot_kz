@@ -24,13 +24,7 @@ func (d *Discord) AccesChatDS(m *discordgo.MessageCreate) {
 		case "додати":
 			go d.DeleteMesageSecond(m.ChannelID, m.ID, 10)
 			d.accessAddChannelDs(m.ChannelID, m.GuildID, "ua")
-		case "del":
-			go d.DeleteMesageSecond(m.ChannelID, m.ID, 10)
-			d.accessDelChannelDs(m.ChannelID, m.GuildID)
-		case "удалить":
-			go d.DeleteMesageSecond(m.ChannelID, m.ID, 10)
-			d.accessDelChannelDs(m.ChannelID, m.GuildID)
-		case "видалити":
+		case "del", "удалить", "видалити":
 			go d.DeleteMesageSecond(m.ChannelID, m.ID, 10)
 			d.accessDelChannelDs(m.ChannelID, m.GuildID)
 		case "паника":
@@ -105,7 +99,7 @@ func (d *Discord) setLang(m *discordgo.MessageCreate) bool {
 			}
 			config.Country = langUpdate
 			d.corpConfigRS[config.CorpName] = config
-			config.MesidDsHelp = d.hhelp1(config.DsChannel)
+			config.MesidDsHelp = d.hhelp1(config.DsChannel, langUpdate)
 
 			d.corpConfigRS[config.CorpName] = config
 			d.storage.ConfigRs.AutoHelpUpdateMesid(config)

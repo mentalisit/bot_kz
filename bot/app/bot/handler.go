@@ -207,7 +207,7 @@ func (b *Bot) elsetrue(name string) { //удаляем игрока с очер�
 func (b *Bot) hhelp() {
 	b.iftipdelete()
 	if b.in.Tip == ds {
-		go b.client.Ds.Help(b.in.Config.DsChannel)
+		go b.client.Ds.Help(b.in.Config.DsChannel, b.in.Config.Country)
 	} else if b.in.Tip == tg {
 		go b.client.Tg.Help(b.in.Config.TgChannel, b.in.Config.Country)
 	}

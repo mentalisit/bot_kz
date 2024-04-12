@@ -136,7 +136,7 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func (d *Discord) ready() {
-	d.removeCommand()
+	//d.removeCommand()
 	for _, config := range d.corpConfigRS {
 		if config.DsChannel != "" && config.Guildid != "" {
 			var commands []*discordgo.ApplicationCommand
