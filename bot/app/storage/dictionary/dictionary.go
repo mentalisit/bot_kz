@@ -1,6 +1,9 @@
 package dictionary
 
-import "github.com/mentalisit/logger"
+import (
+	"fmt"
+	"github.com/mentalisit/logger"
+)
 
 type Dictionary struct {
 	ua  map[string]string
@@ -45,7 +48,9 @@ func (dict *Dictionary) GetText(lang string, key string) string {
 	if text == "" {
 		if key == "" {
 			text = "{'key' not specified}"
+			dict.log.Error("{'key' not specified}")
 		} else {
+			dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
 			text = "{" + key + "}"
 		}
 	}

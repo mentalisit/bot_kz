@@ -214,11 +214,17 @@ func (b *Bot) hhelp() {
 }
 
 func (b *Bot) getText(key string) string {
+	if b.in.Config.Country == "en" {
+		return b.storage.Dictionary.GetText(b.in.Config.Country, key)
+	}
 	return b.storage.Words.GetWords(b.in.Config.Country, key)
 }
 
-func (b *Bot) getLanguageText(land, key string) string {
-	return b.storage.Words.GetWords(land, key)
+func (b *Bot) getLanguageText(lang, key string) string {
+	if lang == "en" {
+		return b.storage.Dictionary.GetText(lang, key)
+	}
+	return b.storage.Words.GetWords(lang, key)
 }
 
 func containsSymbolD(s string) (dark bool, result string) {
