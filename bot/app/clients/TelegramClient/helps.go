@@ -6,7 +6,7 @@ import (
 )
 
 func (t *Telegram) Help(Channel string, lang string) {
-	text := fmt.Sprintf("%s\n%s ", t.storage.Words.GetWords(lang, "spravka"), t.storage.Words.GetWords(lang, "hhelpText"))
+	text := fmt.Sprintf("%s\n%s ", t.getLanguage(lang, "spravka"), t.getLanguage(lang, "hhelpText"))
 	t.SendChannelDelSecond(Channel, text, 180)
 }
 

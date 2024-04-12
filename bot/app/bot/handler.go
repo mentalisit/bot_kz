@@ -217,6 +217,10 @@ func (b *Bot) GetLang(key string) string {
 	return b.storage.Words.GetWords(b.in.Config.Country, key)
 }
 
+func (b *Bot) GetLanguage(land, key string) string {
+	return b.storage.Words.GetWords(land, key)
+}
+
 func containsSymbolD(s string) (dark bool, result string) {
 	for _, char := range s {
 		if char == 'd' {

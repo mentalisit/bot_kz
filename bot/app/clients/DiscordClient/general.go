@@ -241,26 +241,25 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n3️⃣ %s \n4️⃣ %s \n",
 			mapa["name1"], mapa["name2"], mapa["name3"], mapa["name4"])
 	}
-	title := d.storage.Words.GetWords(mapa["lang"], "ocheredKz")
+	title := d.getLanguage(mapa["lang"], "ocheredKz")
 	if dark {
-		title = d.storage.Words.GetWords(mapa["lang"], "ocheredTKz")
+		title = d.getLanguage(mapa["lang"], "ocheredTKz")
 	}
 	return discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{},
 		Color:  16711680,
 		Description: fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",
-			d.storage.Words.GetWords(mapa["lang"], "jelaushieNa"), mapa["lvlkz"], numkz) +
+			d.getLanguage(mapa["lang"], "jelaushieNa"), mapa["lvlkz"], numkz) +
 			textcount,
 
-		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{
-				Name: fmt.Sprintf(" %s %s\n%s %s\n%s %s",
-					emOK, d.storage.Words.GetWords(mapa["lang"], "DlyaDobavleniya"),
-					emCancel, d.storage.Words.GetWords(mapa["lang"], "DlyaVihodaIz"),
-					emRsStart, d.storage.Words.GetWords(mapa["lang"], "prinuditelniStart")),
-				Value:  d.storage.Words.GetWords(mapa["lang"], "DannieObnovleni") + ": ",
-				Inline: true,
-			}},
+		Fields: []*discordgo.MessageEmbedField{{
+			Name: fmt.Sprintf(" %s %s\n%s %s\n%s %s",
+				emOK, d.getLanguage(mapa["lang"], "DlyaDobavleniya"),
+				emCancel, d.getLanguage(mapa["lang"], "DlyaVihodaIz"),
+				emRsStart, d.getLanguage(mapa["lang"], "prinuditelniStart")),
+			Value:  d.getLanguage(mapa["lang"], "DannieObnovleni") + ": ",
+			Inline: true,
+		}},
 		Timestamp: time.Now().Format(time.RFC3339), // ТЕКУЩЕЕ ВРЕМЯ ДИСКОРДА
 		Title:     title,
 	}

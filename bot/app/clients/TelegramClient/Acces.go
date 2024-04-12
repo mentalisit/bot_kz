@@ -48,7 +48,7 @@ func (t *Telegram) accesChatTg(m *tgbotapi.Message) {
 func (t *Telegram) accessAddChannelTg(chatid, lang string, m *tgbotapi.Message) { // внесение в дб и добавление в масив
 	ok, _ := t.checkChannelConfigTG(chatid)
 	if ok {
-		go t.SendChannelDelSecond(chatid, t.storage.Words.GetWords(lang, "accessAlready"), 20)
+		go t.SendChannelDelSecond(chatid, t.getLanguage(lang, "accessAlready"), 20)
 	} else {
 		chatName := t.chatName(chatid)
 		if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
@@ -56,13 +56,13 @@ func (t *Telegram) accessAddChannelTg(chatid, lang string, m *tgbotapi.Message) 
 		}
 		t.addTgCorpConfig(chatName, chatid, lang)
 		t.log.Info("новая активация корпорации " + chatName)
-		go t.SendChannelDelSecond(chatid, t.storage.Words.GetWords(lang, "accessTY"), 60)
+		go t.SendChannelDelSecond(chatid, t.getLanguage(lang, "accessTY"), 60)
 	}
 }
 func (t *Telegram) accessDelChannelTg(chatid string, m *tgbotapi.Message) { //удаление с бд и масива для блокировки
 	ok, config := t.checkChannelConfigTG(chatid)
 	if !ok {
-		go t.SendChannelDelSecond(chatid, t.storage.Words.GetWords("ru", "accessYourChannel"), 60)
+		go t.SendChannelDelSecond(chatid, t.getLanguage("ru", "accessYourChannel"), 60)
 	} else {
 		t.storage.ConfigRs.DeleteConfigRs(config)
 		t.storage.ReloadDbArray()
@@ -72,7 +72,7 @@ func (t *Telegram) accessDelChannelTg(chatid string, m *tgbotapi.Message) { //у
 			chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
 		}
 		t.log.Info("отключение корпорации " + chatName)
-		go t.SendChannelDelSecond(chatid, t.storage.Words.GetWords(config.Country, "YouDisabledMyFeatures"), 60)
+		go t.SendChannelDelSecond(chatid, t.getLanguage(config.Country, "YouDisabledMyFeatures"), 60)
 	}
 }
 func (t *Telegram) setLang(m *tgbotapi.Message, chatid string) bool {
@@ -86,7 +86,7 @@ func (t *Telegram) setLang(m *tgbotapi.Message, chatid string) bool {
 			config.Country = langUpdate
 			t.corpConfigRS[config.CorpName] = config
 			t.storage.ConfigRs.AutoHelpUpdateMesid(config)
-			go t.SendChannelDelSecond(chatid, t.storage.Words.GetWords(config.Country, "vashLanguage"), 20)
+			go t.SendChannelDelSecond(chatid, t.getLanguage(config.Country, "vashLanguage"), 20)
 			t.log.Info(fmt.Sprintf("замена языка в %s на %s", config.CorpName, config.Country))
 		}
 

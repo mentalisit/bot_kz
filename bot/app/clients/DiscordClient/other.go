@@ -133,6 +133,9 @@ func (d *Discord) getLang(chatId, key string) string {
 	_, conf := d.CheckChannelConfigDS(chatId)
 	return d.storage.Words.GetWords(conf.Country, key)
 }
+func (d *Discord) getLanguage(lang, key string) string {
+	return d.storage.Words.GetWords(lang, key)
+}
 
 func (d *Discord) CleanOldMessageChannel(chatId, lim string) {
 	limit, _ := strconv.Atoi(lim)

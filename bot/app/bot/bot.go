@@ -66,7 +66,6 @@ func (b *Bot) loadInbox() {
 			b.LogicRs()
 		}
 	}
-	b.log.Panic("Ошибка в боте")
 }
 func (b *Bot) RemoveMessage() { //цикл для удаления сообщений
 	for {
@@ -178,7 +177,7 @@ func (b *Bot) Autohelp() {
 				s.MesidDsHelp = b.client.Ds.HelpChannelUpdate(s)
 			}
 			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
-				text := fmt.Sprintf("%s \n%s", b.storage.Words.GetWords(s.Country, "botUdalyaet"), b.storage.Words.GetWords(s.Country, "hhelpText"))
+				text := fmt.Sprintf("%s \n%s", b.GetLanguage(s.Country, "botUdalyaet"), b.GetLanguage(s.Country, "hhelpText"))
 				if s.MesidTgHelp != "" {
 					mID, err := strconv.Atoi(s.MesidTgHelp)
 					if err != nil {

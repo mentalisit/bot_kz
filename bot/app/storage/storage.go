@@ -3,9 +3,9 @@ package storage
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
-	"go.uber.org/zap"
 	"kz_bot/config"
 	"kz_bot/models"
+	"kz_bot/storage/dictionary"
 	"kz_bot/storage/mongo"
 	"kz_bot/storage/postgres"
 	"kz_bot/storage/reststorage"
@@ -13,12 +13,13 @@ import (
 )
 
 type Storage struct {
-	log               *zap.Logger
+	log               *logger.Logger
 	debug             bool
 	BridgeConfig      *reststorage.Db
 	ConfigRs          ConfigRs
 	TimeDeleteMessage TimeDeleteMessage
 	Words             *words.Words
+	Dictionary        *dictionary.Dictionary
 	Subscribe         Subscribe
 	Emoji             Emoji
 	Count             Count
@@ -34,25 +35,25 @@ type Storage struct {
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 
-	//инициализируем и читаем репозиторий из облока конфига конфигурации
+	//Initializing a repository from a cloud configuration
 	mongoDB := mongo.InitMongoDB(log)
 
+	//REST API
 	rdb := reststorage.InitRestApiStorage(log)
-	//corp := CorpsConfig.NewCorps(log, cfg)
 
-	//подключаю языковой пакет
+	//add language packages
 	w := words.NewWords()
 
-	//инициализируем локальный репозиторий
+	//Initializing a local repository
 	local := postgres.NewDb(log, cfg)
 
 	s := &Storage{
-		//CorpsConfig:       corp,
-		//HadesClient:       mongoDB,
+		log:               log,
 		BridgeConfig:      rdb,
 		TimeDeleteMessage: mongoDB,
 		ConfigRs:          mongoDB,
 		Words:             w,
+		Dictionary:        dictionary.NewDictionary(log),
 		Subscribe:         local,
 		Emoji:             local,
 		Count:             local,
@@ -62,24 +63,23 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		DbFunc:            local,
 		Event:             local,
 		LevelCorp:         local,
-		//CorporationHades:  make(map[string]models.CorporationHadesClient),
-		BridgeConfigs: make(map[string]models.BridgeConfig),
-		CorpConfigRS:  make(map[string]models.CorporationConfig),
+		BridgeConfigs:     make(map[string]models.BridgeConfig),
+		CorpConfigRS:      make(map[string]models.CorporationConfig),
 	}
 
 	go s.loadDbArray()
 	return s
 }
 func (s *Storage) loadDbArray() {
-	var b = 0
+	var bridgeCounter = 0
 	var bridge string
 	bc := s.BridgeConfig.DBReadBridgeConfig()
 	for _, configBridge := range bc {
 		s.BridgeConfigs[configBridge.NameRelay] = configBridge
-		b++
+		bridgeCounter++
 		bridge = bridge + fmt.Sprintf("%s, ", configBridge.HostRelay)
 	}
-	fmt.Printf("Загружено конфиг мостов %d : %s\n", b, bridge)
+	fmt.Printf("Загружено конфиг мостов %d : %s\n", bridgeCounter, bridge)
 
 	var c = 0
 	var rslist string
@@ -98,8 +98,8 @@ func (s *Storage) ReloadDbArray() {
 	s.CorpConfigRS = CorpConfigRS
 	s.BridgeConfigs = BridgeConfigs
 
-	bc := s.BridgeConfig.DBReadBridgeConfig()
-	for _, configBridge := range bc {
+	bridgeConfig := s.BridgeConfig.DBReadBridgeConfig()
+	for _, configBridge := range bridgeConfig {
 		s.BridgeConfigs[configBridge.NameRelay] = configBridge
 	}
 	rs := s.ConfigRs.ReadConfigRs()
