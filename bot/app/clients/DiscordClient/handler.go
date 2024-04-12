@@ -3,8 +3,7 @@ package DiscordClient
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"kz_bot/models"
-	"time"
+	"kz_bot/clients/DiscordClient/slashCommand"
 )
 
 func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -120,7 +119,17 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			case "module":
 				// Обработка вашей слеш-команды
 				d.handleModuleCommand(i)
+			case "модули":
+				// Обработка вашей слеш-команды
+				d.handleModuleCommand(i)
+			case "модулі":
+				// Обработка вашей слеш-команды
+				d.handleModuleCommand(i)
 			case "weapon":
+				d.handleWeaponCommand(i)
+			case "оружие":
+				d.handleWeaponCommand(i)
+			case "зброя":
 				d.handleWeaponCommand(i)
 			}
 			//commandHandlers := d.addSlashHandler()
@@ -138,26 +147,43 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func (d *Discord) ready() {
-	commands := d.addSlashCommand()
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
-	for i, v := range commands {
-		cmd, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, "", v)
-		if err != nil {
-
-			d.log.ErrorErr(err)
+	d.removeCommand()
+	for _, config := range d.corpConfigRS {
+		if config.DsChannel != "" && config.Guildid != "" {
+			var commands []*discordgo.ApplicationCommand
+			if config.Country == "ru" {
+				commands = slashCommand.AddSlashCommandRu()
+			} else if config.Country == "en" {
+				commands = slashCommand.AddSlashCommandEn()
+			} else if config.Country == "ua" {
+				commands = slashCommand.AddSlashCommandUa()
+			}
+			if len(commands) == 0 {
+				return
+			}
+			for _, v := range commands {
+				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, config.Guildid, v)
+				if err != nil {
+					d.log.ErrorErr(err)
+				}
+			}
 		}
-		registeredCommands[i] = cmd
 	}
 }
 
-func (d *Discord) removeCommand(guildid string) {
-	registeredCommands, err := d.S.ApplicationCommands(d.S.State.User.ID, guildid)
+func (d *Discord) removeCommand() {
+	registeredCommands, err := d.S.ApplicationCommands(d.S.State.User.ID, "")
 	if err != nil {
 		d.log.Fatal(err.Error())
 	}
 
+	fmt.Println(len(registeredCommands))
 	for _, v := range registeredCommands {
-		err = d.S.ApplicationCommandDelete(d.S.State.User.ID, guildid, v.ID)
+		fmt.Printf("%+v\n", v)
+	}
+
+	for _, v := range registeredCommands {
+		err = d.S.ApplicationCommandDelete(d.S.State.User.ID, "", v.ID)
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
@@ -301,90 +327,91 @@ func (d *Discord) addSlashCommand() []*discordgo.ApplicationCommand {
 		},
 	}
 }
-func (d *Discord) addSlashHandler() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	var commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"help": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
 
-					Content: models.Help,
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-		"helpqueue": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: models.HelpQueue,
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-		"helpnotification": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Уведомления:\n" +
-						"	Подписаться на уведомления о начале очереди: +[4-11]\n" +
-						"+10 -подписаться на уведомления о начале очереди на КЗ 10ур.\n\n" +
-						"	Подписаться на уведомление, если в очереди 3 человека: ++[4-11]\n" +
-						"++10 -подписаться на уведомления о наличии 3х человек в очереди на КЗ 10ур.\n\n" +
-						"	Отключить уведомления о начале сбора: -[5-11]\n" +
-						"-9 -отключить уведомления о начале сборе на КЗ 9ур.\n\n" +
-						"	Отключить уведомления 3/4 в очереди: --[5-11]\n" +
-						"--9 -отключить уведомления о наличии 3х человек в очереди на КЗ 9ур.",
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-		"helpevent": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: models.HelpEvent,
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-		"helptop": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: models.HelpTop,
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-		"helpicon": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: models.HelpIcon,
-				},
-			})
-			go func() {
-				time.Sleep(1 * time.Minute)
-				s.InteractionResponseDelete(i.Interaction)
-			}()
-		},
-	}
-
-	return commandHandlers
-}
+//func (d *Discord) addSlashHandler() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//	var commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+//		"help": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//
+//					Content: models.Help,
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//		"helpqueue": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//					Content: models.HelpQueue,
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//		"helpnotification": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//					Content: "Уведомления:\n" +
+//						"	Подписаться на уведомления о начале очереди: +[4-11]\n" +
+//						"+10 -подписаться на уведомления о начале очереди на КЗ 10ур.\n\n" +
+//						"	Подписаться на уведомление, если в очереди 3 человека: ++[4-11]\n" +
+//						"++10 -подписаться на уведомления о наличии 3х человек в очереди на КЗ 10ур.\n\n" +
+//						"	Отключить уведомления о начале сбора: -[5-11]\n" +
+//						"-9 -отключить уведомления о начале сборе на КЗ 9ур.\n\n" +
+//						"	Отключить уведомления 3/4 в очереди: --[5-11]\n" +
+//						"--9 -отключить уведомления о наличии 3х человек в очереди на КЗ 9ур.",
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//		"helpevent": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//					Content: models.HelpEvent,
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//		"helptop": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//					Content: models.HelpTop,
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//		"helpicon": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+//				Type: discordgo.InteractionResponseChannelMessageWithSource,
+//				Data: &discordgo.InteractionResponseData{
+//					Content: models.HelpIcon,
+//				},
+//			})
+//			go func() {
+//				time.Sleep(1 * time.Minute)
+//				s.InteractionResponseDelete(i.Interaction)
+//			}()
+//		},
+//	}
+//
+//	return commandHandlers
+//}

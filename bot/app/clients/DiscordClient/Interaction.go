@@ -163,9 +163,9 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate) {
 	module := i.ApplicationCommandData().Options[0].StringValue()
 	level := i.ApplicationCommandData().Options[1].IntValue()
 
-	response := fmt.Sprintf("Выбран модуль: %s, уровень: %d", module, level)
+	response := fmt.Sprintf(d.getLang(i.ChannelID, "selectModuleLevel"), module, level)
 	if level == 0 {
-		response = fmt.Sprintf("Удален модуль: %s, уровень: %d", module, level)
+		response = fmt.Sprintf(d.getLang(i.ChannelID, "deleteModuleLevel"), module, level)
 	}
 	// Отправка ответа
 	err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -192,7 +192,7 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate) {
 func (d *Discord) handleWeaponCommand(i *discordgo.InteractionCreate) {
 	weapon := i.ApplicationCommandData().Options[0].StringValue()
 
-	response := fmt.Sprintf("Установлено оружие: %s", weapon)
+	response := fmt.Sprintf(d.getLang(i.ChannelID, "installWeapon"), weapon)
 
 	// Отправка ответа
 	err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

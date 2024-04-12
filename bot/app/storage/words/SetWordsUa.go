@@ -81,4 +81,7 @@ func (w *Words) setWordsUa() {
 	w.ua["ocheredTKz"] = "Черга тчз"
 	w.ua["zakrilOcheredTKz"] = "  закрив чергу тчз"
 	w.ua["vashLanguage"] = "Ви переключили мене на українську мову"
+	w.ua["selectModuleLevel"] = "Вибрано модуль: %s, рівень: %d"
+	w.ua["deleteModuleLevel"] = "Видалений модуль: %s, рівень: %d"
+	w.ua["installWeapon"] = "Встановлено зброю: %s"
 }

@@ -79,4 +79,7 @@ func (w *Words) setWordsEn() {
 	w.en["ocheredTKz"] = "Queue drs"
 	w.en["zakrilOcheredTKz"] = " closed the queue of drs"
 	w.en["vashLanguage"] = "You switched me to English"
+	w.en["selectModuleLevel"] = "Module selected: %s, level: %d"
+	w.en["deleteModuleLevel"] = "Removed module: %s, level: %d"
+	w.en["installWeapon"] = "Weapon installed: %s"
 }

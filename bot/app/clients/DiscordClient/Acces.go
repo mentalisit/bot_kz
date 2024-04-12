@@ -37,7 +37,7 @@ func (d *Discord) AccesChatDS(m *discordgo.MessageCreate) {
 			d.log.Panic("перезагрузка по требованию")
 			os.Exit(1)
 		case "removeCommand":
-			d.removeCommand(m.GuildID)
+			d.removeCommand()
 			go d.ready()
 		case "мес":
 			d.DeleteMessage(m.ChannelID, m.ID)

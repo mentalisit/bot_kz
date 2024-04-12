@@ -86,5 +86,8 @@ func (w *Words) setWordsRu() {
 	w.ru["ocheredTKz"] = "Очередь ткз"
 	w.ru["zakrilOcheredTKz"] = " закрыл очередь ткз"
 	w.ru["vashLanguage"] = "Вы переключили меня на Русский язык"
+	w.ru["selectModuleLevel"] = "Выбран модуль: %s, уровень: %d"
+	w.ru["deleteModuleLevel"] = "Удален модуль: %s, уровень: %d"
+	w.ru["installWeapon"] = "Установлено оружие: %s"
 
 }

@@ -2,6 +2,7 @@ package DiscordClient
 
 import (
 	"kz_bot/models"
+	"time"
 )
 
 // BridgeCheckChannelConfigDS bridge
@@ -38,4 +39,13 @@ func (d *Discord) AddDsCorpConfig(chatName, chatid, guildid, lang string) {
 	d.storage.ConfigRs.InsertConfigRs(c)
 	d.corpConfigRS[c.CorpName] = c
 	d.log.Info(chatName + " Добавлена в конфиг корпораций ")
+}
+func (d *Discord) loadSlashCommand() {
+	for {
+		if len(d.corpConfigRS) > 0 {
+			d.ready()
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
 }
