@@ -216,6 +216,7 @@ func (b *Bot) hhelp() {
 func (b *Bot) getText(key string) string {
 	text := ""
 	if b.in.Config.Country == "en" {
+
 		text = b.storage.Dictionary.GetText(b.in.Config.Country, key)
 	}
 	if text == "" {
@@ -227,6 +228,7 @@ func (b *Bot) getText(key string) string {
 func (b *Bot) getLanguageText(lang, key string) string {
 	text := ""
 	if lang == "en" {
+
 		text = b.storage.Dictionary.GetText(lang, key)
 	}
 	if text == "" {

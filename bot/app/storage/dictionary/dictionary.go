@@ -1,7 +1,6 @@
 package dictionary
 
 import (
-	"fmt"
 	"github.com/mentalisit/logger"
 )
 
@@ -50,7 +49,7 @@ func (dict *Dictionary) GetText(lang string, key string) string {
 			text = "{'key' not specified}"
 			dict.log.Error("{'key' not specified}")
 		} else {
-			dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
+			//dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
 			//text = "{" + key + "}"
 		}
 	}
