@@ -7,6 +7,7 @@ import (
 )
 
 //lang ok
+//нужно переделать полностью
 
 func (b *Bot) TopLevel() {
 	b.iftipdelete()
@@ -52,8 +53,7 @@ func (b *Bot) TopLevel() {
 }
 func (b *Bot) TopAll() {
 	b.iftipdelete()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	numEvent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 	if numEvent == 0 {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText("topUchastnikov"))

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"kz_bot/models"
 )
 
 func (d *Db) TopLevel(ctx context.Context, CorpName, lvlkz string) bool {
@@ -187,7 +188,7 @@ func (d *Db) TopAllEvent(ctx context.Context, CorpName string, numberevent int) 
 			err = row.Scan(&countNames)
 			if err != nil {
 				d.log.ErrorErr(err)
-				return false
+				continue
 			}
 			var points int
 			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
@@ -195,16 +196,56 @@ func (d *Db) TopAllEvent(ctx context.Context, CorpName string, numberevent int) 
 			err4 := row4.Scan(&points)
 			if err4 != nil {
 				d.log.ErrorErr(err)
-				return false
+				continue
 			}
 
 			insertTempTopEvent := `INSERT INTO kzbot.temptopevent(name,numkz,points) VALUES ($1,$2,$3)`
 			_, err = d.db.Exec(ctx, insertTempTopEvent, name, countNames, points)
 			if err != nil {
 				d.log.ErrorErr(err)
-				return false
+				continue
 			}
 		}
 	}
 	return good
+}
+func (d *Db) TopAllEventNew(ctx context.Context, CorpName string, numberevent int) []models.Top {
+	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY name LIMIT 50"
+	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return []models.Top{}
+	}
+
+	var topslice []models.Top
+	var name string
+	for results.Next() {
+		err = results.Scan(&name)
+		if len(name) > 0 {
+			var countNames int
+			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
+			row := d.db.QueryRow(ctx, selC, name, CorpName, numberevent)
+			err = row.Scan(&countNames)
+			if err != nil {
+				d.log.ErrorErr(err)
+				return topslice
+			}
+			var points int
+			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
+			row4 := d.db.QueryRow(ctx, selS, name, CorpName, numberevent)
+			err4 := row4.Scan(&points)
+			if err4 != nil {
+				d.log.ErrorErr(err)
+				return topslice
+			}
+			top := models.Top{
+				Name:   name,
+				Numkz:  countNames,
+				Points: points,
+			}
+
+			topslice = append(topslice, top)
+		}
+	}
+	return topslice
 }

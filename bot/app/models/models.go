@@ -89,3 +89,7 @@ type CorporationConfig struct {
 	Guildid        string
 	//ThreadID       int
 }
+type Top struct {
+	Name              string
+	Numkz, Id, Points int
+}

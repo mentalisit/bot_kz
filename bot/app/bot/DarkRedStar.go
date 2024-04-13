@@ -307,8 +307,7 @@ func (b *Bot) RsSoloPlus() {
 		fmt.Printf("\n\nin RsSoloPlus %+v\n", b.in)
 	}
 	b.iftipdelete()
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, b.in.Lvlkz[1:], b.in.Config.CorpName, b.in.Name) //проверяем количество боёв по уровню кз игрока
 	if err2 != nil {
 		return
