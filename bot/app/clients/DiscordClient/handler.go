@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/clients/DiscordClient/slashCommand"
-	"kz_bot/config"
 	"time"
 )
 
@@ -144,48 +143,13 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func (d *Discord) ready() {
-	//s := d.S
-	//d.S.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-	//	log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
-	//})
-	//
-	//log.Println("Adding commands...")
-	//registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
-	//for i, v := range commands {
-	//	cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", v)
-	//	if err != nil {
-	//		log.Panicf("Cannot create '%v' command: %v", v.Name, err)
-	//	}
-	//	registeredCommands[i] = cmd
-	//}
-
-	//d.removeCommand()
-	if config.Instance.BotMode == "dev" {
-		//mode := slashCommand.AddSlashCommandMode()
-		//for _, command := range mode {
-		//	_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, "", command)
-		//	if err != nil {
-		//		d.log.ErrorErr(err)
-		//		return
-		//	}
-		//}
-
-		return
-	}
 	for _, config := range d.corpConfigRS {
 		if config.DsChannel != "" && config.Guildid != "" {
-			var commands []*discordgo.ApplicationCommand
-			if config.Country == "ru" {
-				commands = slashCommand.AddSlashCommandRu()
-			} else if config.Country == "en" {
-				commands = slashCommand.AddSlashCommandEn()
-			} else if config.Country == "ua" {
-				commands = slashCommand.AddSlashCommandUa()
-			}
-			if len(commands) == 0 {
+			commandsModuleWeapon := slashCommand.AddSlashCommandModuleWeaponLocale()
+			if len(commandsModuleWeapon) == 0 {
 				return
 			}
-			for _, v := range commands {
+			for _, v := range commandsModuleWeapon {
 				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, config.Guildid, v)
 				if err != nil {
 					d.log.ErrorErr(err)
