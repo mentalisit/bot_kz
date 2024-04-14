@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/clients/DiscordClient/slashCommand"
+	"kz_bot/config"
 	"time"
 )
 
@@ -112,45 +113,68 @@ func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageR
 }
 
 func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	//s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	//	if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-	//		h(s, i)
-	//	}
-	//})
+	if config.Instance.BotMode == "dev" {
+		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		})
+	}
 
 	switch i.Type {
-
 	case discordgo.InteractionApplicationCommand:
 		{
-			switch i.ApplicationCommandData().Name {
-			case "module", "модули", "модулі":
-				d.handleModuleCommand(i)
-			case "weapon", "оружие", "зброя":
-				d.handleWeaponCommand(i)
+			locale := ""
+			switch i.Locale.String() {
+			case "Russian":
+				locale = "ru"
+			case "Ukrainian":
+				locale = "ua"
+			default:
+				locale = "en"
 			}
-			//commandHandlers := d.addSlashHandler()
-			//if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			//	h(s, i)
-			//}
+			switch i.ApplicationCommandData().Name {
+			case "module":
+				d.handleModuleCommand(i, locale)
+			case "weapon":
+				d.handleWeaponCommand(i, locale)
+			default:
+				d.log.Info(fmt.Sprintf("slash InteractionApplicationCommand  %+v\n", i.ApplicationCommandData()))
+			}
 		}
 	case discordgo.InteractionMessageComponent:
 		d.handleButtonPressed(i)
 
 	default:
-		fmt.Printf("slash %+v\n", i.Type)
+		d.log.Info(fmt.Sprintf("slash %+v\n", i.Type))
 	}
 
 }
 
 func (d *Discord) ready() {
-	for _, config := range d.corpConfigRS {
-		if config.DsChannel != "" && config.Guildid != "" {
+	if config.Instance.BotMode == "dev" {
+		d.removeCommand("") //700238199070523412
+		commandsTest := commands
+		if len(commandsTest) == 0 {
+			return
+		}
+		for _, v := range commandsTest {
+			_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, "", v)
+			if err != nil {
+				d.log.ErrorErr(err)
+			}
+		}
+		return
+	}
+	for _, configrs := range d.corpConfigRS {
+		if configrs.DsChannel != "" && configrs.Guildid != "" {
+			//d.removeCommand(configrs.Guildid)
 			commandsModuleWeapon := slashCommand.AddSlashCommandModuleWeaponLocale()
 			if len(commandsModuleWeapon) == 0 {
 				return
 			}
 			for _, v := range commandsModuleWeapon {
-				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, config.Guildid, v)
+				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, configrs.Guildid, v)
 				if err != nil {
 					d.log.ErrorErr(err)
 				}
@@ -159,8 +183,8 @@ func (d *Discord) ready() {
 	}
 }
 
-func (d *Discord) removeCommand() {
-	registeredCommands, err := d.S.ApplicationCommands(d.S.State.User.ID, "")
+func (d *Discord) removeCommand(guildId string) {
+	registeredCommands, err := d.S.ApplicationCommands(d.S.State.User.ID, guildId)
 	if err != nil {
 		d.log.Fatal(err.Error())
 	}
@@ -171,149 +195,12 @@ func (d *Discord) removeCommand() {
 	}
 
 	for _, v := range registeredCommands {
-		err = d.S.ApplicationCommandDelete(d.S.State.User.ID, "", v.ID)
+		err = d.S.ApplicationCommandDelete(d.S.State.User.ID, guildId, v.ID)
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
 	}
 	fmt.Println("удалены")
-}
-func (d *Discord) addSlashCommand() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "module",
-			Description: "Выберите нужный модуль и уровень / Select the desired module and level",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "module",
-					Description: "Выберите модуль / Select module",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Ингибитор КЗ / RSE",
-							Value: "RSE",
-						},
-						{
-							Name:  "Генезис / Genesis",
-							Value: "GENESIS",
-						},
-						{
-							Name:  "Обогатить / Enrich",
-							Value: "ENRICH",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "level",
-					Description: "Выберите уровень / Select level",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Уровень / Level 0",
-							Value: 0,
-						},
-						{
-							Name:  "Уровень / Level 1",
-							Value: 1,
-						}, {
-							Name:  "Уровень / Level 2",
-							Value: 2,
-						}, {
-							Name:  "Уровень / Level 3",
-							Value: 3,
-						}, {
-							Name:  "Уровень / Level 4",
-							Value: 4,
-						}, {
-							Name:  "Уровень / Level 5",
-							Value: 5,
-						}, {
-							Name:  "Уровень / Level 6",
-							Value: 6,
-						}, {
-							Name:  "Уровень / Level 7",
-							Value: 7,
-						}, {
-							Name:  "Уровень / Level 8",
-							Value: 8,
-						}, {
-							Name:  "Уровень / Level 9",
-							Value: 9,
-						}, {
-							Name:  "Уровень / Level 10",
-							Value: 10,
-						}, {
-							Name:  "Уровень / Level 11",
-							Value: 11,
-						}, {
-							Name:  "Уровень / Level 12",
-							Value: 12,
-						}, {
-							Name:  "Уровень / Level 13",
-							Value: 13,
-						}, {
-							Name:  "Уровень / Level 14",
-							Value: 14,
-						}, {
-							Name:  "Уровень / Level 15",
-							Value: 15,
-						},
-						// Добавьте другие уровни по мере необходимости
-					},
-				},
-			},
-		},
-		{
-			Name:        "weapon",
-			Description: "Выберите основное оружие / Select your main weapon",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "weapon",
-					Description: "Выберите оружие / Select weapon",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Артобстрел / Barrage",
-							Value: "barrage",
-						},
-						{
-							Name:  "Лазер / Laser",
-							Value: "laser",
-						},
-						{
-							Name:  "Цепной луч / Chain ray",
-							Value: "chainray",
-						},
-						{
-							Name:  "Батарея / Battery",
-							Value: "battery",
-						},
-						{
-							Name:  "Залповая батарея / Mass battery",
-							Value: "massbattery",
-						},
-						{
-							Name:  "Пусковая установка / Dart launcher",
-							Value: "dartlauncher",
-						},
-						{
-							Name:  "Ракетная установка / Rocket launcher",
-							Value: "rocketlauncher",
-						},
-						{
-							Name:  "Удалить оружие / Remove weapon",
-							Value: "Remove",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-			},
-		},
-	}
 }
 
 //func (d *Discord) addSlashHandler() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -417,51 +304,6 @@ var (
 			DMPermission:             &dmPermission,
 		},
 		{
-			Name:        "localized-command",
-			Description: "Localized command. Description and name may vary depending on the Language setting",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.ChineseCN: "本地化的命令",
-				discordgo.Russian:   "лаколизация",
-			},
-			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.ChineseCN: "这是一个本地化的命令",
-				discordgo.Russian:   "лаколизация команда",
-			},
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "localized-option",
-					Description: "Localized option. Description and name may vary depending on the Language setting",
-					NameLocalizations: map[discordgo.Locale]string{
-						discordgo.ChineseCN: "一个本地化的选项",
-						discordgo.Russian:   "вариант",
-					},
-					DescriptionLocalizations: map[discordgo.Locale]string{
-						discordgo.ChineseCN: "这是一个本地化的选项",
-						discordgo.Russian:   "другой",
-					},
-					Type: discordgo.ApplicationCommandOptionInteger,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name: "First",
-							NameLocalizations: map[discordgo.Locale]string{
-								discordgo.ChineseCN: "一的",
-								discordgo.Russian:   "один",
-							},
-							Value: 1,
-						},
-						{
-							Name: "Second",
-							NameLocalizations: map[discordgo.Locale]string{
-								discordgo.ChineseCN: "二的",
-								discordgo.Russian:   "два",
-							},
-							Value: 2,
-						},
-					},
-				},
-			},
-		},
-		{
 			Name:        "options",
 			Description: "Command for demonstrating options",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -561,70 +403,12 @@ var (
 			},
 		},
 		{
-			Name:        "responses",
-			Description: "Interaction responses testing initiative",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "resp-type",
-					Description: "Response type",
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Channel message with source",
-							Value: 4,
-						},
-						{
-							Name:  "Deferred response With Source",
-							Value: 5,
-						},
-					},
-					Required: true,
-				},
-			},
-		},
-		{
 			Name:        "followups",
 			Description: "Followup messages",
 		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"localized-command": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			responses := map[discordgo.Locale]string{
-				discordgo.ChineseCN: "你好！ 这是一个本地化的命令",
-				discordgo.Ukrainian: "Ukrainian",
-				discordgo.Russian:   "Russian",
-			}
-			response := "Hi! This is a localized message"
-			fmt.Println(i.Locale)
-			if r, ok := responses[i.Locale]; ok {
-				response = r
-			}
-			fmt.Println(response)
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: response,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "English",
-							Value: "en",
-						},
-						{
-							Name:  "Русский",
-							Value: "ru",
-						},
-						{
-							Name:  "Український",
-							Value: "ua",
-						},
-					},
-				},
-			})
-			if err != nil {
-				fmt.Println(err)
-			}
-		},
 		"options": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			// Access options in the order provided by the user.
 			options := i.ApplicationCommandData().Options
@@ -766,33 +550,6 @@ var (
 						},
 					},
 					AllowedMentions: &discordgo.MessageAllowedMentions{},
-				},
-			})
-		},
-		"subcommands": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			options := i.ApplicationCommandData().Options
-			content := ""
-
-			// As you can see, names of subcommands (nested, top-level)
-			// and subcommand groups are provided through the arguments.
-			switch options[0].Name {
-			case "subcommand":
-				content = "The top-level subcommand is executed. Now try to execute the nested one."
-			case "subcommand-group":
-				options = options[0].Options
-				switch options[0].Name {
-				case "nested-subcommand":
-					content = "Nice, now you know how to execute nested commands too"
-				default:
-					content = "Oops, something went wrong.\n" +
-						"Hol' up, you aren't supposed to see this message."
-				}
-			}
-
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
 				},
 			})
 		},
