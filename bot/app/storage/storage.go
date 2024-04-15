@@ -42,7 +42,8 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 	rdb := reststorage.InitRestApiStorage(log)
 
 	//add language packages
-	w := words.NewWords()
+	d := dictionary.NewDictionary(log)
+	w := words.NewWords(d)
 
 	//Initializing a local repository
 	local := postgres.NewDb(log, cfg)
@@ -53,7 +54,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		TimeDeleteMessage: mongoDB,
 		ConfigRs:          mongoDB,
 		Words:             w,
-		Dictionary:        dictionary.NewDictionary(log),
+		Dictionary:        d,
 		Subscribe:         local,
 		Emoji:             local,
 		Count:             local,

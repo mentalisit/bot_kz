@@ -26,8 +26,10 @@ func NewDictionary(log *logger.Logger) *Dictionary {
 
 func (dict *Dictionary) setDictionary() {
 
-	dict.setDictionaryUa()
-	dict.setDictionaryRu()
+	//dict.setDictionaryUa()
+	dict.setDictionaryUaJson()
+	//dict.setDictionaryRu()
+	dict.setDictionaryRuJson()
 	//dict.setDictionaryEn()
 	dict.setDictionaryEnJson()
 }
