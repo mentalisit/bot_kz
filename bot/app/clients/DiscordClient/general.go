@@ -241,7 +241,7 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n3️⃣ %s \n4️⃣ %s \n",
 			mapa["name1"], mapa["name2"], mapa["name3"], mapa["name4"])
 	}
-	title := d.getLanguage(mapa["lang"], "ocheredKz")
+	title := d.getLanguage(mapa["lang"], "rs_queue")
 	if dark {
 		title = d.getLanguage(mapa["lang"], "ocheredTKz")
 	}
@@ -256,7 +256,7 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 			Name: fmt.Sprintf(" %s %s\n%s %s\n%s %s",
 				emOK, d.getLanguage(mapa["lang"], "DlyaDobavleniya"),
 				emCancel, d.getLanguage(mapa["lang"], "DlyaVihodaIz"),
-				emRsStart, d.getLanguage(mapa["lang"], "prinuditelniStart")),
+				emRsStart, d.getLanguage(mapa["lang"], "forced_start")),
 			Value:  d.getLanguage(mapa["lang"], "DannieObnovleni") + ": ",
 			Inline: true,
 		}},

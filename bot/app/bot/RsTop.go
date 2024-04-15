@@ -16,7 +16,7 @@ func (b *Bot) TopLevel() {
 	numEvent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 	if numEvent == 0 {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s %s%s:\n",
-			b.getText("topUchastnikov"), b.getText("kz"), b.in.Lvlkz)
+			b.getText("topUchastnikov"), b.getText("rs"), b.in.Lvlkz)
 
 		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 5)
 		good := b.storage.Top.TopLevel(ctx, b.in.Config.CorpName, b.in.Lvlkz)
@@ -34,7 +34,7 @@ func (b *Bot) TopLevel() {
 		}
 	} else {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s %s %s%s\n     ",
-			b.getText("topUchastnikov"), b.getText("iventa"), b.getText("kz"), b.in.Lvlkz)
+			b.getText("topUchastnikov"), b.getText("iventa"), b.getText("rs"), b.in.Lvlkz)
 		b.ifTipSendTextDelSecond(b.getText("ScanDB"), 5)
 		good := b.storage.Top.TopEventLevel(ctx, b.in.Config.CorpName, b.in.Lvlkz, numEvent)
 		if !good {

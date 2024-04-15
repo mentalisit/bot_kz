@@ -94,7 +94,7 @@ func (b *Bot) RsDarkPlus() {
 		return
 	}
 	if CountName == 1 { //проверяем есть ли игрок в очереди
-		b.ifTipSendMentionText(b.getText("tiUjeVocheredi"))
+		b.ifTipSendMentionText(b.getText("you_in_queue"))
 	} else {
 		countQueue, err1 := b.storage.Count.CountQueue(ctx, b.in.Lvlkz, b.in.Config.CorpName) //проверяем, есть ли кто-то в очереди
 		if err1 != nil {
@@ -141,7 +141,7 @@ func (b *Bot) RsDarkPlus() {
 						"%s++ - %s",
 						b.getText("ocheredTKz"), b.in.Lvlkz[1:], numkzL,
 						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN,
-						b.in.Lvlkz[1:], b.getText("prinuditelniStart"))
+						b.in.Lvlkz[1:], b.getText("forced_start"))
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					b.SubscribePing(1)
 					b.wg.Done()
@@ -160,7 +160,7 @@ func (b *Bot) RsDarkPlus() {
 					n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
 					n["name2"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(b.in.Name, b.in.NameMention, ds), b.in.Timekz, numkzN)
 					emb := b.client.Ds.EmbedDS(n, numkzL, 2, true)
-					text := n["lvlkz"] + " 2/3 " + b.in.Name + b.getText("prisoedenilsyKocheredi") + "\n" + u.User1.Mention
+					text := n["lvlkz"] + " 2/3 " + b.in.Name + b.getText("you_joined_queue") + "\n" + u.User1.Mention
 					go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 10)
 					b.client.Ds.EditComplexButton(u.User1.Dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 					b.wg.Done()
@@ -174,7 +174,7 @@ func (b *Bot) RsDarkPlus() {
 						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
 					name2 := fmt.Sprintf("2. %s - %s%s (%d) \n",
 						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN)
-					text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("prinuditelniStart"))
+					text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 					text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
@@ -206,17 +206,17 @@ func (b *Bot) RsDarkPlus() {
 					n1, n2, _, n3 := b.nameMention(u, ds)
 					go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel,
-						"🚀 3/3 "+b.in.Name+" "+b.getText("prisoedenilsyKocheredi"), 10)
+						"🚀 3/3 "+b.in.Name+" "+b.getText("you_joined_queue"), 10)
 					text := fmt.Sprintf("3/3 %s%s %s\n"+
 						" %s\n"+
 						" %s\n"+
 						" %s\n"+
 						"%s %s",
-						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("sformirovana"),
+						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("queue_completed"),
 						n1,
 						n2,
 						n3,
-						b.getText("Vigru"), textEvent)
+						b.getText("go"), textEvent)
 
 					if b.in.Tip == ds {
 						dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
@@ -246,9 +246,9 @@ func (b *Bot) RsDarkPlus() {
 						"%s\n"+
 						" %s \n"+
 						"%s",
-						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("sformirovana"),
+						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("queue_completed"),
 						n1, n2, n3,
-						b.getText("Vigru"), textEvent)
+						b.getText("go"), textEvent)
 					tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
 					b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
 					b.wg.Done()
@@ -323,7 +323,7 @@ func (b *Bot) RsSoloPlus() {
 	if numberevent > 0 {
 		numkzL = numkzEvent
 	}
-	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", b.in.Lvlkz, b.in.NameMention, b.getText("Vigru"), textEvent)
+	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", b.in.Lvlkz, b.in.NameMention, b.getText("go"), textEvent)
 	if b.in.Config.DsChannel != "" {
 		if b.in.Tip == ds {
 			dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)

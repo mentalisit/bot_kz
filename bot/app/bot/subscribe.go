@@ -28,12 +28,12 @@ func (b *Bot) Subscribe(tipPing int) {
 	if b.in.Tip == ds {
 		//go b.Ds.DeleteMessage(b.in.Config.DsChannel, b.in.Ds.Mesid)
 		d, result := containsSymbolD(b.in.Lvlkz)
-		argRoles := b.getText("kz") + b.in.Lvlkz
+		argRoles := b.getText("rs") + b.in.Lvlkz
 		if d {
 			argRoles = b.getText("dkz") + result
 		}
 		if tipPing == 3 {
-			argRoles = b.getText("kz") + b.in.Lvlkz + "+"
+			argRoles = b.getText("rs") + b.in.Lvlkz + "+"
 		}
 		subscribeCode := b.client.Ds.Subscribe(b.in.Ds.Nameid, argRoles, b.in.Config.Guildid)
 		var text string
@@ -74,12 +74,12 @@ func (b *Bot) Unsubscribe(tipPing int) {
 
 	if b.in.Tip == ds {
 		d, result := containsSymbolD(b.in.Lvlkz)
-		argRoles := b.getText("kz") + b.in.Lvlkz
+		argRoles := b.getText("rs") + b.in.Lvlkz
 		if d {
 			argRoles = b.getText("dkz") + result
 		}
 		if tipPing == 3 {
-			argRoles = b.getText("kz") + b.in.Lvlkz + "+"
+			argRoles = b.getText("rs") + b.in.Lvlkz + "+"
 		}
 		unsubscribeCode := b.client.Ds.Unsubscribe(b.in.Ds.Nameid, argRoles, b.in.Config.Guildid)
 		text := ""
