@@ -21,8 +21,6 @@ func (dict *Dictionary) setDictionaryUaJson() {
 
 func getDictionaryUaJson() string {
 	return `{"ua":{
-"1":"одын",
-"2":"другый",
 "you_in_queue":" ти вже у черзi",
 "temp_queue_started":"%s запустив чергу %dlev КЗ",
 "rs_queue":"Черга чз",

@@ -40,7 +40,7 @@ func (b *Bot) QueueLevel() {
 	darkStar, lvlkz := containsSymbolD(b.in.Lvlkz)
 	if b.in.Config.DsChannel != "" {
 		if darkStar {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("dkz")+lvlkz, b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("drs")+lvlkz, b.in.Config.Guildid)
 		} else {
 			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("rs")+b.in.Lvlkz, b.in.Config.Guildid)
 		}
@@ -78,7 +78,7 @@ func (b *Bot) QueueLevel() {
 			go func() {
 				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 				text := fmt.Sprintf("%s %s %s", text1, name1, text2)
 				if b.in.Option.Edit {
@@ -115,9 +115,9 @@ func (b *Bot) QueueLevel() {
 			go func() {
 				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min."), u.User2.Numkzn)
+					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min"), u.User2.Numkzn)
 				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 				text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 				if b.in.Option.Edit {
@@ -160,11 +160,11 @@ func (b *Bot) QueueLevel() {
 			go func() {
 				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
 				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min."), u.User2.Numkzn)
+					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min"), u.User2.Numkzn)
 				name3 := fmt.Sprintf("3️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.getText("min."), u.User3.Numkzn)
+					b.emReadName(u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.getText("min"), u.User3.Numkzn)
 				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 				text := fmt.Sprintf("%s %s %s %s %s", text1, name1, name2, name3, text2)
 				if b.in.Option.Edit {

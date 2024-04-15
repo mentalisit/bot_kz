@@ -115,7 +115,7 @@ func (b *Bot) RsDarkPlus() {
 		n = make(map[string]string)
 		n["lang"] = b.in.Config.Country
 		if b.in.Config.DsChannel != "" {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("dkz")+b.in.Lvlkz[1:], b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("drs")+b.in.Lvlkz[1:], b.in.Config.Guildid)
 			if err != nil {
 				b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", b.in.Config, b.in.Lvlkz[1:]))
 			}
@@ -140,7 +140,7 @@ func (b *Bot) RsDarkPlus() {
 						"1. %s - %s%s (%d) \n\n"+
 						"%s++ - %s",
 						b.getText("ocheredTKz"), b.in.Lvlkz[1:], numkzL,
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN,
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN,
 						b.in.Lvlkz[1:], b.getText("forced_start"))
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					b.SubscribePing(1)
@@ -171,9 +171,9 @@ func (b *Bot) RsDarkPlus() {
 				go func() {
 					text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("ocheredTKz"), b.in.Lvlkz, numkzL)
 					name1 := fmt.Sprintf("1. %s - %d%s (%d) \n",
-						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 					name2 := fmt.Sprintf("2. %s - %s%s (%d) \n",
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN)
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN)
 					text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 					text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)

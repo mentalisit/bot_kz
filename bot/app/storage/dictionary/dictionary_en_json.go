@@ -21,8 +21,6 @@ func (dict *Dictionary) setDictionaryEnJson() {
 
 func getDictionaryEnJson() string {
 	return `{"en":{
-"1":"one",
-"2":"two",
 "you_in_queue":"You're already in the queue",
 "temp_queue_started":"%s got in queue %dlev RS",
 "rs_queue":"RS queue",

@@ -21,8 +21,6 @@ func (dict *Dictionary) setDictionaryRuJson() {
 
 func getDictionaryRuJson() string {
 	return `{"ru":{
-"1":"один",
-"2":"два",
 "you_in_queue":" ты уже в очереди",
 "temp_queue_started":"%s запустил очередь %dlev КЗ",
 "rs_queue":"Очередь КЗ",

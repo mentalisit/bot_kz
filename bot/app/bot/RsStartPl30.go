@@ -180,7 +180,7 @@ func (b *Bot) Pl30() {
 		timedown := b.storage.DbFunc.P30Pl(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)
 		if timedown >= 150 {
 			text = fmt.Sprintf("%s %s %d %s",
-				b.in.NameMention, b.getText("maksimalnoeVremya"), timedown, b.getText("min."))
+				b.in.NameMention, b.getText("maksimalnoeVremya"), timedown, b.getText("min"))
 		} else {
 			text = b.in.NameMention + b.getText("vremyaObnovleno")
 			b.storage.DbFunc.UpdateTimedown(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)

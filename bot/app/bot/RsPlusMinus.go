@@ -68,7 +68,7 @@ func (b *Bot) RsPlus() {
 						"1️⃣ %s - %s%s (%d) \n\n"+
 						"%s++ - %s",
 						b.getText("rs_queue"), b.in.Lvlkz, numkzL,
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN,
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN,
 						b.in.Lvlkz, b.getText("forced_start"))
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					b.SubscribePing(1)
@@ -99,9 +99,9 @@ func (b *Bot) RsPlus() {
 				go func() {
 					text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numkzL)
 					name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 					name2 := fmt.Sprintf("2️⃣ %s - %s%s (%d) \n",
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN)
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN)
 					text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 					text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
@@ -136,11 +136,11 @@ func (b *Bot) RsPlus() {
 				go func() {
 					text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numkzL)
 					name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min."), u.User1.Numkzn)
+						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 					name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-						b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min."), u.User2.Numkzn)
+						b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min"), u.User2.Numkzn)
 					name3 := fmt.Sprintf("3️⃣ %s - %s%s (%d) \n",
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min."), numkzN)
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN)
 					text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
 					text := fmt.Sprintf("%s %s %s %s %s", text1, name1, name2, name3, text2)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
@@ -203,7 +203,7 @@ func (b *Bot) RsPlus() {
 					n1, n2, n3, n4 := b.nameMention(u, tg)
 					go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel,
-						b.in.Name+b.getText("zakrilOcheredKz")+b.in.Lvlkz, 10)
+						b.in.Name+b.getText("rs_queue_closed")+b.in.Lvlkz, 10)
 					text := fmt.Sprintf("%s%s %s\n"+
 						"%s\n"+
 						"%s\n"+
