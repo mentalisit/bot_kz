@@ -28,7 +28,7 @@ func (s *Server) InboxMessage(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	s.log.Info(fmt.Sprintf("InboxMessage \nGuildName:%s\n Name:%s\n Text:%s\n ChannelId:%s Type:%s\n", data.GuildName, data.Name, data.Text, data.ChannelId, data.Type))
+	//s.log.Info(fmt.Sprintf("InboxMessage \nGuildName:%s\n Name:%s\n Text:%s\n ChannelId:%s Type:%s\n", data.GuildName, data.Name, data.Text, data.ChannelId, data.Type))
 	s.In <- data
 	c.JSON(http.StatusOK, "ok")
 }
