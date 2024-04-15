@@ -139,7 +139,7 @@ func (b *Bot) RsDarkPlus() {
 					text := fmt.Sprintf("%s%s (%d)\n"+
 						"1. %s - %s%s (%d) \n\n"+
 						"%s++ - %s",
-						b.getText("ocheredTKz"), b.in.Lvlkz[1:], numkzL,
+						b.getText("queue_drs"), b.in.Lvlkz[1:], numkzL,
 						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN,
 						b.in.Lvlkz[1:], b.getText("forced_start"))
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
@@ -169,7 +169,7 @@ func (b *Bot) RsDarkPlus() {
 			if b.in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("ocheredTKz"), b.in.Lvlkz, numkzL)
+					text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("queue_drs"), b.in.Lvlkz, numkzL)
 					name1 := fmt.Sprintf("1. %s - %d%s (%d) \n",
 						b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
 					name2 := fmt.Sprintf("2. %s - %s%s (%d) \n",
@@ -212,14 +212,14 @@ func (b *Bot) RsDarkPlus() {
 						" %s\n"+
 						" %s\n"+
 						"%s %s",
-						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("queue_completed"),
+						b.getText("queue_drs"), b.in.Lvlkz[1:], b.getText("queue_completed"),
 						n1,
 						n2,
 						n3,
 						b.getText("go"), textEvent)
 
 					if b.in.Tip == ds {
-						dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 						if u.User1.Tip == ds {
 							go b.sendDmDark(text, u.User1.Mention)
 						}
@@ -239,14 +239,14 @@ func (b *Bot) RsDarkPlus() {
 					n1, n2, _, n3 := b.nameMention(u, tg)
 					go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel,
-						b.in.Name+b.getText("zakrilOcheredTKz")+b.in.Lvlkz[1:], 10)
+						b.in.Name+b.getText("drs_queue_closed")+b.in.Lvlkz[1:], 10)
 					text := fmt.Sprintf("🚀 %s%s %s\n"+
 						"%s\n"+
 						"%s\n"+
 						"%s\n"+
 						" %s \n"+
 						"%s",
-						b.getText("ocheredTKz"), b.in.Lvlkz[1:], b.getText("queue_completed"),
+						b.getText("queue_drs"), b.in.Lvlkz[1:], b.getText("queue_completed"),
 						n1, n2, n3,
 						b.getText("go"), textEvent)
 					tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
@@ -326,7 +326,7 @@ func (b *Bot) RsSoloPlus() {
 	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", b.in.Lvlkz, b.in.NameMention, b.getText("go"), textEvent)
 	if b.in.Config.DsChannel != "" {
 		if b.in.Tip == ds {
-			dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 		} else {
 			dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 		}

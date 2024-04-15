@@ -24,10 +24,10 @@ func (b *Bot) Plus() bool {
 		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
 		if t.Timedown > 3 {
 			message = fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.getText("ranovatoPlysik"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min"))
+				t.Mention, b.getText("info_cannot_click_plus"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min"))
 		} else if t.Timedown <= 3 {
 			ins = true
-			message = t.Mention + b.getText("vremyaObnovleno")
+			message = t.Mention + b.getText("timer_updated")
 			b.in.Lvlkz = t.Lvlkz
 			b.in.Option.Reaction = false
 			b.QueueLevel()
@@ -55,7 +55,7 @@ func (b *Bot) Minus() bool {
 		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
 		if t.Name == b.in.Name && t.Timedown > 3 {
 			message := fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.getText("ranovatoMinus"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min"))
+				t.Mention, b.getText("info_cannot_click_minus"), t.Lvlkz, b.getText("budeshEshe"), t.Timedown, b.getText("min"))
 			b.ifTipSendTextDelSecond(message, 10)
 		} else if t.Name == b.in.Name && t.Timedown <= 3 {
 			b.in.Lvlkz = t.Lvlkz

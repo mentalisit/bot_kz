@@ -88,7 +88,7 @@ func (b *Bot) CheckTimeQueue() {
 		return
 	}
 	if atoi == 3 {
-		text := b.in.NameMention + b.getText("VremyaPochtiVishlo")
+		text := b.in.NameMention + b.getText("info_time_almost_up")
 		if b.in.Tip == ds {
 			mID := b.client.Ds.SendEmbedTime(b.in.Config.DsChannel, text)
 			go b.client.Ds.DeleteMesageSecond(b.in.Config.DsChannel, mID, 180)

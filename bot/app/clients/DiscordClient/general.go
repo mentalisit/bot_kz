@@ -243,7 +243,7 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 	}
 	title := d.getLanguage(mapa["lang"], "rs_queue")
 	if dark {
-		title = d.getLanguage(mapa["lang"], "ocheredTKz")
+		title = d.getLanguage(mapa["lang"], "queue_drs")
 	}
 	return discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{},

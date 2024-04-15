@@ -38,7 +38,7 @@ func (b *Bot) Subscribe(tipPing int) {
 		subscribeCode := b.client.Ds.Subscribe(b.in.Ds.Nameid, argRoles, b.in.Config.Guildid)
 		var text string
 		if subscribeCode == 0 {
-			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("teperViPodpisani"), argRoles)
+			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("you_subscribed_to"), argRoles)
 		} else if subscribeCode == 1 {
 			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("you_already_subscribed_to"), argRoles)
 		} else if subscribeCode == 2 {
@@ -84,11 +84,11 @@ func (b *Bot) Unsubscribe(tipPing int) {
 		unsubscribeCode := b.client.Ds.Unsubscribe(b.in.Ds.Nameid, argRoles, b.in.Config.Guildid)
 		text := ""
 		if unsubscribeCode == 0 {
-			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("viNePodpisani"), argRoles)
+			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("you_not_subscribed_to_role"), argRoles)
 		} else if unsubscribeCode == 1 {
-			text = fmt.Sprintf("%s %s %s", b.in.NameMention, argRoles, b.getText("netTakoiRoli"))
+			text = fmt.Sprintf("%s %s %s", b.in.NameMention, argRoles, b.getText("role_not_exist"))
 		} else if unsubscribeCode == 2 {
-			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("ViOtpisalis"), argRoles)
+			text = fmt.Sprintf("%s %s %s", b.in.NameMention, b.getText("you_unsubscribed"), argRoles)
 		} else if unsubscribeCode == 3 {
 			text = b.getText("error_rights_remove") + argRoles
 			b.log.Info(fmt.Sprintf("%+v %+v", b.in, b.in.Config))

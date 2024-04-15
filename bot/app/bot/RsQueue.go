@@ -25,10 +25,10 @@ func (b *Bot) QueueLevel() {
 	// совподения количество  условие
 	if count == 0 {
 		if !b.in.Option.Queue {
-			text := b.getText("rs_queue") + b.in.Lvlkz + b.getText("pusta")
+			text := b.getText("rs_queue") + b.in.Lvlkz + b.getText("empty")
 			b.ifTipSendTextDelSecond(text, 10)
 		} else if b.in.Option.Queue {
-			b.ifTipSendTextDelSecond(b.getText("netAktivnuh"), 10)
+			b.ifTipSendTextDelSecond(b.getText("no_active_queues"), 10)
 		}
 		return
 	}
@@ -201,7 +201,7 @@ func (b *Bot) QueueAll() {
 			}
 		}
 	} else {
-		b.ifTipSendTextDelSecond(b.getText("netAktivnuh"), 10)
+		b.ifTipSendTextDelSecond(b.getText("no_active_queues"), 10)
 		b.iftipdelete()
 	}
 
