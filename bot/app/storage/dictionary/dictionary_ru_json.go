@@ -22,7 +22,7 @@ func (dict *Dictionary) setDictionaryRuJson() {
 func getDictionaryRuJson() string {
 	return `{"ru":{
 "you_in_queue":" ты уже в очереди",
-"temp_queue_started":"%s запустил очередь %dlev КЗ",
+"temp_queue_started":" запустил очередь ",
 "rs_queue":"Очередь КЗ",
 "min":"мин.",
 "forced_start":"принудительный старт",
@@ -58,14 +58,14 @@ func getDictionaryRuJson() string {
 "info_time_almost_up":" время почти вышло...\nДля продления времени ожидания на 30м жми +\nДля выхода из очереди жми -",
 "info_cannot_click_plus":"рановато плюсик жмешь, ты в очереди на КЗ",
 "info_cannot_click_minus":"рановато минус жмешь, ты в очереди на КЗ",
-"budeshEshe":"будешь еще",
+"you_will_still":"будешь еще",
 "timer_updated":" время обновлено ",
 "empty":" пуста ",
 "no_active_queues":"Нет активных очередей ",
 "info_forced_start_available":"Принудительный старт доступен участникам очереди.",
 "was_launched_incomplete":"была запущена не полной",
 "info_max_queue_time":"максимальное время в очереди ограничено на 180 минут\n твое время",
-"timer_updated":" время обновлено +30",
+"timer_updated":" время обновлено +30м",
 "scan_db":"Сканирую базу данных",
 "no_history":" История не найдена ",
 "form_list":"Формирую список ",
@@ -92,5 +92,8 @@ func getDictionaryRuJson() string {
 "drs":"ТКЗ",
 "queue_drs":"Очередь ТКЗ",
 "drs_queue_closed":" закрыл очередь ТКЗ",
-"language_switched_to":"Вы переключили меня на Русский язык"}}`
+"language_switched_to":"Вы переключили меня на Русский язык",
+"select_module_level":"Выбран модуль: %s, уровень: %d",
+"delete_module_level":"Удален модуль: %s, уровень: %d",
+"install_weapon":"Установлено оружие: %s"}}`
 }

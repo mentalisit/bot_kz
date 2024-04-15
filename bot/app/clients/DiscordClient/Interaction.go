@@ -14,9 +14,9 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate, locale str
 	module := i.ApplicationCommandData().Options[0].StringValue()
 	level := i.ApplicationCommandData().Options[1].IntValue()
 
-	response := fmt.Sprintf(d.getLanguage(locale, "selectModuleLevel"), module, level)
+	response := fmt.Sprintf(d.getLanguage(locale, "select_module_level"), module, level)
 	if level == 0 {
-		response = fmt.Sprintf(d.getLanguage(locale, "deleteModuleLevel"), module, level)
+		response = fmt.Sprintf(d.getLanguage(locale, "delete_module_level"), module, level)
 	}
 	// Отправка ответа
 	err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -43,7 +43,7 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate, locale str
 func (d *Discord) handleWeaponCommand(i *discordgo.InteractionCreate, locale string) {
 	weapon := i.ApplicationCommandData().Options[0].StringValue()
 
-	response := fmt.Sprintf(d.getLanguage(locale, "installWeapon"), weapon)
+	response := fmt.Sprintf(d.getLanguage(locale, "install_weapon"), weapon)
 
 	// Отправка ответа
 	err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

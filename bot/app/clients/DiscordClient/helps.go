@@ -30,7 +30,7 @@ func (d *Discord) HelpChannelUpdate(c models.CorporationConfig) string {
 }
 
 func (d *Discord) hhelp1(chatid, lang string) string {
-	m := d.SendEmbedText(chatid, d.getLanguage(lang, "spravka"),
-		fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "botUdalyaet"), d.getLanguage(lang, "hhelpText")))
+	m := d.SendEmbedText(chatid, d.getLanguage(lang, "information"),
+		fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")))
 	return m.ID
 }

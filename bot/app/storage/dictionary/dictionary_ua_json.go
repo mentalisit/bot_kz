@@ -22,7 +22,7 @@ func (dict *Dictionary) setDictionaryUaJson() {
 func getDictionaryUaJson() string {
 	return `{"ua":{
 "you_in_queue":" ти вже у черзi",
-"temp_queue_started":"%s запустив чергу %dlev КЗ",
+"temp_queue_started":" запустив чергу ",
 "rs_queue":"Черга чз",
 "min":"хв.",
 "forced_start":"примусовий старт",
@@ -58,16 +58,14 @@ func getDictionaryUaJson() string {
 "info_time_almost_up":" час майже вийшов...\nДля продовження часу очікування на 30хв. тисни +\nДля виходу з черги тисни -",
 "info_cannot_click_plus":"рано плюсик тиснеш, ти в черзі на чз",
 "info_cannot_click_minus":"рано мінус тиснеш, ти в черзі на чз",
-
-"budeshEshe":"будешь еще",
-
+"you_will_still":"будешь еще",
 "timer_updated":" час оновлено ",
 "empty":" порожня ",
 "no_active_queues":"Немає активних черг ",
 "info_forced_start_available":"Примусовий старт доступний учасникам черги.",
 "was_launched_incomplete":"була запущена не повною",
 "info_max_queue_time":"максимальний час у черзі обмежений на 180 хвилин\n  твій час",
-"timer_updated":" час оновлено +30",
+"timer_updated":" час оновлено +30хв",
 "scan_db":"Сканую базу даних",
 "no_history":"Історія не знайдена",
 "form_list":"Формую список ",
@@ -94,5 +92,8 @@ func getDictionaryUaJson() string {
 "drs":"тчз",
 "queue_drs":"Черга тчз",
 "drs_queue_closed":"  закрив чергу тчз",
-"language_switched_to":"Ви переключили мене на українську мову"}}`
+"language_switched_to":"Ви переключили мене на українську мову",
+"select_module_level":"Вибрано модуль: %s, рівень: %d",
+"delete_module_level":"Видалений модуль: %s, рівень: %d",
+"install_weapon":"Встановлено зброю: %s"}}`
 }

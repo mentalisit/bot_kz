@@ -53,12 +53,12 @@ func (d *Discord) mes() {
 func (d *Discord) accessAddChannelDs(chatid, guildid, lang string) { // внесение в дб и добавление в масив
 	ok, _ := d.CheckChannelConfigDS(chatid)
 	if ok {
-		go d.SendChannelDelSecond(chatid, d.getLanguage(lang, "accessAlready"), 30)
+		go d.SendChannelDelSecond(chatid, d.getLanguage(lang, "info_activation_not_required"), 30)
 	} else {
 		chatName := d.GuildChatName(chatid, guildid)
 		d.log.Info("новая активация корпорации " + chatName)
 		d.AddDsCorpConfig(chatName, chatid, guildid, lang)
-		go d.SendChannelDelSecond(chatid, d.getLanguage(lang, "accessTY"), 10)
+		go d.SendChannelDelSecond(chatid, d.getLanguage(lang, "tranks_for_activation"), 10)
 
 	}
 }
@@ -66,9 +66,9 @@ func (d *Discord) accessDelChannelDs(chatid, guildid string) { //удалени�
 	ok, config := d.CheckChannelConfigDS(chatid)
 	d.DeleteMessage(chatid, config.MesidDsHelp)
 	if !ok {
-		go d.SendChannelDelSecond(chatid, d.getLanguage("ru", "accessYourChannel"), 60)
+		go d.SendChannelDelSecond(chatid, d.getLanguage("ru", "channel_not_connected"), 60)
 	} else {
-		d.SendChannelDelSecond(chatid, d.getLang(chatid, "YouDisabledMyFeatures"), 60)
+		d.SendChannelDelSecond(chatid, d.getLang(chatid, "you_disabled_bot_functions"), 60)
 		d.storage.ConfigRs.DeleteConfigRs(config)
 		d.storage.ReloadDbArray()
 		d.corpConfigRS = d.storage.CorpConfigRS
@@ -103,7 +103,7 @@ func (d *Discord) setLang(m *discordgo.MessageCreate) bool {
 
 			d.corpConfigRS[config.CorpName] = config
 			d.storage.ConfigRs.AutoHelpUpdateMesid(config)
-			go d.SendChannelDelSecond(m.ChannelID, d.getLanguage(config.Country, "vashLanguage"), 20)
+			go d.SendChannelDelSecond(m.ChannelID, d.getLanguage(config.Country, "language_switched_to"), 20)
 			d.log.Info(fmt.Sprintf("замена языка в %s на %s", config.CorpName, config.Country))
 		}
 

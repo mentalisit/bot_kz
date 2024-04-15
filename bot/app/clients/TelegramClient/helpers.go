@@ -65,5 +65,5 @@ func (t *Telegram) chat(chatid string) (chatId int64, ThreadID int) {
 	return chatId, ThreadID
 }
 func (t *Telegram) getLanguage(lang, key string) string {
-	return t.storage.Words.GetWords(lang, key)
+	return t.storage.Dictionary.GetText(lang, key)
 }

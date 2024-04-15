@@ -1,6 +1,7 @@
 package dictionary
 
 import (
+	"fmt"
 	"github.com/mentalisit/logger"
 )
 
@@ -25,12 +26,8 @@ func NewDictionary(log *logger.Logger) *Dictionary {
 }
 
 func (dict *Dictionary) setDictionary() {
-
-	//dict.setDictionaryUa()
 	dict.setDictionaryUaJson()
-	//dict.setDictionaryRu()
 	dict.setDictionaryRuJson()
-	//dict.setDictionaryEn()
 	dict.setDictionaryEnJson()
 }
 
@@ -51,8 +48,8 @@ func (dict *Dictionary) GetText(lang string, key string) string {
 			text = "{'key' not specified}"
 			dict.log.Error("{'key' not specified}")
 		} else {
-			//dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
-			//text = "{" + key + "}"
+			dict.log.Error(fmt.Sprintf("GetText lang:%s  key:%s", lang, key))
+			text = "{" + key + "}"
 		}
 	}
 

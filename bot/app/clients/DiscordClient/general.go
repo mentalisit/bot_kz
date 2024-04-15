@@ -249,15 +249,15 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 		Author: &discordgo.MessageEmbedAuthor{},
 		Color:  16711680,
 		Description: fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",
-			d.getLanguage(mapa["lang"], "jelaushieNa"), mapa["lvlkz"], numkz) +
+			d.getLanguage(mapa["lang"], "wishing_to"), mapa["lvlkz"], numkz) +
 			textcount,
 
 		Fields: []*discordgo.MessageEmbedField{{
 			Name: fmt.Sprintf(" %s %s\n%s %s\n%s %s",
-				emOK, d.getLanguage(mapa["lang"], "DlyaDobavleniya"),
-				emCancel, d.getLanguage(mapa["lang"], "DlyaVihodaIz"),
+				emOK, d.getLanguage(mapa["lang"], "to_add_to_queue"),
+				emCancel, d.getLanguage(mapa["lang"], "to_exit_the_queue"),
 				emRsStart, d.getLanguage(mapa["lang"], "forced_start")),
-			Value:  d.getLanguage(mapa["lang"], "DannieObnovleni") + ": ",
+			Value:  d.getLanguage(mapa["lang"], "data_updated") + ": ",
 			Inline: true,
 		}},
 		Timestamp: time.Now().Format(time.RFC3339), // ТЕКУЩЕЕ ВРЕМЯ ДИСКОРДА

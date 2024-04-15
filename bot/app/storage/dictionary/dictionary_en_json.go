@@ -22,7 +22,7 @@ func (dict *Dictionary) setDictionaryEnJson() {
 func getDictionaryEnJson() string {
 	return `{"en":{
 "you_in_queue":"You're already in the queue",
-"temp_queue_started":"%s got in queue %dlev RS",
+"temp_queue_started":" got in queue ",
 "rs_queue":"RS queue",
 "min":"min.",
 "forced_start":"forced start",
@@ -58,9 +58,7 @@ func getDictionaryEnJson() string {
 "info_time_almost_up":" time is almost up...\nTo extend the waiting time by 30m, click '+'\nTo exit the queue, click '-'",
 "info_cannot_click_plus":"too early to click the '+', you're in the RS queue",
 "info_cannot_click_minus":"too early to click the '-', you're in the RS queue",
-
-"budeshEshe":"you will still",
-
+"you_will_still":"you will still",
 "timer_updated":"timer updated",
 "empty":" empty ",
 "no_active_queues":"No active queues ",
@@ -94,5 +92,8 @@ func getDictionaryEnJson() string {
 "DRS":"DRS",
 "queue_drs":"Queue DRS",
 "drs_queue_closed":" DRS queue closed",
-"language_switched_to":"You switched the bot to English"}}`
+"language_switched_to":"You switched the bot to English",
+"select_module_level":"Module selected: %s, level: %d",
+"delete_module_level":"Removed module: %s, level: %d",
+"install_weapon":"Weapon installed: %s"}}`
 }

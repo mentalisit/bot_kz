@@ -9,7 +9,6 @@ import (
 	"kz_bot/storage/mongo"
 	"kz_bot/storage/postgres"
 	"kz_bot/storage/reststorage"
-	"kz_bot/storage/words"
 )
 
 type Storage struct {
@@ -18,19 +17,19 @@ type Storage struct {
 	BridgeConfig      *reststorage.Db
 	ConfigRs          ConfigRs
 	TimeDeleteMessage TimeDeleteMessage
-	Words             *words.Words
-	Dictionary        *dictionary.Dictionary
-	Subscribe         Subscribe
-	Emoji             Emoji
-	Count             Count
-	Top               Top
-	Update            Update
-	Timers            Timers
-	DbFunc            DbFunc
-	Event             Event
-	LevelCorp         LevelCorp
-	BridgeConfigs     map[string]models.BridgeConfig
-	CorpConfigRS      map[string]models.CorporationConfig
+	//Words             *words.Words
+	Dictionary    *dictionary.Dictionary
+	Subscribe     Subscribe
+	Emoji         Emoji
+	Count         Count
+	Top           Top
+	Update        Update
+	Timers        Timers
+	DbFunc        DbFunc
+	Event         Event
+	LevelCorp     LevelCorp
+	BridgeConfigs map[string]models.BridgeConfig
+	CorpConfigRS  map[string]models.CorporationConfig
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
@@ -43,7 +42,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 
 	//add language packages
 	d := dictionary.NewDictionary(log)
-	w := words.NewWords(d)
+	//w := words.NewWords(d)
 
 	//Initializing a local repository
 	local := postgres.NewDb(log, cfg)
@@ -53,19 +52,19 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		BridgeConfig:      rdb,
 		TimeDeleteMessage: mongoDB,
 		ConfigRs:          mongoDB,
-		Words:             w,
-		Dictionary:        d,
-		Subscribe:         local,
-		Emoji:             local,
-		Count:             local,
-		Top:               local,
-		Update:            local,
-		Timers:            local,
-		DbFunc:            local,
-		Event:             local,
-		LevelCorp:         local,
-		BridgeConfigs:     make(map[string]models.BridgeConfig),
-		CorpConfigRS:      make(map[string]models.CorporationConfig),
+		//Words:             w,
+		Dictionary:    d,
+		Subscribe:     local,
+		Emoji:         local,
+		Count:         local,
+		Top:           local,
+		Update:        local,
+		Timers:        local,
+		DbFunc:        local,
+		Event:         local,
+		LevelCorp:     local,
+		BridgeConfigs: make(map[string]models.BridgeConfig),
+		CorpConfigRS:  make(map[string]models.CorporationConfig),
 	}
 
 	go s.loadDbArray()

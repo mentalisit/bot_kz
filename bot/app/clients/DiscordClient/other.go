@@ -131,10 +131,10 @@ func (d *Discord) createRole(rolPing, guildid string) (*discordgo.Role, error) {
 
 func (d *Discord) getLang(chatId, key string) string {
 	_, conf := d.CheckChannelConfigDS(chatId)
-	return d.storage.Words.GetWords(conf.Country, key)
+	return d.storage.Dictionary.GetText(conf.Country, key)
 }
 func (d *Discord) getLanguage(lang, key string) string {
-	return d.storage.Words.GetWords(lang, key)
+	return d.storage.Dictionary.GetText(lang, key)
 }
 
 func (d *Discord) CleanOldMessageChannel(chatId, lim string) {
