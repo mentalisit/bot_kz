@@ -12,13 +12,12 @@ import (
 
 type Telegram struct {
 	ChanRsMessage chan models.InMessage
-	//ChanBridgeMessage chan models.BridgeMessage
-	t            *tgbotapi.BotAPI
-	log          *logger.Logger
-	storage      *storage.Storage
-	debug        bool
-	bridgeConfig map[string]models.BridgeConfig
-	corpConfigRS map[string]models.CorporationConfig
+	t             *tgbotapi.BotAPI
+	log           *logger.Logger
+	storage       *storage.Storage
+	debug         bool
+	bridgeConfig  map[string]models.BridgeConfig
+	corpConfigRS  map[string]models.CorporationConfig
 }
 
 func NewTelegram(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Telegram {
@@ -29,32 +28,14 @@ func NewTelegram(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot)
 
 	tg := &Telegram{
 		ChanRsMessage: make(chan models.InMessage, 10),
-		//ChanBridgeMessage: make(chan models.BridgeMessage, 20),
-		t:            client,
-		log:          log,
-		storage:      st,
-		debug:        cfg.IsDebug,
-		bridgeConfig: st.BridgeConfigs,
-		corpConfigRS: st.CorpConfigRS,
+		t:             client,
+		log:           log,
+		storage:       st,
+		debug:         cfg.IsDebug,
+		bridgeConfig:  st.BridgeConfigs,
+		corpConfigRS:  st.CorpConfigRS,
 	}
-	//a1 := corpCompendium{
-	//	name:    "HS UA Community",
-	//	storage: "HS UA Community",
-	//	chatid:  -1002116077159,
-	//}
-	//corp = append(corp, a1)
-	//a2 := corpCompendium{
-	//	name:    "UAGC",
-	//	storage: "UAGC",
-	//	chatid:  -1001194014201,
-	//}
-	//corp = append(corp, a2)
-	//a3 := corpCompendium{
-	//	name:    "test3",
-	//	storage: "HS UA Community",
-	//	chatid:  -1001556223093,
-	//}
-	//corp = append(corp, a3)
+
 	go tg.update()
 
 	return tg

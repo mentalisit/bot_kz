@@ -58,7 +58,7 @@ func (b *Bot) RsStart() {
 							b.getText("was_launched_incomplete"), name1, b.getText("go"), textEvent)
 
 						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 
 						} else {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
@@ -94,7 +94,7 @@ func (b *Bot) RsStart() {
 						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("go"), textEvent)
 						text := text1 + text2
 						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 							if u.User1.Tip == ds {
 								go b.sendDmDark(text, u.User1.Mention)
 							}
@@ -131,7 +131,7 @@ func (b *Bot) RsStart() {
 							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"),
 							name1, name2, name3, b.getText("go"), textEvent)
 						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "КзБот", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
 						} else {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}
