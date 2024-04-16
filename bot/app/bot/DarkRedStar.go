@@ -160,7 +160,8 @@ func (b *Bot) RsDarkPlus() {
 					n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
 					n["name2"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(b.in.Name, b.in.NameMention, ds), b.in.Timekz, numkzN)
 					emb := b.client.Ds.EmbedDS(n, numkzL, 2, true)
-					text := n["lvlkz"] + " 2/3 " + b.in.Name + b.getText("you_joined_queue") + "\n" + u.User1.Mention
+					text := n["lvlkz"] + fmt.Sprintf(" 2/3 %s %s \n%s", b.in.Name, b.getText("you_joined_queue"), u.User1.Mention)
+					//text := n["lvlkz"] + " 2/3 " + b.in.Name + b.getText("you_joined_queue") + "\n" + u.User1.Mention
 					go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 10)
 					b.client.Ds.EditComplexButton(u.User1.Dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 					b.wg.Done()
@@ -206,7 +207,8 @@ func (b *Bot) RsDarkPlus() {
 					n1, n2, _, n3 := b.nameMention(u, ds)
 					go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel,
-						"🚀 3/3 "+b.in.Name+" "+b.getText("you_joined_queue"), 10)
+						//"🚀 3/3 "+b.in.Name+" "+b.getText("you_joined_queue"), 10)
+						fmt.Sprintf("🚀 3/3 %s %s", b.in.Name, b.getText("you_joined_queue")), 10)
 					text := fmt.Sprintf("3/3 %s%s %s\n"+
 						" %s\n"+
 						" %s\n"+
