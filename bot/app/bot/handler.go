@@ -20,10 +20,11 @@ func (b *Bot) iftipdelete() {
 	}
 }
 func (b *Bot) ifTipSendMentionText(text string) {
+	text = fmt.Sprintf("%s %s", b.in.NameMention, text)
 	if b.in.Tip == ds {
-		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, b.in.NameMention+text, 10)
+		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 10)
 	} else if b.in.Tip == tg {
-		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, b.in.NameMention+text, 10)
+		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, 10)
 	}
 }
 func (b *Bot) ifTipSendTextDelSecond(text string, time int) {
