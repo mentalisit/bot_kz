@@ -267,7 +267,7 @@ func (b *Bot) RsMinus() {
 		}
 
 		if b.in.Config.DsChannel != "" {
-			go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, b.in.Name+b.getText("left_queue"), 10)
+			go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, fmt.Sprintf("%s %s", b.in.Name, b.getText("left_queue")), 10)
 			if countQueue == 0 {
 				go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel,
 					fmt.Sprintf("%s%s %s.", b.getText("rs_queue"), b.in.Lvlkz, b.getText("was_deleted")), 10)
@@ -275,7 +275,7 @@ func (b *Bot) RsMinus() {
 			}
 		}
 		if b.in.Config.TgChannel != "" {
-			go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, b.in.Name+b.getText("left_queue"), 10)
+			go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, fmt.Sprintf("%s %s", b.in.Name, b.getText("left_queue")), 10)
 			if countQueue == 0 {
 				go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel,
 					fmt.Sprintf("%s%s %s.", b.getText("rs_queue"), b.in.Lvlkz, b.getText("was_deleted")), 10)

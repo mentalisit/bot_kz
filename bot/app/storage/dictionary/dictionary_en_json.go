@@ -23,7 +23,7 @@ func getDictionaryEnJson() string {
 	return `{"en":{
 "you_in_queue":"You're already in the queue",
 "temp_queue_started":" got in queue ",
-"rs_queue":"RS queue",
+"rs_queue":"Queue RS",
 "min":"min.",
 "forced_start":"forced start",
 "call_rs":"call a RS",
