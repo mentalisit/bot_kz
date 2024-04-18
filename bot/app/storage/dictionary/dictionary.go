@@ -1,5 +1,5 @@
 package dictionary
-
+//
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
