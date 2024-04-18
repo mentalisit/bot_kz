@@ -7,16 +7,17 @@ import (
 // temp function to integrate to exisiing logic
 func (dict *Dictionary) setDictionaryRuJson() {
 
-	dictRuJson := getDictionaryRuJson()
+	//dictRuJson := getDictionaryRuJson()
 
-	var dictTemp map[string]map[string]string
+	//var dictTemp map[string]map[string]string
 
-	err := json.Unmarshal([]byte(dictRuJson), &dictTemp)
+	//err := json.Unmarshal([]byte(dictRuJson), &dictTemp)
+	err := json.Unmarshal([]byte(getDictionaryRuJson()), &dict.dictionary)
 	if err != nil {
 		dict.log.ErrorErr(err)
 	}
 
-	dict.ru = dictTemp["ru"]
+	//dict.ru = dictTemp["ru"]
 }
 
 func getDictionaryRuJson() string {

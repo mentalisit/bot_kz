@@ -6,17 +6,19 @@ import (
 )
 
 type Dictionary struct {
-	ua  map[string]string
-	en  map[string]string
-	ru  map[string]string
+	//ua  map[string]string
+	//en  map[string]string
+	//ru  map[string]string
+	dictionary  map[string]map[string]string
 	log *logger.Logger
 }
 
 func NewDictionary(log *logger.Logger) *Dictionary {
 	dict := &Dictionary{
-		ua:  make(map[string]string),
-		en:  make(map[string]string),
-		ru:  make(map[string]string),
+		//ua:  make(map[string]string),
+		//en:  make(map[string]string),
+		//ru:  make(map[string]string),
+		dictionary:  make(map[string]map[string]string),
 		log: log,
 	}
 
@@ -33,15 +35,16 @@ func (dict *Dictionary) setDictionary() {
 
 func (dict *Dictionary) GetText(lang string, key string) string {
 
-	var text string
+	//var text string
+	var text = dict.dictionary[lang][key]
 
-	if lang == "ru" {
-		text = dict.ru[key]
-	} else if lang == "ua" {
-		text = dict.ua[key]
-	} else {
-		text = dict.en[key]
-	}
+	//if lang == "ru" {
+	//	text = dict.ru[key]
+	//} else if lang == "ua" {
+	//	text = dict.ua[key]
+	//} else {
+	//	text = dict.en[key]
+	//}
 
 	if text == "" {
 		if key == "" {

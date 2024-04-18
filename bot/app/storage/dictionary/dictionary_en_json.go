@@ -7,16 +7,17 @@ import (
 // temp function to integrate to exisiing logic
 func (dict *Dictionary) setDictionaryEnJson() {
 
-	dictEnJson := getDictionaryEnJson()
+	//dictEnJson := getDictionaryEnJson()
 
-	var dictTemp map[string]map[string]string
+	//var dictTemp map[string]map[string]string
 
-	err := json.Unmarshal([]byte(dictEnJson), &dictTemp)
+	//err := json.Unmarshal([]byte(dictEnJson), &dictTemp)
+	err := json.Unmarshal([]byte(getDictionaryEnJson()), &dict.dictionary)
 	if err != nil {
 		dict.log.ErrorErr(err)
 	}
 
-	dict.en = dictTemp["en"]
+	//dict.en = dictTemp["en"]
 }
 
 func getDictionaryEnJson() string {
