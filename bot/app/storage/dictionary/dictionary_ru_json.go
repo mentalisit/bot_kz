@@ -16,7 +16,7 @@ func (dict *Dictionary) setDictionaryRuJson() {
 		dict.log.ErrorErr(err)
 	}
 
-	dict.ru = dictTemp["ru"]
+	dict.dictionary["ru"] = dictTemp["ru"]
 }
 
 func getDictionaryRuJson() string {

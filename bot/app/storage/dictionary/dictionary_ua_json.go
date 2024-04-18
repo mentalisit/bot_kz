@@ -16,7 +16,7 @@ func (dict *Dictionary) setDictionaryUaJson() {
 		dict.log.ErrorErr(err)
 	}
 
-	dict.ua = dictTemp["ua"]
+	dict.dictionary["ua"] = dictTemp["ua"]
 }
 
 func getDictionaryUaJson() string {

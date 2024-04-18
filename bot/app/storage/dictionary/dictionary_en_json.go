@@ -16,7 +16,7 @@ func (dict *Dictionary) setDictionaryEnJson() {
 		dict.log.ErrorErr(err)
 	}
 
-	dict.en = dictTemp["en"]
+	dict.dictionary["en"] = dictTemp["en"]
 }
 
 func getDictionaryEnJson() string {
