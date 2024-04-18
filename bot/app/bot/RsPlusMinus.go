@@ -55,7 +55,8 @@ func (b *Bot) RsPlus() {
 				go func() {
 					n["name1"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(b.in.Name, b.in.NameMention, ds), b.in.Timekz, numkzN)
 					emb := b.client.Ds.EmbedDS(n, numkzL, 1, false)
-					dsmesid = b.client.Ds.SendComplexContent(b.in.Config.DsChannel, b.in.Name+b.getText("temp_queue_started")+n["lvlkz"])
+					//dsmesid = b.client.Ds.SendComplexContent(b.in.Config.DsChannel, b.in.Name+b.getText("temp_queue_started")+n["lvlkz"])
+					dsmesid = b.client.Ds.SendComplexContent(b.in.Config.DsChannel, fmt.Sprintf(b.getText("temp_queue_started"),b.in.Name,n))
 					time.Sleep(1 * time.Second)
 					b.client.Ds.EditComplexButton(dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 					b.wg.Done()
