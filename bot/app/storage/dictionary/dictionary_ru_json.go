@@ -96,5 +96,6 @@ func getDictionaryRuJson() string {
 "language_switched_to":"Вы переключили меня на Русский язык",
 "select_module_level":"Выбран модуль: %s, уровень: %d",
 "delete_module_level":"Удален модуль: %s, уровень: %d",
-"install_weapon":"Установлено оружие: %s"}}`
+"install_weapon":"Установлено оружие: %s",
+"temp1_queue":"Очередь КЗ%s (%d)\n1️⃣ %s - %sмин. (%d)\n\n%s++ - принудительный старт"}}`
 }
