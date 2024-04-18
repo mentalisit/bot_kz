@@ -35,9 +35,7 @@ func (dict *Dictionary) setDictionary() {
 
 func (dict *Dictionary) GetText(lang string, key string) string {
 
-	var text string
-
-	text = dict.dictionary[lang][key]
+	text := dict.dictionary[lang][key]
 
 	if text == "" {
 		if key == "" {

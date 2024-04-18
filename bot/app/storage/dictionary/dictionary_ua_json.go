@@ -22,7 +22,7 @@ func (dict *Dictionary) setDictionaryUaJson() {
 func getDictionaryUaJson() string {
 	return `{"ua":{
 "you_in_queue":" ти вже у черзi",
-"temp_queue_started":" запустив чергу ",
+"temp_queue_started":"%s запустив чергу %s",
 "rs_queue":"Черга чз",
 "min":"хв.",
 "forced_start":"примусовий старт",
