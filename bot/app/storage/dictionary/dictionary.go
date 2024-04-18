@@ -3,6 +3,7 @@ package dictionary
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
+	"encoding/json"
 )
 
 type Dictionary struct {
@@ -28,9 +29,9 @@ func NewDictionary(log *logger.Logger) *Dictionary {
 }
 
 func (dict *Dictionary) setDictionary() {
-	dict.setDictionaryUaJson()
-	dict.setDictionaryRuJson()
-	dict.setDictionaryEnJson()
+	dict.setDictionaryJson(getDictionaryEnJson())
+	dict.setDictionaryJson(getDictionaryRuJson())
+	dict.setDictionaryJson(getDictionaryUaJson())
 }
 
 func (dict *Dictionary) GetText(lang string, key string) string {
@@ -57,4 +58,18 @@ func (dict *Dictionary) GetText(lang string, key string) string {
 	}
 
 	return text
+}
+
+func (dict *Dictionary) setDictionaryJson(jsonText string) {
+
+	var dictTemp map[string]map[string]string
+
+	err := json.Unmarshal([]byte(jsonText), &dictTemp)
+	if err != nil {
+		dict.log.ErrorErr(err)
+	}
+
+	for key, val := range dictTemp {
+       dict.dictionary[key] = val
+  	}
 }

@@ -1,25 +1,5 @@
 package dictionary
 
-import (
-	"encoding/json"
-)
-
-// temp function to integrate to exisiing logic
-func (dict *Dictionary) setDictionaryEnJson() {
-
-	//dictEnJson := getDictionaryEnJson()
-
-	//var dictTemp map[string]map[string]string
-
-	//err := json.Unmarshal([]byte(dictEnJson), &dictTemp)
-	err := json.Unmarshal([]byte(getDictionaryEnJson()), &dict.dictionary)
-	if err != nil {
-		dict.log.ErrorErr(err)
-	}
-
-	//dict.en = dictTemp["en"]
-}
-
 func getDictionaryEnJson() string {
 	return `{"en":{
 "you_in_queue":"You're already in the queue",

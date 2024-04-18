@@ -1,25 +1,5 @@
 package dictionary
 
-import (
-	"encoding/json"
-)
-
-// temp function to integrate to exisiing logic
-func (dict *Dictionary) setDictionaryUaJson() {
-
-	//dictUaJson := getDictionaryUaJson()
-
-	//var dictTemp map[string]map[string]string
-
-	//err := json.Unmarshal([]byte(dictUaJson), &dictTemp)
-	err := json.Unmarshal([]byte(getDictionaryUaJson()), &dict.dictionary)
-	if err != nil {
-		dict.log.ErrorErr(err)
-	}
-
-	//dict.ua = dictTemp["ua"]
-}
-
 func getDictionaryUaJson() string {
 	return `{"ua":{
 "you_in_queue":" ти вже у черзi",
