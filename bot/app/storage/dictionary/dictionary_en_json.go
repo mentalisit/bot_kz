@@ -70,7 +70,7 @@ func getDictionaryEnJson() []byte {
 "tranks_for_activation":"Thanks for the activation.",
 "channel_not_connected":"your channel is not connected to the bot ",
 "you_disabled_bot_functions":"you've disabled the bot's functions",
-"DRS":"DRS",
+"drs":"DRS",
 "queue_drs":"Queue DRS",
 "drs_queue_closed":" DRS queue closed",
 "language_switched_to":"You switched the bot to English",
