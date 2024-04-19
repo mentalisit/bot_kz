@@ -113,13 +113,13 @@ func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageR
 }
 
 func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if config.Instance.BotMode == "dev" {
-		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
-			}
-		})
-	}
+	//if config.Instance.BotMode == "dev" {
+	//	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	//		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+	//			h(s, i)
+	//		}
+	//	})
+	//}
 
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
@@ -153,17 +153,17 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func (d *Discord) ready() {
 	if config.Instance.BotMode == "dev" {
-		d.removeCommand("") //700238199070523412
-		commandsTest := commands
-		if len(commandsTest) == 0 {
-			return
-		}
-		for _, v := range commandsTest {
-			_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, "", v)
-			if err != nil {
-				d.log.ErrorErr(err)
-			}
-		}
+		//d.removeCommand("") //700238199070523412
+		//commandsTest := commands
+		//if len(commandsTest) == 0 {
+		//	return
+		//}
+		//for _, v := range commandsTest {
+		//	_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, "", v)
+		//	if err != nil {
+		//		d.log.ErrorErr(err)
+		//	}
+		//}
 		return
 	}
 	for _, configrs := range d.corpConfigRS {
