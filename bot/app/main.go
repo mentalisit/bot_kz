@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/bot"
 	"kz_bot/clients"
 	"kz_bot/config"
-	"kz_bot/pkg/utils"
 	"kz_bot/server"
 	"kz_bot/storage"
 	"os"
@@ -17,9 +17,10 @@ import (
 
 func main() {
 	fmt.Println("Bot loading ")
-	defer utils.RestorePanic()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	err := RunNew()
+	err := RunNew(ctx)
 	if err != nil {
 		fmt.Println("Error loading bot", err)
 		time.Sleep(10 * time.Second)
@@ -27,7 +28,7 @@ func main() {
 	}
 }
 
-func RunNew() error {
+func RunNew(ctx context.Context) error {
 	//читаем конфигурацию с ENV
 	cfg := config.InitConfig()
 
@@ -58,9 +59,9 @@ func RunNew() error {
 	//go BridgeChat.NewBridge(log, cl, st)
 
 	//ожидаем сигнала завершения
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-	<-quit
+	<-ctx.Done()
 
+	//need write code save session and stop all services
+	log.Info("shutdown")
 	return nil
 }
