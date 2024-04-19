@@ -1,38 +1,91 @@
 package dictionary
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/mentalisit/logger"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Dictionary struct {
-	//ua  map[string]string
-	//en  map[string]string
-	//ru  map[string]string
 	log        *logger.Logger
 	dictionary map[string]map[string]string
 }
 
 func NewDictionary(log *logger.Logger) *Dictionary {
 	dict := &Dictionary{
-		//ua:  make(map[string]string),
-		//en:  make(map[string]string),
-		//ru:  make(map[string]string),
 		log:        log,
 		dictionary: make(map[string]map[string]string),
 	}
 
-	dict.setDictionary()
+	dict.setDictionaryJson(getDictionaryRuJson())
+	dict.setDictionaryJson(getDictionaryEnJson())
+	dict.setDictionaryJson(getDictionaryUaJson())
 
 	return dict
 }
 
-func (dict *Dictionary) setDictionary() {
-	dict.setDictionaryUaJson()
-	dict.setDictionaryRuJson()
-	dict.setDictionaryEnJson()
+// заготовка
+func (dict *Dictionary) readDirLocale() error {
+	// Получаем текущую директорию
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	// Формируем путь к папке "locale"
+	localeDir := filepath.Join(currentDir, "locale")
+
+	// Проверяем существование папки "locale"
+	if _, err = os.Stat(localeDir); os.IsNotExist(err) {
+		return err
+	}
+
+	// Получаем список файлов в папке "locale"
+	files, err := os.ReadDir(localeDir)
+	if err != nil {
+		return err
+	}
+
+	// Итерируем по файлам и выводим файлы с расширением ".json"
+	for _, file := range files {
+
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
+
+			readFile, err := os.ReadFile(filepath.Join(localeDir, file.Name()))
+			if err != nil {
+				return err
+			}
+
+			var dictTemp map[string]map[string]string
+			err = json.Unmarshal(readFile, &dictTemp)
+			if err != nil {
+				return err
+			}
+
+			for key, val := range dictTemp {
+				dict.dictionary[key] = val
+			}
+		}
+	}
+	return nil
 }
 
+func (dict *Dictionary) setDictionaryJson(jsonText string) {
+
+	var dictTemp map[string]map[string]string
+
+	err := json.Unmarshal([]byte(jsonText), &dictTemp)
+	if err != nil {
+		dict.log.ErrorErr(err)
+	}
+
+	for key, val := range dictTemp {
+		dict.dictionary[key] = val
+	}
+}
 func (dict *Dictionary) GetText(lang string, key string) string {
 
 	text := dict.dictionary[lang][key]
