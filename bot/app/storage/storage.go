@@ -17,19 +17,20 @@ type Storage struct {
 	BridgeConfig      *reststorage.Db
 	ConfigRs          ConfigRs
 	TimeDeleteMessage TimeDeleteMessage
-	//Words             *words.Words
-	Dictionary    *dictionary.Dictionary
-	Subscribe     Subscribe
-	Emoji         Emoji
-	Count         Count
-	Top           Top
-	Update        Update
-	Timers        Timers
-	DbFunc        DbFunc
-	Event         Event
-	LevelCorp     LevelCorp
-	BridgeConfigs map[string]models.BridgeConfig
-	CorpConfigRS  map[string]models.CorporationConfig
+	Dictionary        *dictionary.Dictionary
+	Subscribe         Subscribe
+	Emoji             Emoji
+	Count             Count
+	Top               Top
+	Update            Update
+	Timers            Timers
+	DbFunc            DbFunc
+	Event             Event
+	LevelCorp         LevelCorp
+	BridgeConfigs     map[string]models.BridgeConfig
+	CorpConfigRS      map[string]models.CorporationConfig
+	mongo             *mongo.DB
+	postgres          *postgres.Db
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
@@ -42,7 +43,6 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 
 	//add language packages
 	d := dictionary.NewDictionary(log)
-	//w := words.NewWords(d)
 
 	//Initializing a local repository
 	local := postgres.NewDb(log, cfg)
@@ -52,19 +52,20 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		BridgeConfig:      rdb,
 		TimeDeleteMessage: mongoDB,
 		ConfigRs:          mongoDB,
-		//Words:             w,
-		Dictionary:    d,
-		Subscribe:     local,
-		Emoji:         local,
-		Count:         local,
-		Top:           local,
-		Update:        local,
-		Timers:        local,
-		DbFunc:        local,
-		Event:         local,
-		LevelCorp:     local,
-		BridgeConfigs: make(map[string]models.BridgeConfig),
-		CorpConfigRS:  make(map[string]models.CorporationConfig),
+		Dictionary:        d,
+		Subscribe:         local,
+		Emoji:             local,
+		Count:             local,
+		Top:               local,
+		Update:            local,
+		Timers:            local,
+		DbFunc:            local,
+		Event:             local,
+		LevelCorp:         local,
+		BridgeConfigs:     make(map[string]models.BridgeConfig),
+		CorpConfigRS:      make(map[string]models.CorporationConfig),
+		mongo:             mongoDB,
+		postgres:          local,
 	}
 
 	go s.loadDbArray()
@@ -106,4 +107,8 @@ func (s *Storage) ReloadDbArray() {
 	for _, r := range rs {
 		s.CorpConfigRS[r.CorpName] = r
 	}
+}
+func (s *Storage) Shutdown() {
+	s.mongo.Shutdown()
+	s.postgres.Shutdown()
 }

@@ -47,3 +47,10 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 
 	return DS
 }
+func (d *Discord) Shutdown() {
+	err := d.S.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+}

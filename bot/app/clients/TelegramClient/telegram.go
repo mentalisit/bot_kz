@@ -102,3 +102,6 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 	}
 
 }
+func (t *Telegram) Shutdown() {
+	t.t.StopReceivingUpdates()
+}

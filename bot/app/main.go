@@ -60,6 +60,8 @@ func RunNew(ctx context.Context) error {
 
 	//ожидаем сигнала завершения
 	<-ctx.Done()
+	cl.Shutdown()
+	st.Shutdown()
 
 	//need write code save session and stop all services
 	log.Info("shutdown")

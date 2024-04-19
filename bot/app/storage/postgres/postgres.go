@@ -2,15 +2,17 @@ package postgres
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mentalisit/logger"
 	"kz_bot/config"
 	"kz_bot/pkg/clientDB/postgresLocal"
 )
 
 type Db struct {
-	db    postgresLocal.Client
-	log   *logger.Logger
-	debug bool
+	db     postgresLocal.Client
+	log    *logger.Logger
+	debug  bool
+	client *pgxpool.Pool
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
@@ -19,9 +21,10 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		log.Fatal(err.Error())
 	}
 	d := &Db{
-		db:    db,
-		log:   log,
-		debug: cfg.IsDebug,
+		db:     db,
+		log:    log,
+		debug:  cfg.IsDebug,
+		client: db,
 	}
 	go d.createTable()
 	return d
@@ -162,4 +165,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+}
+func (d *Db) Shutdown() {
+	d.client.Close()
 }

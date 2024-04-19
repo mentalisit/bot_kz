@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"context"
 	"github.com/mentalisit/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"kz_bot/pkg/clientDB/mongodb"
@@ -23,4 +24,11 @@ func InitMongoDB(log *logger.Logger) *DB {
 		log: log,
 	}
 	return d
+}
+func (d *DB) Shutdown() {
+	err := d.s.Disconnect(context.Background())
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 }

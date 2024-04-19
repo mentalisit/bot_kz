@@ -50,3 +50,7 @@ func (c *Clients) DeleteMessageTimer() {
 		}
 	}
 }
+func (c *Clients) Shutdown() {
+	c.Ds.Shutdown()
+	c.Tg.Shutdown()
+}
