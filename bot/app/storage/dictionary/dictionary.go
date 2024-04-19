@@ -20,6 +20,11 @@ func NewDictionary(log *logger.Logger) *Dictionary {
 		dictionary: make(map[string]map[string]string),
 	}
 
+	err := dict.readDirLocale()
+	if err != nil {
+		log.ErrorErr(err)
+	}
+
 	dict.setDictionaryJson(getDictionaryRuJson())
 	dict.setDictionaryJson(getDictionaryEnJson())
 	dict.setDictionaryJson(getDictionaryUaJson())
@@ -38,9 +43,9 @@ func (dict *Dictionary) readDirLocale() error {
 	// Формируем путь к папке "locale"
 	localeDir := filepath.Join(currentDir, "locale")
 
-	// Проверяем существование папки "locale"
+	// Проверяем существование папки "locale" если её нет возвращаем nil
 	if _, err = os.Stat(localeDir); os.IsNotExist(err) {
-		return err
+		return nil
 	}
 
 	// Получаем список файлов в папке "locale"
@@ -73,11 +78,11 @@ func (dict *Dictionary) readDirLocale() error {
 	return nil
 }
 
-func (dict *Dictionary) setDictionaryJson(jsonText string) {
+func (dict *Dictionary) setDictionaryJson(jsonByte []byte) {
 
 	var dictTemp map[string]map[string]string
 
-	err := json.Unmarshal([]byte(jsonText), &dictTemp)
+	err := json.Unmarshal(jsonByte, &dictTemp)
 	if err != nil {
 		dict.log.ErrorErr(err)
 	}

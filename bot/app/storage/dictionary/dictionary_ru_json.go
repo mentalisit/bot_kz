@@ -1,7 +1,7 @@
 package dictionary
 
-func getDictionaryRuJson() string {
-	return `{"ru":{
+func getDictionaryRuJson() []byte {
+	return []byte(`{"ru":{
 "you_in_queue":" ты уже в очереди",
 "temp_queue_started":"%s запустил очередь %s",
 "rs_queue":"Очередь КЗ",
@@ -76,5 +76,5 @@ func getDictionaryRuJson() string {
 "language_switched_to":"Вы переключили меня на Русский язык",
 "select_module_level":"Выбран модуль: %s, уровень: %d",
 "delete_module_level":"Удален модуль: %s, уровень: %d",
-"install_weapon":"Установлено оружие: %s"}}`
+"install_weapon":"Установлено оружие: %s"}}`)
 }

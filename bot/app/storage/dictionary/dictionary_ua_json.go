@@ -1,7 +1,7 @@
 package dictionary
 
-func getDictionaryUaJson() string {
-	return `{"ua":{
+func getDictionaryUaJson() []byte {
+	return []byte(`{"ua":{
 "you_in_queue":" ти вже у черзi",
 "temp_queue_started":"%s запустив чергу %s",
 "rs_queue":"Черга чз",
@@ -76,5 +76,5 @@ func getDictionaryUaJson() string {
 "language_switched_to":"Ви переключили мене на українську мову",
 "select_module_level":"Вибрано модуль: %s, рівень: %d",
 "delete_module_level":"Видалений модуль: %s, рівень: %d",
-"install_weapon":"Встановлено зброю: %s"}}`
+"install_weapon":"Встановлено зброю: %s"}}`)
 }

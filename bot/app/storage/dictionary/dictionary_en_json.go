@@ -1,7 +1,7 @@
 package dictionary
 
-func getDictionaryEnJson() string {
-	return `{"en":{
+func getDictionaryEnJson() []byte {
+	return []byte(`{"en":{
 "you_in_queue":"You're already in the queue",
 "temp_queue_started":"%s got in queue %s",
 "rs_queue":"Queue RS",
@@ -76,5 +76,5 @@ func getDictionaryEnJson() string {
 "language_switched_to":"You switched the bot to English",
 "select_module_level":"Module selected: %s, level: %d",
 "delete_module_level":"Removed module: %s, level: %d",
-"install_weapon":"Weapon installed: %s"}}`
+"install_weapon":"Weapon installed: %s"}}`)
 }
