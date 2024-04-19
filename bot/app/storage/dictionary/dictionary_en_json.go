@@ -76,5 +76,6 @@ func getDictionaryEnJson() []byte {
 "language_switched_to":"You switched the bot to English",
 "select_module_level":"Module selected: %s, level: %d",
 "delete_module_level":"Removed module: %s, level: %d",
-"install_weapon":"Weapon installed: %s"}}`)
+"install_weapon":"Weapon installed: %s",
+"temp1_queue":"Queue RS%s (%d)\n1️⃣ %s - %smin. (%d)\n\n%s++ - forced start"}}`)
 }

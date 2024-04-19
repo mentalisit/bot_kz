@@ -66,12 +66,16 @@ func (b *Bot) RsPlus() {
 			if b.in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					text := fmt.Sprintf("%s%s (%d)\n"+
-						"1️⃣ %s - %s%s (%d) \n\n"+
-						"%s++ - %s",
-						b.getText("rs_queue"), b.in.Lvlkz, numkzL,
-						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN,
-						b.in.Lvlkz, b.getText("forced_start"))
+					//text := fmt.Sprintf("%s%s (%d)\n"+
+					//	"1️⃣ %s - %s%s (%d) \n\n"+
+					//	"%s++ - %s",
+					//	b.getText("rs_queue"), b.in.Lvlkz, numkzL,
+					//	b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, b.getText("min"), numkzN,
+					//	b.in.Lvlkz, b.getText("forced_start"))
+					text := fmt.Sprintf(b.getText("temp1_queue"),
+						b.in.Lvlkz, numkzL,
+						b.emReadName(b.in.Name, b.in.NameMention, tg), b.in.Timekz, numkzN,
+						b.in.Lvlkz)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					b.SubscribePing(1)
 					b.wg.Done()
