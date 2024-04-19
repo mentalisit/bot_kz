@@ -13,19 +13,22 @@ const dark = "d"
 func (b *Bot) lDarkRsPlus() bool {
 	var kzb string
 	kz := false
-	re := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])(\d|\d{2}|\d{3})$`) //три переменные
+	re := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])(\+)?(\d|\d{2}|\d{3})$`) //три переменные
 	arr := re.FindAllStringSubmatch(b.in.Mtext, -1)
 	if len(arr) > 0 {
 		kz = true
 		b.in.Lvlkz = dark + arr[0][1]
 		kzb = arr[0][2]
-		timekzz, err := strconv.Atoi(arr[0][3])
+		timekzz, err := strconv.Atoi(arr[0][4])
 		if err != nil {
 			b.log.ErrorErr(err)
 			timekzz = 0
 		}
 		if timekzz > 180 {
 			timekzz = 180
+		}
+		if arr[0][3] == "+" {
+			b.in.NameMention = "$" + b.in.NameMention
 		}
 		b.in.Timekz = strconv.Itoa(timekzz)
 	}
