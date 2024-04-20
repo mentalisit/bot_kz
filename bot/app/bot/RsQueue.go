@@ -10,6 +10,9 @@ import (
 //lang ok
 
 func (b *Bot) QueueLevel() {
+	if b.in.Config.DsChannel != "1210280495238090782" {
+		return
+	}
 	b.iftipdelete()
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
