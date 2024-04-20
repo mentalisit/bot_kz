@@ -5,6 +5,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/clients/DiscordClient/transmitter"
 	"kz_bot/models"
+	"strconv"
 	"time"
 )
 
@@ -279,5 +280,46 @@ func (d *Discord) SendDmText(text, AuthorID string) {
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
+	}
+}
+
+func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageComponent {
+	var components []discordgo.MessageComponent
+	_, config := d.CheckChannelConfigDS(chatid)
+	levels := d.storage.Count.ReadTop5Level(config.CorpName)
+	if len(levels) > 0 {
+		for _, level := range levels {
+			button := discordgo.Button{}
+
+			if level[:1] == "d" {
+				button.Style = discordgo.DangerButton
+				button.Label = level[1:] + "*"
+				button.CustomID = level[1:] + "*"
+			} else {
+				button.Style = discordgo.SecondaryButton
+				button.Label = level + "+"
+				button.CustomID = level + "+"
+			}
+			components = append(components, button)
+		}
+	}
+
+	if len(components) == 0 {
+		for i := 7; i < 12; i++ {
+			l := strconv.Itoa(i)
+
+			button := discordgo.Button{
+				Label:    l + "+",
+				Style:    discordgo.SecondaryButton,
+				CustomID: l + "+",
+			}
+			components = append(components, button)
+
+		}
+	}
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: components,
+		},
 	}
 }

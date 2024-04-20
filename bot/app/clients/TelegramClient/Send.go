@@ -544,3 +544,44 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 	}
 	return messageIds
 }
+
+func (t *Telegram) SendHelp(chatid string, text string) int {
+	a := strings.SplitN(chatid, "/", 2)
+	chatId, err := strconv.ParseInt(a[0], 10, 64)
+	if err != nil {
+		t.log.ErrorErr(err)
+	}
+	ThreadID := 0
+	if len(a) > 1 {
+		ThreadID, err = strconv.Atoi(a[1])
+		if err != nil {
+			t.log.ErrorErr(err)
+		}
+	}
+
+	_, config := t.checkChannelConfigTG(chatid)
+
+	levels := t.storage.Count.ReadTop5Level(config.CorpName)
+	var btt []tgbotapi.InlineKeyboardButton
+	if len(levels) > 0 {
+		for _, level := range levels {
+			var bt tgbotapi.InlineKeyboardButton
+			if level[:1] == "d" {
+				bt = tgbotapi.NewInlineKeyboardButtonData(level[1:]+"*", level[1:]+"*")
+			} else {
+				bt = tgbotapi.NewInlineKeyboardButtonData(level+"+", level+"+")
+			}
+			btt = append(btt, bt)
+		}
+	}
+
+	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(btt)
+
+	msg := tgbotapi.NewMessage(chatId, text)
+	msg.MessageThreadID = ThreadID
+	msg.ReplyMarkup = keyboardQueue
+	message, _ := t.t.Send(msg)
+
+	return message.MessageID
+
+}

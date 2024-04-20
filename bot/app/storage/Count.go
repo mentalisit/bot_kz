@@ -8,4 +8,5 @@ type Count interface {
 	CountNumberNameActive1(ctx context.Context, lvlkz, CorpName, name string) (int, error)
 	CountNameQueue(ctx context.Context, name string) (countNames int)
 	CountNameQueueCorp(ctx context.Context, name, corp string) (countNames int)
+	ReadTop5Level(corpname string) []string
 }

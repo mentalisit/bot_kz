@@ -2,6 +2,7 @@ package DiscordClient
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"kz_bot/models"
 )
 
@@ -30,7 +31,23 @@ func (d *Discord) HelpChannelUpdate(c models.CorporationConfig) string {
 }
 
 func (d *Discord) hhelp1(chatid, lang string) string {
-	m := d.SendEmbedText(chatid, d.getLanguage(lang, "information"),
-		fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")))
+	//m := d.SendEmbedText(chatid, d.getLanguage(lang, "information"),
+	//	fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")))
+	Emb := &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       16711680,
+		Description: fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")),
+		Title:       d.getLanguage(lang, "information"),
+	}
+
+	m, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
+		//Content:    "for RS",
+		Components: d.AddButtonsStartQueue(chatid),
+		Embed:      Emb,
+	})
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
 	return m.ID
 }

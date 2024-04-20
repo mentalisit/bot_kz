@@ -185,7 +185,7 @@ func (b *Bot) Autohelp() {
 					}
 					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
-				s.MesidTgHelp = strconv.Itoa(b.client.Tg.SendChannel(s.TgChannel, strings.ReplaceAll(text, "3", "10")))
+				s.MesidTgHelp = strconv.Itoa(b.client.Tg.SendHelp(s.TgChannel, strings.ReplaceAll(text, "3", "10")))
 
 			}
 			b.storage.ConfigRs.AutoHelpUpdateMesid(s)
