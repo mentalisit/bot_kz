@@ -13,7 +13,7 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	log := logger.LoggerZapDiscord(cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
 	st := storage.NewStorage(log, cfg)
 
 	//d := ds.NewDiscord(log, st, cfg)

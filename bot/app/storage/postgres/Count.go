@@ -152,7 +152,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
         SELECT lvlkz, COUNT(*) AS lvlkz_count
         FROM kzbot.sborkz
         WHERE corpname=$1
-          AND date::timestamp >= CURRENT_DATE - INTERVAL '10 days'
+          AND date::timestamp >= CURRENT_DATE - INTERVAL '5 days'
         GROUP BY lvlkz
         ORDER BY lvlkz_count DESC
         LIMIT 5;

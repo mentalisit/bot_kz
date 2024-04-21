@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"kz_bot/config"
 	"kz_bot/pkg/utils"
 	"time"
 )
@@ -10,7 +11,7 @@ import (
 //lang ok
 
 func (b *Bot) QueueLevel() {
-	if b.in.Config.DsChannel != "1210280495238090782" {
+	if b.in.Config.DsChannel != "1210280495238090782" && config.Instance.BotMode == "dev" {
 		return
 	}
 	b.iftipdelete()
