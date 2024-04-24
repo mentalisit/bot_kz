@@ -1,6 +1,7 @@
 package DiscordClient
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/mentalisit/logger"
 	"kz_bot/clients/DiscordClient/transmitter"
@@ -66,7 +67,6 @@ func (d *Discord) rsbotQueue() {
 	messages, err := d.S.ChannelMessages(chatid, 10, "", "", "")
 	if err != nil {
 		d.log.ErrorErr(err)
-		return
 	}
 	if len(messages) > 0 {
 		id = messages[0].ID
@@ -76,14 +76,14 @@ func (d *Discord) rsbotQueue() {
 		queue, err := restapi.RsbotQueue()
 		if err != nil {
 			d.log.ErrorErr(err)
-			return
+			continue
 		}
 
 		if queue != "" && id == "" {
 			send, err := d.webhook.Send(chatid, &discordgo.WebhookParams{Content: queue, Username: username, AvatarURL: avatarurl})
 			if err != nil {
 				d.log.ErrorErr(err)
-				return
+				continue
 			}
 			id = send.ID
 		} else if id != "" {
@@ -95,10 +95,11 @@ func (d *Discord) rsbotQueue() {
 			if queue == "" {
 				queue = "нет активных очередей"
 			}
-			err = d.webhook.Edit(chatid, id, &discordgo.WebhookParams{Content: queue, Username: username, AvatarURL: avatarurl})
+			ts := fmt.Sprintf("\n<t:%d:f>", time.Now().UTC().Unix())
+			err = d.webhook.Edit(chatid, id, &discordgo.WebhookParams{Content: queue + ts, Username: username, AvatarURL: avatarurl})
 			if err != nil {
 				d.log.ErrorErr(err)
-				return
+				continue
 			}
 		}
 	}
