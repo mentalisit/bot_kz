@@ -3,8 +3,12 @@ package bot
 import (
 	"context"
 	"fmt"
+	"kz_bot/clients/restapi"
+	conf "kz_bot/config"
 	"kz_bot/models"
+	"sort"
 	"strconv"
+	"time"
 )
 
 //lang ok
@@ -12,6 +16,12 @@ import (
 
 func (b *Bot) MinusMin() {
 	tt := b.storage.Timers.MinusMin(context.Background())
+
+	go b.myQueue(tt)
+
+	if conf.Instance.BotMode == "dev" {
+		return
+	}
 
 	if len(tt) > 0 {
 		for _, t := range tt {
@@ -103,4 +113,51 @@ func (b *Bot) CheckTimeQueue() {
 	} else if atoi < 0 {
 		b.RsMinus()
 	}
+}
+func (b *Bot) myQueue(my []models.Sborkz) {
+	time.Sleep(5 * time.Second)
+	var text string
+	if len(my) != 0 {
+		sort.Slice(my, func(i, j int) bool {
+			return my[i].Corpname < my[j].Corpname
+		})
+		var corpName string
+		var level string
+		var count int
+		for _, sborkz := range my {
+			if corpName != sborkz.Corpname {
+				text += fmt.Sprintf("⚠️ сбор в %s \n", sborkz.Corpname)
+				corpName = sborkz.Corpname
+				level = ""
+			}
+			if sborkz.Corpname == corpName {
+				if level != sborkz.Lvlkz {
+					text += fmt.Sprintf("🔥 на кз%s \n", sborkz.Lvlkz)
+					level = sborkz.Lvlkz
+					count = 1
+				}
+				if level == sborkz.Lvlkz {
+					text += fmt.Sprintf("%d. %s  %d\n", count, sborkz.Name, sborkz.Timedown)
+					count += 1
+				}
+			}
+		}
+	}
+	if text == "" {
+		text = "нет активных очередей"
+	}
+
+	b.client.Ds.QueueSend(text, "RsBot")
+
+	time.Sleep(5 * time.Second)
+
+	queue, err := restapi.RsbotQueue()
+	if err != nil {
+		b.log.ErrorErr(err)
+	}
+
+	if queue == "" {
+		queue = "нет активных очередей"
+	}
+	b.client.Ds.QueueSend(queue, "rssoyzbot")
 }

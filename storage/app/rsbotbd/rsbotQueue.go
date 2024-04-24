@@ -26,6 +26,7 @@ func GetQueue() string {
 	corpName[-1001295995727] = "RUS"
 	corpName[-1001685747025] = "Best"
 	corpName[-1002098812155] = "Zvezdec"
+	corpName[-1002075054059] = "Дом Датэ"
 
 	db, err := sql.Open("mysql", config.Instance.MySQl)
 	if err != nil {

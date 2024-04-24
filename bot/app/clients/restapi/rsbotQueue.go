@@ -10,7 +10,7 @@ func RsbotQueue() (string, error) {
 	var text string
 	resp, err := http.Get("http://storage/storage/rsbot/readqueue")
 	if err != nil {
-		resp, err = http.Get("http://192.168.100.155:804/storage/rsbot/readqueue")
+		resp, err = http.Get("http://192.168.100.131:804/storage/rsbot/readqueue")
 		if err != nil {
 			return "", err
 		}
