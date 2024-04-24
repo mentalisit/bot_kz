@@ -138,13 +138,13 @@ func (d *Discord) CleanRsBotOtherMessage() {
 							if message.Content == "" || !strings.HasPrefix(message.Content, ".") {
 								errd := d.S.ChannelMessageDelete(config.DsChannel, message.ID)
 								if errd != nil {
-									restErr, _ := err.(*discordgo.RESTError)
+									restErr, _ := errd.(*discordgo.RESTError)
 									if restErr.Message != nil && restErr.Message.Code == discordgo.ErrCodeMissingPermissions {
-										d.log.Info("ошибка удаления ErrCodeMissingPermissions : " + config.CorpName)
+										//d.log.Info("ошибка удаления ErrCodeMissingPermissions : " + config.CorpName)
 									} else {
-										d.log.ErrorErr(err)
+										//d.log.ErrorErr(errd)
 									}
-									d.log.InfoStruct("не удалено", message)
+									d.log.InfoStruct(errd.Error(), message)
 								}
 
 							}
