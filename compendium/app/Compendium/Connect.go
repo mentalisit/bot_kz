@@ -24,7 +24,7 @@ func (c *Compendium) connect() {
 	}
 	err = c.sendDM("Пожалуйста, вставьте код в приложение\nhttps://mentalisit.github.io/HadesSpace/ \n" +
 		"или просто перейдите по ссылке для автоматической авторизации  \n" +
-		"https://mentalisit.github.io/HadesSpace/compendiumCorp?c=" + code)
+		"https://mentalisit.github.io/HadesSpace/compendiumTech?c=" + code)
 	if err != nil {
 		return
 	}

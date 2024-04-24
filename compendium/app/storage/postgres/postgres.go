@@ -46,7 +46,8 @@ func (d *Db) createTable() {
 	d.db.Exec(context.Background(), "CREATE SCHEMA IF NOT EXISTS compendium")
 	// Создание таблицы compendium.corpmember
 	_, err := d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS compendium.corpmember (
-        guildid      TEXT,
+    id           bigserial primary key,    
+    guildid      TEXT,
         name         TEXT,
         userid       TEXT,
         clientuserid TEXT,
@@ -95,6 +96,28 @@ func (d *Db) createTable() {
     )`)
 	if err != nil {
 		fmt.Println("Ошибка при создании таблицы compendium.user:", err)
+		return
+	}
+	// Создание таблицы compendium.Roles
+	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS compendium."guildrole" (
+        id           bigserial primary key,
+        guildid      TEXT,
+        role         TEXT,
+        username     TEXT,
+        userid       TEXT
+    )`)
+	if err != nil {
+		fmt.Println("Ошибка при создании таблицы compendium.roles:", err)
+		return
+	}
+	// Создание таблицы compendium.Roles
+	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS compendium."roles" (
+        id           bigserial primary key,
+        guildid      TEXT,
+        role         TEXT
+    )`)
+	if err != nil {
+		fmt.Println("Ошибка при создании таблицы compendium.roles:", err)
 		return
 	}
 }

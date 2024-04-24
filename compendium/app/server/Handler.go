@@ -90,7 +90,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			Ver:        1,
 			InSync:     1,
 		}
-		cm := s.db.Temp.CorpMemberReadByUserId(context.TODO(), i.User.ID)
+		cm := s.db.Temp.CorpMemberReadByUserId(context.TODO(), i.User.ID, i.Guild.ID)
 		if len(cm.Tech) > 0 {
 			sd.TechLevels = cm.Tech
 		}
@@ -104,7 +104,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		go s.db.Temp.CorpMemberTechUpdate(context.TODO(), i.User.ID, data.TechLevels)
+		go s.db.Temp.CorpMemberTechUpdate(context.TODO(), i.User.ID, i.Guild.ID, data.TechLevels)
 
 		// Используйте переменную data с полученными данными
 		c.JSON(http.StatusOK, data)

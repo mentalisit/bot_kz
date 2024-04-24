@@ -46,10 +46,11 @@ func CheckCode(CheckCode string) models.Identity {
 	if len(codes) > 0 {
 		var newcodes []codeStruct
 		for _, code := range codes {
-			if time.Since(code.time) <= 3*time.Minute {
+			if time.Since(code.time) <= 5*time.Minute {
 				if code.code == CheckCode {
 					code.Identity.Token = GenerateToken()
 					i = code.Identity
+					newcodes = append(newcodes, code) // это временно
 				} else {
 					newcodes = append(newcodes, code)
 				}
