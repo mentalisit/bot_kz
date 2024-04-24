@@ -133,22 +133,11 @@ func (d *Discord) CleanRsBotOtherMessage() {
 			if len(channelMessages) > 0 {
 				t := time.Now().Unix()
 				for _, message := range channelMessages {
-					if message.Author.String() != "Rs_bot#9945" && message.Author.String() != "КзБот#0000" {
+					if message.Author.String() != "RsBot#0000" && message.Author.String() != "Rs_bot#9945" && message.Author.String() != "КзБот#0000" {
 						if t-message.Timestamp.Unix() < 1209600 && t-message.Timestamp.Unix() > 180 {
 							if message.Content == "" || !strings.HasPrefix(message.Content, ".") {
-								errd := d.S.ChannelMessageDelete(config.DsChannel, message.ID)
-								if errd != nil {
-									restErr, _ := errd.(*discordgo.RESTError)
-									if restErr.Message != nil && restErr.Message.Code == discordgo.ErrCodeMissingPermissions {
-										//d.log.Info("ошибка удаления ErrCodeMissingPermissions : " + config.CorpName)
-									} else {
-										//d.log.ErrorErr(errd)
-									}
-									d.log.InfoStruct(errd.Error(), message)
-								}
-
+								_ = d.S.ChannelMessageDelete(config.DsChannel, message.ID)
 							}
-							//fmt.Printf(" message Author: %s Content: %+v\n", message.Author.String(), message.Content)
 						}
 						if t-message.Timestamp.Unix() < 1209600 && t-message.Timestamp.Unix() > 260000 {
 							if strings.HasPrefix(message.Content, ".") {
