@@ -4,10 +4,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/mentalisit/logger"
 	"kz_bot/clients/DiscordClient/transmitter"
+	"kz_bot/clients/restapi"
 	"kz_bot/config"
 	"kz_bot/models"
 	"kz_bot/pkg/clientDiscord"
 	"kz_bot/storage"
+	"time"
 )
 
 type Discord struct {
@@ -45,6 +47,8 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 	//go DS.ready()
 	go DS.loadSlashCommand()
 
+	go DS.rsbotQueue()
+
 	return DS
 }
 func (d *Discord) Shutdown() {
@@ -52,5 +56,50 @@ func (d *Discord) Shutdown() {
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
+	}
+}
+func (d *Discord) rsbotQueue() {
+	var id string
+	chatid := "1232711859690406042"
+	username := "rssoyzbot"
+	avatarurl := "https://www.superherodb.com/pictures2/portraits/10/050/10409.jpg"
+	messages, err := d.S.ChannelMessages(chatid, 10, "", "", "")
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	if len(messages) > 0 {
+		id = messages[0].ID
+	}
+	for {
+		time.Sleep(1 * time.Minute)
+		queue, err := restapi.RsbotQueue()
+		if err != nil {
+			d.log.ErrorErr(err)
+			return
+		}
+
+		if queue != "" && id == "" {
+			send, err := d.webhook.Send(chatid, &discordgo.WebhookParams{Content: queue, Username: username, AvatarURL: avatarurl})
+			if err != nil {
+				d.log.ErrorErr(err)
+				return
+			}
+			id = send.ID
+		} else if id != "" {
+			message, _ := d.S.ChannelMessage(chatid, id)
+
+			if message.Content == "нет активных очередей" && queue == "" {
+				continue
+			}
+			if queue == "" {
+				queue = "нет активных очередей"
+			}
+			err = d.webhook.Edit(chatid, id, &discordgo.WebhookParams{Content: queue, Username: username, AvatarURL: avatarurl})
+			if err != nil {
+				d.log.ErrorErr(err)
+				return
+			}
+		}
 	}
 }

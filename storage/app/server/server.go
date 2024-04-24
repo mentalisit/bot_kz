@@ -34,6 +34,8 @@ func (s *Server) runServer() error {
 	r.GET("/storage/timer/delete", s.DeleteMessageTimer)
 	r.POST("/storage/timer/insert", s.InsertTimer)
 
+	r.GET("/storage/rsbot/readqueue", s.DBReadRsBotMySQL)
+
 	err := r.Run(":80")
 	if err != nil {
 		s.log.ErrorErr(err)

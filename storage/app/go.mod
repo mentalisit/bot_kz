@@ -4,12 +4,14 @@ go 1.22
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/mentalisit/logger v0.0.0-20240221024243-6f28067f593e
 	go.mongodb.org/mongo-driver v1.15.0
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/bytedance/sonic v1.11.5 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

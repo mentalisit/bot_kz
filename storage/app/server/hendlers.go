@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"storage/models"
+	"storage/rsbotbd"
 )
 
 func (s *Server) DBReadBridgeConfig(c *gin.Context) {
@@ -33,4 +34,7 @@ func (s *Server) InsertBridgeChat(c *gin.Context) {
 	}
 	s.db.UpdateBridgeChat(br)
 	c.JSON(http.StatusOK, gin.H{"status": "Insert done"})
+}
+func (s *Server) DBReadRsBotMySQL(c *gin.Context) {
+	c.JSON(http.StatusOK, rsbotbd.GetQueue())
 }
