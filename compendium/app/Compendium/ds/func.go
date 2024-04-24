@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const apiname = "kz_bot"
+const apinameds = "kz_bot"
 
 func SendChannel(chatId, text string) error {
 	m := models.SendText{
@@ -20,7 +20,7 @@ func SendChannel(chatId, text string) error {
 		return err
 	}
 
-	resp, err := http.Post("http://"+apiname+"/discord/SendText", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://"+apinameds+"/discord/SendText", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		fmt.Println(err)
 		//resp, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
@@ -40,7 +40,7 @@ func SendChannelPic(chatId, text string, pic []byte) error {
 		return err
 	}
 
-	resp, err := http.Post("http://"+apiname+"/discord/SendPic", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post("http://"+apinameds+"/discord/SendPic", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		fmt.Println(err)
 		//resp, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
