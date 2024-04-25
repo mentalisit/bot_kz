@@ -1,6 +1,7 @@
 package Compendium
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -79,6 +80,35 @@ func (c *Compendium) logicRoles() bool {
 				c.sendChat("не существует роли " + roleName)
 			}
 		}
+		return true
+	}
+
+	reSubs := regexp.MustCompile(`^role subs (\w+)((?: @\w+)+)$`)
+
+	matches = reSubs.FindStringSubmatch(cutPrefix)
+	if matches != nil && len(matches) > 2 {
+		text := "попытка оформить подписку \n"
+		roleName := matches[1]
+		usernames := matches[2]
+		split := strings.Split(usernames, " ")
+		for _, s := range split {
+			after, found := strings.CutPrefix(s, "@")
+			if found {
+				if c.db.Temp.ExistRole(c.in.GuildId, roleName) {
+					member := c.db.Temp.CorpMemberReadByNameByGuildId(context.Background(), after, c.in.GuildId)
+					if member.UserId != "" {
+						c.db.Temp.RoleSubscribe(c.in.GuildId, roleName, c.in.NameId, member.UserId)
+						text += fmt.Sprintf("%s подписан\n", after)
+					} else {
+						text += fmt.Sprintf("%s не подписан данные не найдены \n", after)
+					}
+				} else {
+					text += "сначала создай роль " + roleName
+					break
+				}
+			}
+		}
+		c.sendChat(text)
 		return true
 	}
 	return false

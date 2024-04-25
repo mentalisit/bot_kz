@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 func (c *Compendium) techImage() {
@@ -23,11 +24,12 @@ func (c *Compendium) techImage() {
 }
 
 func (c *Compendium) techImageName() bool {
-	re := regexp.MustCompile(`<@(\d{17,20})>`)
-	retg := regexp.MustCompile(`@(\w+)`)
+	after, _ := strings.CutPrefix(c.in.Text, "%")
+	re := regexp.MustCompile(`^t <@(\d{17,20})> i`)
+	retg := regexp.MustCompile(`^t @(\w+) i`)
 
-	matches := re.FindStringSubmatch(c.in.Text)
-	matchestg := retg.FindStringSubmatch(c.in.Text)
+	matches := re.FindStringSubmatch(after)
+	matchestg := retg.FindStringSubmatch(after)
 
 	if len(matches) > 0 {
 		userID := matches[1]
