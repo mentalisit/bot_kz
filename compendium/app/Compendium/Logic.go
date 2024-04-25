@@ -27,6 +27,7 @@ func (c *Compendium) logic(m models.IncomingMessage) {
 }
 func (c *Compendium) regular(text string) {
 	if c.techImageName() {
+	} else if c.logicRoles() {
 	} else {
 		c.log.Info(text)
 	}

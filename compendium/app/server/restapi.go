@@ -56,7 +56,7 @@ func GetRoles(guildId string) ([]models.CorpRole, error) {
 
 	return guildRole, nil
 }
-func CheckRole(guildId, memderId, roleid string) bool {
+func CheckRoleDs(guildId, memderId, roleid string) bool {
 	if roleid == "" {
 		return true
 	}
