@@ -46,7 +46,6 @@ func getDictionaryRuJson() []byte {
 "info_forced_start_available":"Принудительный старт доступен участникам очереди.",
 "was_launched_incomplete":"была запущена не полной",
 "info_max_queue_time":"максимальное время в очереди ограничено на 180 минут\n твое время",
-"timer_updated":" время обновлено +30м",
 "scan_db":"Сканирую базу данных",
 "no_history":" История не найдена ",
 "form_list":"Формирую список ",

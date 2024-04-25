@@ -131,7 +131,6 @@ func (b *Bot) RsDarkPlus() {
 					emb := b.client.Ds.EmbedDS(n, numkzL, 1, true)
 					dsmesid = b.client.Ds.SendComplexContent(b.in.Config.DsChannel,
 						fmt.Sprintf(b.getText("temp_queue_started"), b.in.Name, n["lvlkz"]))
-					//b.in.Name+b.getText("temp_queue_started")+n["lvlkz"])
 					time.Sleep(1 * time.Second)
 					b.client.Ds.EditComplexButton(dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
