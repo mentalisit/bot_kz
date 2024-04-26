@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"time"
 )
 
-func (b *Percent) getKeyAll() []string {
-	var keys []string
+func (b *Percent) getKeyAll() []Content {
+	var contentNew []Content
 	var marker string
 	for {
 		// Получаем XML-данные с помощью HTTP GET-запроса
@@ -55,15 +56,16 @@ func (b *Percent) getKeyAll() []string {
 			}
 
 			if !lastModifiedTime.Before(tenDaysAgo) {
-				keys = append(keys, content.Key)
+				contentNew = append(contentNew, content)
 			}
 		}
 		if !listBucketResult.IsTruncated {
 			break
 		}
 	}
-	if len(keys) == 0 {
-		b.log.Error("len(keys) == 0")
-	}
-	return keys
+	sort.Slice(contentNew, func(i, j int) bool {
+		return contentNew[i].LastModified > contentNew[j].LastModified
+	})
+
+	return contentNew
 }

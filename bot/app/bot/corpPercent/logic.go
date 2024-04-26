@@ -1,11 +1,13 @@
 package corpPercent
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/clients"
 	"kz_bot/models"
 	"kz_bot/storage"
+	"os"
 	"time"
 )
 
@@ -20,7 +22,7 @@ func NewPercent(log *logger.Logger, storage *storage.Storage, clients *clients.C
 }
 
 func (b *Percent) GetHadesStorage() {
-	keys := b.getKeyAll()
+	contentNew := b.getKeyAll()
 	listHCorp := make(map[string]models.LevelCorp)
 
 	all, err := b.storage.LevelCorp.ReadCorpLevelAll()
@@ -33,8 +35,17 @@ func (b *Percent) GetHadesStorage() {
 		listHCorp[corp.HCorp] = corp
 	}
 
-	for _, key := range keys {
-		data := b.getKey(key)
+	var corpsdata []CorpsData
+
+	for _, cont := range contentNew {
+		data := b.getKey(cont.Key)
+		corpsdata = append(corpsdata, CorpsData{
+			Corp1Name:  data.Corporation1Name,
+			Corp2Name:  data.Corporation2Name,
+			Corp1Score: data.Corporation1Score,
+			Corp2Score: data.Corporation2Score,
+			DateEnded:  data.DateEnded,
+		})
 
 		if listHCorp[data.Corporation1Name].HCorp != "" {
 			c := listHCorp[data.Corporation1Name]
@@ -45,6 +56,16 @@ func (b *Percent) GetHadesStorage() {
 		}
 
 		time.Sleep(1000)
+	}
+
+	marshal, err := json.Marshal(corpsdata)
+	if err != nil {
+		return
+	}
+	err = os.WriteFile("ws/ws.json", marshal, 0644)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 }
 
