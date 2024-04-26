@@ -25,8 +25,8 @@ func (c *Compendium) techImage() {
 
 func (c *Compendium) techImageName() bool {
 	after, _ := strings.CutPrefix(c.in.Text, "%")
-	re := regexp.MustCompile(`^t <@(\d{17,20})> i`)
-	retg := regexp.MustCompile(`^t @(\w+) i`)
+	re := regexp.MustCompile(`^[тt] +<@(\d{17,20})> +[иi]$`)
+	retg := regexp.MustCompile(`^[tт] +@(\w+) +[iи]$`)
 
 	matches := re.FindStringSubmatch(after)
 	matchestg := retg.FindStringSubmatch(after)
