@@ -36,6 +36,11 @@ func (s *Server) runServer() error {
 
 	r.GET("/storage/rsbot/readqueue", s.DBReadRsBotMySQL)
 
+	r.GET("/storage/rsbot/read", s.DBReadRsConfig)
+	r.POST("/storage/rsbot/update", s.UpdateRsConfig)
+	r.POST("/storage/rsbot/insert", s.InsertRsConfig)
+	r.DELETE("/storage/rsbot/delete", s.DeleteRsConfig)
+
 	err := r.Run(":80")
 	if err != nil {
 		s.log.ErrorErr(err)

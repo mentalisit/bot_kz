@@ -8,3 +8,16 @@ type Timer struct {
 	Tgchatid string `bson:"tgchatid"`
 	Timed    int    `bson:"timed"`
 }
+type CorporationConfig struct {
+	Type           int
+	CorpName       string
+	DsChannel      string
+	TgChannel      string
+	WaChannel      string
+	Country        string
+	DelMesComplite int
+	MesidDsHelp    string
+	MesidTgHelp    string
+	Forward        bool
+	Guildid        string
+}

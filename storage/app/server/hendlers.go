@@ -38,3 +38,37 @@ func (s *Server) InsertBridgeChat(c *gin.Context) {
 func (s *Server) DBReadRsBotMySQL(c *gin.Context) {
 	c.JSON(http.StatusOK, rsbotbd.GetQueue())
 }
+
+func (s *Server) DBReadRsConfig(c *gin.Context) {
+	c.JSON(http.StatusOK, s.db.ReadConfigRs())
+}
+func (s *Server) InsertRsConfig(c *gin.Context) {
+	s.log.Info("InsertRsConfig")
+	var Rs models.CorporationConfig
+	if err := c.ShouldBindJSON(&Rs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	s.db.InsertConfigRs(Rs)
+	c.JSON(http.StatusOK, gin.H{"status": "Insert done"})
+}
+func (s *Server) UpdateRsConfig(c *gin.Context) {
+	s.log.Info("UpdateRsConfig")
+	var br models.CorporationConfig
+
+	if err := c.ShouldBindJSON(&br); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	s.db.UpdateRsConfig(br)
+	c.JSON(http.StatusOK, gin.H{"status": "Update done"})
+}
+func (s *Server) DeleteRsConfig(c *gin.Context) {
+	s.log.Info("DeleteRsConfig")
+	var br models.CorporationConfig
+	if err := c.ShouldBindJSON(&br); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	s.db.DeleteConfigRs(br)
+	c.JSON(http.StatusOK, gin.H{"status": "Delete done"})
+}
