@@ -22,6 +22,16 @@ func (b *Bot) QueueLevel() {
 	if err != nil {
 		return
 	}
+	if count == 0 {
+		b.in.Lvlkz = "d" + b.in.Lvlkz
+		count, err = b.storage.Count.CountQueue(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+		if err != nil {
+			return
+		}
+		if count == 0 {
+			b.in.Lvlkz = b.in.Lvlkz[1:]
+		}
+	}
 	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(ctx, b.in.Lvlkz, b.in.Config.CorpName)
 	if err2 != nil {
 		return
