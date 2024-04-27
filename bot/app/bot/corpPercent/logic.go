@@ -1,7 +1,9 @@
 package corpPercent
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/clients"
@@ -147,8 +149,19 @@ func (b *Percent) SendPercent(Config models.CorporationConfig) {
 func (b *Percent) GetTextPercent(Config models.CorporationConfig, dark bool) string {
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
 	if err != nil {
-		b.log.ErrorErr(err)
-		return ""
+		if errors.Is(err, sql.ErrNoRows) {
+			b.storage.LevelCorp.InsertUpdateCorpLevel(models.LevelCorp{
+				CorpName: Config.CorpName,
+				Level:    0,
+				EndDate:  time.Time{},
+				HCorp:    "",
+				Percent:  0,
+			})
+			return ""
+		} else {
+			b.log.ErrorErr(err)
+			return ""
+		}
 	}
 	untilTime := currentCorp.EndDate.AddDate(0, 0, 7).Unix()
 	if time.Now().UTC().Unix() < untilTime {
