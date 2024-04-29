@@ -90,7 +90,7 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		return
 	}
 	go d.latinOrNot(m) //пытаемся переводить гостевой чат
-	d.AccesChatDS(m)
+	//d.AccesChatDS(m)
 	if m.Author != nil && m.Author.Locale != "" {
 		go d.log.Info(m.Author.Username + " " + m.Author.Locale)
 	}
@@ -100,6 +100,10 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(m.Content, "%") {
 		d.SendToCompendium(m)
+	}
+
+	if strings.HasPrefix(m.Content, ".") {
+		d.ifPrefixPoint(m)
 	}
 
 	//filter Rs
@@ -118,33 +122,6 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 			Config: &bridgeConfig,
 		}
 		d.filterNewBridge(m, mes)
-	}
-	//new
-	if strings.HasPrefix(m.Content, ".") {
-
-		mes := models.ToBridgeMessage{
-			Text:          m.Content,
-			Sender:        m.Author.Username,
-			Tip:           "ds",
-			Avatar:        m.Author.AvatarURL("128"),
-			ChatId:        m.ChannelID,
-			MesId:         m.ID,
-			GuildId:       m.GuildID,
-			TimestampUnix: m.Timestamp.Unix(),
-			Config: &models.BridgeConfig{
-				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
-			},
-		}
-		err := restapi.SendBridgeApp(mes)
-		if err != nil {
-			d.log.ErrorErr(err)
-			return
-		}
-		go func() {
-			time.Sleep(3 * time.Second)
-			d.storage.ReloadDbArray()
-			d.bridgeConfig = d.storage.BridgeConfigs
-		}()
 	}
 }
 

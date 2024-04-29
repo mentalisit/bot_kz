@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
-	"kz_bot/bot/corpPercent"
 	"kz_bot/clients"
 	"kz_bot/config"
 	"kz_bot/models"
@@ -29,7 +28,6 @@ type Bot struct {
 	wg         sync.WaitGroup
 	mu         sync.Mutex
 	configCorp map[string]models.CorporationConfig
-	percent    *corpPercent.Percent
 }
 
 func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logger, cfg *config.ConfigBot) *Bot {
@@ -40,7 +38,6 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		debug:      cfg.IsDebug,
 		inbox:      make(chan models.InMessage, 10),
 		configCorp: storage.CorpConfigRS,
-		percent:    corpPercent.NewPercent(log, storage, client),
 	}
 	go b.loadInbox()
 	go b.RemoveMessage()
@@ -76,7 +73,6 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 
 			if now.Minute() == 0 {
 				b.Autohelp() //автозапуск справки
-				go b.percent.GetHadesStorage()
 			}
 			time.Sleep(1 * time.Second)
 		}
@@ -85,6 +81,9 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 
 // LogicRs логика игры
 func (b *Bot) LogicRs() {
+	if strings.HasPrefix(b.in.Mtext, ".") {
+		b.accessChat()
+	}
 	if len(b.in.Mtext) > 0 && b.in.Mtext != " `edit`" {
 		if b.lRsPlus() {
 		} else if b.lDarkRsPlus() {
@@ -179,10 +178,12 @@ func (b *Bot) Autohelp() {
 			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
 				text := fmt.Sprintf("%s \n%s", b.getLanguageText(s.Country, "info_bot_delete_msg"), b.getLanguageText(s.Country, "info_help_text"))
 				if s.MesidTgHelp != "" {
+					b.log.Info(s.MesidTgHelp)
 					mID, err := strconv.Atoi(s.MesidTgHelp)
 					if err != nil {
 						return
 					}
+					b.log.Info(fmt.Sprintf("%s %d", s.MesidTgHelp, mID))
 					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
 				s.MesidTgHelp = strconv.Itoa(b.client.Tg.SendHelp(s.TgChannel, strings.ReplaceAll(text, "3", "10")))
@@ -193,7 +194,6 @@ func (b *Bot) Autohelp() {
 		time.Sleep(time.Minute)
 		go b.client.Ds.CleanRsBotOtherMessage()
 	} else if mtime == "03:00" {
-		//time.Sleep(1 * time.Second)
-		//utils.UpdateRun()
+
 	}
 }

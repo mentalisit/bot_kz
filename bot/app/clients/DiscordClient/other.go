@@ -297,3 +297,45 @@ func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	}
 	return false
 }
+
+func (d *Discord) CleanRsBotOtherMessage() {
+	defer func() {
+		if r := recover(); r != nil {
+			d.log.Info(fmt.Sprintf("recover() %+v", r))
+		}
+	}()
+	for _, config := range d.corpConfigRS {
+		if config.DsChannel != "" {
+			channelMessages, err := d.S.ChannelMessages(config.DsChannel, 100, "", "", "")
+			if err != nil {
+				restErr, _ := err.(*discordgo.RESTError)
+				if restErr.Message != nil && restErr.Message.Code == discordgo.ErrCodeUnknownChannel {
+					d.log.Info("нужно сделать удаление этого канала : " + config.CorpName)
+				} else {
+					d.log.ErrorErr(err)
+				}
+				continue
+			}
+			if len(channelMessages) > 0 {
+				t := time.Now().Unix()
+				for _, message := range channelMessages {
+					if message.Author.String() != "RsBot#0000" && message.Author.String() != "Rs_bot#9945" && message.Author.String() != "КзБот#0000" {
+						if t-message.Timestamp.Unix() < 1209600 && t-message.Timestamp.Unix() > 180 {
+							if message.Content == "" || !strings.HasPrefix(message.Content, ".") {
+								_ = d.S.ChannelMessageDelete(config.DsChannel, message.ID)
+							}
+						}
+						if t-message.Timestamp.Unix() < 1209600 && t-message.Timestamp.Unix() > 260000 {
+							if strings.HasPrefix(message.Content, ".") {
+								_ = d.S.ChannelMessageDelete(config.DsChannel, message.ID)
+
+							}
+						}
+					}
+				}
+				fmt.Println("clean OK " + config.CorpName)
+			}
+		}
+	}
+	fmt.Println("clean OK")
+}
