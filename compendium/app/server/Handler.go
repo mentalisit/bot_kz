@@ -4,12 +4,9 @@ import (
 	"compendium/Compendium/generate"
 	"compendium/models"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
-	"time"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
@@ -120,23 +117,10 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 //fmt.Println("Requested headers:", requestedHeaders)
 
 func (s *Server) getWsMatches(c *gin.Context) {
-	file, err := os.ReadFile("ws/ws.json")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var cors []CorporationsData
-	err = json.Unmarshal(file, &cors)
-	if err != nil {
-		fmt.Println(err)
-	}
-	c.JSON(http.StatusOK, cors)
-}
+	limit := c.DefaultQuery("limit", "")
+	page := c.DefaultQuery("page", "1")
 
-type CorporationsData struct {
-	Corp1Name  string    `json:"Corp1Name"`
-	Corp2Name  string    `json:"Corp2Name"`
-	Corp1Score int       `json:"Corp1Score"`
-	Corp2Score int       `json:"Corp2Score"`
-	DateEnded  time.Time `json:"DateEnded"`
+	result := s.getMatches(limit, page)
+
+	c.JSON(http.StatusOK, result)
 }
