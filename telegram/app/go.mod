@@ -3,7 +3,7 @@ module telegram
 go 1.22.0
 
 require (
-	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.0.0-00010101000000-000000000000
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/mentalisit/logger v0.0.0-20240221024243-6f28067f593e
 	golang.org/x/image v0.15.0
