@@ -1,4 +1,4 @@
-package corpPercent
+package models
 
 import (
 	"encoding/xml"
@@ -40,4 +40,32 @@ type CorpsData struct {
 	Corp1Score int       `json:"Corp1Score"`
 	Corp2Score int       `json:"Corp2Score"`
 	DateEnded  time.Time `json:"DateEnded"`
+}
+
+func (data *CorporationsData) SortWin() *CorporationsData {
+	if data.Corporation1Score > data.Corporation2Score {
+		//fmt.Printf("1Score>2Score %d-%d %s-%s\n", data.Corporation1Score, data.Corporation2Score, data.Corporation1Name, data.Corporation2Name)
+		return data
+	} else if data.Corporation2Score > data.Corporation1Score {
+		corp := CorporationsData{
+			Corporation1Name:  data.Corporation2Name,
+			Corporation1Id:    data.Corporation2Id,
+			Corporation2Name:  data.Corporation1Name,
+			Corporation2Id:    data.Corporation1Id,
+			Corporation1Score: data.Corporation2Score,
+			Corporation2Score: data.Corporation1Score,
+			DateEnded:         data.DateEnded,
+		}
+		//fmt.Printf("2Score>1Score %d-%d %s-%s\n", data.Corporation2Score, data.Corporation1Score, data.Corporation2Name, data.Corporation1Name)
+		return &corp
+	}
+	return &CorporationsData{}
+}
+
+type LevelCorp struct {
+	CorpName string
+	Level    int
+	EndDate  time.Time
+	HCorp    string
+	Percent  int
 }
