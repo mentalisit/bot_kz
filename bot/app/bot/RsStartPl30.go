@@ -42,7 +42,7 @@ func (b *Bot) RsStart() {
 			textEvent, numkzEvent := b.EventText()
 			if textEvent == "" {
 				DarkFlag := strings.HasPrefix(b.in.Lvlkz, "d")
-				textEvent = b.percent.GetTextPercent(b.in.Config, DarkFlag)
+				textEvent = b.GetTextPercent(b.in.Config, DarkFlag)
 			}
 			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
 			if numberevent > 0 {
@@ -159,7 +159,7 @@ func (b *Bot) RsStart() {
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
 
 			//отправляем сообщение о корпорациях с %
-			go b.percent.SendPercent(b.in.Config)
+			go b.SendPercent(b.in.Config)
 
 			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}
 			b.elseChat(user)

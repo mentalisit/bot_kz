@@ -167,7 +167,7 @@ func (b *Bot) RsPlus() {
 
 			textEvent, numkzEvent := b.EventText()
 			if textEvent == "" {
-				textEvent = b.percent.GetTextPercent(b.in.Config, false)
+				textEvent = b.GetTextPercent(b.in.Config, false)
 			}
 			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName) //получаем номер ивета если он активен
 			if numberevent > 0 {
@@ -232,7 +232,7 @@ func (b *Bot) RsPlus() {
 			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
 
 			//отправляем сообщение о корпорациях с %
-			go b.percent.SendPercent(b.in.Config)
+			go b.SendPercent(b.in.Config)
 
 			//проверка есть ли игрок в других чатах
 			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}

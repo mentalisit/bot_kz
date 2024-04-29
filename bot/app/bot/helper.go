@@ -1,4 +1,4 @@
-package corpPercent
+package bot
 
 import (
 	"fmt"
