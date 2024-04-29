@@ -19,7 +19,7 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 	if m.GuildID == "" {
 		d.log.Info(m.Author.Username + ": " + m.Content)
 		if m.Content == ".паника" {
-			d.AccesChatDS(m)
+			d.log.Panic(".паника " + m.Author.Username)
 		}
 		//DM message
 		return

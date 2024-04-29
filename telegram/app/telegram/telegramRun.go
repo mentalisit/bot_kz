@@ -21,11 +21,14 @@ func NewTelegram(log *logger.Logger, token string) *Telegram {
 		return nil
 	}
 	t := &Telegram{
-		log: log,
-		t:   botApi,
+		log:          log,
+		t:            botApi,
+		bridgeConfig: make(map[string]models.BridgeConfig),
+		corpConfigRS: make(map[string]models.CorporationConfig),
 	}
 
 	go t.update()
+	go t.LoadConfig()
 
 	return t
 }
@@ -35,5 +38,8 @@ func (t *Telegram) LoadConfig() {
 	for _, configBridge := range bc {
 		t.bridgeConfig[configBridge.NameRelay] = configBridge
 	}
-	rs, _ := restapi.GetRsBotConfig()
+	rs, _ := restapi.GetRsConfig()
+	for _, configRs := range rs {
+		t.corpConfigRS[configRs.CorpName] = configRs
+	}
 }
