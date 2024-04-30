@@ -26,12 +26,11 @@ func main() {
 		if now.Second() == 0 && now.Minute() == 0 {
 			newContent = hs.GetContentSevenDays()
 			hs.DownloadFile("ws", newContent)
-		}
 
-		if now.Hour() == 5 && now.Minute() == 30 && now.Second() == 0 {
 			newContent = hs.GetContentAll()
 			hs.DownloadFile("wsAll", newContent)
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 }
