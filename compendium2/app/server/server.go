@@ -47,7 +47,8 @@ func (s *Server) RunServer(port string) {
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 
 	router.GET("/ws/matches", s.getWsMatches)
-	//router.GET("/ws/matchesall", s.getWsMatchesAll)
+	router.GET("/ws/docs", s.docs)
+	router.GET("/ws/", s.docs)
 	router.GET("/ws/corps", s.getWsCorps)
 
 	fmt.Println("Running port:" + port)

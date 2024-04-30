@@ -9,7 +9,7 @@ import (
 
 func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 	var count int
-	var corpsdata []models.CorporationsData
+	var corpsdata []models.Match
 
 	for _, cont := range newContent {
 		count++
@@ -18,7 +18,18 @@ func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 			corpData = h.GetCorporationsData(cont.Key)
 			h.r.SaveCorpDate(cont.Key, *corpData)
 		}
-		corpsdata = append(corpsdata, *corpData)
+		mid := models.Match{
+			Corporation1Name:  corpData.Corporation1Name,
+			Corporation1Id:    corpData.Corporation1Id,
+			Corporation2Name:  corpData.Corporation2Name,
+			Corporation2Id:    corpData.Corporation2Id,
+			Corporation1Score: corpData.Corporation1Score,
+			Corporation2Score: corpData.Corporation2Score,
+			DateEnded:         corpData.DateEnded,
+			MatchId:           cont.Key,
+		}
+
+		corpsdata = append(corpsdata, mid)
 	}
 	fmt.Println("count", count)
 
@@ -40,7 +51,7 @@ func (h *HS) SaveFile(fileName string, corpsdata any) {
 	}
 	fmt.Println("файл сохранен " + path)
 }
-func (h *HS) SaveCorpList(corps []models.CorporationsData) {
+func (h *HS) SaveCorpList(corps []models.Match) {
 	corpMap := make(map[string]models.Corporation)
 	var corpList []models.Corporation
 	for _, corp := range corps {

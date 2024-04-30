@@ -152,3 +152,62 @@ func (s *Server) getWsCorps(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+func (s *Server) docs(c *gin.Context) {
+	htmlContent := `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4; // Светлый фон всей страницы
+        }
+        .centered-content {
+            width: 100%; // Ширина контента равна ширине страницы
+            max-width: 600px; // Максимальная ширина контента
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #3366cc;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="centered-content">
+        <h1>Select endpoint:</h1>
+        <ul>
+            <li><a href="/ws/corps">list corporations</a></li>
+            <li><a href="/ws/corps?limit=20">list corporations limit 20</a></li>
+            <li><a href="/ws/matches">list matches</a></li>
+            <li><a href="/ws/matches?limit=20">list matches limit 20</a></li>
+        </ul>
+    </div>
+</body>
+</html>
+`
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+}

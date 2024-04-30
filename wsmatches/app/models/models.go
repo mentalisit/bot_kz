@@ -33,6 +33,16 @@ type CorporationsData struct {
 	Corporation2Score int       `json:"Corporation2Score"`
 	DateEnded         time.Time `json:"DateEnded"`
 }
+type Match struct {
+	Corporation1Name  string    `json:"Corporation1Name"`
+	Corporation1Id    string    `json:"Corporation1Id"`
+	Corporation2Name  string    `json:"Corporation2Name"`
+	Corporation2Id    string    `json:"Corporation2Id"`
+	Corporation1Score int       `json:"Corporation1Score"`
+	Corporation2Score int       `json:"Corporation2Score"`
+	DateEnded         time.Time `json:"DateEnded"`
+	MatchId           string    `json:"MatchId"`
+}
 
 //type CorpsData struct {
 //	Corp1Name  string    `json:"Corp1Name"`
