@@ -47,6 +47,7 @@ func (s *Server) RunServer(port string) {
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 
 	router.GET("/wsmatches", s.getWsMatches)
+	router.GET("/wsmatchesall", s.getWsMatchesAll)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "cert1.pem", "privkey1.pem")
