@@ -62,7 +62,7 @@ func getDictionaryEnJson() []byte {
 "to_add_to_queue":"to add to the queue",
 "to_exit_the_queue":"to exit the queue",
 "data_updated":"Data updated",
-"info_help_text":"Get in queue: [4-11]+ or\n  [4-11]+[specify timeout in minutes]\n(rs level)+(waiting time)\n  9+ stand in queue for short circuit 9level.\n  9 + 60 get on short circuit 9level, waiting time is not more than 60 minutes.\nLeave queue: [4-11] -\n  9- exit the queue RS 9level.\nView list of active queues: q[4-11]\n  q9 output queue for your rs\n Get Role Rs: + [5-11]\n  +9 get the role of RS lvl 9.\n  -9 remove the role\n For Dark Red Stars\nTo start the queue\n  9*\nTo get a role\n  +d9",
+"info_help_text":"Get in queue *(RS level)+(waiting time)*:\n    **[3-11]+** or\n    **[3-11]+[specify timeout in minutes]**\n*Examples:*\n    **7+** to stand in a queue for a level 7 RS\n    **8+30** to stand in a queue for a level 8 RS, waiting time is not more than 30 minutes\nLeave queue:\n    **[3-11]-**\n*Example:*\n    **9-** to exit the queue 9 level RS\nView list of active queues:\n    **q[3-11]**\n*Example:*\n    **q9** show the queue for your RS\nGet RS role:\n    **+[3-11]**\n*Examples:*\n    **+6** get a role for RS level 6\n    **-6** remove the role\nFor Dark Red Stars\nGet in queue:\n    **7*** or **d7+**\nLeave queue:\n    **d7-**\nTo get a role:\n    **+d7**",
 "information":"Information",
 "info_bot_delete_msg":"WARNING\n BOT DELETES USER MESSAGES\n AFTER 3 MINUTES.",
 "info_activation_not_required":"Bot already works on your channel\nre-activation is not required.\nwrite Help",
