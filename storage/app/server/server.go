@@ -31,8 +31,8 @@ func (s *Server) runServer() error {
 	r.POST("/storage/bridge/update", s.UpdateBridgeChat)
 	r.POST("/storage/bridge/insert", s.InsertBridgeChat)
 
-	r.GET("/storage/timer/delete", s.DeleteMessageTimer)
-	r.POST("/storage/timer/insert", s.InsertTimer)
+	//r.GET("/storage/timer/delete", s.DeleteMessageTimer)
+	//r.POST("/storage/timer/insert", s.InsertTimer)
 
 	r.GET("/storage/rsbot/readqueue", s.DBReadRsBotMySQL)
 

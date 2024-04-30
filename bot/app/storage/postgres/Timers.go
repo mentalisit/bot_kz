@@ -56,3 +56,37 @@ func (d *Db) MinusMin(ctx context.Context) []models.Sborkz {
 	}
 	return tt
 }
+
+func (d *Db) TimerInsert(c models.Timer) {
+	insert := `INSERT INTO kzbot.timer(dsmesid, dschatid, tgmesid, tgchatid, timed) 
+				VALUES ($1,$2,$3,$4,$5)`
+	_, err := d.db.Exec(context.Background(), insert, c.Dsmesid, c.Dschatid, c.Tgmesid, c.Tgchatid, c.Timed)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
+
+func (d *Db) TimerDeleteMessage() []models.Timer {
+	query := `UPDATE kzbot.timer SET timed = timed - 60 WHERE timed > 60`
+
+	_, _ = d.db.Exec(context.Background(), query)
+
+	query = `SELECT * FROM kzbot.timer WHERE timed <= 60`
+
+	// Выполнение запроса
+	rows, _ := d.db.Query(context.Background(), query)
+
+	defer rows.Close()
+	var tt []models.Timer
+	for rows.Next() {
+		var id int
+		var t models.Timer
+		_ = rows.Scan(&id, &t.Dsmesid, &t.Dschatid, &t.Tgmesid, &t.Tgchatid, &t.Timed)
+		tt = append(tt, t)
+	}
+	query = `DELETE FROM kzbot.timer WHERE dsmesid = $1 AND tgmesid = $2`
+	for _, t := range tt {
+		_, _ = d.db.Exec(context.Background(), query, t.Dsmesid, t.Tgmesid)
+	}
+	return tt
+}

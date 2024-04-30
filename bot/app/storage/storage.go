@@ -50,7 +50,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 	s := &Storage{
 		log:               log,
 		BridgeConfig:      rdb,
-		TimeDeleteMessage: mongoDB,
+		TimeDeleteMessage: local,
 		ConfigRs:          mongoDB,
 		Dictionary:        d,
 		Subscribe:         local,

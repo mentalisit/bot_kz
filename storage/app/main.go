@@ -12,7 +12,7 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	log := logger.LoggerZapDiscord(cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
 	db, err := mongodb.InitMongoDB(log, cfg.Mongo)
 	if err != nil {
 		log.Panic(err.Error())

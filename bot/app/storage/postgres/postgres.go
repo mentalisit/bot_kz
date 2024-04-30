@@ -118,8 +118,8 @@ func (d *Db) createTable() {
     id       bigserial primary key,
     dsmesid  text,
     dschatid text,
-    tgmesid  bigint,
-    tgchatid bigint,
+    tgmesid  text,
+    tgchatid text,
     timed    bigint
 	);`)
 	if err != nil {
