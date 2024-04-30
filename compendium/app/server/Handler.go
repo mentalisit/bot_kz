@@ -117,10 +117,25 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 //fmt.Println("Requested headers:", requestedHeaders)
 
 func (s *Server) getWsMatches(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 	limit := c.DefaultQuery("limit", "")
 	page := c.DefaultQuery("page", "1")
 
 	result := s.getMatches(limit, page)
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) getWsMatchesAll(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
+	limit := c.DefaultQuery("limit", "")
+	page := c.DefaultQuery("page", "1")
+
+	result := s.getMatchesAll(limit, page)
 
 	c.JSON(http.StatusOK, result)
 }
