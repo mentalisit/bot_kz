@@ -169,7 +169,7 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
 		chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
 	}
-
+	good, config := t.checkChannelConfigTG(ChatId)
 	in := models.InMessage{
 		Mtext:       m.Text,
 		Tip:         "tg",
@@ -180,14 +180,18 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 		}{
 			Mesid: m.MessageID,
 		},
-		Config: models.CorporationConfig{
-			CorpName:  chatName,
-			TgChannel: ChatId,
-			Guildid:   "",
-		},
 		Option: models.Option{
 			InClient: true,
 		},
+	}
+	if good {
+		in.Config = config
+	} else {
+		in.Config = models.CorporationConfig{
+			CorpName:  chatName,
+			TgChannel: ChatId,
+			Guildid:   "",
+		}
 	}
 	t.ChanRsMessage <- in
 	go func() {

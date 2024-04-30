@@ -104,6 +104,7 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(m.Content, ".") {
 		d.ifPrefixPoint(m)
+		return
 	}
 
 	//filter Rs

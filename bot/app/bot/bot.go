@@ -39,6 +39,18 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		inbox:      make(chan models.InMessage, 10),
 		configCorp: storage.CorpConfigRS,
 	}
+	go func() {
+		for {
+			if len(storage.CorpConfigRS) > 0 {
+				b.configCorp = storage.CorpConfigRS
+				fmt.Println("Bot Loaded")
+				break
+			} else {
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+
 	go b.loadInbox()
 	go b.RemoveMessage()
 
@@ -83,6 +95,7 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 func (b *Bot) LogicRs() {
 	if strings.HasPrefix(b.in.Mtext, ".") {
 		b.accessChat()
+		return
 	}
 	if len(b.in.Mtext) > 0 && b.in.Mtext != " `edit`" {
 		if b.lRsPlus() {

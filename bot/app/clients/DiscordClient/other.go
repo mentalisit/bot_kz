@@ -129,10 +129,6 @@ func (d *Discord) createRole(rolPing, guildid string) (*discordgo.Role, error) {
 	return create, nil
 }
 
-func (d *Discord) getLang(chatId, key string) string {
-	_, conf := d.CheckChannelConfigDS(chatId)
-	return d.storage.Dictionary.GetText(conf.Country, key)
-}
 func (d *Discord) getLanguage(lang, key string) string {
 	return d.storage.Dictionary.GetText(lang, key)
 }

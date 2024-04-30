@@ -118,6 +118,7 @@ import (
 //}
 
 func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
+	good, config := d.CheckChannelConfigDS(m.ID)
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
@@ -129,14 +130,19 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 			Guildid string
 			Avatar  string
 		}{Mesid: m.ID, Nameid: m.Author.ID, Guildid: m.GuildID, Avatar: m.Author.AvatarURL("")},
-		Config: models.CorporationConfig{
-			CorpName:  d.GuildChatName(m.ChannelID, m.GuildID),
-			DsChannel: m.ChannelID,
-			Guildid:   m.GuildID,
-		},
+
 		Option: models.Option{
 			InClient: true,
 		},
+	}
+	if good {
+		in.Config = config
+	} else {
+		in.Config = models.CorporationConfig{
+			CorpName:  d.GuildChatName(m.ChannelID, m.GuildID),
+			DsChannel: m.ChannelID,
+			Guildid:   m.GuildID,
+		}
 	}
 	d.ChanRsMessage <- in
 	go func() {
@@ -163,7 +169,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 			return
 		}
 		go func() {
-			time.Sleep(3 * time.Second)
+			time.Sleep(5 * time.Second)
 			d.storage.ReloadDbArray()
 			d.bridgeConfig = d.storage.BridgeConfigs
 		}()

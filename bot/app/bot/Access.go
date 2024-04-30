@@ -53,6 +53,12 @@ func (b *Bot) accessAddChannel(lang string) {
 		b.configCorp[c.CorpName] = c
 		b.log.Info(c.CorpName + " Добавлена в конфиг корпораций ")
 		go b.ifTipSendTextDelSecond(b.getLanguageText(lang, "tranks_for_activation"), 60)
+		if c.DsChannel != "" {
+			b.client.Ds.Hhelp1(c.DsChannel, lang)
+		}
+		if c.TgChannel != "" {
+			b.client.Tg.Help(c.TgChannel, lang)
+		}
 	}
 }
 func (b *Bot) accessDelChannel(lang string) {
@@ -93,10 +99,12 @@ func (b *Bot) setLang() bool {
 	return false
 }
 func (b *Bot) checkConfig() (bool, models.CorporationConfig) {
-	for _, config := range b.configCorp {
-		if config.DsChannel == b.in.Config.DsChannel {
+	for corpName, config := range b.configCorp {
+		if corpName != "" && corpName == b.in.Config.CorpName {
 			return true, config
-		} else if config.TgChannel == b.in.Config.TgChannel {
+		} else if config.DsChannel != "" && config.DsChannel == b.in.Config.DsChannel {
+			return true, config
+		} else if config.TgChannel != "" && config.TgChannel == b.in.Config.TgChannel {
 			return true, config
 		}
 	}
