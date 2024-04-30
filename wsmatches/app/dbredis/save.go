@@ -6,15 +6,17 @@ import (
 	"ws/models"
 )
 
-func (r *Db) SaveCorpDate(key string, corp models.CorpsData) {
+func (r *Db) SaveCorpDate(key string, corp models.CorporationsData) {
 
 	// Set hash field-values
 	err := r.c.HSet(ctx, key, map[string]interface{}{
-		"Corp1Name":  corp.Corp1Name,
-		"Corp2Name":  corp.Corp2Name,
-		"Corp1Score": corp.Corp1Score,
-		"Corp2Score": corp.Corp2Score,
-		"DateEnded":  corp.DateEnded.Format(time.RFC3339), // Сохраняем время как строку
+		"Corporation1Name":  corp.Corporation1Name,
+		"Corporation2Name":  corp.Corporation2Name,
+		"Corporation1Score": corp.Corporation1Score,
+		"Corporation2Score": corp.Corporation2Score,
+		"Corporation1Id":    corp.Corporation1Id,
+		"Corporation2Id":    corp.Corporation2Id,
+		"DateEnded":         corp.DateEnded.Format(time.RFC3339), // Сохраняем время как строку
 	}).Err()
 	if err != nil {
 		log.ErrorErr(err)

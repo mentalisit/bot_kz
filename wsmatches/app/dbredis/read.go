@@ -6,7 +6,7 @@ import (
 	"ws/models"
 )
 
-func (r *Db) ReadCorpData(key string) *models.CorpsData {
+func (r *Db) ReadCorpData(key string) *models.CorporationsData {
 	// Get hash field-values
 	userInfo, err := r.c.HGetAll(ctx, key).Result()
 	if err != nil {
@@ -16,19 +16,19 @@ func (r *Db) ReadCorpData(key string) *models.CorpsData {
 		return nil
 	}
 
-	Corp1Score := userInfo["Corp1Score"]
-	Corp2Score := userInfo["Corp2Score"]
-	s1, _ := strconv.Atoi(Corp1Score)
-	s2, _ := strconv.Atoi(Corp2Score)
+	s1, _ := strconv.Atoi(userInfo["Corporation1Score"])
+	s2, _ := strconv.Atoi(userInfo["Corporation2Score"])
 
 	dateEnded, _ := time.Parse(time.RFC3339, userInfo["DateEnded"]) // Преобразование строки в time.Time
 
-	corp1 := models.CorpsData{
-		Corp1Name:  userInfo["Corp1Name"],
-		Corp2Name:  userInfo["Corp2Name"],
-		Corp1Score: s1,
-		Corp2Score: s2,
-		DateEnded:  dateEnded,
+	corp1 := models.CorporationsData{
+		Corporation1Name:  userInfo["Corporation1Name"],
+		Corporation2Name:  userInfo["Corporation2Name"],
+		Corporation1Score: s1,
+		Corporation2Score: s2,
+		Corporation1Id:    userInfo["Corporation1Id"],
+		Corporation2Id:    userInfo["Corporation2Id"],
+		DateEnded:         dateEnded,
 	}
 	//fmt.Printf("read %s %+v\n", key, corp1)
 	return &corp1

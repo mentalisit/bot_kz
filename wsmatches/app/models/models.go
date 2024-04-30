@@ -34,13 +34,13 @@ type CorporationsData struct {
 	DateEnded         time.Time `json:"DateEnded"`
 }
 
-type CorpsData struct {
-	Corp1Name  string    `json:"Corp1Name"`
-	Corp2Name  string    `json:"Corp2Name"`
-	Corp1Score int       `json:"Corp1Score"`
-	Corp2Score int       `json:"Corp2Score"`
-	DateEnded  time.Time `json:"DateEnded"`
-}
+//type CorpsData struct {
+//	Corp1Name  string    `json:"Corp1Name"`
+//	Corp2Name  string    `json:"Corp2Name"`
+//	Corp1Score int       `json:"Corp1Score"`
+//	Corp2Score int       `json:"Corp2Score"`
+//	DateEnded  time.Time `json:"DateEnded"`
+//}
 
 func (data *CorporationsData) SortWin() *CorporationsData {
 	if data.Corporation1Score > data.Corporation2Score {
@@ -68,4 +68,9 @@ type LevelCorp struct {
 	EndDate  time.Time
 	HCorp    string
 	Percent  int
+}
+
+type Corporation struct {
+	Name string `json:"Name"`
+	Id   string `json:"Id"`
 }
