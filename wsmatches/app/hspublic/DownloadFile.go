@@ -18,6 +18,7 @@ func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 			corpData = h.GetCorporationsData(cont.Key)
 			h.r.SaveCorpDate(cont.Key, *corpData)
 		}
+		corpData = corpData.SortWin()
 		mid := models.Match{
 			Corporation1Name:  corpData.Corporation1Name,
 			Corporation1Id:    corpData.Corporation1Id,

@@ -15,6 +15,7 @@ func main() {
 	hs := hspublic.NewHS(log)
 
 	newContent := hs.GetContentSevenDays()
+	hs.SavePercent(newContent)
 	hs.DownloadFile("ws", newContent)
 
 	newContent = hs.GetContentAll()
@@ -25,6 +26,7 @@ func main() {
 
 		if now.Second() == 0 && now.Minute() == 0 {
 			newContent = hs.GetContentSevenDays()
+			hs.SavePercent(newContent)
 			hs.DownloadFile("ws", newContent)
 
 			newContent = hs.GetContentAll()

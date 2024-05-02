@@ -53,10 +53,7 @@ type Match struct {
 //}
 
 func (data *CorporationsData) SortWin() *CorporationsData {
-	if data.Corporation1Score > data.Corporation2Score {
-		//fmt.Printf("1Score>2Score %d-%d %s-%s\n", data.Corporation1Score, data.Corporation2Score, data.Corporation1Name, data.Corporation2Name)
-		return data
-	} else if data.Corporation2Score > data.Corporation1Score {
+	if data.Corporation2Score > data.Corporation1Score {
 		corp := CorporationsData{
 			Corporation1Name:  data.Corporation2Name,
 			Corporation1Id:    data.Corporation2Id,
@@ -69,7 +66,7 @@ func (data *CorporationsData) SortWin() *CorporationsData {
 		//fmt.Printf("2Score>1Score %d-%d %s-%s\n", data.Corporation2Score, data.Corporation1Score, data.Corporation2Name, data.Corporation1Name)
 		return &corp
 	}
-	return &CorporationsData{}
+	return data
 }
 
 type LevelCorp struct {

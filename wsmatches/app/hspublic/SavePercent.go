@@ -27,11 +27,12 @@ func (h *HS) SavePercent(newContent []models.Content) {
 			corpData = h.GetCorporationsData(cont.Key)
 			h.r.SaveCorpDate(cont.Key, *corpData)
 		}
+		f := corpData.SortWin()
 
-		if listHCorp[corpData.Corporation1Name].HCorp != "" {
-			c := listHCorp[corpData.Corporation1Name]
-			if c.EndDate.Before(corpData.DateEnded) {
-				c.EndDate = corpData.DateEnded
+		if listHCorp[f.Corporation1Name].HCorp != "" {
+			c := listHCorp[f.Corporation1Name]
+			if c.EndDate.Before(f.DateEnded) {
+				c.EndDate = f.DateEnded
 				c.Percent = c.Level - 1
 
 				h.p.InsertUpdateCorpLevel(c)
