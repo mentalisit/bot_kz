@@ -28,6 +28,7 @@ func (c *Compendium) logic(m models.IncomingMessage) {
 func (c *Compendium) regular(text string) {
 	if c.techImageName() {
 	} else if c.logicRoles() {
+	} else if c.createAlt() {
 	} else {
 		c.log.Info(text)
 	}
@@ -38,4 +39,16 @@ func (c *Compendium) help() {
 		"'%connect' или '%коннект' для подключения приложения\n" +
 		"'%t i' или '%т и' для получения изображения с вашими модулями\n" +
 		"'%t @Name i' или '%т @имя и' для получения изображения с модулями другого игрока\n")
+}
+
+func (c *Compendium) createAlt() bool {
+	//after, _ := strings.CutPrefix(c.in.Text, "%")
+	//
+	//split := strings.Split(after, " ")
+	//if len(split) == 3 {
+	//	if split[0] == "alts" && split[1] == "add" {
+	//		c.db.Temp.UserReadByUserId(context.Background(), c.in.NameId)
+	//	}
+	//}
+	return false
 }

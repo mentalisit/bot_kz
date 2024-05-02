@@ -39,6 +39,7 @@ func (c *Compendium) generate() models.Identity {
 			Discriminator: "",
 			Avatar:        c.in.AvatarF,
 			AvatarURL:     c.in.Avatar,
+			Alts:          []string{},
 		},
 		Guild: models.Guild{
 			URL:  c.in.GuildAvatar,

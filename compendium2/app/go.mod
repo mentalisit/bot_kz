@@ -8,6 +8,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.2
+	github.com/lib/pq v1.10.2
 	github.com/mentalisit/logger v0.0.0-20240221024243-6f28067f593e
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	go.uber.org/zap v1.27.0

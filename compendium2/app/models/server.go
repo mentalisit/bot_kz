@@ -17,11 +17,12 @@ type IdentityGET struct {
 }
 
 type User struct {
-	ID            string `json:"id"`
-	Username      string `json:"username"`
-	Discriminator string `json:"discriminator"`
-	Avatar        string `json:"avatar"`
-	AvatarURL     string `json:"avatarUrl"`
+	ID            string   `json:"id"`
+	Username      string   `json:"username"`
+	Discriminator string   `json:"discriminator"`
+	Avatar        string   `json:"avatar"`
+	AvatarURL     string   `json:"avatarUrl"`
+	Alts          []string `json:"alts"`
 }
 
 type Guild struct {

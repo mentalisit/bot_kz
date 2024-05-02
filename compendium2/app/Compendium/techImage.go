@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Compendium) techImage() {
-	m := c.db.Temp.CorpMemberReadByUserIdByGuildId(context.TODO(), c.in.NameId, c.in.GuildId)
+	m := c.db.Temp.CorpMemberReadByUserIdByGuildIdByName(context.TODO(), c.in.NameId, c.in.GuildId, c.in.Name)
 	if m.Name == "" {
 		c.sendChat("данные не найдены")
 	} else {

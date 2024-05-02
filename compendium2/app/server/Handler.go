@@ -74,7 +74,9 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 
 	mode := c.Param("mode")
-	fmt.Println("Last parameter:", mode)
+	twin := c.DefaultQuery("twin", "")
+
+	fmt.Printf("mode %s twin %s\n", mode, twin)
 
 	token := c.GetHeader("authorization")
 
@@ -84,13 +86,19 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
 		return
 	}
+	userId := i.User.ID
+	userName := i.User.Username
+	guildId := i.Guild.ID
+	if twin != "" && twin != "default" {
+		userName = twin
+	}
 	if mode == "get" {
 		sd := models.SyncData{
 			TechLevels: models.TechLevels{},
 			Ver:        1,
 			InSync:     1,
 		}
-		cm := s.db.Temp.CorpMemberReadByUserId(context.TODO(), i.User.ID, i.Guild.ID)
+		cm := s.db.Temp.CorpMemberReadByUserIdByName(context.Background(), userId, guildId, userName)
 		if len(cm.Tech) > 0 {
 			sd.TechLevels = cm.Tech
 		}
@@ -104,7 +112,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		go s.db.Temp.CorpMemberTechUpdate(context.TODO(), i.User.ID, i.Guild.ID, data.TechLevels)
+		go s.db.Temp.CorpMemberTechUpdate(context.TODO(), userId, guildId, userName, data.TechLevels)
 
 		// Используйте переменную data с полученными данными
 		c.JSON(http.StatusOK, data)
