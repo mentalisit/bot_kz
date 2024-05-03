@@ -53,6 +53,14 @@ func (c *Compendium) createAlt() bool {
 				return false
 			}
 			alts := u.Alts
+			if len(alts) > 0 {
+				for _, alt := range alts {
+					if alt == split[2] {
+						c.sendChat("already exists")
+						return true
+					}
+				}
+			}
 			alts = append(alts, split[2])
 			c.db.Temp.UserUpdateAlts(context.Background(), u.Username, u.ID, alts)
 			c.log.Info(fmt.Sprintf("User %s alts new %+v", u.Username, alts))

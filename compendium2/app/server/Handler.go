@@ -76,11 +76,13 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	mode := c.Param("mode")
 	twin := c.DefaultQuery("twin", "")
 
-	fmt.Printf("mode %s twin %s\n", mode, twin)
-
 	token := c.GetHeader("authorization")
 
 	i := s.GetTokenIdentity(token)
+	if i.User.Username == "" {
+		s.log.Error("no Name")
+	}
+
 	if i == nil {
 		fmt.Println("i==nil")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
@@ -92,6 +94,9 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	if twin != "" && twin != "default" {
 		userName = twin
 	}
+
+	fmt.Printf("mode %s TwinOrName %s\n", mode, userName)
+
 	if mode == "get" {
 		sd := models.SyncData{
 			TechLevels: models.TechLevels{},

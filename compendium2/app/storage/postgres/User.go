@@ -3,9 +3,6 @@ package postgres
 import (
 	"compendium/models"
 	"context"
-	"database/sql"
-	"errors"
-	"fmt"
 	"github.com/lib/pq"
 )
 
@@ -30,13 +27,9 @@ func (d *Db) userUpdateTokenAvatarUrlAlts(ctx context.Context, token, avatarUrl 
 func (d *Db) userInsert(ctx context.Context, token string, u models.User) {
 	uu, err := d.UserReadByUserIdByUsername(ctx, u.ID, u.Username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			insert := `INSERT INTO compendium.user(token, id, username, discriminator, avatar, avatarurl, alts) VALUES ($1,$2,$3,$4,$5,$6,$7)`
-			_, err = d.db.Exec(ctx, insert, token, u.ID, u.Username, u.Discriminator, u.Avatar, u.AvatarURL, pq.Array(u.Alts))
-			if err != nil {
-				d.log.ErrorErr(err)
-			}
-		} else {
+		insert := `INSERT INTO compendium.user(token, id, username, discriminator, avatar, avatarurl, alts) VALUES ($1,$2,$3,$4,$5,$6,$7)`
+		_, err = d.db.Exec(ctx, insert, token, u.ID, u.Username, u.Discriminator, u.Avatar, u.AvatarURL, pq.Array(u.Alts))
+		if err != nil {
 			d.log.ErrorErr(err)
 		}
 	} else {
@@ -53,7 +46,6 @@ func (d *Db) userInsert(ctx context.Context, token string, u models.User) {
 	}
 }
 func (d *Db) userReadWhereToken(ctx context.Context, token string) models.User {
-	fmt.Println(token)
 	selec := "SELECT * FROM compendium.user WHERE token = $1"
 	results, err := d.db.Query(ctx, selec, token)
 	if err != nil {
