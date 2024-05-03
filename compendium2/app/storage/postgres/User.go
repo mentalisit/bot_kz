@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/lib/pq"
 )
 
@@ -19,7 +20,7 @@ func (d *Db) UserReadByUserIdByUsername(ctx context.Context, userid, username st
 	return &uu, nil
 }
 func (d *Db) userUpdateTokenAvatarUrlAlts(ctx context.Context, token, avatarUrl string, alts []string, userId, username string) error {
-	upd := `update compendium.user set token = $1 AND avatarurl = $2 AND alts = $3 where id = $4 AND username = $5`
+	upd := `update compendium.user set token = $1, avatarurl = $2, alts = $3 where id = $4 AND username = $5`
 	_, err := d.db.Exec(ctx, upd, token, avatarUrl, pq.Array(alts), userId, username)
 	if err != nil {
 		return err
@@ -52,6 +53,7 @@ func (d *Db) userInsert(ctx context.Context, token string, u models.User) {
 	}
 }
 func (d *Db) userReadWhereToken(ctx context.Context, token string) models.User {
+	fmt.Println(token)
 	selec := "SELECT * FROM compendium.user WHERE token = $1"
 	results, err := d.db.Query(ctx, selec, token)
 	if err != nil {
