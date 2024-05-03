@@ -2,6 +2,7 @@ package Compendium
 
 import (
 	"compendium/models"
+	"context"
 	"fmt"
 	"strings"
 )
@@ -42,13 +43,23 @@ func (c *Compendium) help() {
 }
 
 func (c *Compendium) createAlt() bool {
-	//after, _ := strings.CutPrefix(c.in.Text, "%")
-	//
-	//split := strings.Split(after, " ")
-	//if len(split) == 3 {
-	//	if split[0] == "alts" && split[1] == "add" {
-	//		c.db.Temp.UserReadByUserId(context.Background(), c.in.NameId)
-	//	}
-	//}
+	after, _ := strings.CutPrefix(c.in.Text, "%")
+	split := strings.Split(after, " ")
+	if len(split) == 3 {
+		if split[0] == "alts" && split[1] == "add" {
+			u, err := c.db.Temp.UserReadByUserIdByUsername(context.Background(), c.in.NameId, c.in.Name)
+			if err != nil {
+				c.log.ErrorErr(err)
+				return false
+			}
+			alts := u.Alts
+			alts = append(alts, split[2])
+			c.db.Temp.UserUpdateAlts(context.Background(), u.Username, u.ID, alts)
+			c.log.Info(fmt.Sprintf("User %s alts new %+v", u.Username, alts))
+			c.sendChat("alto added " + split[2])
+			_ = c.sendDM(fmt.Sprintf("List of your alts %+v", alts))
+			return true
+		}
+	}
 	return false
 }

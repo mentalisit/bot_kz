@@ -22,15 +22,17 @@ func (d *Db) IdentityInsert(ctx context.Context, i models.Identity) {
 	}
 	d.corpMemberInsert(ctx, i.Guild.ID, cm)
 }
-func (d *Db) IdentityUpdateToken(ctx context.Context, oldToken, newToken string) {
-	sqlUpd := `update compendium.identity set id = $1 where id = $2`
-	_, err := d.db.Exec(ctx, sqlUpd, newToken, oldToken)
-	if err != nil {
-		d.log.ErrorErr(err)
-	}
-	d.userUpdate(ctx, oldToken, newToken)
-	d.guildUpdate(ctx, oldToken, newToken)
-}
+
+//func (d *Db) IdentityUpdateToken(ctx context.Context, oldToken, newToken string) {
+//	sqlUpd := `update compendium.identity set id = $1 where id = $2`
+//	_, err := d.db.Exec(ctx, sqlUpd, newToken, oldToken)
+//	if err != nil {
+//		d.log.ErrorErr(err)
+//	}
+//	d.userUpdate(ctx, oldToken, newToken)
+//	d.guildUpdate(ctx, oldToken, newToken)
+//}
+
 func (d *Db) IdentityRead(ctx context.Context, token string) models.Identity {
 	selec := "SELECT * FROM compendium.identity WHERE id = $1"
 	results, err := d.db.Query(ctx, selec, token)
@@ -44,7 +46,7 @@ func (d *Db) IdentityRead(ctx context.Context, token string) models.Identity {
 			d.log.ErrorErr(err)
 		}
 	}
-	t.User = d.userRead(ctx, token)
+	t.User = d.userReadWhereToken(ctx, token)
 	t.Guild = d.guildRead(ctx, token)
 
 	return t
