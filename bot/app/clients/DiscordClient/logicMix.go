@@ -273,6 +273,10 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		GuildAvatarF: g.Icon,
 		Type:         "ds",
 	}
+	if m.ChannelID == "1096374833157255178" {
+		_ = restapi.SendCompendiumAppDev(i)
+		return
+	}
 	err = restapi.SendCompendiumApp(i)
 	if err != nil {
 		d.log.InfoStruct("SendCompendiumApp", i)
