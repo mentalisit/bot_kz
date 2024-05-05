@@ -21,7 +21,7 @@ func EloLogic(match []models.Match, corps []models.Corporation) {
 	var elo []models.Corporation
 	for _, c := range corps {
 		el := c
-		el.Elo = int(ratings[c.Id])
+		el.Elo = int(math.Ceil(ratings[c.Id]))
 		elo = append(elo, el)
 	}
 
@@ -34,7 +34,7 @@ func EloLogic(match []models.Match, corps []models.Corporation) {
 	fmt.Println("файл сохранен " + path)
 }
 
-func calculateEloRating(ratingA, ratingB, actualScoreA, actualScoreB float64, kFactor float64) (float64, float64) {
+func calculateEloRating(ratingA, ratingB float64, actualScoreA, actualScoreB int, kFactor float64) (float64, float64) {
 	var scoreA, scoreB float64
 	if actualScoreA > actualScoreB {
 		// Победа игрока A
@@ -50,8 +50,8 @@ func calculateEloRating(ratingA, ratingB, actualScoreA, actualScoreB float64, kF
 		scoreB = 0.5
 	}
 
-	expectedScoreA := 1 / (1 + math.Pow(10, float64(ratingB-ratingA)/400))
-	expectedScoreB := 1 / (1 + math.Pow(10, float64(ratingA-ratingB)/400))
+	expectedScoreA := 1 / (1 + math.Pow(10, (ratingB-ratingA)/400))
+	expectedScoreB := 1 / (1 + math.Pow(10, (ratingA-ratingB)/400))
 
 	newRatingA := ratingA + kFactor*(scoreA-expectedScoreA)
 	newRatingB := ratingB + kFactor*(scoreB-expectedScoreB)
@@ -63,7 +63,7 @@ func processMatches(matches []models.Match) {
 		corp1Rating := ratings[match.Corporation1Id]
 		corp2Rating := ratings[match.Corporation2Id]
 
-		newCorp1Rating, newCorp2Rating := calculateEloRating(corp1Rating, corp2Rating, float64(match.Corporation1Score), float64(match.Corporation2Score), 30)
+		newCorp1Rating, newCorp2Rating := calculateEloRating(corp1Rating, corp2Rating, match.Corporation1Score, match.Corporation2Score, 30)
 		ratings[match.Corporation1Id] = newCorp1Rating
 		ratings[match.Corporation2Id] = newCorp2Rating
 	}

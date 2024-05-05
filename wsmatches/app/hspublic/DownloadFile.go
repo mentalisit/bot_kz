@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"ws/models"
 )
 
@@ -100,6 +101,8 @@ func (h *HS) SaveCorpListCount(m map[string]models.Corporation, corps []models.M
 		}
 		cc = append(cc, c)
 	}
-
+	sort.Slice(corps, func(i, j int) bool {
+		return corps[i].DateEnded.Before(corps[j].DateEnded)
+	})
 	EloLogic(corps, cc)
 }
