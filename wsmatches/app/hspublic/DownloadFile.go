@@ -76,4 +76,36 @@ func (h *HS) SaveCorpList(corps []models.Match) {
 		corpList = append(corpList, corp)
 	}
 	h.SaveFile("corps", corpList)
+	h.SaveCorpListCount(corpMap, corps)
+}
+func (h *HS) SaveCorpListCount(m map[string]models.Corporation, corps []models.Match) {
+	var cc []models.CorporationCount
+	for _, corporation := range m {
+		var c models.CorporationCount
+		c.Name = corporation.Name
+		c.Id = corporation.Id
+		for _, match := range corps {
+			if corporation.Id == match.Corporation1Id {
+				if match.Corporation1Score > match.Corporation2Score {
+					c.Win += 1
+				} else if match.Corporation1Score < match.Corporation2Score {
+					c.Loss += 1
+				} else if match.Corporation1Score == match.Corporation2Score {
+					c.Draw += 1
+				}
+			} else if corporation.Id == match.Corporation2Id {
+				if match.Corporation2Score > match.Corporation1Score {
+					c.Win += 1
+				} else if match.Corporation2Score < match.Corporation1Score {
+					c.Loss += 1
+				} else if match.Corporation1Score == match.Corporation2Score {
+					c.Draw += 1
+				}
+			}
+		}
+		fmt.Printf("%+v\n", c)
+		cc = append(cc, c)
+	}
+
+	h.SaveFile("corpsCount", cc)
 }

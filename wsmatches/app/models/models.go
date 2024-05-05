@@ -44,14 +44,6 @@ type Match struct {
 	MatchId           string    `json:"MatchId"`
 }
 
-//type CorpsData struct {
-//	Corp1Name  string    `json:"Corp1Name"`
-//	Corp2Name  string    `json:"Corp2Name"`
-//	Corp1Score int       `json:"Corp1Score"`
-//	Corp2Score int       `json:"Corp2Score"`
-//	DateEnded  time.Time `json:"DateEnded"`
-//}
-
 func (data *CorporationsData) SortWin() *CorporationsData {
 	if data.Corporation2Score > data.Corporation1Score {
 		corp := CorporationsData{
@@ -80,4 +72,33 @@ type LevelCorp struct {
 type Corporation struct {
 	Name string `json:"Name"`
 	Id   string `json:"Id"`
+}
+
+type FilterCorps struct {
+	Corp []Corporation `json:"Corp"`
+}
+type Corp struct {
+	MaxPage int           `json:"MaxPage"`
+	Matches []Corporation `json:"matches"`
+}
+type CorpCount struct {
+	MaxPage int                `json:"MaxPage"`
+	Matches []CorporationCount `json:"matches"`
+}
+
+type Ws struct {
+	MaxPage int     `json:"MaxPage"`
+	Matches []Match `json:"matches"`
+}
+type WsCount struct {
+	MaxPage int                `json:"MaxPage"`
+	Matches []Match            `json:"matches"`
+	Count   []CorporationCount `json:"count"`
+}
+type CorporationCount struct {
+	Name string `json:"Name"`
+	Id   string `json:"Id"`
+	Win  int    `json:"Win"`
+	Loss int    `json:"Loss"`
+	Draw int    `json:"Draw"`
 }

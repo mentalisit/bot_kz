@@ -12,6 +12,7 @@ type ConfigBot struct {
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
+	Port string `yaml:"port"`
 }
 
 var Instance *ConfigBot
