@@ -27,7 +27,7 @@ func getDictionaryEnJson() []byte {
 "for_event":"for the event",
 "info_event_started":"The event has started. After each RS, one of the RS participants contributes the points into the database with the command 'K {RS number} {number of points scored}'.",
 "event_mode_enabled":"Event mode is already enabled.",
-"info_event_started":"Event started | The event can be stopped by the channel administrator.",
+"info_event_starting":"Event started | The event can be stopped by the channel administrator.",
 "event_stopped":"Event stopped.",
 "info_event_not_active":"The event is not active. There is nothing to stop",
 "rs_data_entered":"RS data has already been entered",

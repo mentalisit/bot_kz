@@ -33,6 +33,7 @@ func NewDictionary(log *logger.Logger) *Dictionary {
 	dict.setDictionaryJson(getDictionaryRuJson())
 	dict.setDictionaryJson(getDictionaryEnJson())
 	dict.setDictionaryJson(getDictionaryUaJson())
+	dict.setDictionaryJson(getDictionaryDeJson())
 
 	//dict.TranslateViaGoogle("de")
 	return dict
