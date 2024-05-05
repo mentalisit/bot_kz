@@ -1,9 +1,9 @@
 package server
 
 import (
-	"compendium/Compendium/generate"
+	"compendium/logic/generate"
 	"compendium/models"
-	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -29,9 +29,6 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, identity)
-
-	// Запуск асинхронной операции вставки идентификации в базу данных
-	go s.db.Temp.IdentityInsert(context.TODO(), identity)
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
@@ -100,11 +97,14 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			Ver:        1,
 			InSync:     1,
 		}
-		cm := s.db.Temp.CorpMemberReadByUserIdByName(context.Background(), userId, guildId, userName)
-		if len(cm.Tech) > 0 {
-			sd.TechLevels = cm.Tech
+		techBytes, err := s.db.TechGet(userName, userId, guildId)
+		if err != nil {
+			s.log.ErrorErr(err)
 		}
-
+		err = json.Unmarshal(techBytes, &sd.TechLevels)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
 		c.JSON(http.StatusOK, sd)
 	} else if mode == "sync" {
 
@@ -114,7 +114,17 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		go s.db.Temp.CorpMemberTechUpdate(context.TODO(), userId, guildId, userName, data.TechLevels)
+		go func() {
+			bytes, err := json.Marshal(data.TechLevels)
+			if err != nil {
+				s.log.ErrorErr(err)
+			}
+			err = s.db.TechUpdate(userName, userId, guildId, bytes)
+			if err != nil {
+				s.log.ErrorErr(err)
+				return
+			}
+		}()
 
 		// Используйте переменную data с полученными данными
 		c.JSON(http.StatusOK, data)
@@ -139,18 +149,6 @@ func (s *Server) getWsMatches(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-//	func (s *Server) getWsMatchesAll(c *gin.Context) {
-//		c.Header("Access-Control-Allow-Origin", "*")
-//		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-//		c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
-//		limit := c.DefaultQuery("limit", "")
-//		page := c.DefaultQuery("page", "1")
-//		filter := c.DefaultQuery("filter", "")
-//
-//		result := s.getMatchesAll(limit, page, filter)
-//
-//		c.JSON(http.StatusOK, result)
-//	}
 func (s *Server) getWsCorps(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
