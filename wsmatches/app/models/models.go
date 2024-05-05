@@ -55,7 +55,6 @@ func (data *CorporationsData) SortWin() *CorporationsData {
 			Corporation2Score: data.Corporation1Score,
 			DateEnded:         data.DateEnded,
 		}
-		//fmt.Printf("2Score>1Score %d-%d %s-%s\n", data.Corporation2Score, data.Corporation1Score, data.Corporation2Name, data.Corporation1Name)
 		return &corp
 	}
 	return data
@@ -69,11 +68,6 @@ type LevelCorp struct {
 	Percent  int
 }
 
-type Corporation struct {
-	Name string `json:"Name"`
-	Id   string `json:"Id"`
-}
-
 type FilterCorps struct {
 	Corp []Corporation `json:"Corp"`
 }
@@ -81,24 +75,15 @@ type Corp struct {
 	MaxPage int           `json:"MaxPage"`
 	Matches []Corporation `json:"matches"`
 }
-type CorpCount struct {
-	MaxPage int                `json:"MaxPage"`
-	Matches []CorporationCount `json:"matches"`
-}
-
 type Ws struct {
 	MaxPage int     `json:"MaxPage"`
 	Matches []Match `json:"matches"`
 }
-type WsCount struct {
-	MaxPage int                `json:"MaxPage"`
-	Matches []Match            `json:"matches"`
-	Count   []CorporationCount `json:"count"`
-}
-type CorporationCount struct {
+type Corporation struct {
 	Name string `json:"Name"`
 	Id   string `json:"Id"`
 	Win  int    `json:"Win"`
 	Loss int    `json:"Loss"`
 	Draw int    `json:"Draw"`
+	Elo  int    `json:"Elo"`
 }

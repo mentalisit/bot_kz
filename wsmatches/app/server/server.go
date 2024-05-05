@@ -24,7 +24,6 @@ func (s *Srv) runServer(port string) {
 	router.GET("/docs", s.docs)
 	router.GET("/", s.docs)
 	router.GET("/corps", s.getWsCorps)
-	router.GET("/corps2", s.getWsCorpsCount)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")

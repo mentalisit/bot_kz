@@ -29,17 +29,6 @@ func (s *Srv) getWsCorps(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
-func (s *Srv) getWsCorpsCount(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
-	limit := c.DefaultQuery("limit", "")
-	page := c.DefaultQuery("page", "1")
-
-	result := s.getCorpsCount(limit, page)
-
-	c.JSON(http.StatusOK, result)
-}
 func (s *Srv) docs(c *gin.Context) {
 	htmlContent := `
 <!DOCTYPE html>
@@ -90,8 +79,6 @@ func (s *Srv) docs(c *gin.Context) {
         <ul>
             <li><a href="/corps">list corporations</a></li>
             <li><a href="/corps?limit=20">list corporations limit 20</a></li>
-            <li><a href="/corps2">list corporations v2</a></li>
-            <li><a href="/corps2?limit=20">list corporations v2 limit 20</a></li>
             <li><a href="/matches">list matches</a></li>
             <li><a href="/matches?limit=20">list matches limit 20</a></li>
         </ul>

@@ -54,7 +54,6 @@ func (h *HS) SaveFile(fileName string, corpsdata any) {
 }
 func (h *HS) SaveCorpList(corps []models.Match) {
 	corpMap := make(map[string]models.Corporation)
-	var corpList []models.Corporation
 	for _, corp := range corps {
 		c := models.Corporation{
 			Name: corp.Corporation1Name,
@@ -72,16 +71,12 @@ func (h *HS) SaveCorpList(corps []models.Match) {
 			corpMap[corp.Corporation2Name] = c
 		}
 	}
-	for _, corp := range corpMap {
-		corpList = append(corpList, corp)
-	}
-	h.SaveFile("corps", corpList)
 	h.SaveCorpListCount(corpMap, corps)
 }
 func (h *HS) SaveCorpListCount(m map[string]models.Corporation, corps []models.Match) {
-	var cc []models.CorporationCount
+	var cc []models.Corporation
 	for _, corporation := range m {
-		var c models.CorporationCount
+		var c models.Corporation
 		c.Name = corporation.Name
 		c.Id = corporation.Id
 		for _, match := range corps {
@@ -103,9 +98,8 @@ func (h *HS) SaveCorpListCount(m map[string]models.Corporation, corps []models.M
 				}
 			}
 		}
-		fmt.Printf("%+v\n", c)
 		cc = append(cc, c)
 	}
 
-	h.SaveFile("corpsCount", cc)
+	EloLogic(corps, cc)
 }
