@@ -20,6 +20,8 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		d.log.Info(m.Author.Username + ": " + m.Content)
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)
+		} else {
+			d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь ")
 		}
 		//DM message
 		return
