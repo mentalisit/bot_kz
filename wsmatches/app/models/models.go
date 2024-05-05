@@ -40,6 +40,8 @@ type Match struct {
 	Corporation2Id    string    `json:"Corporation2Id"`
 	Corporation1Score int       `json:"Corporation1Score"`
 	Corporation2Score int       `json:"Corporation2Score"`
+	Corporation1Elo   int       `json:"Corporation1Elo"`
+	Corporation2Elo   int       `json:"Corporation2Elo"`
 	DateEnded         time.Time `json:"DateEnded"`
 	MatchId           string    `json:"MatchId"`
 }

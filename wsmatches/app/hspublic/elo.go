@@ -10,6 +10,7 @@ import (
 
 // Имитация базы данных рейтингов
 var ratings = map[string]float64{}
+var elo map[string]int
 
 func EloLogic(match []models.Match, corps []models.Corporation) {
 	for _, c := range corps {
@@ -17,15 +18,18 @@ func EloLogic(match []models.Match, corps []models.Corporation) {
 	}
 
 	processMatches(match)
+	elo = make(map[string]int)
 
-	var elo []models.Corporation
+	var eloa []models.Corporation
 	for _, c := range corps {
 		el := c
-		el.Elo = int(math.Ceil(ratings[c.Id]))
-		elo = append(elo, el)
+		elocurrent := int(math.Ceil(ratings[c.Id]))
+		el.Elo = elocurrent
+		eloa = append(eloa, el)
+		elo[c.Id] = elocurrent
 	}
 
-	mElo, _ := json.Marshal(elo)
+	mElo, _ := json.Marshal(eloa)
 	path := "ws/corps.json"
 	err := os.WriteFile(path, mElo, 0644)
 	if err != nil {

@@ -35,8 +35,19 @@ func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 	}
 	fmt.Println("count", count)
 
-	h.SaveFile(fileName, corpsdata)
 	h.SaveCorpList(corpsdata)
+
+	var match []models.Match
+	for _, corpsdatum := range corpsdata {
+		var current models.Match
+		current = corpsdatum
+		current.Corporation1Elo = elo[current.Corporation1Id]
+		current.Corporation2Elo = elo[current.Corporation2Id]
+
+		match = append(match, current)
+	}
+
+	h.SaveFile(fileName, match)
 }
 
 func (h *HS) SaveFile(fileName string, corpsdata any) {
