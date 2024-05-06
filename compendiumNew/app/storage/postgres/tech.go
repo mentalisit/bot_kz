@@ -50,6 +50,7 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		var techl models.TechLevels
 		err = json.Unmarshal(tech, &techl)
 		if err != nil {

@@ -25,6 +25,7 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 
 	// Проверка на наличие токена в полученной идентификации
 	if identity.Token == "" {
+		fmt.Println(code, identity)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Outdated or invalid code"})
 		return
 	}
@@ -99,10 +100,11 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		}
 		techBytes, err := s.db.TechGet(userName, userId, guildId)
 		if err == nil && len(techBytes) > 0 {
-			err = json.Unmarshal(techBytes, &sd.TechLevels)
-			if err != nil {
-				s.log.ErrorErr(err)
-			}
+			sd.TechLevels = sd.TechLevels.ConvertToTech(techBytes)
+			//err = json.Unmarshal(techBytes, &sd.TechLevels)
+			//if err != nil {
+			//	s.log.ErrorErr(err)
+			//}
 		}
 		c.JSON(http.StatusOK, sd)
 	} else if mode == "sync" {

@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Identity struct {
 	User  User   `json:"user"`
@@ -38,6 +41,29 @@ type TechLevel struct {
 type TechLevels map[int]TechLevel
 type TechLevelArray map[int][2]int
 
+func (a *TechLevelArray) ConvertToTech(b []byte) TechLevelArray {
+	//var m map[int]TechLevel
+	m := make(map[int]TechLevel)
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return TechLevelArray{}
+	}
+	var mi = make(TechLevelArray)
+	for i, le := range m {
+		mi[i] = [2]int{le.Level}
+	}
+	return mi
+}
+func (l *TechLevels) ConvertToTech(b []byte) map[int]TechLevel {
+	//var m map[int]TechLevel
+	m := make(map[int]TechLevel)
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return nil
+	}
+	return m
+}
+
 type SyncData struct {
 	Ver        int        `json:"ver"`        // Версия данных
 	InSync     int        `json:"inSync"`     // Флаг синхронизации
@@ -55,7 +81,7 @@ type CorpMember struct {
 	UserId     string         `json:"userId"`
 	GuildId    string         `json:"guildId"`
 	Avatar     string         `json:"avatar"`
-	Tech       map[int][2]int `json:"tech"`
+	Tech       TechLevelArray `json:"tech"`
 	AvatarUrl  string         `json:"avatarUrl"`
 	TimeZone   string         `json:"timeZone"`
 	LocalTime  string         `json:"localTime"`

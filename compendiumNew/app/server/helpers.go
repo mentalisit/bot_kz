@@ -2,7 +2,6 @@ package server
 
 import (
 	"compendium/models"
-	"fmt"
 )
 
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
@@ -37,7 +36,6 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 	c.Members = []models.CorpMember{}
 
 	if i.Guild.ID != "" {
-		fmt.Printf("%+v\n", i)
 		c.Roles = s.getRoles(i)
 		cm, err := s.db.CorpMembersRead(i.Guild.ID)
 		if err != nil {
