@@ -40,23 +40,31 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	for results.Next() {
 		var t models.CorpMember
 		var id int
-		ttt := make(map[int]models.TechLevel)
+		//ttt := make(map[int]models.TechLevel)
 		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
 
-		bytes, errGet := d.TechGet(t.Name, t.UserId, t.GuildId)
+		getAll, errGet := d.TechGetAll(t)
 		if errGet != nil {
 			return nil, errGet
 		}
-		err = json.Unmarshal(bytes, &ttt)
-		if err != nil {
-			return nil, err
+		for _, member := range getAll {
+			mm = append(mm, member)
 		}
-		t.Tech = make(map[int][2]int)
-		for i, level := range ttt {
-			t.Tech[i] = [2]int{level.Level, int(level.Ts)}
-			//fmt.Println("t ", i, level)
-		}
-		mm = append(mm, t)
+
+		//bytes, errGet := d.TechGet(t.Name, t.UserId, t.GuildId)
+		//if errGet != nil {
+		//	return nil, errGet
+		//}
+		//err = json.Unmarshal(bytes, &ttt)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//t.Tech = make(map[int][2]int)
+		//for i, level := range ttt {
+		//	t.Tech[i] = [2]int{level.Level, int(level.Ts)}
+		//	//fmt.Println("t ", i, level)
+		//}
+		//mm = append(mm, t)
 	}
 	return mm, nil
 }

@@ -98,12 +98,11 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			InSync:     1,
 		}
 		techBytes, err := s.db.TechGet(userName, userId, guildId)
-		if err != nil {
-			s.log.ErrorErr(err)
-		}
-		err = json.Unmarshal(techBytes, &sd.TechLevels)
-		if err != nil {
-			s.log.ErrorErr(err)
+		if err == nil && len(techBytes) > 0 {
+			err = json.Unmarshal(techBytes, &sd.TechLevels)
+			if err != nil {
+				s.log.ErrorErr(err)
+			}
 		}
 		c.JSON(http.StatusOK, sd)
 	} else if mode == "sync" {
@@ -114,17 +113,15 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		go func() {
-			bytes, err := json.Marshal(data.TechLevels)
-			if err != nil {
-				s.log.ErrorErr(err)
-			}
-			err = s.db.TechUpdate(userName, userId, guildId, bytes)
-			if err != nil {
-				s.log.ErrorErr(err)
-				return
-			}
-		}()
+		bytes, err := json.Marshal(data.TechLevels)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+		err = s.db.TechUpdate(userName, userId, guildId, bytes)
+		if err != nil {
+			s.log.ErrorErr(err)
+			return
+		}
 
 		// Используйте переменную data с полученными данными
 		c.JSON(http.StatusOK, data)

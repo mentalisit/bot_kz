@@ -12,6 +12,10 @@ func (d *Db) UsersInsert(u models.User) error {
 		return err
 	}
 	if count > 0 {
+		user, _ := d.UsersGetByUserId(u.ID)
+		if len(user.Alts) > 0 {
+			u.Alts = user.Alts
+		}
 		err = d.UsersUpdate(u)
 		if err != nil {
 			return err
@@ -28,7 +32,7 @@ func (d *Db) UsersInsert(u models.User) error {
 func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	var u models.User
 	var id int
-	selectUser := "SELECT * FROM hs_compendium.users WHERE id = $1 "
+	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
 	err := d.db.QueryRow(context.Background(), selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts))
 	if err != nil {
 		return nil, err

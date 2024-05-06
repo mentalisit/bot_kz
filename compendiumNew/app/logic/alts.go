@@ -50,7 +50,7 @@ func (c *Hs) createAlt() bool {
 						alts = append(alts, alt)
 					} else if alt == split[2] {
 						c.sendChat("alto removed " + split[2])
-						err = c.tech.TechDelete(u.Username, u.ID, c.in.GuildId)
+						err = c.tech.TechDelete(split[2], u.ID, c.in.GuildId)
 						if err != nil {
 							c.log.ErrorErr(err)
 						}
