@@ -1,9 +1,9 @@
 package bot
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"kz_bot/models"
 	"time"
 )
@@ -12,7 +12,6 @@ func (b *Bot) SendPercent(Config models.CorporationConfig) {
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
-		return
 	}
 	untilTime := currentCorp.EndDate.AddDate(0, 0, 7).Unix()
 	if time.Now().UTC().Unix() < untilTime {
@@ -53,7 +52,7 @@ func (b *Bot) SendPercent(Config models.CorporationConfig) {
 func (b *Bot) GetTextPercent(Config models.CorporationConfig, dark bool) string {
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			b.storage.LevelCorp.InsertUpdateCorpLevel(models.LevelCorp{
 				CorpName: Config.CorpName,
 				Level:    0,
