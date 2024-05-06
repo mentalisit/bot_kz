@@ -22,7 +22,7 @@ func (d *Discord) HelpChannelUpdate(c models.CorporationConfig) string {
 			c.MesidDsHelp = d.Hhelp1(c.DsChannel, c.Country)
 			return c.MesidDsHelp
 		}
-		if len(messages) > 2 {
+		if len(messages) > 3 {
 			go d.DeleteMessage(c.DsChannel, c.MesidDsHelp)
 			c.MesidDsHelp = d.Hhelp1(c.DsChannel, c.Country)
 		}

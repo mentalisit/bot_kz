@@ -199,14 +199,26 @@ func (b *Bot) Autohelp() {
 					b.log.Info(fmt.Sprintf("%s %d", s.MesidTgHelp, mID))
 					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
-				s.MesidTgHelp = strconv.Itoa(b.client.Tg.SendHelp(s.TgChannel, strings.ReplaceAll(text, "3", "10")))
+				mid := b.client.Tg.SendHelp(s.TgChannel, strings.ReplaceAll(text, "3", "10"))
+				b.log.Info(fmt.Sprintf("mid %d", mid))
+				s.MesidTgHelp = strconv.Itoa(mid)
 
 			}
 			b.storage.ConfigRs.AutoHelpUpdateMesid(s)
 		}
 		time.Sleep(time.Minute)
 		go b.client.Ds.CleanRsBotOtherMessage()
-	} else if mtime == "03:00" {
-
+	} else if tm.Minute() == 0 {
+		a := b.storage.ConfigRs.AutoHelp()
+		for _, s := range a {
+			if s.DsChannel != "" {
+				MesidDsHelp := b.client.Ds.HelpChannelUpdate(s)
+				if MesidDsHelp != s.MesidDsHelp {
+					s.MesidDsHelp = MesidDsHelp
+					b.storage.ConfigRs.AutoHelpUpdateMesid(s)
+				}
+			}
+		}
 	}
+	time.Sleep(time.Minute)
 }

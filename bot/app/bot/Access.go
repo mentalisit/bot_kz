@@ -122,6 +122,7 @@ func (b *Bot) updateLanguage(langUpdate string, config models.CorporationConfig)
 	b.configCorp[config.CorpName] = config
 
 	b.storage.ConfigRs.AutoHelpUpdateMesid(config)
+	b.storage.ReloadDbArray()
 
 	go b.ifTipSendTextDelSecond(b.getLanguageText(config.Country, "language_switched_to"), 20)
 	b.log.Info(fmt.Sprintf("замена языка в %s на %s", config.CorpName, config.Country))
