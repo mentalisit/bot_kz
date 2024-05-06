@@ -46,6 +46,9 @@ func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 
 		match = append(match, current)
 	}
+	sort.Slice(match, func(i, j int) bool {
+		return match[i].DateEnded.After(match[j].DateEnded)
+	})
 
 	h.SaveFile(fileName, match)
 }
