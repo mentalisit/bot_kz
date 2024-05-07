@@ -35,6 +35,18 @@ func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
 	}
 	return tech, nil
 }
+func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
+	var tech []byte
+	var userid string
+	sel := "SELECT userid,tech FROM hs_compendium.tech WHERE guildid = $1 AND username = $2"
+	err := d.db.QueryRow(context.Background(), sel, guildid, username).Scan(&userid, &tech)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, "", err
+		}
+	}
+	return tech, userid, nil
+}
 func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	var acm []models.CorpMember
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"

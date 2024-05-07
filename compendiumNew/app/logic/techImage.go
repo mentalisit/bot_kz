@@ -85,3 +85,40 @@ func (c *Hs) techImageName() bool {
 	}
 	return false
 }
+func (c *Hs) techImageNameAlt() bool {
+	after, _ := strings.CutPrefix(c.in.Text, "%")
+	re := regexp.MustCompile(`^[tт] +(\w+) +[iи]$`)
+
+	matches := re.FindStringSubmatch(after)
+
+	if len(matches) > 0 {
+		userName := matches[1]
+		techBytes, userID, err := c.tech.TechGetName(userName, c.in.GuildId)
+		if err != nil && userID == "" {
+			c.sendChat("данные не найдены")
+			return false
+		}
+
+		user, err := c.users.UsersGetByUserId(userID)
+		if err != nil {
+			c.sendChat("данные не найдены")
+			c.log.Info(err.Error())
+			return false
+		}
+		if user == nil {
+			c.sendChat("данные не найдены")
+			return false
+		}
+
+		_, m := c.BytesToTechLevel(techBytes)
+		userPic := imageGenerator.GenerateUser(
+			user.AvatarURL,
+			c.in.GuildAvatar,
+			userName,
+			c.in.GuildName,
+			m)
+		c.sendChatPic("", userPic)
+		return true
+	}
+	return false
+}

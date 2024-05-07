@@ -12,6 +12,7 @@ type Tech interface {
 	TechGet(username, userid, guildid string) ([]byte, error)
 	TechUpdate(username, userid, guildid string, tech []byte) error
 	TechDelete(username, userid, guildid string) error
+	TechGetName(username, guildid string) ([]byte, string, error)
 }
 
 type Guilds interface {
