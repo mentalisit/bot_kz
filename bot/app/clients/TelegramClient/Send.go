@@ -343,6 +343,7 @@ func (t *Telegram) Send(chatid string, text string) error {
 	}
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = ThreadID
+	m.ParseMode = tgbotapi.ModeMarkdownV2
 	_, err = t.t.Send(m)
 	if err != nil {
 		return err
