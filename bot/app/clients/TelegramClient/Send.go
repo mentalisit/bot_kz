@@ -343,7 +343,6 @@ func (t *Telegram) Send(chatid string, text string) error {
 	}
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = ThreadID
-	m.ParseMode = tgbotapi.ModeMarkdownV2
 	_, err = t.t.Send(m)
 	if err != nil {
 		return err
@@ -581,7 +580,11 @@ func (t *Telegram) SendHelp(chatid string, text string) int {
 	msg := tgbotapi.NewMessage(chatId, text)
 	msg.MessageThreadID = ThreadID
 	msg.ReplyMarkup = keyboardQueue
-	message, _ := t.t.Send(msg)
+	message, err := t.t.Send(msg)
+	t.log.InfoStruct("helpTG", message)
+	if err != nil {
+		t.log.ErrorErr(err)
+	}
 
 	return message.MessageID
 

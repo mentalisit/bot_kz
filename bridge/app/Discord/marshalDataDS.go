@@ -19,7 +19,7 @@ func (d *Discord) MarshalDataSendBridgeAsync(message models.BridgeSendToMessenge
 
 	resp, err := http.Post("http://"+endpoint+"/discord/send/bridge", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		resp, err = http.Post("http://192.168.100.155:802/send/bridge", "application/json", bytes.NewBuffer(data))
+		resp, err = http.Post("http://192.168.100.131:802/send/bridge", "application/json", bytes.NewBuffer(data))
 		if err != nil {
 			d.log.ErrorErr(err)
 			return nil
@@ -44,7 +44,7 @@ func (d *Discord) MarshalDataDiscordDel(message models.DeleteMessageStruct) {
 
 	_, err = http.Post("http://"+endpoint+"/discord/del", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
+		_, err = http.Post("http://192.168.100.131:802/data", "application/json", bytes.NewBuffer(data))
 		d.log.ErrorErr(err)
 		return
 	}
@@ -59,7 +59,7 @@ func (d *Discord) MarshalDataDiscordSendDel(message models.SendTextDeleteSeconds
 
 	_, err = http.Post("http://"+endpoint+"/discord/SendDel", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
+		_, err = http.Post("http://192.168.100.131:802/data", "application/json", bytes.NewBuffer(data))
 		d.log.ErrorErr(err)
 		return
 	}

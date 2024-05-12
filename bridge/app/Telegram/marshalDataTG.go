@@ -19,7 +19,7 @@ func (t *Telegram) MarshalDataSendBridgeAsync(message models.BridgeSendToMesseng
 
 	resp, err := http.Post("http://"+endpoint+"/telegram/send/bridge", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		resp, err = http.Post("http://192.168.100.155:802/send/bridge", "application/json", bytes.NewBuffer(data))
+		resp, err = http.Post("http://192.168.100.131:802/send/bridge", "application/json", bytes.NewBuffer(data))
 		if err != nil {
 			t.log.ErrorErr(err)
 			return nil
@@ -44,7 +44,7 @@ func (t *Telegram) MarshalDelTelegram(message models.DeleteMessageStruct) {
 
 	_, err = http.Post("http://"+endpoint+"/telegram/del", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.155:803/data", "application/json", bytes.NewBuffer(data))
+		_, err = http.Post("http://192.168.100.131:802/data", "application/json", bytes.NewBuffer(data))
 		if err != nil {
 			t.log.ErrorErr(err)
 			return
@@ -60,7 +60,7 @@ func (t *Telegram) MarshalSendDelTelegram(message models.SendTextDeleteSeconds) 
 
 	_, err = http.Post("http://"+endpoint+"/telegram/SendDel", "application/json", bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.155:803/data", "application/json", bytes.NewBuffer(data))
+		_, err = http.Post("http://192.168.100.131:802/data", "application/json", bytes.NewBuffer(data))
 		if err != nil {
 			t.log.ErrorErr(err)
 			return
