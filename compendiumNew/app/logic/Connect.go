@@ -47,7 +47,7 @@ func (c *Hs) connect() {
 	}
 	err = c.sendDM("Пожалуйста, вставьте код в приложение\nhttps://mentalisit.github.io/HadesSpace/ \n" +
 		"или просто перейдите по ссылке для автоматической авторизации  \n" +
-		"https://mentalisit.github.io/HadesSpace/compendiumTech?c=" + code)
+		"https://mentalisit.github.io/HadesSpace/compendiumTech?c2=" + code)
 	if err != nil {
 		c.log.ErrorErr(err)
 		return
