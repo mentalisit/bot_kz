@@ -26,7 +26,7 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 	// Проверка на наличие токена в полученной идентификации
 	if identity.Token == "" {
 		fmt.Println(code, identity)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Outdated or invalid code"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Outdated or invalid code"})
 		return
 	}
 	c.JSON(http.StatusOK, identity)
@@ -38,6 +38,9 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 	token := c.GetHeader("authorization")
 	i := s.GetTokenIdentity(token)
+	if i == nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+	}
 	c.JSON(http.StatusOK, i)
 }
 
@@ -50,7 +53,7 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 
 	i := s.GetTokenIdentity(token)
 	if i == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
 		return
 	}
 
@@ -64,6 +67,10 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 
 	token := c.GetHeader("authorization")
 	i := s.GetTokenIdentity(token)
+	if i == nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
+		return
+	}
 	c.JSON(http.StatusOK, i)
 }
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
@@ -80,7 +87,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 
 	if i == nil || i.User.Username == "" || i.Guild.Name == "" {
 		fmt.Println("i==nil")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid token"})
 		return
 	}
 	userId := i.User.ID
@@ -101,10 +108,6 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		techBytes, err := s.db.TechGet(userName, userId, guildId)
 		if err == nil && len(techBytes) > 0 {
 			sd.TechLevels = sd.TechLevels.ConvertToTech(techBytes)
-			//err = json.Unmarshal(techBytes, &sd.TechLevels)
-			//if err != nil {
-			//	s.log.ErrorErr(err)
-			//}
 		}
 		c.JSON(http.StatusOK, sd)
 	} else if mode == "sync" {
