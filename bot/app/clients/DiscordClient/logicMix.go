@@ -133,10 +133,14 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 	if len(m.Message.Embeds) > 0 {
 		m.Content += "\u200B"
 	}
+	nick := m.Author.Username
+	if m.Member != nil && m.Member.Nick != "" {
+		nick = m.Member.Nick
+	}
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
-		Name:        m.Author.Username,
+		Name:        nick,
 		NameMention: m.Author.Mention(),
 		Ds: struct {
 			Mesid   string
