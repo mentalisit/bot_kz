@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Hs) logic(m models.IncomingMessage) {
-	fmt.Printf("logic %+v\n", m)
+	fmt.Printf("logic: %s %+v\n", m.Language, m)
 	cutPrefix, found := strings.CutPrefix(m.Text, "%")
 
 	if found {

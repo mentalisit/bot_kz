@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"kz_bot/clients/helper"
 	"kz_bot/clients/restapi"
 	"kz_bot/models"
 	"strings"
@@ -261,6 +262,7 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+	channel, _ := d.S.Channel(m.ChannelID)
 
 	i := models.IncomingMessage{
 		Text:         m.Content,
@@ -277,10 +279,12 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		GuildAvatarF: g.Icon,
 		Type:         "ds",
 	}
-	//if m.ChannelID == "1096374833157255178" {
-	//	_ = restapi.SendCompendiumAppDev(i)
-	//	return
-	//}
+	if channel != nil {
+		i.Language = helper.DetectLanguage(g.Name + "/" + channel.Name)
+	} else {
+		i.Language = helper.DetectLanguage(g.Name)
+	}
+
 	err = restapi.SendCompendiumApp(i)
 	if err != nil {
 		d.log.InfoStruct("SendCompendiumApp", i)

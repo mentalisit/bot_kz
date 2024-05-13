@@ -3,6 +3,7 @@ package TelegramClient
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"kz_bot/clients/helper"
 	"kz_bot/clients/restapi"
 	"kz_bot/models"
 	"strconv"
@@ -124,6 +125,15 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 
 	if chat.Location != nil && chat.Location.Address != "" {
 		t.log.Info(chat.Location.Address)
+	}
+	if m.From != nil && m.From.LanguageCode != "" {
+		i.Language = m.From.LanguageCode
+	} else {
+		chatName := t.chatName(ChatId)
+		if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
+			chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
+		}
+		i.Language = helper.DetectLanguage(chatName)
 	}
 	err = restapi.SendCompendiumApp(i)
 	if err != nil {

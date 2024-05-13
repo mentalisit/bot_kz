@@ -14,4 +14,5 @@ type IncomingMessage struct {
 	GuildAvatar  string
 	GuildAvatarF string
 	Type         string
+	Language     string
 }
