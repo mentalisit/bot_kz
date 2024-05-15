@@ -6,19 +6,16 @@ import (
 	"fmt"
 )
 
-func (c *Hs) connect() {
-	err := c.sendDM(fmt.Sprintf("Код для подключения приложения к серверу %s.", c.in.GuildName))
+func (c *Hs) connect(m models.IncomingMessage) {
+	err := c.sendDM(m, fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName))
 	if err != nil && err.Error() == "forbidden" {
-		c.sendChat(c.in.MentionName +
-			" пожалуйста отправьте мне команду старт в личных сообщениях, " +
-			"я как бот не могу первый отправить вам личное сообщение. " +
-			"И после повторите команду  ")
+		c.sendChat(m, fmt.Sprintf(c.getText(m, "ERROR_SEND"), m.MentionName))
 		return
 	} else if err != nil {
 		c.log.ErrorErr(err)
 	}
-	c.sendChat(c.in.MentionName + ", Инструкцию отправили вам в Директ.")
-	newIdentify, cm := c.generate()
+	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
+	newIdentify, cm := c.generate(m)
 	code := generate.GenerateFormattedString(newIdentify)
 	err = c.guilds.GuildInsert(newIdentify.Guild)
 	if err != nil {
@@ -40,47 +37,47 @@ func (c *Hs) connect() {
 		c.log.ErrorErr(err)
 		return
 	}
-	err = c.sendDM(code)
+	err = c.sendDM(m, code)
 	if err != nil {
 		c.log.ErrorErr(err)
 		return
 	}
-	err = c.sendDM("Пожалуйста, вставьте код в приложение\nhttps://mentalisit.github.io/HadesSpace/ \n" +
-		"или просто перейдите по ссылке для автоматической авторизации  \n" +
-		"https://mentalisit.github.io/HadesSpace/compendiumTech?c2=" + code)
+	urlLink := "https://mentalisit.github.io/HadesSpace/"
+	urlLinkAdd := "compendiumTech?c2=" + code
+	err = c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
 	if err != nil {
 		c.log.ErrorErr(err)
 		return
 	}
 }
 
-func (c *Hs) generate() (models.Identity, models.CorpMember) {
+func (c *Hs) generate(m models.IncomingMessage) (models.Identity, models.CorpMember) {
 	//проверить если есть NameId то предложить соединить для двух корпораций
 	identity := models.Identity{
 		User: models.User{
-			ID:       c.in.NameId,
-			Username: c.in.Name,
+			ID:       m.NameId,
+			Username: m.Name,
 			//Discriminator: "",
-			Avatar:    c.in.AvatarF,
-			AvatarURL: c.in.Avatar,
+			Avatar:    m.AvatarF,
+			AvatarURL: m.Avatar,
 			Alts:      []string{},
 		},
 		Guild: models.Guild{
-			URL:  c.in.GuildAvatar,
-			ID:   c.in.GuildId,
-			Name: c.in.GuildName,
-			Icon: c.in.GuildAvatarF,
+			URL:  m.GuildAvatar,
+			ID:   m.GuildId,
+			Name: m.GuildName,
+			Icon: m.GuildAvatarF,
 		},
 		Token: generate.GenerateToken(),
 		//Type:  c.in.Type,
 	}
 	cm := models.CorpMember{
-		Name:      c.in.Name,
-		UserId:    c.in.NameId,
-		GuildId:   c.in.GuildId,
-		Avatar:    c.in.AvatarF,
+		Name:      m.Name,
+		UserId:    m.NameId,
+		GuildId:   m.GuildId,
+		Avatar:    m.AvatarF,
 		Tech:      map[int][2]int{},
-		AvatarUrl: c.in.Avatar,
+		AvatarUrl: m.Avatar,
 	}
 	return identity, cm
 }

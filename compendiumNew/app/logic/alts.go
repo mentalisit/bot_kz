@@ -1,16 +1,17 @@
 package logic
 
 import (
+	"compendium/models"
 	"fmt"
 	"strings"
 )
 
-func (c *Hs) createAlt() bool {
-	after, _ := strings.CutPrefix(c.in.Text, "%")
+func (c *Hs) createAlt(m models.IncomingMessage) bool {
+	after, _ := strings.CutPrefix(m.Text, "%")
 	split := strings.Split(after, " ")
 	if len(split) == 3 {
 		if split[0] == "alts" && split[1] == "add" {
-			u, err := c.users.UsersGetByUserId(c.in.NameId)
+			u, err := c.users.UsersGetByUserId(m.NameId)
 			if err != nil {
 				c.log.ErrorErr(err)
 				return false
@@ -19,7 +20,7 @@ func (c *Hs) createAlt() bool {
 			if len(alts) > 0 {
 				for _, alt := range alts {
 					if alt == split[2] {
-						c.sendChat("already exists")
+						c.sendChat(m, c.getText(m, "ALREADY_EXISTS"))
 						return true
 					}
 				}
@@ -33,12 +34,12 @@ func (c *Hs) createAlt() bool {
 			}
 
 			c.log.Info(fmt.Sprintf("User %s alts new %+v", u.Username, alts))
-			c.sendChat("alto added " + split[2])
-			_ = c.sendDM(fmt.Sprintf("List of your alts %+v", alts))
+			c.sendChat(m, fmt.Sprintf(c.getText(m, "ALTO_ADDED"), split[2]))
+			_ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), alts))
 			return true
 		}
 		if split[0] == "alts" && split[1] == "del" {
-			u, err := c.users.UsersGetByUserId(c.in.NameId)
+			u, err := c.users.UsersGetByUserId(m.NameId)
 			if err != nil {
 				c.log.ErrorErr(err)
 				return false
@@ -49,8 +50,8 @@ func (c *Hs) createAlt() bool {
 					if alt != split[2] {
 						alts = append(alts, alt)
 					} else if alt == split[2] {
-						c.sendChat("alto removed " + split[2])
-						err = c.tech.TechDelete(split[2], u.ID, c.in.GuildId)
+						c.sendChat(m, fmt.Sprintf(c.getText(m, "ALTO_REMOVED"), split[2]))
+						err = c.tech.TechDelete(split[2], u.ID, m.GuildId)
 						if err != nil {
 							c.log.ErrorErr(err)
 						}
@@ -63,11 +64,11 @@ func (c *Hs) createAlt() bool {
 					return false
 				}
 			} else {
-				c.sendChat("no altos found")
+				c.sendChat(m, fmt.Sprintf("NO_ALTOS_FOUND"))
 			}
 
 			c.log.Info(fmt.Sprintf("User %s alts delete %+v", u.Username, split[2]))
-			_ = c.sendDM(fmt.Sprintf("List of your alts %+v", u.Alts))
+			_ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), u.Alts))
 			return true
 		}
 	}

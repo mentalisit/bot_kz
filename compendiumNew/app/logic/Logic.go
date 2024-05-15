@@ -11,52 +11,33 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	cutPrefix, found := strings.CutPrefix(m.Text, "%")
 
 	if found {
-		c.in = m
 		switch cutPrefix {
-		case "help", "помощь", "справка":
-			c.help()
-		case "подключить", "connect":
-			c.connect()
-		case "т и", "t i":
-			c.techImage()
+		case "help", "помощь", "допомога":
+			c.help(m)
+		case "подключить", "connect", "підключити":
+			c.connect(m)
+		case "т и", "t i", "т і":
+			c.techImage(m)
 		default:
 
-			c.regular(cutPrefix)
+			c.regular(m)
 		}
 	}
 }
-func (c *Hs) regular(text string) {
-	if c.techImageName() {
-	} else if c.techImageNameAlt() {
-	} else if c.logicRoles() {
-	} else if c.createAlt() {
+func (c *Hs) regular(m models.IncomingMessage) {
+	if c.techImageName(m) {
+	} else if c.techImageNameAlt(m) {
+	} else if c.logicRoles(m) {
+	} else if c.createAlt(m) {
 	} else {
-		c.log.Info("else " + text)
+		c.log.Info("else " + m.Text)
 	}
 }
-func (c *Hs) help() {
-	if c.in.Type == "ds" {
-		c.sendChat("на текуший момент доступны команды:\n" +
-			"'**%help**' или '**%помощь**', '**%справка**' для получения текущей справки \n" +
-			"'**%connect**' или '**%подключить**' для подключения приложения\n" +
-			"'**%t i**' или '**%т и**' для получения изображения с вашими модулями\n" +
-			"'**%t @Name i**' или '**%т @имя и**' для получения изображения с модулями другого игрока\n" +
-			"'**%t Name i**' или '**%т имя и**' для получения изображения с модулями альта" +
-			"'**%alts add NameAlt**' для создания альта для технологий\n" +
-			"'**%alts del NameAlt**' для удаления альта")
+func (c *Hs) help(m models.IncomingMessage) {
+	if m.Type == "ds" {
+		c.sendChat(m, c.getText(m, "HELP_TEXT_DS"))
 	} else {
-		c.sendChat("на текуший момент доступны команды:\n" +
-			"'**%help**' или '**%помощь**', '**%справка**' для получения текущей справки \n" +
-			"'**%connect**' или '**%подключить**' для подключения приложения\n" +
-			"'**%t i**' или '**%т и**' для получения изображения с вашими модулями\n" +
-			"'**%t @Name i**' или '**%т @имя и**' для получения изображения с модулями другого игрока\n" +
-			"'**%t Name i**' или '**%т имя и**' для получения изображения с модулями альта" +
-			"'**%role create RoleName**' создание роли для телеграм\n" +
-			"'**%role delete Rolename**' удаление роли для телеграм\n" +
-			"'**%role s RoleName**' для подписки на роль\n" +
-			"'**%role u RoleName**' для удаления подписки на роль\n" +
-			"'**%alts add NameAlt**' для создания альта для технологий\n" +
-			"'**%alts del NameAlt**' для удаления альта")
+		c.sendChat(m, c.getText(m, "HELP_TEXT_TG"))
 	}
 
 }

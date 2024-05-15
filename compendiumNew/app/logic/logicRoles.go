@@ -1,13 +1,16 @@
 package logic
 
 import (
+	"compendium/models"
 	"fmt"
 	"regexp"
 	"strings"
 )
 
-func (c *Hs) logicRoles() bool {
-	cutPrefix, _ := strings.CutPrefix(c.in.Text, "%")
+//TODO NEED TRANSLATE
+
+func (c *Hs) logicRoles(m models.IncomingMessage) bool {
+	cutPrefix, _ := strings.CutPrefix(m.Text, "%")
 	// Компиляция регулярного выражения
 	regex, err := regexp.Compile(`^role (create|delete) (\w+)$`)
 	if err != nil {
@@ -19,26 +22,26 @@ func (c *Hs) logicRoles() bool {
 	if matches != nil {
 		action := matches[1]
 		roleName := matches[2]
-		ifExistRole := c.guildsRole.GuildRoleExist(c.in.GuildId, roleName)
+		ifExistRole := c.guildsRole.GuildRoleExist(m.GuildId, roleName)
 
 		if action == "create" {
 			if ifExistRole {
-				c.sendChat(roleName + " роль уже существует")
+				c.sendChat(m, roleName+" роль уже существует")
 			} else {
-				c.guildsRole.GuildRoleCreate(c.in.GuildId, roleName)
-				c.sendChat(roleName + " роль создана")
+				c.guildsRole.GuildRoleCreate(m.GuildId, roleName)
+				c.sendChat(m, roleName+" роль создана")
 			}
 		}
 		if action == "delete" {
 			if ifExistRole {
-				err = c.guildsRole.GuildRoleDelete(c.in.GuildId, roleName)
+				err = c.guildsRole.GuildRoleDelete(m.GuildId, roleName)
 				if err != nil {
 					c.log.ErrorErr(err)
 					return false
 				}
-				c.sendChat(roleName + " роль удалена")
+				c.sendChat(m, roleName+" роль удалена")
 			} else {
-				c.sendChat(roleName + " не существует")
+				c.sendChat(m, roleName+" не существует")
 			}
 		}
 
@@ -56,38 +59,38 @@ func (c *Hs) logicRoles() bool {
 	if matches != nil {
 		action := matches[1]
 		roleName := matches[2]
-		existRole := c.guildsRole.GuildRoleExist(c.in.GuildId, roleName)
-		existSubscribe := c.guildsRole.GuildRolesExistSubscribe(c.in.GuildId, roleName, c.in.NameId)
+		existRole := c.guildsRole.GuildRoleExist(m.GuildId, roleName)
+		existSubscribe := c.guildsRole.GuildRolesExistSubscribe(m.GuildId, roleName, m.NameId)
 		if action == "s" {
 			if existRole {
 				if existSubscribe {
-					c.sendChat("ты уже подписан на роль " + roleName)
+					c.sendChat(m, "ты уже подписан на роль "+roleName)
 				} else {
-					err = c.guildsRole.GuildRolesSubscribe(c.in.GuildId, roleName, c.in.Name, c.in.NameId)
+					err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, m.Name, m.NameId)
 					if err != nil {
 						c.log.ErrorErr(err)
 						return false
 					}
-					c.sendChat("подписался на роль " + roleName)
+					c.sendChat(m, "подписался на роль "+roleName)
 				}
 			} else {
-				c.sendChat(fmt.Sprintf("роли %s не существует, сначала создай роль\n команда: %%role create %s", roleName, roleName))
+				c.sendChat(m, fmt.Sprintf("роли %s не существует, сначала создай роль\n команда: %%role create %s", roleName, roleName))
 			}
 		}
 		if action == "u" {
 			if existRole {
 				if existSubscribe {
-					err = c.guildsRole.GuildRolesDeleteSubscribe(c.in.GuildId, roleName, c.in.NameId)
+					err = c.guildsRole.GuildRolesDeleteSubscribe(m.GuildId, roleName, m.NameId)
 					if err != nil {
 						c.log.ErrorErr(err)
 						return false
 					}
-					c.sendChat("отписался от роли " + roleName)
+					c.sendChat(m, "отписался от роли "+roleName)
 				} else {
-					c.sendChat("ты не подписан на " + roleName)
+					c.sendChat(m, "ты не подписан на "+roleName)
 				}
 			} else {
-				c.sendChat("не существует роли " + roleName)
+				c.sendChat(m, "не существует роли "+roleName)
 			}
 		}
 		return true
@@ -104,7 +107,7 @@ func (c *Hs) logicRoles() bool {
 		for _, s := range split {
 			after, found := strings.CutPrefix(s, "@")
 			if found {
-				if c.guildsRole.GuildRoleExist(c.in.GuildId, roleName) {
+				if c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
 					user, errget := c.users.UsersGetByUserName(after)
 					if errget != nil {
 						c.log.ErrorErr(errget)
@@ -112,7 +115,7 @@ func (c *Hs) logicRoles() bool {
 					}
 
 					if user.ID != "" {
-						err = c.guildsRole.GuildRolesSubscribe(c.in.GuildId, roleName, user.Username, user.ID)
+						err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, user.Username, user.ID)
 						if err != nil {
 							return false
 						}
@@ -126,7 +129,7 @@ func (c *Hs) logicRoles() bool {
 				}
 			}
 		}
-		c.sendChat(text)
+		c.sendChat(m, text)
 		return true
 	}
 	return false

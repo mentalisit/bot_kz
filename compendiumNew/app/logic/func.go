@@ -3,17 +3,18 @@ package logic
 import (
 	"compendium/logic/ds"
 	"compendium/logic/tg"
+	"compendium/models"
 )
 
-func (c *Hs) sendChat(text string) {
-	if c.in.Type == "ds" {
-		err := ds.SendChannel(c.in.ChannelId, text)
+func (c *Hs) sendChat(m models.IncomingMessage, text string) {
+	if m.Type == "ds" {
+		err := ds.SendChannel(m.ChannelId, text)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
-	} else if c.in.Type == "tg" {
-		err := tg.Send(c.in.ChannelId, text)
+	} else if m.Type == "tg" {
+		err := tg.Send(m.ChannelId, text)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -21,34 +22,37 @@ func (c *Hs) sendChat(text string) {
 	}
 }
 
-func (c *Hs) sendDM(text string) error {
-	if c.in.Type == "ds" {
-		err := ds.SendChannel(c.in.DmChat, text)
+func (c *Hs) sendDM(m models.IncomingMessage, text string) error {
+	if m.Type == "ds" {
+		err := ds.SendChannel(m.DmChat, text)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return err
 		}
-	} else if c.in.Type == "tg" {
-		err := tg.Send(c.in.DmChat, text)
+	} else if m.Type == "tg" {
+		err := tg.Send(m.DmChat, text)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (c *Hs) sendChatPic(text string, pic []byte) {
-	if c.in.Type == "ds" {
-		err := ds.SendChannelPic(c.in.ChannelId, text, pic)
+func (c *Hs) sendChatPic(m models.IncomingMessage, text string, pic []byte) {
+	if m.Type == "ds" {
+		err := ds.SendChannelPic(m.ChannelId, text, pic)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
-	} else if c.in.Type == "tg" {
-		err := tg.SendPic(c.in.ChannelId, text, pic)
+	} else if m.Type == "tg" {
+		err := tg.SendPic(m.ChannelId, text, pic)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
 	}
 
+}
+func (c *Hs) getText(m models.IncomingMessage, key string) string {
+	return c.Dict.GetText(m.Language, key)
 }
