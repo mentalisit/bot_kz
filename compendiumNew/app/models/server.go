@@ -35,8 +35,8 @@ type Guild struct {
 }
 
 type TechLevel struct {
-	Level int   `json:"level"`
 	Ts    int64 `json:"ts"`
+	Level int   `json:"level"`
 }
 type TechLevels map[int]TechLevel
 type TechLevelArray map[int][2]int
