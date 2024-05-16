@@ -65,7 +65,13 @@ func (b *Bot) RsStart() {
 						}
 
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 
@@ -79,7 +85,13 @@ func (b *Bot) RsStart() {
 							b.getText("rs_queue"), b.in.Lvlkz, numberkz,
 							b.getText("was_launched_incomplete"), name1, b.getText("go"), textEvent)
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 
@@ -102,7 +114,13 @@ func (b *Bot) RsStart() {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 
@@ -117,7 +135,13 @@ func (b *Bot) RsStart() {
 						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("go"), textEvent)
 						text := text1 + text2
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 
@@ -136,7 +160,13 @@ func (b *Bot) RsStart() {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 				}
@@ -149,7 +179,13 @@ func (b *Bot) RsStart() {
 							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"),
 							name1, name2, name3, b.getText("go"), textEvent)
 						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							if err != nil {
+								b.log.ErrorErr(err)
+							}
+						}
 						b.wg.Done()
 					}()
 

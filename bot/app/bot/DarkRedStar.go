@@ -183,7 +183,13 @@ func (b *Bot) RsDarkPlus() {
 					text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 					tgmesid = b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
 					go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
-					b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					if err != nil {
+						err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.wg.Done()
 				}()
 			}
@@ -235,7 +241,13 @@ func (b *Bot) RsDarkPlus() {
 					} else {
 						dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 					}
-					b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					if err != nil {
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.wg.Done()
 				}()
 			}
@@ -256,7 +268,13 @@ func (b *Bot) RsDarkPlus() {
 						n1, n2, n3,
 						b.getText("go"), textEvent)
 					tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-					b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					if err != nil {
+						err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.wg.Done()
 				}()
 			}

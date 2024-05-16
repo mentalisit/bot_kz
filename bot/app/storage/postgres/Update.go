@@ -5,26 +5,21 @@ import (
 	"fmt"
 )
 
-func (d *Db) MesidTgUpdate(ctx context.Context, mesidtg int, lvlkz string, corpname string) {
-	if d.debug {
-		fmt.Println("MesidTgUpdate", "mesidtg", mesidtg, "lvlkz", lvlkz, "corpname", corpname)
-	}
+func (d *Db) MesidTgUpdate(ctx context.Context, mesidtg int, lvlkz string, corpname string) error {
 	upd := `update kzbot.sborkz set tgmesid = $1 where lvlkz = $2 AND corpname = $3 `
 	_, err := d.db.Exec(ctx, upd, mesidtg, lvlkz, corpname)
 	if err != nil {
-		d.log.ErrorErr(err)
+		return err
 	}
+	return nil
 }
-func (d *Db) MesidDsUpdate(ctx context.Context, mesidds, lvlkz, corpname string) {
-	if d.debug {
-		fmt.Println("MesidDsUpdate", "mesidds", mesidds, "lvlkz", lvlkz, "corpname", corpname)
-	}
-	ctx = context.Background()
+func (d *Db) MesidDsUpdate(ctx context.Context, mesidds, lvlkz, corpname string) error {
 	upd := `update kzbot.sborkz set dsmesid = $1 where lvlkz = $2 AND corpname = $3 `
 	_, err := d.db.Exec(ctx, upd, mesidds, lvlkz, corpname)
 	if err != nil {
-		d.log.ErrorErr(err)
+		return err
 	}
+	return nil
 }
 func (d *Db) UpdateCompliteRS(ctx context.Context, lvlkz string, dsmesid string, tgmesid int, wamesid string, numberkz int, numberevent int, corpname string) {
 	if d.debug {

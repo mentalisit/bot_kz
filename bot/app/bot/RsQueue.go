@@ -82,7 +82,13 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					if err != nil {
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 				}
 				b.wg.Done()
 			}()
@@ -99,7 +105,13 @@ func (b *Bot) QueueLevel() {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
 				} else if !b.in.Option.Edit {
 					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					if err != nil {
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
@@ -119,7 +131,13 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					if err != nil {
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 				}
 				b.wg.Done()
 			}()
@@ -138,7 +156,13 @@ func (b *Bot) QueueLevel() {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
 				} else if !b.in.Option.Edit {
 					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					if err != nil {
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
@@ -164,7 +188,13 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					if err != nil {
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 				}
 				b.wg.Done()
 			}()
@@ -185,7 +215,13 @@ func (b *Bot) QueueLevel() {
 					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
 				} else if !b.in.Option.Edit {
 					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+					if err != nil {
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
 					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
