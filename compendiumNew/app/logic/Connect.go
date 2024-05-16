@@ -43,7 +43,7 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		return
 	}
 	urlLink := "https://mentalisit.github.io/HadesSpace/"
-	urlLinkAdd := "compendiumTech?c2=" + code
+	urlLinkAdd := "compendiumTech?c2=" + code + "&lang=" + m.Language
 	err = c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
 	if err != nil {
 		c.log.ErrorErr(err)
