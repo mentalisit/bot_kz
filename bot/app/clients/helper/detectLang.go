@@ -9,12 +9,12 @@ func DetectLanguage(s string) string {
 	var russianChars []*unicode.RangeTable
 	russianChars = append(russianChars, unicode.Cyrillic)
 	// Немецкие символы, которых нет в английском языке
-	germanChars := "ÄÖÜß"
+	//germanChars := "ÄÖÜß"
 
 	// Счетчики для каждого языка
 	ukrainianCount := 0
 	russianCount := 0
-	germanCount := 0
+	//germanCount := 0
 
 	contains := func(char rune, chars string) bool {
 		for _, c := range chars {
@@ -31,8 +31,8 @@ func DetectLanguage(s string) string {
 			ukrainianCount++
 		case unicode.IsOneOf(russianChars, char):
 			russianCount++
-		case contains(char, germanChars):
-			germanCount++
+			//case contains(char, germanChars):
+			//germanCount++
 		}
 	}
 
@@ -40,8 +40,8 @@ func DetectLanguage(s string) string {
 		return "uk"
 	} else if russianCount > 0 {
 		return "ru"
-	} else if germanCount > 0 {
-		return "de"
+		//} else if germanCount > 0 {
+		//	return "de"
 	} else {
 		return "en"
 	}
