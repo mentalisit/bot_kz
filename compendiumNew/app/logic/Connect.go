@@ -43,7 +43,7 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		return
 	}
 	urlLink := "https://mentalisit.github.io/HadesSpace/"
-	urlLinkAdd := "compendiumTech?c2=" + code + "&lang=" + m.Language
+	urlLinkAdd := "compendiumTech?c=" + code + "&lang=" + m.Language + "&client=1"
 	err = c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
 	if err != nil {
 		c.log.ErrorErr(err)
@@ -71,6 +71,11 @@ func (c *Hs) generate(m models.IncomingMessage) (models.Identity, models.CorpMem
 		Token: generate.GenerateToken(),
 		//Type:  c.in.Type,
 	}
+	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
+	if tokenOld != "" {
+		identity.Token = tokenOld
+	}
+
 	cm := models.CorpMember{
 		Name:      m.Name,
 		UserId:    m.NameId,
