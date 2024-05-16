@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 )
 
 func (d *Db) MesidTgUpdate(ctx context.Context, mesidtg int, lvlkz string, corpname string) error {
@@ -21,27 +20,25 @@ func (d *Db) MesidDsUpdate(ctx context.Context, mesidds, lvlkz, corpname string)
 	}
 	return nil
 }
-func (d *Db) UpdateCompliteRS(ctx context.Context, lvlkz string, dsmesid string, tgmesid int, wamesid string, numberkz int, numberevent int, corpname string) {
-	if d.debug {
-		fmt.Println("UpdateCompliteRS", lvlkz, dsmesid, tgmesid, wamesid, numberkz, numberevent, corpname)
-	}
+func (d *Db) UpdateCompliteRS(ctx context.Context, lvlkz string, dsmesid string, tgmesid int, wamesid string, numberkz int, numberevent int, corpname string) error {
 	upd := `update kzbot.sborkz set active = 1,dsmesid = $1,tgmesid = $2,wamesid = $3,numberkz = $4,numberevent = $5 
 				where lvlkz = $6 AND corpname = $7 AND active = 0`
 	_, err := d.db.Exec(ctx, upd, dsmesid, tgmesid, wamesid, numberkz, numberevent, lvlkz, corpname)
 	if err != nil {
-		d.log.ErrorErr(err)
+		return err
 	}
 
 	updN := `update kzbot.numkz set number=number+1 where lvlkz = $1 AND corpname = $2`
 	_, err = d.db.Exec(ctx, updN, lvlkz, corpname)
 	if err != nil {
-		d.log.ErrorErr(err)
+		return err
 	}
 	if numberevent > 0 {
 		updE := `update kzbot.rsevent set number = number+1  where corpname = $1 AND activeevent = 1`
 		_, err = d.db.Exec(ctx, updE, corpname)
 		if err != nil {
-			d.log.ErrorErr(err)
+			return err
 		}
 	}
+	return nil
 }

@@ -192,7 +192,13 @@ func (b *Bot) RsStart() {
 				}
 			}
 			b.wg.Wait()
-			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+			err = b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+			if err != nil {
+				err = b.storage.Update.UpdateCompliteRS(context.Background(), b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+				if err != nil {
+					b.log.ErrorErr(err)
+				}
+			}
 
 			//отправляем сообщение о корпорациях с %
 			go b.SendPercent(b.in.Config)

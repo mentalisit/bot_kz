@@ -281,7 +281,13 @@ func (b *Bot) RsDarkPlus() {
 
 			b.wg.Wait()
 			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", b.in.Config.CorpName, b.in.Name, b.in.NameMention, b.in.Tip, b.in.Lvlkz, b.in.Timekz, tgmesid, numkzN)
-			b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+			err = b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+			if err != nil {
+				err = b.storage.Update.UpdateCompliteRS(context.Background(), b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+				if err != nil {
+					b.log.ErrorErr(err)
+				}
+			}
 
 			//отправляем сообщение о корпорациях с %
 			go b.SendPercent(b.in.Config)
@@ -360,7 +366,13 @@ func (b *Bot) RsSoloPlus() {
 	}
 
 	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", b.in.Config.CorpName, b.in.Name, b.in.NameMention, b.in.Tip, b.in.Lvlkz, b.in.Timekz, tgmesid, numkzN)
-	b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+	err := b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+	if err != nil {
+		err = b.storage.Update.UpdateCompliteRS(context.Background(), b.in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, b.in.Config.CorpName)
+		if err != nil {
+			b.log.ErrorErr(err)
+		}
+	}
 
 	//проверка есть ли игрок в других чатах
 	go b.elseChat([]string{b.in.Name})
