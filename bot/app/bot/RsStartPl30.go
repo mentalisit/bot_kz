@@ -65,9 +65,9 @@ func (b *Bot) RsStart() {
 						}
 
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -114,9 +114,9 @@ func (b *Bot) RsStart() {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -160,9 +160,9 @@ func (b *Bot) RsStart() {
 							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
 						}
 						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}

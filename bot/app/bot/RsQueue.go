@@ -82,9 +82,9 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
@@ -131,9 +131,9 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
@@ -188,9 +188,9 @@ func (b *Bot) QueueLevel() {
 					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
 
 					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.DsChannel)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
