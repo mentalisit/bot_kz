@@ -114,11 +114,15 @@ func (d *Discord) updateModuleOrWeapon(username, module, level string) {
 func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 	ok, config := d.CheckChannelConfigDS(i.ChannelID)
 	if ok {
+		user := i.Interaction.User
+		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
+			user = i.Interaction.Member.User
+		}
 		in := models.InMessage{
 			Mtext:       i.MessageComponentData().CustomID,
 			Tip:         "ds",
-			Name:        i.Interaction.Member.User.Username,
-			NameMention: i.Interaction.Member.User.Mention(),
+			Name:        user.Username,
+			NameMention: user.Mention(),
 			Ds: struct {
 				Mesid   string
 				Nameid  string
@@ -126,9 +130,9 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 				Avatar  string
 			}{
 				Mesid:   i.Interaction.Message.ID,
-				Nameid:  i.Interaction.Member.User.ID,
+				Nameid:  user.ID,
 				Guildid: i.Interaction.GuildID,
-				Avatar:  i.Interaction.Member.User.AvatarURL("128"),
+				Avatar:  user.AvatarURL("128"),
 			},
 			Config: config,
 			Option: models.Option{Reaction: true},

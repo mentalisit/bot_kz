@@ -134,15 +134,15 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 	if len(m.Message.Embeds) > 0 {
 		m.Content += "\u200B"
 	}
-	nick := m.Author.Username
-	if m.Member != nil && m.Member.Nick != "" {
-		nick = m.Member.Nick
+	user := m.Author
+	if m.Member != nil && m.Member.User != nil {
+		user = m.Member.User
 	}
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
-		Name:        nick,
-		NameMention: m.Author.Mention(),
+		Name:        user.Username,
+		NameMention: user.Mention(),
 		Ds: struct {
 			Mesid   string
 			Nameid  string
@@ -150,9 +150,9 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 			Avatar  string
 		}{
 			Mesid:   m.ID,
-			Nameid:  m.Author.ID,
+			Nameid:  user.ID,
 			Guildid: m.GuildID,
-			Avatar:  m.Author.AvatarURL("128"),
+			Avatar:  user.AvatarURL("128"),
 		},
 		Config: config,
 		Option: models.Option{InClient: true},
@@ -163,73 +163,17 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 func (d *Discord) ifMentionBot(m *discordgo.MessageCreate) bool {
 	after, found := strings.CutPrefix(m.Content, d.S.State.User.Mention())
 	if found {
-		if len(after) > 0 {
-			split := strings.Split(after, " ")
-			if split[0] == "help" || split[0] == "справка" || split[0] == "довідка" {
-				//nujno sdelat obshuu spravku
-				d.SendChannelDelSecond(m.ChannelID, "сорян в разработке", 10)
-				return true
-			}
-		}
-
 		d.DeleteMesageSecond(m.ChannelID, m.ID, 30)
 		goodRs, _ := d.CheckChannelConfigDS(m.ChannelID)
-		//okAlliance, corp := hades.HadesStorage.AllianceChat(m.ChannelID)
-		//okWs1, corpw := hades.HadesStorage.Ws1Chat(m.ChannelID)
-		var text string
 		if goodRs {
-			text = fmt.Sprintf("%s че пингуешь? пиши Справка,или пиши создателю бота @Mentalisit#5159 ", m.Author.Mention())
-			//} else if okAlliance {
-			//	text = fmt.Sprintf("%s не балуйся бот занят пересылкой сообщений в игру в корпорацию %s", m.Author.Mention(), corp.Corp)
-			//} else if okWs1 {
-			//	text = fmt.Sprintf("%s не балуйся бот занят пересылкой сообщений в игру в корпорацию %s", m.Author.Mention(), corpw.Corp)
+			d.SendChannelDelSecond(m.ChannelID, fmt.Sprintf("%s че пингуешь? пиши Справка,или пиши создателю бота @Mentalisit#5159 ", m.Author.Mention()), 30)
 		} else {
-			text = fmt.Sprintf("%s че пингуешь? я же многофункциональный бот, Префикс доступен только после активации нужного режима \n Для получения справки пиши %s help",
-				m.Author.Mention(), d.S.State.User.Mention())
+			m.Content = "%" + after
+			d.SendToCompendium(m)
 		}
-		d.SendChannelDelSecond(m.ChannelID, text, 30)
 	}
 	return found
 }
-
-//func (d *Discord) SendToBridgeChatFilter(m *discordgo.MessageCreate, config models.BridgeConfig) {
-//	mes := models.BridgeMessage{
-//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
-//		Sender:        d.getAuthorName(m),
-//		Tip:           "ds",
-//		Avatar:        m.Author.AvatarURL("128"),
-//		ChatId:        m.ChannelID,
-//		MesId:         m.ID,
-//		GuildId:       m.GuildID,
-//		TimestampUnix: m.Timestamp.Unix(),
-//		Config:        &config,
-//	}
-//	if len(m.StickerItems) > 0 {
-//		mes.Text = fmt.Sprintf("https://cdn.discordapp.com/stickers/%s.png", m.Message.StickerItems[0].ID)
-//	}
-//
-//	if m.ReferencedMessage != nil {
-//		usernameR := m.ReferencedMessage.Author.String() //.Username
-//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
-//			usernameR = m.ReferencedMessage.Member.Nick
-//		}
-//		mes.Reply = &models.BridgeMessageReply{
-//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
-//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
-//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
-//			UserName:    usernameR,
-//		}
-//	}
-//	if len(m.Attachments) > 0 {
-//		if len(m.Attachments) != 1 {
-//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
-//		}
-//		for _, a := range m.Attachments {
-//			mes.FileUrl = append(mes.FileUrl, a.URL)
-//		}
-//	}
-//	d.ChanBridgeMessage <- mes
-//}
 
 func (d *Discord) readReactionTranslate(r *discordgo.MessageReactionAdd, m *discordgo.Message) {
 	user, err := d.S.User(r.UserID)
@@ -264,14 +208,18 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 	}
 	channel, _ := d.S.Channel(m.ChannelID)
 
+	user := m.Author
+	if m.Member != nil && m.Member.User != nil {
+		user = m.Member.User
+	}
 	i := models.IncomingMessage{
 		Text:         m.Content,
-		DmChat:       d.dmChannel(m.Author.ID),
-		Name:         m.Author.Username,
-		MentionName:  m.Author.Mention(),
-		NameId:       m.Author.ID,
-		Avatar:       m.Author.AvatarURL(""),
-		AvatarF:      m.Author.Avatar,
+		DmChat:       d.dmChannel(user.ID),
+		Name:         user.Username,
+		MentionName:  user.Mention(),
+		NameId:       user.ID,
+		Avatar:       user.AvatarURL(""),
+		AvatarF:      user.Avatar,
 		ChannelId:    m.ChannelID,
 		GuildId:      m.GuildID,
 		GuildName:    g.Name,
