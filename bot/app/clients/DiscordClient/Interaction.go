@@ -118,6 +118,9 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
 			user = i.Interaction.Member.User
 		}
+		if i.Interaction.Member != nil && i.Interaction.Member.Nick != "" {
+			user.Username = i.Interaction.Member.Nick
+		}
 		in := models.InMessage{
 			Mtext:       i.MessageComponentData().CustomID,
 			Tip:         "ds",

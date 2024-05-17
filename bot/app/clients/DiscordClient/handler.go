@@ -122,6 +122,9 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	//		}
 	//	})
 	//}
+	if i.Interaction != nil && i.Interaction.Member != nil && i.Interaction.Member.Nick != "" {
+		i.Interaction.Member.User.Username = i.Interaction.Member.Nick
+	}
 
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:

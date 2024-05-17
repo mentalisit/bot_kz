@@ -138,6 +138,9 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 	if m.Member != nil && m.Member.User != nil {
 		user = m.Member.User
 	}
+	if m.Member != nil && m.Member.Nick != "" {
+		user.Username = m.Member.Nick
+	}
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
@@ -212,6 +215,11 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 	if m.Member != nil && m.Member.User != nil {
 		user = m.Member.User
 	}
+	// слитает доступ к бд
+	//if m.Member != nil && m.Member.Nick != "" {
+	//	user.Username = m.Member.Nick
+	//}
+
 	i := models.IncomingMessage{
 		Text:         m.Content,
 		DmChat:       d.dmChannel(user.ID),
