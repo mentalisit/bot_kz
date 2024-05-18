@@ -16,8 +16,8 @@ func (d *Db) GuildInsert(u models.Guild) error {
 			return err
 		}
 	} else {
-		insert := `INSERT INTO hs_compendium.guilds(url,guildid,name,icon) VALUES ($1,$2,$3,$4)`
-		_, err = d.db.Exec(context.Background(), insert, u.URL, u.ID, u.Name, u.Icon)
+		insert := `INSERT INTO hs_compendium.guilds(url,guildid,name,icon,type) VALUES ($1,$2,$3,$4,$5)`
+		_, err = d.db.Exec(context.Background(), insert, u.URL, u.ID, u.Name, u.Icon, u.Type)
 		if err != nil {
 			return err
 		}
@@ -28,7 +28,7 @@ func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
 	var u models.Guild
 	var id int
 	selectGuild := "SELECT * FROM hs_compendium.guilds WHERE guildid = $1 "
-	err := d.db.QueryRow(context.Background(), selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon)
+	err := d.db.QueryRow(context.Background(), selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
 	if err != nil {
 		return nil, err
 	}

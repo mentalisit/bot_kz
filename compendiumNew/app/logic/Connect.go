@@ -55,9 +55,8 @@ func (c *Hs) generate(m models.IncomingMessage) (models.Identity, models.CorpMem
 	//проверить если есть NameId то предложить соединить для двух корпораций
 	identity := models.Identity{
 		User: models.User{
-			ID:       m.NameId,
-			Username: m.Name,
-			//Discriminator: "",
+			ID:        m.NameId,
+			Username:  m.Name,
 			Avatar:    m.AvatarF,
 			AvatarURL: m.Avatar,
 			Alts:      []string{},
@@ -67,9 +66,9 @@ func (c *Hs) generate(m models.IncomingMessage) (models.Identity, models.CorpMem
 			ID:   m.GuildId,
 			Name: m.GuildName,
 			Icon: m.GuildAvatarF,
+			Type: m.Type,
 		},
 		Token: generate.GenerateToken(),
-		//Type:  c.in.Type,
 	}
 	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
 	if tokenOld != "" {
