@@ -15,7 +15,11 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		c.log.ErrorErr(err)
 	}
 	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
-	newIdentify, cm := c.generate(m)
+	newIdentify, cm := generate.GenerateIdentity(m)
+	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
+	if tokenOld != "" {
+		newIdentify.Token = tokenOld
+	}
 	code := generate.GenerateFormattedString(newIdentify)
 	err = c.guilds.GuildInsert(newIdentify.Guild)
 	if err != nil {
@@ -49,39 +53,4 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		c.log.ErrorErr(err)
 		return
 	}
-}
-
-func (c *Hs) generate(m models.IncomingMessage) (models.Identity, models.CorpMember) {
-	//проверить если есть NameId то предложить соединить для двух корпораций
-	identity := models.Identity{
-		User: models.User{
-			ID:        m.NameId,
-			Username:  m.Name,
-			Avatar:    m.AvatarF,
-			AvatarURL: m.Avatar,
-			Alts:      []string{},
-		},
-		Guild: models.Guild{
-			URL:  m.GuildAvatar,
-			ID:   m.GuildId,
-			Name: m.GuildName,
-			Icon: m.GuildAvatarF,
-			Type: m.Type,
-		},
-		Token: generate.GenerateToken(),
-	}
-	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
-	if tokenOld != "" {
-		identity.Token = tokenOld
-	}
-
-	cm := models.CorpMember{
-		Name:      m.Name,
-		UserId:    m.NameId,
-		GuildId:   m.GuildId,
-		Avatar:    m.AvatarF,
-		Tech:      map[int][2]int{},
-		AvatarUrl: m.Avatar,
-	}
-	return identity, cm
 }
