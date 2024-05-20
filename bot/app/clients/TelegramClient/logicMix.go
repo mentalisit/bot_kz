@@ -102,6 +102,7 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 		Name:         m.From.String(),
 		MentionName:  "@" + m.From.String(),
 		NameId:       strconv.FormatInt(m.From.ID, 10),
+		NickName:     "", //нет способа извлечь ник кроме member.CustomTitle
 		Avatar:       t.getAvatarIsExist(m.From.ID),
 		AvatarF:      "tg",
 		ChannelId:    ChatId,
@@ -121,6 +122,15 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 			i.GuildAvatar = "https://api.telegram.org/file/bot" + t.t.Token + "/" + file.FilePath
 		}
 
+	}
+	member, _ := t.t.GetChatMember(tgbotapi.GetChatMemberConfig{ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
+		ChatConfig: tgbotapi.ChatConfig{
+			ChatID: m.Chat.ID,
+		},
+		UserID: m.From.ID,
+	}})
+	if member.CustomTitle != "" {
+		i.NickName = member.CustomTitle
 	}
 
 	if chat.Location != nil && chat.Location.Address != "" {

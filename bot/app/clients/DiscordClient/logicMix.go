@@ -215,10 +215,10 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 	if m.Member != nil && m.Member.User != nil {
 		user = m.Member.User
 	}
-	// слитает доступ к бд
-	//if m.Member != nil && m.Member.Nick != "" {
-	//	user.Username = m.Member.Nick
-	//}
+	nick := ""
+	if m.Member != nil {
+		nick = m.Member.DisplayName()
+	}
 
 	i := models.IncomingMessage{
 		Text:         m.Content,
@@ -226,6 +226,7 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		Name:         user.Username,
 		MentionName:  user.Mention(),
 		NameId:       user.ID,
+		NickName:     nick,
 		Avatar:       user.AvatarURL(""),
 		AvatarF:      user.Avatar,
 		ChannelId:    m.ChannelID,

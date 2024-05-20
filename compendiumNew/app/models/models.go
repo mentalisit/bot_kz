@@ -6,6 +6,7 @@ type IncomingMessage struct {
 	Name         string
 	MentionName  string
 	NameId       string
+	NickName     string
 	Avatar       string
 	AvatarF      string
 	ChannelId    string
