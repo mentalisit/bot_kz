@@ -74,6 +74,7 @@ func CheckCodeTest(CheckCode string) models.Identity {
 			Guild: models.Guild{
 				ID:   "22222222222",
 				Name: "TestGuild",
+				Type: "tg",
 			},
 			Token: "gGUBIlUAU1uTKWd8HssP27ojG0DugoAaPslwFGTDSAbEM6UM",
 		}
