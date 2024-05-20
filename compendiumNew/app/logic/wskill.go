@@ -41,7 +41,7 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 	if len(ws) > 0 {
 		// Исходные данные
 		data := [][]string{
-			{"Returns in", "NameNameName", "Ship"},
+			{"Returns in", "Name", "Ship"},
 		}
 
 		for _, w := range ws {
@@ -70,7 +70,7 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 		for _, row := range data {
 			text += fmt.Sprintf(format+"\n", row[0], row[1], row[2])
 		}
-		c.sendChat(m, fmt.Sprintf("%s, Scheduled WS Returns\n%s", m.MentionName, text))
+		c.sendChatTable(m, fmt.Sprintf("%s, Scheduled WS Returns", m.MentionName), text)
 	} else {
 		c.sendChat(m, m.MentionName+", No ships are scheduled to return.")
 	}

@@ -21,6 +21,21 @@ func (c *Hs) sendChat(m models.IncomingMessage, text string) {
 		}
 	}
 }
+func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
+	if m.Type == "ds" {
+		err := ds.SendChannel(m.ChannelId, text+"\n```"+table+"```")
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	} else if m.Type == "tg" {
+		err := tg.Send(m.ChannelId, text+"\n"+table)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	}
+}
 
 func (c *Hs) sendDM(m models.IncomingMessage, text string) error {
 	if m.Type == "ds" {
