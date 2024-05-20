@@ -19,7 +19,7 @@ func (b *Bot) TopLevel() {
 			b.getText("top_participants"), b.getText("rs"), b.in.Lvlkz)
 
 		b.ifTipSendTextDelSecond(b.getText("scan_db"), 5)
-		good := b.storage.Top.TopLevel(ctx, b.in.Config.CorpName, b.in.Lvlkz)
+		good := b.storage.Top.TopLevelPerMonth(ctx, b.in.Config.CorpName, b.in.Lvlkz)
 		if !good {
 			b.ifTipSendTextDelSecond(b.getText("no_history"), 20)
 		} else if good {
@@ -58,7 +58,7 @@ func (b *Bot) TopAll() {
 	if numEvent == 0 {
 		mesage := fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText("top_participants"))
 		b.ifTipSendTextDelSecond(b.getText("scan_db"), 5)
-		good := b.storage.Top.TopAll(ctx, b.in.Config.CorpName)
+		good := b.storage.Top.TopAllPerMonth(ctx, b.in.Config.CorpName)
 		if good {
 			b.ifTipSendTextDelSecond(b.getText("form_list"), 5)
 			message2 := b.storage.Top.TopTemp(ctx)

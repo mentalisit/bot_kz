@@ -9,4 +9,6 @@ type Top interface {
 	TopTempEvent(ctx context.Context) string
 	TopAll(ctx context.Context, CorpName string) bool
 	TopAllEvent(ctx context.Context, CorpName string, numberevent int) bool
+	TopAllPerMonth(ctx context.Context, CorpName string) bool
+	TopLevelPerMonth(ctx context.Context, CorpName, lvlkz string) bool
 }

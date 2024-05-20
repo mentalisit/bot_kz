@@ -249,3 +249,68 @@ func (d *Db) TopAllEventNew(ctx context.Context, CorpName string, numberevent in
 	}
 	return topslice
 }
+
+func (d *Db) TopAllPerMonth(ctx context.Context, CorpName string) bool {
+	good := false
+	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
+	results, err := d.db.Query(ctx, sel, CorpName)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return false
+	}
+	var name string
+	for results.Next() {
+		err = results.Scan(&name)
+		if len(name) > 0 {
+			good = true
+			var countNames int
+			selC := "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE corpname = $1 AND name = $2 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days'"
+			row := d.db.QueryRow(ctx, selC, CorpName, name)
+			err = row.Scan(&countNames)
+			if err != nil {
+				d.log.ErrorErr(err)
+				return false
+			}
+
+			insertTempTopEvent := `INSERT INTO kzbot.temptopevent(name,numkz,points) VALUES ($1,$2,$3)`
+			_, err = d.db.Exec(ctx, insertTempTopEvent, name, countNames, 0)
+			if err != nil {
+				d.log.ErrorErr(err)
+				return false
+			}
+		}
+	}
+	return good
+}
+func (d *Db) TopLevelPerMonth(ctx context.Context, CorpName, lvlkz string) bool {
+	var good = false
+	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
+	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, "d"+lvlkz)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return false
+	}
+
+	var name string
+	for results.Next() {
+		err = results.Scan(&name)
+		if len(name) > 0 {
+			good = true
+			var countNumberNameActive1 int
+			sel = "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE (lvlkz = $1 OR lvlkz = $2) AND corpname = $3 AND name = $4 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days'"
+			row := d.db.QueryRow(ctx, sel, lvlkz, "d"+lvlkz, CorpName, name)
+			err = row.Scan(&countNumberNameActive1)
+			if err != nil {
+				d.log.ErrorErr(err)
+			}
+			countNames := countNumberNameActive1
+			insertTempTopEvent := `INSERT INTO kzbot.temptopevent(name,numkz,points) VALUES ($1,$2,$3)`
+			_, err = d.db.Exec(ctx, insertTempTopEvent, name, countNames, 0)
+			if err != nil {
+				d.log.ErrorErr(err)
+				return false
+			}
+		}
+	}
+	return good
+}
