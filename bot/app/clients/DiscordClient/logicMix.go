@@ -216,8 +216,8 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		user = m.Member.User
 	}
 	nick := ""
-	if m.Member != nil {
-		nick = m.Member.DisplayName()
+	if m.Member != nil && m.Member.Nick != "" {
+		nick = m.Member.Nick
 	}
 
 	i := models.IncomingMessage{
