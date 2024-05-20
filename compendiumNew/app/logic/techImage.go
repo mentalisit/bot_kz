@@ -43,7 +43,7 @@ func (c *Hs) techImage(m models.IncomingMessage) {
 func (c *Hs) techImageName(m models.IncomingMessage) bool {
 	after, _ := strings.CutPrefix(m.Text, "%")
 	re := regexp.MustCompile(`^[тt] +<@(\d{17,20})> +[иiі]$`)
-	retg := regexp.MustCompile(`^[tт] +@(\w+) +[iиі]$`)
+	retg := regexp.MustCompile(`^[tт] +@(\S+) +[iиі]$`)
 
 	matches := re.FindStringSubmatch(after)
 	matchestg := retg.FindStringSubmatch(after)
@@ -87,7 +87,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 }
 func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 	after, _ := strings.CutPrefix(m.Text, "%")
-	re := regexp.MustCompile(`^[tт] +(\w+) +[iиі]$`)
+	re := regexp.MustCompile(`^[tт] +(\S+) +[iиі]$`)
 
 	matches := re.FindStringSubmatch(after)
 
