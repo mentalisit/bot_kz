@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
+	"sort"
 )
 
 func (d *Db) WsKillInsert(w models.WsKill) error {
@@ -34,6 +35,9 @@ func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
 		}
 		wskill = append(wskill, w)
 	}
+	sort.Slice(wskill, func(i, j int) bool {
+		return wskill[i].TimestampEnd > wskill[j].TimestampEnd
+	})
 	return wskill, nil
 }
 

@@ -17,14 +17,14 @@ func (c *Hs) wskill(m models.IncomingMessage) bool {
 	if !found {
 		return false
 	}
-	re := regexp.MustCompile(`(\S+|@\S+|<@\d+>) ?(\w+)?`)
+	re := regexp.MustCompile(`(\S+|@\S+|<@\d+>)(\s+)?(\S+)?`)
 	matches := re.FindStringSubmatch(after)
 	if len(matches) == 0 || len(after) < 3 {
 		c.wskillList(m)
 		return true
 	}
 	name := matches[1]
-	ship := matches[2]
+	ship := matches[3]
 	afterMatches := re.FindStringIndex(after)
 	endIndex := afterMatches[1]
 	textAfterMatch := after[endIndex:]
@@ -76,6 +76,10 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 	}
 }
 func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText string) {
+	if name == "" || ship == "" {
+		text := fmt.Sprintf("%s, The wskill command accepts any of the following formats: `wskill name ship`, `wskill name ship <time>`, or `wskill name ship delete`.", m.MentionName)
+		c.sendChat(m, text)
+	}
 	if len(afterText) <= 2 {
 		now := time.Now().UTC()
 		add := now.Add(18 * time.Hour)
@@ -83,7 +87,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		wskill := models.WsKill{
 			GuildId:      m.GuildId,
 			ChatId:       m.ChannelId,
-			UserName:     m.Name,
+			UserName:     c.getNameText(name),
 			Mention:      name,
 			ShipName:     ship,
 			TimestampEnd: timestamp,
@@ -108,7 +112,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			if matches[1] == "delete" {
 				wskill := models.WsKill{
 					GuildId:  m.GuildId,
-					UserName: m.Name,
+					UserName: c.getNameText(name),
 					ShipName: ship,
 				}
 				err := c.db.DB.WsKillDelete(wskill)
@@ -148,7 +152,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 				wskill := models.WsKill{
 					GuildId:      m.GuildId,
 					ChatId:       m.ChannelId,
-					UserName:     m.Name,
+					UserName:     c.getNameText(name),
 					Mention:      name,
 					ShipName:     ship,
 					TimestampEnd: timestamp,
@@ -196,7 +200,7 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 	wskill := models.WsKill{
 		GuildId:      m.GuildId,
 		ChatId:       m.ChannelId,
-		UserName:     m.Name,
+		UserName:     c.getNameText(name),
 		Mention:      name,
 		ShipName:     ship,
 		TimestampEnd: parsedTime.Unix(),
@@ -297,4 +301,20 @@ func getTimeLeft(timestamp int64) (int, int) {
 	hours := int(duration.Hours())
 	minutes := int(duration.Minutes()) % 60
 	return hours, minutes
+}
+func (c *Hs) getNameText(name string) string {
+	re := regexp.MustCompile(`<@(\d+)>`)
+	matches := re.FindStringSubmatch(name)
+	if len(matches) > 0 {
+		user, err := c.users.UsersGetByUserId(matches[1])
+		if err != nil {
+			return name
+		} else {
+			return user.Username
+		}
+	}
+	if name[:1] == "@" {
+		return name[1:]
+	}
+	return name
 }
