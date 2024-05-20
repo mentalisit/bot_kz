@@ -29,6 +29,7 @@ func (c *Hs) regular(m models.IncomingMessage) {
 	} else if c.techImageNameAlt(m) {
 	} else if c.logicRoles(m) {
 	} else if c.createAlt(m) {
+	} else if c.wskill(m) {
 	} else {
 		c.log.Info("else " + m.Text)
 	}

@@ -94,3 +94,12 @@ type CorpRole struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type WsKill struct {
+	GuildId      string
+	ChatId       string
+	UserName     string
+	Mention      string
+	ShipName     string
+	TimestampEnd int64
+}

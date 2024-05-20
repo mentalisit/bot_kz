@@ -137,4 +137,19 @@ func (d *Db) createTable() {
 		fmt.Println("Ошибка при создании таблицы guildroles:", err)
 		return
 	}
+
+	// Создание таблицы wskill
+	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.wskill (
+	id           bigserial primary key,
+	guildid 	 TEXT,
+	chatid 	     TEXT,
+	username     TEXT,
+	mention      TEXT,
+	shipname     TEXT,
+	timestampend BIGSERIAL
+	)`)
+	if err != nil {
+		fmt.Println("Ошибка при создании таблицы wskill:", err)
+		return
+	}
 }

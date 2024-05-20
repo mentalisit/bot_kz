@@ -38,6 +38,7 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 }
 
 func (c *Hs) inbox(m chan models.IncomingMessage) {
+	go c.wsKillTimer()
 	for {
 		select {
 		case in := <-m:
