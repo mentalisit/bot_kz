@@ -4,6 +4,7 @@ import (
 	"compendium/models"
 	"context"
 	"encoding/json"
+	"time"
 )
 
 func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
@@ -56,25 +57,48 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 			return nil, errGet
 		}
 		for _, member := range getAll {
+			if member.TimeZone != "" {
+				t12, t24 := getTimeStrings(member.ZoneOffset)
+				member.LocalTime = t12
+				member.LocalTime24 = t24
+			}
 			mm = append(mm, member)
 		}
 
-		//bytes, errGet := d.TechGet(t.Name, t.UserId, t.GuildId)
-		//if errGet != nil {
-		//	return nil, errGet
-		//}
-		//err = json.Unmarshal(bytes, &ttt)
-		//if err != nil {
-		//	return nil, err
-		//}
-		//t.Tech = make(map[int][2]int)
-		//for i, level := range ttt {
-		//	t.Tech[i] = [2]int{level.Level, int(level.Ts)}
-		//	//fmt.Println("t ", i, level)
-		//}
-		//mm = append(mm, t)
 	}
 	return mm, nil
+}
+func getTimeStrings(offset int) (string, string) {
+	// Получаем текущее время в UTC
+	now := time.Now().UTC()
+
+	// Применяем смещение к текущему времени в UTC
+	offsetDuration := time.Duration(offset) * time.Minute
+	timeWithOffset := now.Add(offsetDuration)
+
+	// Форматируем время в 12-часовом формате с AM/PM
+	time12HourFormat := timeWithOffset.Format("03:04 PM")
+
+	// Форматируем время в 24-часовом формате
+	time24HourFormat := timeWithOffset.Format("15:04")
+
+	return time12HourFormat, time24HourFormat
+}
+func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error {
+	sqlUpd := `update hs_compendium.corpmember set zonaoffset = $1,timezona = $2 where userid = $3 AND guildid = $4`
+	_, err := d.db.Exec(context.Background(), sqlUpd, offset, timeZone, userid, guildid)
+	return err
+}
+
+func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
+	var u models.CorpMember
+	var id int
+	selectUser := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1 "
+	err := d.db.QueryRow(context.Background(), selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &u.Avatar, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
 }
 
 //func (d *Db) CorpMemberReadByUserId(ctx context.Context, userId, guildid string) models.CorpMember {

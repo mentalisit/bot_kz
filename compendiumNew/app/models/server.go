@@ -77,17 +77,18 @@ type CorpData struct {
 }
 
 type CorpMember struct {
-	Name       string         `json:"name"`
-	UserId     string         `json:"userId"`
-	GuildId    string         `json:"guildId"`
-	Avatar     string         `json:"avatar"`
-	Tech       TechLevelArray `json:"tech"`
-	AvatarUrl  string         `json:"avatarUrl"`
-	TimeZone   string         `json:"timeZone"`
-	LocalTime  string         `json:"localTime"`
-	ZoneOffset int            `json:"zoneOffset"` // TZ offset in minutes
-	AfkFor     string         `json:"afkFor"`     // readable afk duration
-	AfkWhen    int            `json:"afkWhen"`    // Unix Epoch when user returns
+	Name        string         `json:"name"`
+	UserId      string         `json:"userId"`
+	GuildId     string         `json:"guildId"`
+	Avatar      string         `json:"avatar"`
+	Tech        TechLevelArray `json:"tech"`
+	AvatarUrl   string         `json:"avatarUrl"`
+	LocalTime   string         `json:"localTime"`   //localTime:"07:52 PM"
+	LocalTime24 string         `json:"localTime24"` //localTime24:"19:52"
+	TimeZone    string         `json:"timeZone"`    //timeZone:"UTC-5"
+	ZoneOffset  int            `json:"zoneOffset"`  //zoneOffset:-300
+	AfkFor      string         `json:"afkFor"`      // readable afk duration
+	AfkWhen     int            `json:"afkWhen"`     // Unix Epoch when user returns
 }
 
 type CorpRole struct {

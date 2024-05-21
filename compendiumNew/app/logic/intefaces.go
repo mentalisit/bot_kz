@@ -5,6 +5,8 @@ import "compendium/models"
 type CorpMember interface {
 	CorpMemberInsert(cm models.CorpMember) error
 	CorpMembersRead(guildid string) ([]models.CorpMember, error)
+	CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error
+	CorpMemberByUserId(userId string) (*models.CorpMember, error)
 }
 
 type Tech interface {

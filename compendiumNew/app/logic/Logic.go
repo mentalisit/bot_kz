@@ -30,6 +30,7 @@ func (c *Hs) regular(m models.IncomingMessage) {
 	} else if c.logicRoles(m) {
 	} else if c.createAlt(m) {
 	} else if c.wskill(m) {
+	} else if c.TzTime(m) {
 	} else {
 		c.log.Info("else " + m.Text)
 	}

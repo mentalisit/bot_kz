@@ -45,32 +45,10 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 		}
 
 		for _, w := range ws {
-			newRow := []string{timeUntil(w.TimestampEnd), w.UserName, w.ShipName}
+			newRow := []string{c.timeUntil(w.TimestampEnd), w.UserName, w.ShipName}
 			data = append(data, newRow)
 		}
-		// Определяем максимальную длину для каждого столбца
-		colWidths := make([]int, len(data[0]))
-		for _, row := range data {
-			for i, col := range row {
-				if len(col) > colWidths[i] {
-					colWidths[i] = len(col)
-				}
-			}
-		}
-
-		// Формируем формат для печати строк
-		format := ""
-		for _, width := range colWidths {
-			format += fmt.Sprintf("%%-%ds  ", width)
-		}
-		format = format[:len(format)-2] // Убираем последний лишний пробел
-
-		// Печатаем строки с выравниванием
-		text := ""
-		for _, row := range data {
-			text += fmt.Sprintf(format+"\n", row[0], row[1], row[2])
-		}
-		c.sendChatTable(m, fmt.Sprintf("%s, Scheduled WS Returns", m.MentionName), text)
+		c.sendFormatedText(m, fmt.Sprintf("%s, Scheduled WS Returns", m.MentionName), data)
 	} else {
 		c.sendChat(m, m.MentionName+", No ships are scheduled to return.")
 	}
@@ -98,11 +76,9 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			c.log.InfoStruct("WsKillInsert", wskill)
 			return
 		} else {
-			// Установка временной зоны (в данном случае -05:00)
-			//location := time.FixedZone("EST", -5*3600)
-			add = add.In(time.UTC)
+			addLocal := add.In(c.getTimeLocation(m.NameId))
 			text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-				m.MentionName, name, ship, add.Format("15:04:05 -07:00"), timeUntil(add.Unix()))
+				m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(add.Unix()))
 			c.sendChat(m, text)
 		}
 	} else {
@@ -163,9 +139,9 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 					c.log.InfoStruct("WsKillInsert", wskill)
 					return
 				} else {
-					add := timeMinute.In(time.UTC)
+					addLocal := timeMinute.In(c.getTimeLocation(m.NameId))
 					text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-						m.MentionName, name, ship, add.Format("15:04:05 -07:00"), timeUntil(timestamp))
+						m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(timestamp))
 					c.sendChat(m, text)
 				}
 			}
@@ -194,8 +170,9 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 		minutes, _ = strconv.Atoi(minute)
 	}
 	// Текущее время для создания времени с сегодняшней датой
-	now := time.Now().UTC()
-	parsedTime := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), minutes, 0, 0, now.UTC().Location())
+	location := c.getTimeLocation(m.NameId)
+	now := time.Now().In(location)
+	parsedTime := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), minutes, 0, 0, location)
 
 	wskill := models.WsKill{
 		GuildId:      m.GuildId,
@@ -210,13 +187,26 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 		c.log.ErrorErr(err)
 		c.log.InfoStruct("WsKillInsert", wskill)
 	} else {
-		add := parsedTime.In(time.UTC)
 		text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-			m.MentionName, name, ship, add.Format("15:04:05 -07:00"), timeUntil(parsedTime.Unix()))
+			m.MentionName, name, ship, parsedTime.Format("15:04:05 -07:00"), c.timeUntil(parsedTime.Unix()))
 		c.sendChat(m, text)
 	}
 }
-func timeUntil(wstimestamp int64) string {
+
+func (c *Hs) getTimeLocation(userid string) *time.Location {
+	mem, errt := c.corpMember.CorpMemberByUserId(userid)
+	if errt != nil {
+		c.log.ErrorErr(errt)
+		return time.UTC
+	}
+	if mem.TimeZone == "" && mem.ZoneOffset == 0 {
+		return time.UTC
+	}
+	return time.FixedZone(mem.TimeZone, mem.ZoneOffset*60)
+}
+
+// Возвращает остаток времени
+func (c *Hs) timeUntil(wstimestamp int64) string {
 	timestamp := time.Unix(wstimestamp, 0)
 	// Получаем текущее время
 	now := time.Now().UTC()
@@ -263,7 +253,6 @@ func (c *Hs) wsKillTimer() {
 						if m == 15 {
 							text := fmt.Sprintf("%s's %s will be able to return to the White Star in 15 minutes.",
 								kill.Mention, kill.ShipName)
-
 							c.sendChat(in, text)
 						} else if m == 0 {
 							err = c.db.DB.WsKillDelete(kill)

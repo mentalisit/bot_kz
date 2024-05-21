@@ -4,6 +4,7 @@ import (
 	"compendium/logic/ds"
 	"compendium/logic/tg"
 	"compendium/models"
+	"fmt"
 )
 
 func (c *Hs) sendChat(m models.IncomingMessage, text string) {
@@ -70,4 +71,29 @@ func (c *Hs) sendChatPic(m models.IncomingMessage, text string, pic []byte) {
 }
 func (c *Hs) getText(m models.IncomingMessage, key string) string {
 	return c.Dict.GetText(m.Language, key)
+}
+func (c *Hs) sendFormatedText(m models.IncomingMessage, Text string, data [][]string) {
+	// Определяем максимальную длину для каждого столбца
+	colWidths := make([]int, len(data[0]))
+	for _, row := range data {
+		for i, col := range row {
+			if len(col) > colWidths[i] {
+				colWidths[i] = len(col)
+			}
+		}
+	}
+
+	// Формируем формат для печати строк
+	format := ""
+	for _, width := range colWidths {
+		format += fmt.Sprintf("%%-%ds  ", width)
+	}
+	format = format[:len(format)-2] // Убираем последний лишний пробел
+
+	// Печатаем строки с выравниванием
+	text := ""
+	for _, row := range data {
+		text += fmt.Sprintf(format+"\n", row[0], row[1], row[2])
+	}
+	c.sendChatTable(m, Text, text)
 }
