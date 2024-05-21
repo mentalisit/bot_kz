@@ -12,8 +12,6 @@ func (c *Hs) logic(m models.IncomingMessage) {
 
 	if found {
 		switch cutPrefix {
-		case "help", "помощь", "допомога":
-			c.help(m)
 		case "подключить", "connect", "підключити":
 			c.connect(m)
 		case "т и", "t i", "т і":
@@ -25,21 +23,15 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	}
 }
 func (c *Hs) regular(m models.IncomingMessage) {
-	if c.techImageName(m) {
+	if c.Help(m) {
+	} else if c.techImageName(m) {
 	} else if c.techImageNameAlt(m) {
 	} else if c.logicRoles(m) {
 	} else if c.createAlt(m) {
 	} else if c.wskill(m) {
 	} else if c.TzTime(m) {
+	} else if c.setGameName(m) {
 	} else {
 		c.log.Info("else " + m.Text)
 	}
-}
-func (c *Hs) help(m models.IncomingMessage) {
-	if m.Type == "ds" {
-		c.sendChat(m, c.getText(m, "HELP_TEXT_DS"))
-	} else {
-		c.sendChat(m, c.getText(m, "HELP_TEXT_TG"))
-	}
-
 }

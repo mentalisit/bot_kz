@@ -43,7 +43,7 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 			return nil
 		}
 		for _, member := range cm {
-			if i.Guild.Icon == "tg" {
+			if i.Guild.Type == "tg" {
 				if roleId == "" {
 					c.Members = append(c.Members, member)
 				} else {
@@ -68,7 +68,7 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 	return &c
 }
 func (s *Server) getRoles(i *models.Identity) []models.CorpRole {
-	if i.Guild.Icon == "tg" && i.User.Avatar == "tg" {
+	if i.Guild.Type == "tg" {
 		everyone := []models.CorpRole{{
 			Id:   "",
 			Name: "Telegram",
