@@ -56,7 +56,15 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 		if errGet != nil {
 			return nil, errGet
 		}
+		user, erru := d.UsersGetByUserId(t.UserId)
+		if erru != nil {
+			d.log.ErrorErr(err)
+		}
+
 		for _, member := range getAll {
+			if user != nil && member.Name == user.Username && user.GameName != "" {
+				member.Name = user.GameName
+			}
 			if member.TimeZone != "" {
 				t12, t24 := getTimeStrings(member.ZoneOffset)
 				member.LocalTime = t12

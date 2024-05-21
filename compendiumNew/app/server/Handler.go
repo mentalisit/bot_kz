@@ -41,6 +41,9 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 	if i == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
 	}
+	if i != nil && i.User.GameName != "" {
+		i.User.Username = i.User.GameName
+	}
 	c.JSON(http.StatusOK, i)
 }
 
@@ -71,6 +74,9 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
 		return
 	}
+	if i.User.GameName != "" {
+		i.User.Username = i.User.GameName
+	}
 	c.JSON(http.StatusOK, i)
 }
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
@@ -95,6 +101,9 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	guildId := i.Guild.ID
 	if twin != "" && twin != "default" {
 		userName = twin
+	}
+	if userName == i.User.GameName {
+		userName = i.User.Username
 	}
 
 	fmt.Printf("mode %s TwinOrName %s\n", mode, userName)

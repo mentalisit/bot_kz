@@ -24,6 +24,7 @@ type User struct {
 	Avatar        string   `json:"avatar"`
 	AvatarURL     string   `json:"avatarUrl"`
 	Alts          []string `json:"alts"`
+	GameName      string   `json:"gameName"`
 }
 
 type Guild struct {

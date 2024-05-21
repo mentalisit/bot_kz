@@ -29,11 +29,19 @@ func (c *Hs) techImage(m models.IncomingMessage) {
 		c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 		return
 	}
+	user, err := c.users.UsersGetByUserId(m.NameId)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+	picName := m.Name
+	if user != nil && user.GameName != "" {
+		picName = user.GameName
+	}
 	_, mt := c.BytesToTechLevel(mBytes)
 	userPic := imageGenerator.GenerateUser(
 		m.Avatar,
 		m.GuildAvatar,
-		m.Name,
+		picName,
 		m.GuildName,
 		mt)
 	c.sendChatPic(m, "", userPic)
@@ -73,11 +81,15 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return false
 		}
+		picName := user.Username
+		if user.GameName != "" {
+			picName = user.GameName
+		}
 		_, mt := c.BytesToTechLevel(techBytes)
 		userPic := imageGenerator.GenerateUser(
 			user.AvatarURL,
 			m.GuildAvatar,
-			user.Username,
+			picName,
 			m.GuildName,
 			mt)
 		c.sendChatPic(m, "", userPic)
@@ -100,14 +112,13 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 		}
 
 		user, err := c.users.UsersGetByUserId(userID)
-		if err != nil {
+		if err != nil || user == nil {
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			c.log.Info(err.Error())
 			return false
 		}
-		if user == nil {
-			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-			return false
+		if user.Username == userName && user.GameName != "" {
+			userName = user.GameName
 		}
 
 		_, mt := c.BytesToTechLevel(techBytes)

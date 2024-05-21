@@ -53,7 +53,8 @@ func (d *Db) createTable() {
         discriminator TEXT,
         avatar        TEXT,
         avatarurl     TEXT,
-        alts text[]
+        alts text[],
+        gamename      TEXT
     )`)
 	if err != nil {
 		fmt.Println("Ошибка при создании таблицы users:", err)

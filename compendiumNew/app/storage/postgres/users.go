@@ -16,13 +16,16 @@ func (d *Db) UsersInsert(u models.User) error {
 		if len(user.Alts) > 0 {
 			u.Alts = user.Alts
 		}
+		if user.GameName != "" {
+			u.GameName = user.GameName
+		}
 		err = d.UsersUpdate(u)
 		if err != nil {
 			return err
 		}
 	} else {
-		insert := `INSERT INTO hs_compendium.users(userid, username, discriminator, avatar, avatarurl, alts) VALUES ($1,$2,$3,$4,$5,$6)`
-		_, err = d.db.Exec(context.Background(), insert, u.ID, u.Username, u.Discriminator, u.Avatar, u.AvatarURL, pq.Array(u.Alts))
+		insert := `INSERT INTO hs_compendium.users(userid, username, discriminator, avatar, avatarurl, alts,gamename) VALUES ($1,$2,$3,$4,$5,$6,$7)`
+		_, err = d.db.Exec(context.Background(), insert, u.ID, u.Username, u.Discriminator, u.Avatar, u.AvatarURL, pq.Array(u.Alts), u.GameName)
 		if err != nil {
 			return err
 		}
@@ -33,7 +36,7 @@ func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	var u models.User
 	var id int
 	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
-	err := d.db.QueryRow(context.Background(), selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts))
+	err := d.db.QueryRow(context.Background(), selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +46,7 @@ func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
 	var u models.User
 	var id int
 	selectUser := "SELECT * FROM hs_compendium.users WHERE username = $1 "
-	err := d.db.QueryRow(context.Background(), selectUser, username).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts))
+	err := d.db.QueryRow(context.Background(), selectUser, username).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +62,8 @@ func (d *Db) UserGetCountByUserId(userid string) (int, error) {
 	return count, nil
 }
 func (d *Db) UsersUpdate(u models.User) error {
-	upd := `update hs_compendium.users set avatarurl = $1, alts = $2 where userid = $3 AND username = $4`
-	_, err := d.db.Exec(context.Background(), upd, u.AvatarURL, pq.Array(u.Alts), u.ID, u.Username)
+	upd := `update hs_compendium.users set avatarurl = $1, alts = $2, gamename = $3, username = $4 where userid = $5`
+	_, err := d.db.Exec(context.Background(), upd, u.AvatarURL, pq.Array(u.Alts), u.GameName, u.Username, u.ID)
 	if err != nil {
 		return err
 	}
