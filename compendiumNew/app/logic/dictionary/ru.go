@@ -13,6 +13,13 @@ func getDictionaryRuJson() []byte {
 "ALTO_ADDED":"альт %s добавлен",
 "LIST_ALTS":"Список ваших альтов %+v",
 "ALTO_REMOVED":"альт %s удален",
-"NO_ALTOS_FOUND":"альты не найдены"
+"NO_ALTOS_FOUND":"альты не найдены",
+"SCHEDULED_RETURNS":"%s, запланированные возвраты БЗ",
+"NO_SHIP_ARE_SCHEDULED":"%s, возвращения кораблей не запланировано.",
+"WILL_BE_ABLE_TO_RETURN":"%s %s сможет вернуться на Белую Звезду через 15 минут.",
+"IS_NOW_ABLE_TO_RETURN":"%s %s теперь может вернуться на Белую Звезду.",
+"IS_DUE_TO_RETURN":"%s %s %s должен вернуться в %s (%s)",
+"TIME_HAS_ALREADY_PASSED":"время уже прошло",
+"H_M_S":"%dч %dм %dс"
 }}`)
 }

@@ -45,18 +45,21 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 		}
 
 		for _, w := range ws {
-			newRow := []string{c.timeUntil(w.TimestampEnd), w.UserName, w.ShipName}
+			newRow := []string{c.timeUntil(m, w.TimestampEnd), w.UserName, w.ShipName}
 			data = append(data, newRow)
 		}
-		c.sendFormatedText(m, fmt.Sprintf("%s, Scheduled WS Returns", m.MentionName), data)
+		c.sendFormatedText(m, fmt.Sprintf(c.getText(m, "SCHEDULED_RETURNS"), m.MentionName), data)
 	} else {
-		c.sendChat(m, m.MentionName+", No ships are scheduled to return.")
+		c.sendChat(m, fmt.Sprintf(c.getText(m, "NO_SHIP_ARE_SCHEDULED"), m.MentionName))
 	}
 }
+
+// todo translate
 func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText string) {
 	if name == "" || ship == "" {
 		text := fmt.Sprintf("%s, The wskill command accepts any of the following formats: `wskill name ship`, `wskill name ship <time>`, or `wskill name ship delete`.", m.MentionName)
 		c.sendChat(m, text)
+		return
 	}
 	if len(afterText) <= 2 {
 		now := time.Now().UTC()
@@ -69,6 +72,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			Mention:      name,
 			ShipName:     ship,
 			TimestampEnd: timestamp,
+			Language:     m.Language,
 		}
 		err := c.db.DB.WsKillInsert(wskill)
 		if err != nil {
@@ -77,8 +81,8 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			return
 		} else {
 			addLocal := add.In(c.getTimeLocation(m.NameId))
-			text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-				m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(add.Unix()))
+			text := fmt.Sprintf(c.getText(m, "IS_DUE_TO_RETURN"),
+				m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(m, add.Unix()))
 			c.sendChat(m, text)
 		}
 	} else {
@@ -132,6 +136,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 					Mention:      name,
 					ShipName:     ship,
 					TimestampEnd: timestamp,
+					Language:     m.Language,
 				}
 				err := c.db.DB.WsKillInsert(wskill)
 				if err != nil {
@@ -140,8 +145,8 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 					return
 				} else {
 					addLocal := timeMinute.In(c.getTimeLocation(m.NameId))
-					text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-						m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(timestamp))
+					text := fmt.Sprintf(c.getText(m, "IS_DUE_TO_RETURN"),
+						m.MentionName, name, ship, addLocal.Format("15:04:05 -07:00"), c.timeUntil(m, timestamp))
 					c.sendChat(m, text)
 				}
 			}
@@ -181,14 +186,15 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 		Mention:      name,
 		ShipName:     ship,
 		TimestampEnd: parsedTime.Unix(),
+		Language:     m.Language,
 	}
 	err = c.db.DB.WsKillInsert(wskill)
 	if err != nil {
 		c.log.ErrorErr(err)
 		c.log.InfoStruct("WsKillInsert", wskill)
 	} else {
-		text := fmt.Sprintf("%s %s's %s is due to return at %s (%s)",
-			m.MentionName, name, ship, parsedTime.Format("15:04:05 -07:00"), c.timeUntil(parsedTime.Unix()))
+		text := fmt.Sprintf(c.getText(m, "IS_DUE_TO_RETURN"),
+			m.MentionName, name, ship, parsedTime.Format("15:04:05 -07:00"), c.timeUntil(m, parsedTime.Unix()))
 		c.sendChat(m, text)
 	}
 }
@@ -206,7 +212,7 @@ func (c *Hs) getTimeLocation(userid string) *time.Location {
 }
 
 // Возвращает остаток времени
-func (c *Hs) timeUntil(wstimestamp int64) string {
+func (c *Hs) timeUntil(m models.IncomingMessage, wstimestamp int64) string {
 	timestamp := time.Unix(wstimestamp, 0)
 	// Получаем текущее время
 	now := time.Now().UTC()
@@ -216,7 +222,7 @@ func (c *Hs) timeUntil(wstimestamp int64) string {
 
 	// Проверяем, если разница меньше нуля, значит указанное время уже прошло
 	if duration < 0 {
-		return "time has already passed"
+		return c.getText(m, "TIME_HAS_ALREADY_PASSED")
 	}
 
 	// Извлекаем часы, минуты и секунды из разницы
@@ -225,7 +231,7 @@ func (c *Hs) timeUntil(wstimestamp int64) string {
 	seconds := int(duration.Seconds()) % 60
 
 	// Форматируем строку в формате "17h 10m 45s"
-	return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
+	return fmt.Sprintf(c.getText(m, "H_M_S"), hours, minutes, seconds)
 }
 func (c *Hs) wsKillTimer() {
 	for {
@@ -243,15 +249,16 @@ func (c *Hs) wsKillTimer() {
 						guild, errs := c.guilds.GuildGet(kill.GuildId)
 						if errs != nil {
 							c.log.ErrorErr(errs)
+							c.log.InfoStruct("kill. ", kill)
 							continue
 						}
 						in := models.IncomingMessage{
 							ChannelId: kill.ChatId,
 							Type:      guild.Type,
-							Language:  "",
+							Language:  kill.Language,
 						}
 						if m == 15 {
-							text := fmt.Sprintf("%s's %s will be able to return to the White Star in 15 minutes.",
+							text := fmt.Sprintf(c.getText(in, "WILL_BE_ABLE_TO_RETURN"),
 								kill.Mention, kill.ShipName)
 							c.sendChat(in, text)
 						} else if m == 0 {
@@ -261,7 +268,7 @@ func (c *Hs) wsKillTimer() {
 								c.log.InfoStruct("WsKillDelete", kill)
 								return
 							}
-							text := fmt.Sprintf("%s's %s is now able to return to the White Star",
+							text := fmt.Sprintf(c.getText(in, "IS_NOW_ABLE_TO_RETURN"),
 								kill.Mention, kill.ShipName)
 							c.sendChat(in, text)
 						}

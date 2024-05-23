@@ -13,6 +13,13 @@ func getDictionaryUkJson() []byte {
 "ALTO_ADDED":"альт %s додано",
 "LIST_ALTS":"Список ваших альтов %+v",
 "ALTO_REMOVED":"альт %s видалено",
-"NO_ALTOS_FOUND":"альтів не знайдено"
+"NO_ALTOS_FOUND":"альтів не знайдено",
+"SCHEDULED_RETURNS":"%s, заплановані повернення БЗ",
+"NO_SHIP_ARE_SCHEDULED":"%s, повернення кораблів не заплановано.",
+"WILL_BE_ABLE_TO_RETURN":"%s %s зможе повернутися на Білу Зірку через 15 хвилин.",
+"IS_NOW_ABLE_TO_RETURN":"%s %s тепер може повернутися до Білої зірки",
+"IS_DUE_TO_RETURN":"%s %s %s має повернутися о %s (%s)",
+"TIME_HAS_ALREADY_PASSED":"час вже пройшов",
+"H_M_S":"%dг %dхв %dс"
 }}`)
 }

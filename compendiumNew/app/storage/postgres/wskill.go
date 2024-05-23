@@ -9,8 +9,8 @@ import (
 )
 
 func (d *Db) WsKillInsert(w models.WsKill) error {
-	insert := `INSERT INTO hs_compendium.wskill(guildid, chatid, username, mention, shipname, timestampend) VALUES ($1,$2,$3,$4,$5,$6)`
-	_, err := d.db.Exec(context.Background(), insert, w.GuildId, w.ChatId, w.UserName, w.Mention, w.ShipName, w.TimestampEnd)
+	insert := `INSERT INTO hs_compendium.wskill(guildid, chatid, username, mention, shipname, timestampend,language) VALUES ($1,$2,$3,$4,$5,$6,$7)`
+	_, err := d.db.Exec(context.Background(), insert, w.GuildId, w.ChatId, w.UserName, w.Mention, w.ShipName, w.TimestampEnd, w.Language)
 	return err
 }
 func (d *Db) WsKillDelete(w models.WsKill) error {
@@ -29,7 +29,7 @@ func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
 	for rows.Next() {
 		var w models.WsKill
 		var id int
-		err = rows.Scan(&id, &w.GuildId, &w.ChatId, &w.UserName, &w.Mention, &w.ShipName, &w.TimestampEnd)
+		err = rows.Scan(&id, &w.GuildId, &w.ChatId, &w.UserName, &w.Mention, &w.ShipName, &w.TimestampEnd, &w.Language)
 		if err != nil {
 			break
 		}
@@ -55,7 +55,7 @@ func (d *Db) WsKillReadAll() ([]models.WsKill, error) {
 	for rows.Next() {
 		var w models.WsKill
 		var id int
-		err = rows.Scan(&id, &w.GuildId, &w.ChatId, &w.UserName, &w.Mention, &w.ShipName, &w.TimestampEnd)
+		err = rows.Scan(&id, &w.GuildId, &w.ChatId, &w.UserName, &w.Mention, &w.ShipName, &w.TimestampEnd, &w.Language)
 		if err != nil {
 			break
 		}

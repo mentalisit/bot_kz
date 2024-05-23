@@ -13,6 +13,13 @@ func getDictionaryEnJson() []byte {
 "ALTO_ADDED":"alto added %s",
 "LIST_ALTS":"List of your alts %+v",
 "ALTO_REMOVED":"alto removed %s",
-"NO_ALTOS_FOUND":"no altos found"
+"NO_ALTOS_FOUND":"no altos found",
+"SCHEDULED_RETURNS":"%s, Scheduled WS Returns",
+"NO_SHIP_ARE_SCHEDULED":"%s, No ships are scheduled to return.",
+"WILL_BE_ABLE_TO_RETURN":"%s's %s will be able to return to the White Star in 15 minutes.",
+"IS_NOW_ABLE_TO_RETURN":"%s's %s is now able to return to the White Star",
+"IS_DUE_TO_RETURN":"%s %s's %s is due to return at %s (%s)",
+"TIME_HAS_ALREADY_PASSED":"time has already passed",
+"H_M_S":"%dh %dm %ds"
 }}`)
 }

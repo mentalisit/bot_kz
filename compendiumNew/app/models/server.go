@@ -104,4 +104,5 @@ type WsKill struct {
 	Mention      string
 	ShipName     string
 	TimestampEnd int64
+	Language     string
 }
