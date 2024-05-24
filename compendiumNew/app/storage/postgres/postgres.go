@@ -153,4 +153,16 @@ func (d *Db) createTable() {
 		fmt.Println("Ошибка при создании таблицы wskill:", err)
 		return
 	}
+
+	// Создание таблицы code
+	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
+	id           bigserial primary key,
+	code    	 TEXT,
+	time 	     bigint,
+	identity     jsonb
+	)`)
+	if err != nil {
+		fmt.Println("Ошибка при создании таблицы codes:", err)
+		return
+	}
 }

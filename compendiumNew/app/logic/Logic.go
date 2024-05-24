@@ -4,10 +4,11 @@ import (
 	"compendium/models"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func (c *Hs) logic(m models.IncomingMessage) {
-	fmt.Printf("logic: %s %+v\n", m.Language, m)
+	fmt.Printf("logic: %+v %+v\n", time.Now(), m)
 	cutPrefix, found := strings.CutPrefix(m.Text, "%")
 
 	if found {

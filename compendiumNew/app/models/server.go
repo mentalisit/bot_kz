@@ -10,6 +10,11 @@ type Identity struct {
 	Token string `json:"token"`
 	//Type  string `json:"type"`
 }
+type Code struct {
+	Code      string
+	Timestamp int64
+	Identity  Identity
+}
 
 //type IdentityGET struct {
 //	User  User    `json:"user"`

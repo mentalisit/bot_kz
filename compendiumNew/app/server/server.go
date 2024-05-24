@@ -63,4 +63,5 @@ type db interface {
 	GuildGet(guildid string) (*models.Guild, error)
 	TechGet(username, userid, guildid string) ([]byte, error)
 	TechUpdate(username, userid, guildid string, tech []byte) error
+	CodeGet(code string) (*models.Code, error)
 }

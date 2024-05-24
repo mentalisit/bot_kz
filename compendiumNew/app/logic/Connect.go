@@ -4,6 +4,8 @@ import (
 	"compendium/logic/generate"
 	"compendium/models"
 	"fmt"
+	"strings"
+	"time"
 )
 
 func (c *Hs) connect(m models.IncomingMessage) {
@@ -15,12 +17,16 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		c.log.ErrorErr(err)
 	}
 	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
+
 	newIdentify, cm := generate.GenerateIdentity(m)
+
 	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
 	if tokenOld != "" {
 		newIdentify.Token = tokenOld
 	}
-	code := generate.GenerateFormattedString(newIdentify)
+
+	code := c.generateCodeAndSave(newIdentify)
+
 	err = c.guilds.GuildInsert(newIdentify.Guild)
 	if err != nil {
 		c.log.ErrorErr(err)
@@ -53,4 +59,24 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		c.log.ErrorErr(err)
 		return
 	}
+}
+
+func (c *Hs) generateCodeAndSave(Identity models.Identity) string {
+	segments := []string{generate.RandString(4), generate.RandString(4), generate.RandString(4)}
+
+	m := models.Code{
+		Code:      strings.Join(segments, "-"),
+		Timestamp: time.Now().Unix(),
+		Identity:  Identity,
+	}
+
+	go func() {
+		err := c.db.DB.CodeInsert(m)
+		if err != nil {
+			c.log.ErrorErr(err)
+			c.log.InfoStruct("CodeInsert", m)
+		}
+	}()
+
+	return m.Code
 }

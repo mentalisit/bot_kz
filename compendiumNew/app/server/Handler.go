@@ -1,7 +1,6 @@
 package server
 
 import (
-	"compendium/logic/generate"
 	"compendium/models"
 	"encoding/json"
 	"fmt"
@@ -21,7 +20,7 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 		return
 	}
 
-	identity := generate.CheckCode(code)
+	identity := s.CheckCode(code)
 
 	// Проверка на наличие токена в полученной идентификации
 	if identity.Token == "" {

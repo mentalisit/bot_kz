@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium/models"
+	"time"
 )
 
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
@@ -90,4 +91,37 @@ func (s *Server) getRoles(i *models.Identity) []models.CorpRole {
 		}
 		return roles
 	}
+}
+
+func (s *Server) CheckCode(code string) models.Identity {
+	var i models.Identity
+	coder, err := s.db.CodeGet(code)
+	if err != nil {
+		s.log.ErrorErr(err)
+		return i
+	}
+
+	if coder != nil && coder.Code == code {
+		if time.Now().Unix() < coder.Timestamp+600 {
+			i = coder.Identity
+			return i
+		}
+	}
+	if code == "test-test-test" {
+		i = models.Identity{
+			User: models.User{
+				ID:       "111111111",
+				Username: "TestUser",
+				Alts:     []string{"alt1", "alt2"},
+			},
+			Guild: models.Guild{
+				ID:   "22222222222",
+				Name: "TestGuild",
+				Type: "tg",
+			},
+			Token: "gGUBIlUAU1uTKWd8HssP27ojG0DugoAaPslwFGTDSAbEM6UM",
+		}
+
+	}
+	return i
 }

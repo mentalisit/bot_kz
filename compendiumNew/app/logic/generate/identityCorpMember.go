@@ -6,9 +6,9 @@ func GenerateIdentity(m models.IncomingMessage) (models.Identity, models.CorpMem
 	//проверить если есть NameId то предложить соединить для двух корпораций
 	identity := models.Identity{
 		User: models.User{
-			ID:        m.NameId,
-			Username:  m.Name,
-			Avatar:    m.AvatarF,
+			ID:       m.NameId,
+			Username: m.Name,
+			//Avatar:    m.AvatarF,
 			AvatarURL: m.Avatar,
 			Alts:      []string{},
 		},
@@ -16,7 +16,7 @@ func GenerateIdentity(m models.IncomingMessage) (models.Identity, models.CorpMem
 			URL:  m.GuildAvatar,
 			ID:   m.GuildId,
 			Name: m.GuildName,
-			Icon: m.GuildAvatarF,
+			//Icon: m.GuildAvatarF,
 			Type: m.Type,
 		},
 		Token: GenerateToken(),
