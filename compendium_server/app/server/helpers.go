@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium_s/models"
+	"strings"
 	"time"
 )
 
@@ -61,8 +62,15 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 						}
 					}
 				}
-			} else if CheckRoleDs(i.Guild.ID, member.UserId, roleId) {
-				c.Members = append(c.Members, member)
+			} else if i.Guild.Type == "ds" {
+				uid := member.UserId
+				if strings.Contains(member.UserId, "/") {
+					split := strings.Split(member.UserId, "/")
+					uid = split[0]
+				}
+				if CheckRoleDs(i.Guild.ID, uid, roleId) {
+					c.Members = append(c.Members, member)
+				}
 			}
 		}
 	}

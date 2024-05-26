@@ -49,7 +49,6 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	for results.Next() {
 		var t models.CorpMember
 		var id int
-		//ttt := make(map[int]models.TechLevel)
 		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
 
 		getAll, errGet := d.TechGetAll(t)
@@ -58,7 +57,7 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 		}
 		user, erru := d.UsersGetByUserId(t.UserId)
 		if erru != nil {
-			d.log.ErrorErr(err)
+			d.log.ErrorErr(erru)
 		}
 
 		for _, member := range getAll {
@@ -72,7 +71,6 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 			}
 			mm = append(mm, member)
 		}
-
 	}
 	return mm, nil
 }
