@@ -1,9 +1,9 @@
 package server
 
 import (
-	"compendium/config"
-	"compendium/models"
-	"compendium/storage"
+	"compendium_s/config"
+	"compendium_s/models"
+	"compendium_s/storage"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
@@ -12,18 +12,17 @@ import (
 type Server struct {
 	log *logger.Logger
 	db  db
-	In  chan models.IncomingMessage
+	//In  chan models.IncomingMessage
 }
 
 func NewServer(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage) *Server {
 	s := &Server{
 		log: log,
 		db:  st.DB,
-		In:  make(chan models.IncomingMessage, 10),
+		//In:  make(chan models.IncomingMessage, 10),
 	}
 
-	//go s.RunServer(cfg.Port)
-	go s.RunServerRestApi()
+	go s.RunServer(cfg.Port)
 	return s
 }
 
