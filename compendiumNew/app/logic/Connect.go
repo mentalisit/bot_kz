@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Hs) connect(m models.IncomingMessage) {
-	err := c.sendDM(m, fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName))
+	_, err := c.sendDM(m, fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName))
 	if err != nil && err.Error() == "forbidden" {
 		c.sendChat(m, fmt.Sprintf(c.getText(m, "ERROR_SEND"), m.MentionName))
 		return
@@ -47,18 +47,31 @@ func (c *Hs) connect(m models.IncomingMessage) {
 		c.log.ErrorErr(err)
 		return
 	}
-	err = c.sendDM(m, code)
-	if err != nil {
-		c.log.ErrorErr(err)
+	mid1, errs1 := c.sendDM(m, code)
+	if errs1 != nil {
+		c.log.ErrorErr(errs1)
 		return
 	}
 	urlLink := "https://mentalisit.github.io/HadesSpace/"
 	urlLinkAdd := "compendiumTech?c=" + code + "&lang=" + m.Language + "&client=1"
-	err = c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
-	if err != nil {
-		c.log.ErrorErr(err)
+	mid2, errs2 := c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
+	if errs2 != nil {
+		c.log.ErrorErr(errs2)
 		return
 	}
+	go func() {
+		time.Sleep(10 * time.Minute)
+		err = c.editMessage(m, m.DmChat, mid1, c.getText(m, "CODE_OUTDATED"))
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+		err = c.deleteMessage(m, m.DmChat, mid2)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	}()
 }
 
 func (c *Hs) generateCodeAndSave(Identity models.Identity) string {

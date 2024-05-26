@@ -203,12 +203,12 @@ func (d *Discord) Unsubscribe(nameid, argRoles, guildid string) int {
 	return unsubscribe
 }
 
-//func (d *Discord) EditMessage(chatID, messageID, content string) {
-//	_, err := d.S.ChannelMessageEdit(chatID, messageID, content)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//}
+func (d *Discord) EditMessage(chatID, messageID, content string) {
+	_, err := d.S.ChannelMessageEdit(chatID, messageID, content)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
 
 func (d *Discord) EditWebhook(text, username, chatID, mID string, guildID, avatarURL string) {
 	if text == "" {

@@ -20,6 +20,7 @@ func getDictionaryUkJson() []byte {
 "IS_NOW_ABLE_TO_RETURN":"%s %s тепер може повернутися до Білої зірки",
 "IS_DUE_TO_RETURN":"%s %s %s має повернутися о %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"час вже пройшов",
-"H_M_S":"%dг %dхв %dс"
+"H_M_S":"%dг %dхв %dс",
+"CODE_OUTDATED":"код застарів"
 }}`)
 }

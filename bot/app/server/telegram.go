@@ -27,7 +27,7 @@ func (s *Server) telegramSendText(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := s.cl.Tg.Send(m.Channel, m.Text)
+	mid, err := s.cl.Tg.Send(m.Channel, m.Text)
 	if err != nil {
 		s.log.ErrorErr(err)
 		if err.Error() == "Forbidden: bot can't initiate conversation with a user" {
@@ -38,8 +38,25 @@ func (s *Server) telegramSendText(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Telegram successfully"})
+	c.JSON(http.StatusOK, mid)
 }
+
+func (s *Server) telegramEditMessage(c *gin.Context) {
+	var m models.EditText
+	if err := c.ShouldBindJSON(&m); err != nil {
+		s.log.ErrorErr(err)
+		s.log.InfoStruct("telegramEditMessage", c.Request.Body)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	mid, err := strconv.Atoi(m.MessageId)
+	if err != nil {
+		return
+	}
+	s.cl.Tg.EditText(m.Channel, mid, m.Text)
+	c.JSON(http.StatusOK, "ok")
+}
+
 func (s *Server) telegramSendPic(c *gin.Context) {
 	var m models.SendPic
 	if err := c.ShouldBindJSON(&m); err != nil {

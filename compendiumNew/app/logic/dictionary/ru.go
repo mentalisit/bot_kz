@@ -20,6 +20,7 @@ func getDictionaryRuJson() []byte {
 "IS_NOW_ABLE_TO_RETURN":"%s %s теперь может вернуться на Белую Звезду.",
 "IS_DUE_TO_RETURN":"%s %s %s должен вернуться в %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"время уже прошло",
-"H_M_S":"%dч %dм %dс"
+"H_M_S":"%dч %dм %dс",
+"CODE_OUTDATED":"код устарел"
 }}`)
 }

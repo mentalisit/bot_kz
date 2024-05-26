@@ -26,6 +26,7 @@ func (s *Server) runServer() {
 	r.POST("/discord/del", s.discordDel)
 	r.POST("/discord/SendDel", s.discordSendDelSecond)
 	r.POST("/discord/SendText", s.discordSendText)
+	r.POST("/discord/edit", s.discordEditMessage)
 	r.POST("/discord/GetRoles", s.discordGetRoles)
 	r.POST("/discord/CheckRole", s.discordCheckRole)
 	r.POST("/discord/SendPic", s.discordSendPic)
@@ -33,6 +34,7 @@ func (s *Server) runServer() {
 	//telegram
 	r.POST("/telegram/send/bridge", s.telegramSendBridge)
 	r.POST("/telegram/SendText", s.telegramSendText)
+	r.POST("/telegram/edit", s.telegramEditMessage)
 	r.POST("/telegram/SendPic", s.telegramSendPic)
 	r.POST("/telegram/del", s.telegramDel)
 	r.POST("/telegram/SendDel", s.telegramSendDelSecond)

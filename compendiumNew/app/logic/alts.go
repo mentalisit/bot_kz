@@ -44,7 +44,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 
 			c.log.Info(fmt.Sprintf("User %s alts new %+v", u.Username, alts))
 			c.sendChat(m, fmt.Sprintf(c.getText(m, "ALTO_ADDED"), split[2]))
-			_ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), alts))
+			_, _ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), alts))
 			return true
 		}
 		if split[0] == "alts" && split[1] == "del" {
@@ -77,7 +77,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 			}
 
 			c.log.Info(fmt.Sprintf("User %s alts delete %+v", u.Username, split[2]))
-			_ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), u.Alts))
+			_, _ = c.sendDM(m, fmt.Sprintf(c.getText(m, "LIST_ALTS"), u.Alts))
 			return true
 		}
 	}

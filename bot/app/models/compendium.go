@@ -25,6 +25,11 @@ type SendText struct {
 	Text    string `json:"text"`
 	Channel string `json:"channel"`
 }
+type EditText struct {
+	Text      string `json:"text"`
+	Channel   string `json:"channel"`
+	MessageId string `json:"message_id"`
+}
 type DeleteMessageStruct struct {
 	MessageId string `json:"message_id"`
 	Channel   string `json:"channel"`

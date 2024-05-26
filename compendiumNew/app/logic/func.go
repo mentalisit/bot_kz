@@ -9,13 +9,13 @@ import (
 
 func (c *Hs) sendChat(m models.IncomingMessage, text string) {
 	if m.Type == "ds" {
-		err := ds.SendChannel(m.ChannelId, text)
+		_, err := ds.SendChannel(m.ChannelId, text)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
 	} else if m.Type == "tg" {
-		err := tg.Send(m.ChannelId, text)
+		_, err := tg.Send(m.ChannelId, text)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -24,13 +24,13 @@ func (c *Hs) sendChat(m models.IncomingMessage, text string) {
 }
 func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
 	if m.Type == "ds" {
-		err := ds.SendChannel(m.ChannelId, text+"\n```"+table+"```")
+		_, err := ds.SendChannel(m.ChannelId, text+"\n```"+table+"```")
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
 	} else if m.Type == "tg" {
-		err := tg.Send(m.ChannelId, text+"\n"+table)
+		_, err := tg.Send(m.ChannelId, text+"\n"+table)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -38,20 +38,22 @@ func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
 	}
 }
 
-func (c *Hs) sendDM(m models.IncomingMessage, text string) error {
+func (c *Hs) sendDM(m models.IncomingMessage, text string) (string, error) {
 	if m.Type == "ds" {
-		err := ds.SendChannel(m.DmChat, text)
+		mid, err := ds.SendChannel(m.DmChat, text)
 		if err != nil {
 			c.log.ErrorErr(err)
-			return err
+			return "", err
 		}
+		return mid, nil
 	} else if m.Type == "tg" {
-		err := tg.Send(m.DmChat, text)
+		mid, err := tg.Send(m.DmChat, text)
 		if err != nil {
-			return err
+			return "", err
 		}
+		return mid, nil
 	}
-	return nil
+	return "", nil
 }
 func (c *Hs) sendChatPic(m models.IncomingMessage, text string, pic []byte) {
 	if m.Type == "ds" {
@@ -96,4 +98,34 @@ func (c *Hs) sendFormatedText(m models.IncomingMessage, Text string, data [][]st
 		text += fmt.Sprintf(format+"\n", row[0], row[1], row[2])
 	}
 	c.sendChatTable(m, Text, text)
+}
+
+func (c *Hs) deleteMessage(m models.IncomingMessage, chat, mid string) error {
+	if m.Type == "ds" {
+		err := ds.DeleteMessage(chat, mid)
+		if err != nil {
+			return err
+		}
+	} else if m.Type == "tg" {
+		err := tg.DeleteMessage(chat, mid)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Hs) editMessage(m models.IncomingMessage, chat, mid, text string) error {
+	if m.Type == "ds" {
+		err := ds.EditMessage(chat, mid, text)
+		if err != nil {
+			return err
+		}
+	} else if m.Type == "tg" {
+		err := tg.EditMessage(chat, mid, text)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

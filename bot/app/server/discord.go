@@ -50,8 +50,20 @@ func (s *Server) discordSendText(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	s.cl.Ds.Send(m.Channel, m.Text)
-	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Discord successfully"})
+	mid := s.cl.Ds.Send(m.Channel, m.Text)
+	c.JSON(http.StatusOK, mid)
+}
+
+func (s *Server) discordEditMessage(c *gin.Context) {
+	var m models.EditText
+	if err := c.ShouldBindJSON(&m); err != nil {
+		s.log.ErrorErr(err)
+		s.log.InfoStruct("discordEditMessage", c.Request.Body)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	s.cl.Ds.EditMessage(m.Channel, m.MessageId, m.Text)
+	c.JSON(http.StatusOK, "ok")
 }
 
 func (s *Server) discordGetRoles(c *gin.Context) {

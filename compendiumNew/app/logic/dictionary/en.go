@@ -20,6 +20,7 @@ func getDictionaryEnJson() []byte {
 "IS_NOW_ABLE_TO_RETURN":"%s's %s is now able to return to the White Star",
 "IS_DUE_TO_RETURN":"%s %s's %s is due to return at %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"time has already passed",
-"H_M_S":"%dh %dm %ds"
+"H_M_S":"%dh %dm %ds",
+"CODE_OUTDATED":"the code is outdated"
 }}`)
 }
