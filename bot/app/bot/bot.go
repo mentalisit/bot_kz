@@ -217,6 +217,9 @@ func (b *Bot) Autohelp() {
 					s.MesidDsHelp = MesidDsHelp
 					b.storage.ConfigRs.AutoHelpUpdateMesid(s)
 				}
+				b.in.Config = s
+				b.in.Option.Update = true
+				b.QueueAll()
 			}
 		}
 	}
