@@ -45,6 +45,8 @@ func (s *Server) RunServer(port string) {
 	router.OPTIONS("/compendium/applink/refresh", s.Check)
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 
+	router.GET("/links", s.links)
+
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")
 	if err != nil {

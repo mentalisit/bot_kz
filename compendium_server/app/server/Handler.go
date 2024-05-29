@@ -145,3 +145,63 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 //requestedHeaders := c.GetHeader("Access-Control-Request-Headers")
 //fmt.Println("Requested method:", requestedMethod)
 //fmt.Println("Requested headers:", requestedHeaders)
+
+func (s *Server) links(c *gin.Context) {
+	htmlContent := `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4; // Светлый фон всей страницы
+        }
+        .centered-content {
+            width: 100%; // Ширина контента равна ширине страницы
+            max-width: 600px; // Максимальная ширина контента
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+        }
+        a {
+            text-decoration: none;
+            color: #3366cc;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="centered-content">
+        <h1>Select link:</h1>
+        <ul>
+            <li><a href="https://discord.com/oauth2/authorize?client_id=909526127305953290&scope=bot+applications.commands&permissions=141533113424" target="_blank">Invite Discord Bot</a></li>
+            <li><a href="https://t.me/gote1st_bot" target="_blank">Invite Telegram Bot</a></li>
+            <li><a href="https://discord.com/users/582882137842122773" target="_blank">Message Discord Bot Author</a></li>
+            <li><a href="https://t.me/mentalisit" target="_blank">Message Telegram Bot Author</a></li>
+        </ul>
+    </div>
+</body>
+</html>
+`
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+}
