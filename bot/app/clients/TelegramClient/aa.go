@@ -131,7 +131,7 @@ func (t *Telegram) updatesComand(c *tgbotapi.Message) {
 	} else {
 		switch c.Command() {
 		case "help":
-			t.SendChannelDelSecond(ChatId, "Активируйте бота командой \n.add", 60)
+			t.SendChannelDelSecond(ChatId, "Активируйте бота командой \n.добавить", 60)
 		default:
 			t.SendChannelDelSecond(ChatId, "Вам не доступна данная команда \n /help", 60)
 		}

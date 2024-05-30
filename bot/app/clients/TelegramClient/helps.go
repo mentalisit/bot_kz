@@ -7,7 +7,7 @@ import (
 
 func (t *Telegram) Help(Channel string, lang string) {
 	text := fmt.Sprintf("%s\n%s ", t.getLanguage(lang, "information"), t.getLanguage(lang, "info_help_text"))
-	t.SendChannelDelSecond(Channel, text, 180)
+	t.SendChannelDelSecond(Channel, escapeMarkdownV2(text), 180)
 }
 
 // команда хелп

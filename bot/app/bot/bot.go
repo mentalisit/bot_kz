@@ -199,7 +199,7 @@ func (b *Bot) Autohelp() {
 					b.log.Info(fmt.Sprintf("%s %d", s.MesidTgHelp, mID))
 					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
-				mid := b.client.Tg.SendHelp(s.TgChannel, strings.ReplaceAll(text, "3", "10"))
+				mid := b.client.Tg.SendHelp(s.TgChannel, strings.Replace(text, "3", "10", 1))
 				b.log.Info(fmt.Sprintf("mid %d", mid))
 				s.MesidTgHelp = strconv.Itoa(mid)
 
@@ -218,7 +218,6 @@ func (b *Bot) Autohelp() {
 					b.storage.ConfigRs.AutoHelpUpdateMesid(s)
 				}
 				b.in.Config = s
-				b.in.Option.Update = true
 				b.QueueAll()
 			}
 		}

@@ -21,7 +21,7 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)
 		} else {
-			d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь ")
+			d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь тут, пиши в канале ")
 		}
 		//DM message
 		return

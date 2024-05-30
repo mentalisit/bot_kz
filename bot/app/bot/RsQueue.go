@@ -250,7 +250,7 @@ func (b *Bot) QueueAll() {
 
 			}
 		}
-	} else {
+	} else if b.in.Option.Reaction {
 		b.ifTipSendTextDelSecond(b.getText("no_active_queues"), 10)
 		b.iftipdelete()
 	}

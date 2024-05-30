@@ -98,7 +98,10 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 		}
 	} else {
 		//нужно решить что тут делать
-		t.log.Info(m.From.String() + ": " + m.Text)
+		text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
+		mes := tgbotapi.NewMessage(m.Chat.ID, text)
+		_, _ = t.t.Send(mes)
+		t.log.Info("DM " + m.From.String() + ": " + m.Text)
 	}
 
 }

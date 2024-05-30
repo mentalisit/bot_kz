@@ -576,17 +576,53 @@ func (t *Telegram) SendHelp(chatid string, text string) int {
 		}
 	}
 
-	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(btt)
-
-	msg := tgbotapi.NewMessage(chatId, text)
+	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2(text))
 	msg.MessageThreadID = ThreadID
-	msg.ReplyMarkup = keyboardQueue
+	msg.ParseMode = tgbotapi.ModeMarkdownV2
+
+	if len(btt) > 0 {
+		var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(btt)
+		msg.ReplyMarkup = keyboardQueue
+	}
+
 	message, err := t.t.Send(msg)
-	t.log.InfoStruct("helpTG", message)
 	if err != nil {
 		t.log.ErrorErr(err)
 	}
 
 	return message.MessageID
 
+}
+
+func escapeMarkdownV2(text string) string {
+	var builder strings.Builder
+	specialChars := "\\_[]()~>#+-=|{}.!"
+	i := 0
+
+	for i < len(text) {
+		if i+1 < len(text) && text[i] == '*' && text[i+1] == '*' {
+			i += 2
+			continue
+		}
+		if i+1 < len(text) && text[i] == '7' && text[i+1] == '*' && text[i-1] == '*' {
+			builder.WriteString("7\\*")
+			i += 2
+			continue
+		}
+		if text[i] == '*' {
+			i++
+			continue
+		}
+
+		// Проверяем, является ли текущий символ специальным
+		if strings.ContainsRune(specialChars, rune(text[i])) {
+			builder.WriteByte('\\') // Добавляем экранирующий символ
+		}
+
+		// Добавляем текущий символ в строку результата
+		builder.WriteByte(text[i])
+		i++
+	}
+
+	return builder.String()
 }
