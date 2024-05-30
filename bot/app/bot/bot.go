@@ -209,18 +209,21 @@ func (b *Bot) Autohelp() {
 		time.Sleep(time.Minute)
 		go b.client.Ds.CleanRsBotOtherMessage()
 	} else if tm.Minute() == 0 {
-		a := b.storage.ConfigRs.AutoHelp()
-		for _, s := range a {
-			if s.DsChannel != "" {
-				MesidDsHelp := b.client.Ds.HelpChannelUpdate(s)
-				if MesidDsHelp != s.MesidDsHelp {
-					s.MesidDsHelp = MesidDsHelp
-					b.storage.ConfigRs.AutoHelpUpdateMesid(s)
+		go func() {
+			a := b.storage.ConfigRs.AutoHelp()
+			for _, s := range a {
+				if s.DsChannel != "" {
+					MesidDsHelp := b.client.Ds.HelpChannelUpdate(s)
+					if MesidDsHelp != s.MesidDsHelp {
+						s.MesidDsHelp = MesidDsHelp
+						b.storage.ConfigRs.AutoHelpUpdateMesid(s)
+					}
+					b.in.Config = s
+					b.QueueAll()
+					time.Sleep(10 * time.Second)
 				}
-				b.in.Config = s
-				b.QueueAll()
 			}
-		}
+		}()
 	}
 	time.Sleep(time.Minute)
 }
