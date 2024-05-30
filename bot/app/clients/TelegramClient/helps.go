@@ -3,11 +3,13 @@ package TelegramClient
 import (
 	"fmt"
 	"kz_bot/models"
+	"strconv"
 )
 
 func (t *Telegram) Help(Channel string, lang string) {
 	text := fmt.Sprintf("%s\n%s ", t.getLanguage(lang, "information"), t.getLanguage(lang, "info_help_text"))
-	t.SendChannelDelSecond(Channel, escapeMarkdownV2(text), 180)
+	mid := t.SendHelp(Channel, text)
+	t.DelMessageSecond(Channel, strconv.Itoa(mid), 180)
 }
 
 // команда хелп
