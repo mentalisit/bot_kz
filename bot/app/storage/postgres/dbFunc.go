@@ -175,9 +175,6 @@ func (d *Db) Queue(ctx context.Context, corpname string) []string {
 		lvl = append(lvl, t.Lvlkz)
 
 	}
-	if d.debug {
-		fmt.Println("Queue lvl", lvl)
-	}
 
 	return lvl
 }

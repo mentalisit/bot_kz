@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"github.com/mentalisit/logger"
+	"kz_bot/bot/helpers"
 	"kz_bot/clients"
 	"kz_bot/config"
 	"kz_bot/models"
@@ -19,15 +20,16 @@ const (
 )
 
 type Bot struct {
-	storage    *storage.Storage
-	client     *clients.Clients
-	inbox      chan models.InMessage
-	log        *logger.Logger
-	debug      bool
-	in         models.InMessage
+	storage *storage.Storage
+	client  *clients.Clients
+	inbox   chan models.InMessage
+	log     *logger.Logger
+	debug   bool
+	//in         models.InMessage
 	wg         sync.WaitGroup
 	mu         sync.Mutex
 	configCorp map[string]models.CorporationConfig
+	helpers    *helpers.Helpers
 }
 
 func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logger, cfg *config.ConfigBot) *Bot {
@@ -38,6 +40,7 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		debug:      cfg.IsDebug,
 		inbox:      make(chan models.InMessage, 10),
 		configCorp: storage.CorpConfigRS,
+		helpers:    helpers.NewHelpers(log, storage),
 	}
 	go func() {
 		for {
@@ -64,15 +67,11 @@ func (b *Bot) loadInbox() {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
 		case in := <-b.client.Ds.ChanRsMessage:
-			b.in = in
-			b.LogicRs()
+			b.LogicRs(in)
 		case in := <-b.client.Tg.ChanRsMessage:
-			b.in = in
-			b.LogicRs()
-
+			b.LogicRs(in)
 		case in := <-b.inbox:
-			b.in = in
-			b.LogicRs()
+			b.LogicRs(in)
 		}
 	}
 }
@@ -92,69 +91,69 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 }
 
 // LogicRs логика игры
-func (b *Bot) LogicRs() {
-	if strings.HasPrefix(b.in.Mtext, ".") {
-		b.accessChat()
+func (b *Bot) LogicRs(in models.InMessage) {
+	if strings.HasPrefix(in.Mtext, ".") {
+		b.accessChat(in)
 		return
 	}
-	if len(b.in.Mtext) > 0 && b.in.Mtext != " `edit`" {
-		if b.lRsPlus() {
-		} else if b.lDarkRsPlus() {
-		} else if b.lSubs() {
-		} else if b.lDarkSubs() {
-		} else if b.lQueue() {
-		} else if b.lRsStart() {
-		} else if b.lEvent() {
-		} else if b.lTop() {
-		} else if b.lEmoji() {
-		} else if b.logicIfText() {
-		} else if b.bridge() {
+	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
+		if b.lRsPlus(in) {
+		} else if b.lDarkRsPlus(in) {
+		} else if b.lSubs(in) {
+		} else if b.lDarkSubs(in) {
+		} else if b.lQueue(in) {
+		} else if b.lRsStart(in) {
+		} else if b.lEvent(in) {
+		} else if b.lTop(in) {
+		} else if b.lEmoji(in) {
+		} else if b.logicIfText(in) {
+		} else if b.bridge(in) {
 			//} else if b.lIfCommand() {
 			//} else if b.SendALLChannel() {
 		} else {
-			b.cleanChat()
+			b.cleanChat(in)
 			//go b.Transtale()//нужно решить проблему с ошибками
 		}
 
-	} else if b.in.Option.MinusMin {
-		b.CheckTimeQueue()
-	} else if b.in.Option.Update {
-		b.QueueLevel()
+	} else if in.Option.MinusMin {
+		b.CheckTimeQueue(in)
+	} else if in.Option.Update {
+		b.QueueLevel(in)
 	}
 }
 
-func (b *Bot) cleanChat() {
-	if b.in.Tip == ds && b.in.Config.DelMesComplite == 0 && !b.in.Option.Edit {
-		go b.client.Ds.CleanChat(b.in.Config.DsChannel, b.in.Ds.Mesid, b.in.Mtext)
+func (b *Bot) cleanChat(in models.InMessage) {
+	if in.Tip == ds && in.Config.DelMesComplite == 0 && !in.Option.Edit {
+		go b.client.Ds.CleanChat(in.Config.DsChannel, in.Ds.Mesid, in.Mtext)
 	}
 	// if hs ua
-	if b.in.Tip == tg && b.in.Config.TgChannel == "-1002116077159/44" {
-		if !strings.HasPrefix(b.in.Mtext, ".") {
-			go b.client.Tg.DelMessageSecond("-1002116077159/44", strconv.Itoa(b.in.Tg.Mesid), 600)
+	if in.Tip == tg && in.Config.TgChannel == "-1002116077159/44" {
+		if !strings.HasPrefix(in.Mtext, ".") {
+			go b.client.Tg.DelMessageSecond("-1002116077159/44", strconv.Itoa(in.Tg.Mesid), 600)
 		}
 
 	}
 }
 
-func (b *Bot) logicIfText() bool {
+func (b *Bot) logicIfText(in models.InMessage) bool {
 	iftext := true
-	switch b.in.Mtext {
+	switch in.Mtext {
 	case "+":
-		if b.Plus() {
+		if b.Plus(in) {
 			return true
 		}
 	case "-":
-		if b.Minus() {
+		if b.Minus(in) {
 			return true
 		}
 	case "Справка", "Help", "help":
-		b.hhelp()
+		b.hhelp(in)
 	case "update modules", "обновить модули":
-		b.updateCompendiumModules()
+		go b.updateCompendiumModules(in)
 		iftext = true
 	case "OptimizationSborkz":
 		go b.storage.DbFunc.OptimizationSborkz()
-		b.iftipdelete()
+		b.iftipdelete(in)
 	case "cleanrs":
 		go b.client.Ds.CleanRsBotOtherMessage()
 	default:
@@ -163,20 +162,19 @@ func (b *Bot) logicIfText() bool {
 	return iftext
 }
 
-func (b *Bot) bridge() bool {
-	if b.in.Config.Forward {
-		//go b.Transtale()
-		if b.in.Tip == ds {
-			text := fmt.Sprintf("(DS)%s \n%s", b.in.Name, b.in.Mtext)
-			b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, 180)
-			b.cleanChat()
-		} else if b.in.Tip == tg {
-			text := fmt.Sprintf("(TG)%s \n%s", b.in.Name, b.in.Mtext)
-			b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 180)
-			b.cleanChat()
+func (b *Bot) bridge(in models.InMessage) bool {
+	if in.Config.Forward {
+		if in.Tip == ds {
+			text := fmt.Sprintf("(DS)%s \n%s", in.Name, in.Mtext)
+			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 180)
+			go b.cleanChat(in)
+		} else if in.Tip == tg {
+			text := fmt.Sprintf("(TG)%s \n%s", in.Name, in.Mtext)
+			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 180)
+			go b.cleanChat(in)
 		}
 	}
-	return b.in.Config.Forward
+	return in.Config.Forward
 }
 func (b *Bot) Autohelp() {
 	tm := time.Now()
@@ -191,18 +189,29 @@ func (b *Bot) Autohelp() {
 			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
 				text := fmt.Sprintf("%s \n%s", b.getLanguageText(s.Country, "info_bot_delete_msg"), b.getLanguageText(s.Country, "info_help_text"))
 				if s.MesidTgHelp != "" {
-					b.log.Info(s.MesidTgHelp)
 					mID, err := strconv.Atoi(s.MesidTgHelp)
 					if err != nil {
 						return
 					}
-					b.log.Info(fmt.Sprintf("%s %d", s.MesidTgHelp, mID))
 					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
 				mid := b.client.Tg.SendHelp(s.TgChannel, strings.Replace(text, "3", "10", 1))
-				b.log.Info(fmt.Sprintf("mid %d", mid))
 				s.MesidTgHelp = strconv.Itoa(mid)
 
+			} else if s.TgChannel != "" && !s.Forward {
+				split := strings.Split(s.TgChannel, "/")
+				if split[1] != "0" {
+					text := fmt.Sprintf("%s\n%s ", b.getLanguageText(s.Country, "information"), b.getLanguageText(s.Country, "info_help_text"))
+					if s.MesidTgHelp != "" {
+						mID, err := strconv.Atoi(s.MesidTgHelp)
+						if err != nil {
+							return
+						}
+						go b.client.Tg.DelMessage(s.TgChannel, mID)
+					}
+					mid := b.client.Tg.SendHelp(s.TgChannel, text)
+					s.MesidTgHelp = strconv.Itoa(mid)
+				}
 			}
 			b.storage.ConfigRs.AutoHelpUpdateMesid(s)
 		}
@@ -218,9 +227,8 @@ func (b *Bot) Autohelp() {
 						s.MesidDsHelp = MesidDsHelp
 						b.storage.ConfigRs.AutoHelpUpdateMesid(s)
 					}
-					b.in.Config = s
-					b.QueueAll()
-					time.Sleep(10 * time.Second)
+					in := models.InMessage{Config: s}
+					b.QueueAll(in)
 				}
 			}
 		}()

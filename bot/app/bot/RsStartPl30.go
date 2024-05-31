@@ -3,34 +3,32 @@ package bot
 import (
 	"context"
 	"fmt"
+	"kz_bot/models"
 	"strings"
 	"time"
 )
 
 //lang ok
 
-func (b *Bot) RsStart() {
+func (b *Bot) RsStart(in models.InMessage) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.debug {
-		fmt.Println("in RsStart", b.in)
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
-	b.iftipdelete()
-	countName, err := b.storage.Count.СountName(ctx, b.in.Name, b.in.Lvlkz, b.in.Config.CorpName)
+	b.iftipdelete(in)
+	countName, err := b.storage.Count.СountName(ctx, in.Name, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		return
 	}
 	if countName == 0 {
-		text := b.getText("info_forced_start_available")
-		b.ifTipSendTextDelSecond(text, 10)
+		text := b.getText(in, "info_forced_start_available")
+		b.ifTipSendTextDelSecond(in, text, 10)
 	} else if countName == 1 {
-		numberkz, err1 := b.storage.DbFunc.NumberQueueLvl(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+		numberkz, err1 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName)
 		if err1 != nil {
 			return
 		}
-		count, err2 := b.storage.Count.CountQueue(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+		count, err2 := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 		if err2 != nil {
 			return
 		}
@@ -38,36 +36,36 @@ func (b *Bot) RsStart() {
 		dsmesid := ""
 		tgmesid := 0
 		if count > 0 {
-			u := b.storage.DbFunc.ReadAll(ctx, b.in.Lvlkz, b.in.Config.CorpName)
-			textEvent, numkzEvent := b.EventText()
+			u := b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
+			textEvent, numkzEvent := b.EventText(in)
 			if textEvent == "" {
-				DarkFlag := strings.HasPrefix(b.in.Lvlkz, "d")
-				textEvent = b.GetTextPercent(b.in.Config, DarkFlag)
+				DarkFlag := strings.HasPrefix(in.Lvlkz, "d")
+				textEvent = b.GetTextPercent(in.Config, DarkFlag)
 			}
-			numberevent := b.storage.Event.NumActiveEvent(b.in.Config.CorpName)
+			numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 			if numberevent > 0 {
 				numberkz = numkzEvent
 			}
 			if count == 1 {
-				if b.in.Config.DsChannel != "" {
+				if in.Config.DsChannel != "" {
 					b.wg.Add(1)
 					go func() {
-						name1, _, _, _ := b.nameMention(u, ds)
+						name1, _, _, _ := b.nameMention(in, u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz,
-							b.getText("was_launched_incomplete"), name1, b.getText("go"), textEvent)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz,
+							b.getText(in, "was_launched_incomplete"), name1, b.getText(in, "go"), textEvent)
 
-						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+						if in.Tip == ds {
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 
 						} else {
-							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
 						}
 
-						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -76,18 +74,18 @@ func (b *Bot) RsStart() {
 					}()
 
 				}
-				if b.in.Config.TgChannel != "" {
+				if in.Config.TgChannel != "" {
 					b.wg.Add(1)
 					go func() {
-						name1, _, _, _ := b.nameMention(u, tg)
-						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+						name1, _, _, _ := b.nameMention(in, u, tg)
+						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz,
-							b.getText("was_launched_incomplete"), name1, b.getText("go"), textEvent)
-						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz,
+							b.getText(in, "was_launched_incomplete"), name1, b.getText(in, "go"), textEvent)
+						tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -97,26 +95,26 @@ func (b *Bot) RsStart() {
 
 				}
 			} else if count == 2 {
-				if b.in.Config.DsChannel != "" { //discord
+				if in.Config.DsChannel != "" { //discord
 					b.wg.Add(1)
 					go func() {
-						name1, name2, _, _ := b.nameMention(u, ds)
+						name1, name2, _, _ := b.nameMention(in, u, ds)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"))
-						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("go"), textEvent)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"))
+						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText(in, "go"), textEvent)
 						text := text1 + text2
-						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+						if in.Tip == ds {
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 							if u.User1.Tip == ds {
 								go b.sendDmDark(text, u.User1.Mention)
 							}
 						} else {
-							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
 						}
-						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -125,19 +123,19 @@ func (b *Bot) RsStart() {
 					}()
 
 				}
-				if b.in.Config.TgChannel != "" { //telegram
+				if in.Config.TgChannel != "" { //telegram
 					b.wg.Add(1)
 					go func() {
-						name1, name2, _, _ := b.nameMention(u, tg)
-						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+						name1, name2, _, _ := b.nameMention(in, u, tg)
+						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"))
-						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText("go"), textEvent)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"))
+						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText(in, "go"), textEvent)
 						text := text1 + text2
-						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -147,22 +145,22 @@ func (b *Bot) RsStart() {
 
 				}
 			} else if count == 3 {
-				if b.in.Config.DsChannel != "" { //discord
+				if in.Config.DsChannel != "" { //discord
 					b.wg.Add(1)
 					go func() {
-						name1, name2, name3, _ := b.nameMention(u, ds)
+						name1, name2, name3, _ := b.nameMention(in, u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"),
-							name1, name2, name3, b.getText("go"), textEvent)
-						if b.in.Tip == ds {
-							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"),
+							name1, name2, name3, b.getText(in, "go"), textEvent)
+						if in.Tip == ds {
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 						} else {
-							dsmesid = b.client.Ds.Send(b.in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
 						}
-						go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+						err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -170,18 +168,18 @@ func (b *Bot) RsStart() {
 						b.wg.Done()
 					}()
 				}
-				if b.in.Config.TgChannel != "" { //telegram
+				if in.Config.TgChannel != "" { //telegram
 					b.wg.Add(1)
 					go func() {
-						name1, name2, name3, _ := b.nameMention(u, tg)
-						go b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+						name1, name2, name3, _ := b.nameMention(in, u, tg)
+						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
-							b.getText("rs_queue"), b.in.Lvlkz, numberkz, b.getText("was_launched_incomplete"),
-							name1, name2, name3, b.getText("go"), textEvent)
-						tgmesid = b.client.Tg.SendChannel(b.in.Config.TgChannel, text)
-						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"),
+							name1, name2, name3, b.getText(in, "go"), textEvent)
+						tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+						err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
-							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, b.in.Lvlkz, b.in.Config.CorpName)
+							err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, in.Lvlkz, in.Config.CorpName)
 							if err != nil {
 								b.log.ErrorErr(err)
 							}
@@ -192,44 +190,41 @@ func (b *Bot) RsStart() {
 				}
 			}
 			b.wg.Wait()
-			err = b.storage.Update.UpdateCompliteRS(ctx, b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, in.Config.CorpName)
 			if err != nil {
-				err = b.storage.Update.UpdateCompliteRS(context.Background(), b.in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, b.in.Config.CorpName)
+				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numberkz, numberevent, in.Config.CorpName)
 				if err != nil {
 					b.log.ErrorErr(err)
 				}
 			}
 
 			//отправляем сообщение о корпорациях с %
-			go b.SendPercent(b.in.Config)
+			go b.SendPercent(in.Config)
 
-			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, b.in.Name}
+			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, in.Name}
 			b.elseChat(user)
 		}
 	}
 }
-func (b *Bot) Pl30() {
-	if b.debug {
-		fmt.Println("in Pl30", b.in)
-	}
+func (b *Bot) Pl30(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	countName := b.storage.Count.CountNameQueue(ctx, b.in.Name)
+	countName := b.storage.Count.CountNameQueue(ctx, in.Name)
 	text := ""
 	if countName == 0 {
-		text = b.in.NameMention + b.getText("you_out_of_queue")
+		text = in.NameMention + b.getText(in, "you_out_of_queue")
 	} else if countName > 0 {
-		timedown := b.storage.DbFunc.P30Pl(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)
+		timedown := b.storage.DbFunc.P30Pl(ctx, in.Lvlkz, in.Config.CorpName, in.Name)
 		if timedown >= 150 {
 			text = fmt.Sprintf("%s %s %d %s",
-				b.in.NameMention, b.getText("info_max_queue_time"), timedown, b.getText("min"))
+				in.NameMention, b.getText(in, "info_max_queue_time"), timedown, b.getText(in, "min"))
 		} else {
-			text = b.in.NameMention + b.getText("timer_updated")
-			b.storage.DbFunc.UpdateTimedown(ctx, b.in.Lvlkz, b.in.Config.CorpName, b.in.Name)
-			b.in.Option.Pl30 = true
-			b.in.Option.Edit = true
-			b.QueueLevel()
+			text = in.NameMention + b.getText(in, "timer_updated")
+			b.storage.DbFunc.UpdateTimedown(ctx, in.Lvlkz, in.Config.CorpName, in.Name)
+			in.Option.Pl30 = true
+			in.Option.Edit = true
+			b.QueueLevel(in)
 		}
 	}
-	b.ifTipSendTextDelSecond(text, 20)
+	b.ifTipSendTextDelSecond(in, text, 20)
 }

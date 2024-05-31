@@ -7,52 +7,47 @@ import (
 	"strings"
 )
 
-func (b *Bot) accessChat() {
-	after, res := strings.CutPrefix(b.in.Mtext, ".")
+func (b *Bot) accessChat(in models.InMessage) {
+	after, res := strings.CutPrefix(in.Mtext, ".")
 	if res {
 		switch after {
 		case "add":
-			go b.iftipdelete()
-			b.accessAddChannel("en")
+			b.accessAddChannel(in, "en")
 		case "добавить":
-			go b.iftipdelete()
-			b.accessAddChannel("ru")
+			b.accessAddChannel(in, "ru")
 		case "додати":
-			go b.iftipdelete()
-			b.accessAddChannel("ua")
+			b.accessAddChannel(in, "ua")
 		case "del":
-			go b.iftipdelete()
-			b.accessDelChannel("en")
+			b.accessDelChannel(in, "en")
 		case "удалить":
-			go b.iftipdelete()
-			b.accessDelChannel("ru")
+			b.accessDelChannel(in, "ru")
 		case "видалити":
-			go b.iftipdelete()
-			b.accessDelChannel("ua")
+			b.accessDelChannel(in, "ua")
 		case "паника":
 			b.log.Panic("перезагрузка по требованию")
 		default:
-			if b.setLang() {
+			if b.setLang(in) {
 				return
 			}
-			if b.cleanOldMessage() {
+			if b.cleanOldMessage(in) {
 				return
 			}
 		}
 	}
 }
-func (b *Bot) accessAddChannel(lang string) {
-	ok, _ := b.checkConfig()
+func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
+	go b.iftipdelete(in)
+	ok, _ := b.checkConfig(in)
 	if ok {
-		go b.ifTipSendTextDelSecond(b.getLanguageText(lang, "info_activation_not_required"), 20)
+		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "info_activation_not_required"), 20)
 	} else {
-		c := b.in.Config
+		c := in.Config
 		c.Country = lang
 
 		b.storage.ConfigRs.InsertConfigRs(c)
 		b.configCorp[c.CorpName] = c
 		b.log.Info(c.CorpName + " Добавлена в конфиг корпораций ")
-		go b.ifTipSendTextDelSecond(b.getLanguageText(lang, "tranks_for_activation"), 60)
+		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "tranks_for_activation"), 60)
 		if c.DsChannel != "" {
 			b.client.Ds.Hhelp1(c.DsChannel, lang)
 		}
@@ -61,36 +56,37 @@ func (b *Bot) accessAddChannel(lang string) {
 		}
 	}
 }
-func (b *Bot) accessDelChannel(lang string) {
-	ok, config := b.checkConfig()
+func (b *Bot) accessDelChannel(in models.InMessage, lang string) {
+	go b.iftipdelete(in)
+	ok, config := b.checkConfig(in)
 	if !ok {
-		go b.ifTipSendTextDelSecond(b.getLanguageText(lang, "channel_not_connected"), 60)
+		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "channel_not_connected"), 60)
 	} else {
 		b.storage.ConfigRs.DeleteConfigRs(config)
 		b.storage.ReloadDbArray()
 		b.configCorp = b.storage.CorpConfigRS
 		b.log.Info("отключение корпорации " + config.CorpName)
-		go b.ifTipSendTextDelSecond(b.getLanguageText(lang, "you_disabled_bot_functions"), 60)
+		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "you_disabled_bot_functions"), 60)
 	}
 }
-func (b *Bot) setLang() bool {
+func (b *Bot) setLang(in models.InMessage) bool {
 	re := regexp.MustCompile(`^\.set lang (\w{2})$`)
-	matches := re.FindStringSubmatch(b.in.Mtext)
+	matches := re.FindStringSubmatch(in.Mtext)
 	if len(matches) > 0 {
 		langUpdate := matches[1]
-		ok, config := b.checkConfig()
+		ok, config := b.checkConfig(in)
 		if ok {
 			if b.storage.Dictionary.CheckTranslateLanguage(langUpdate) {
-				go b.updateLanguage(langUpdate, config)
+				go b.updateLanguage(in, langUpdate, config)
 			} else {
-				b.ifTipSendTextDelSecond("please wait, I'm trying to translate the bot's language via Google to "+langUpdate, 30)
+				b.ifTipSendTextDelSecond(in, "please wait, I'm trying to translate the bot's language via Google to "+langUpdate, 30)
 				err := b.storage.Dictionary.TranslateViaGoogle(langUpdate)
 				if err != nil {
 					b.log.Info(config.CorpName + " " + langUpdate)
 					b.log.ErrorErr(err)
-					b.ifTipSendTextDelSecond("failed to translate to "+langUpdate, 30)
+					b.ifTipSendTextDelSecond(in, "failed to translate to "+langUpdate, 30)
 				} else {
-					go b.updateLanguage(langUpdate, config)
+					go b.updateLanguage(in, langUpdate, config)
 				}
 			}
 			return true
@@ -98,21 +94,21 @@ func (b *Bot) setLang() bool {
 	}
 	return false
 }
-func (b *Bot) checkConfig() (bool, models.CorporationConfig) {
+func (b *Bot) checkConfig(in models.InMessage) (bool, models.CorporationConfig) {
 	for corpName, config := range b.configCorp {
-		if corpName != "" && corpName == b.in.Config.CorpName {
+		if corpName != "" && corpName == in.Config.CorpName {
 			return true, config
-		} else if config.DsChannel != "" && config.DsChannel == b.in.Config.DsChannel {
+		} else if config.DsChannel != "" && config.DsChannel == in.Config.DsChannel {
 			return true, config
-		} else if config.TgChannel != "" && config.TgChannel == b.in.Config.TgChannel {
+		} else if config.TgChannel != "" && config.TgChannel == in.Config.TgChannel {
 			return true, config
 		}
 	}
 	return false, models.CorporationConfig{}
 }
 
-func (b *Bot) updateLanguage(langUpdate string, config models.CorporationConfig) {
-	go b.iftipdelete()
+func (b *Bot) updateLanguage(in models.InMessage, langUpdate string, config models.CorporationConfig) {
+	go b.iftipdelete(in)
 	if config.MesidDsHelp != "" {
 		go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
 	}
@@ -124,18 +120,18 @@ func (b *Bot) updateLanguage(langUpdate string, config models.CorporationConfig)
 	b.storage.ConfigRs.AutoHelpUpdateMesid(config)
 	b.storage.ReloadDbArray()
 
-	go b.ifTipSendTextDelSecond(b.getLanguageText(config.Country, "language_switched_to"), 20)
+	go b.ifTipSendTextDelSecond(in, b.getLanguageText(config.Country, "language_switched_to"), 20)
 	b.log.Info(fmt.Sprintf("замена языка в %s на %s", config.CorpName, config.Country))
 }
-func (b *Bot) cleanOldMessage() bool {
-	if b.in.Tip != "ds" {
+func (b *Bot) cleanOldMessage(in models.InMessage) bool {
+	if in.Tip != "ds" {
 		return false
 	}
 	re := regexp.MustCompile(`^\.очистка (\d{1,2}|100)`)
-	matches := re.FindStringSubmatch(b.in.Mtext)
+	matches := re.FindStringSubmatch(in.Mtext)
 	if len(matches) > 0 {
 		fmt.Println("limitMessage " + matches[1])
-		b.client.Ds.CleanOldMessageChannel(b.in.Config.DsChannel, matches[1])
+		b.client.Ds.CleanOldMessageChannel(in.Config.DsChannel, matches[1])
 		return true
 	}
 	return false

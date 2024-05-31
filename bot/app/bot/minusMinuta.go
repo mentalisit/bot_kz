@@ -91,27 +91,27 @@ func (b *Bot) UpdateMessage() {
 	}
 }
 
-func (b *Bot) CheckTimeQueue() {
-	atoi, err := strconv.Atoi(b.in.Timekz)
+func (b *Bot) CheckTimeQueue(in models.InMessage) {
+	atoi, err := strconv.Atoi(in.Timekz)
 	if err != nil {
 		b.log.ErrorErr(err)
 		return
 	}
 	if atoi == 3 {
-		text := b.in.NameMention + b.getText("info_time_almost_up")
-		if b.in.Tip == ds {
-			mID := b.client.Ds.SendEmbedTime(b.in.Config.DsChannel, text)
-			go b.client.Ds.DeleteMesageSecond(b.in.Config.DsChannel, mID, 180)
-		} else if b.in.Tip == tg {
-			mID := b.client.Tg.SendEmbedTime(b.in.Config.TgChannel, text)
-			go b.client.Tg.DelMessageSecond(b.in.Config.TgChannel, strconv.Itoa(mID), 180)
+		text := in.NameMention + b.getText(in, "info_time_almost_up")
+		if in.Tip == ds {
+			mID := b.client.Ds.SendEmbedTime(in.Config.DsChannel, text)
+			go b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, mID, 180)
+		} else if in.Tip == tg {
+			mID := b.client.Tg.SendEmbedTime(in.Config.TgChannel, text)
+			go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(mID), 180)
 		}
 	} else if atoi == 0 {
-		b.RsMinus()
+		b.RsMinus(in)
 	} else if atoi < -1 {
-		b.RsMinus()
+		b.RsMinus(in)
 	} else if atoi < 0 {
-		b.RsMinus()
+		b.RsMinus(in)
 	}
 }
 func (b *Bot) myQueue(my []models.Sborkz) {

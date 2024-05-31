@@ -10,72 +10,73 @@ import (
 )
 
 // lang
-func (b *Bot) iftipdelete() {
-	if b.in.Tip == ds && !b.in.Option.Reaction && !b.in.Option.Update && !b.in.Option.Edit {
-		go b.client.Ds.DeleteMessage(b.in.Config.DsChannel, b.in.Ds.Mesid)
-		go b.client.Ds.ChannelTyping(b.in.Config.DsChannel)
-	} else if b.in.Tip == tg && !b.in.Option.Reaction && !b.in.Option.Update {
-		go b.client.Tg.ChatTyping(b.in.Config.TgChannel)
-		go b.client.Tg.DelMessage(b.in.Config.TgChannel, b.in.Tg.Mesid)
+func (b *Bot) iftipdelete(in models.InMessage) {
+	if in.Tip == ds && !in.Option.Reaction && !in.Option.Update && !in.Option.Edit {
+		go b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
+		go b.client.Ds.ChannelTyping(in.Config.DsChannel)
+	} else if in.Tip == tg && !in.Option.Reaction && !in.Option.Update {
+		go b.client.Tg.ChatTyping(in.Config.TgChannel)
+		go b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
 	}
 }
-func (b *Bot) ifTipSendMentionText(text string) {
-	text = fmt.Sprintf("%s %s", b.in.NameMention, text)
-	if b.in.Tip == ds {
-		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, 10)
-	} else if b.in.Tip == tg {
-		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, 10)
+func (b *Bot) ifTipSendMentionText(in models.InMessage, text string) {
+	text = fmt.Sprintf("%s %s", in.NameMention, text)
+	if in.Tip == ds {
+		go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
+	} else if in.Tip == tg {
+		go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
 	}
 }
-func (b *Bot) ifTipSendTextDelSecond(text string, time int) {
-	if b.in.Tip == ds {
-		go b.client.Ds.SendChannelDelSecond(b.in.Config.DsChannel, text, time)
-	} else if b.in.Tip == tg {
-		go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text, time)
+func (b *Bot) ifTipSendTextDelSecond(in models.InMessage, text string, time int) {
+	if in.Tip == ds {
+		go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, time)
+	} else if in.Tip == tg {
+		go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, time)
 	}
 }
 
-func (b *Bot) emReadName(name, nameMention, tip string) string { // склеиваем имя и эмоджи
-	t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
-	newName := name
-	if tip == ds {
-		newName = nameMention
-	} else {
-		newName = name
-	}
+//func (b *Bot) emReadName(in models.InMessage, name, nameMention, tip string) string { // склеиваем имя и эмоджи
+//	t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
+//	newName := name
+//	if tip == ds {
+//		newName = nameMention
+//	} else {
+//		newName = name
+//	}
+//
+//	if len(t.Name) > 0 {
+//		if tip == ds && tip == t.Tip {
+//			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", nameMention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
+//		} else if tip == tg && tip == t.Tip {
+//			newName = fmt.Sprintf("%s %s%s%s%s", name, t.Em1, t.Em2, t.Em3, t.Em4)
+//			if t.Weapon != "" {
+//				newName = fmt.Sprintf("%s [%s] %s%s%s%s", name, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
+//			}
+//		}
+//	} else if in.Tip == ds && in.Config.Guildid == "716771579278917702" && in.Name == name {
+//		genesis, enrich, rsextender := helpers.GetTechDataUserId(in.Ds.Nameid)
+//		b.storage.Emoji.EmInsertEmpty(context.Background(), "ds", name)
+//		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
+//		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
+//		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
+//		newName = fmt.Sprintf("%s ", nameMention)
+//		if rsextender != 0 {
+//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "1", one)
+//			newName += one
+//		}
+//		if genesis != 0 {
+//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "2", two)
+//			newName += two
+//		}
+//		if enrich != 0 {
+//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "3", three)
+//			newName += three
+//		}
+//
+//	}
+//	return newName
+//}
 
-	if len(t.Name) > 0 {
-		if tip == ds && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", nameMention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-		} else if tip == tg && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s%s%s%s", name, t.Em1, t.Em2, t.Em3, t.Em4)
-			if t.Weapon != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", name, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-		}
-	} else if b.in.Tip == ds && b.in.Config.Guildid == "716771579278917702" && b.in.Name == name {
-		genesis, enrich, rsextender := GetTechDataUserId(b.in.Ds.Nameid)
-		b.storage.Emoji.EmInsertEmpty(context.Background(), "ds", name)
-		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-		newName = fmt.Sprintf("%s ", nameMention)
-		if rsextender != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "1", one)
-			newName += one
-		}
-		if genesis != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "2", two)
-			newName += two
-		}
-		if enrich != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "3", three)
-			newName += three
-		}
-
-	}
-	return newName
-}
 func (b *Bot) emReadMention(name, nameMention, tip string) string { // склеиваем имя и эмоджи
 	t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
 	newName := nameMention
@@ -89,58 +90,25 @@ func (b *Bot) emReadMention(name, nameMention, tip string) string { // скле�
 				newName = fmt.Sprintf("%s [%s] %s%s%s%s", nameMention, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
 			}
 		}
-	} else if b.in.Tip == ds && b.in.Config.Guildid == "716771579278917702" {
-		genesis, enrich, rsextender := GetTechDataUserId(b.in.Ds.Nameid)
-		b.storage.Emoji.EmInsertEmpty(context.Background(), "ds", name)
-		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-		newName = fmt.Sprintf("%s ", nameMention)
-		if rsextender != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "1", one)
-			newName += one
-		}
-		if genesis != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "2", two)
-			newName += two
-		}
-		if enrich != 0 {
-			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "3", three)
-			newName += three
-		}
-
 	}
 	return newName
 }
 
-func (b *Bot) updateCompendiumModules() {
-	b.iftipdelete()
-	genesis, enrich, rsextender := GetTechDataUserId(b.in.Ds.Nameid)
-	one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-	two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-	three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-	if rsextender != 0 {
-		b.storage.Emoji.ModuleUpdate(context.Background(), b.in.Name, "ds", "1", one)
-	}
-	if genesis != 0 {
-		b.storage.Emoji.ModuleUpdate(context.Background(), b.in.Name, "ds", "2", two)
-	}
-	if enrich != 0 {
-		b.storage.Emoji.ModuleUpdate(context.Background(), b.in.Name, "ds", "3", three)
-	}
-	b.ifTipSendMentionText(" загружено из компендиум бота " + one + two + three)
+func (b *Bot) updateCompendiumModules(in models.InMessage) {
+	b.iftipdelete(in)
+	b.ifTipSendMentionText(in, b.helpers.UpdateCompendiumModules(in))
 }
-func (b *Bot) checkAdmin() bool {
+func (b *Bot) checkAdmin(in models.InMessage) bool {
 	admin := false
-	if b.in.Tip == ds {
-		admin = b.client.Ds.CheckAdmin(b.in.Ds.Nameid, b.in.Config.DsChannel)
-	} else if b.in.Tip == tg {
-		admin = b.client.Tg.CheckAdminTg(b.in.Config.TgChannel, b.in.Name)
+	if in.Tip == ds {
+		admin = b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)
+	} else if in.Tip == tg {
+		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name)
 	}
 	return admin
 }
 
-func (b *Bot) nameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
+func (b *Bot) nameMention(in models.InMessage, u models.Users, tip string) (n1, n2, n3, n4 string) {
 	if u.User1.Tip == tip {
 		n1 = b.emReadMention(u.User1.Name, u.User1.Mention, tip)
 	} else {
@@ -156,10 +124,10 @@ func (b *Bot) nameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
 	} else {
 		n3 = u.User3.Name
 	}
-	if b.in.Tip == tip {
-		n4 = b.emReadMention(b.in.Name, b.in.NameMention, tip)
+	if in.Tip == tip {
+		n4 = b.emReadMention(in.Name, in.NameMention, tip)
 	} else {
-		n4 = b.in.Name
+		n4 = in.Name
 	}
 	return
 }
@@ -205,17 +173,17 @@ func (b *Bot) elsetrue(name string) { //удаляем игрока с очер�
 	}
 }
 
-func (b *Bot) hhelp() {
-	b.iftipdelete()
-	if b.in.Tip == ds {
-		go b.client.Ds.Help(b.in.Config.DsChannel, b.in.Config.Country)
-	} else if b.in.Tip == tg {
-		go b.client.Tg.Help(b.in.Config.TgChannel, b.in.Config.Country)
+func (b *Bot) hhelp(in models.InMessage) {
+	b.iftipdelete(in)
+	if in.Tip == ds {
+		go b.client.Ds.Help(in.Config.DsChannel, in.Config.Country)
+	} else if in.Tip == tg {
+		go b.client.Tg.Help(in.Config.TgChannel, in.Config.Country)
 	}
 }
 
-func (b *Bot) getText(key string) string {
-	return b.storage.Dictionary.GetText(b.in.Config.Country, key)
+func (b *Bot) getText(in models.InMessage, key string) string {
+	return b.storage.Dictionary.GetText(in.Config.Country, key)
 }
 
 func (b *Bot) getLanguageText(lang, key string) string {
@@ -235,17 +203,17 @@ func containsSymbolD(s string) (dark bool, result string) {
 	return dark, result
 }
 
-func (b *Bot) Transtale() {
-	text2, err := gt.Translate(b.in.Mtext, "auto", b.in.Config.Country)
+func (b *Bot) Transtale(in models.InMessage) {
+	text2, err := gt.Translate(in.Mtext, "auto", in.Config.Country)
 	if err == nil {
-		if b.in.Mtext != text2 {
-			if b.in.Tip == ds {
+		if in.Mtext != text2 {
+			if in.Tip == ds {
 				go func() {
-					m := b.client.Ds.SendWebhook(text2, b.in.Name, b.in.Config.DsChannel, b.in.Config.Guildid, b.in.Ds.Avatar)
-					b.client.Ds.DeleteMesageSecond(b.in.Config.DsChannel, m, 90)
+					m := b.client.Ds.SendWebhook(text2, in.Name, in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
+					b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, m, 90)
 				}()
-			} else if b.in.Tip == tg {
-				go b.client.Tg.SendChannelDelSecond(b.in.Config.TgChannel, text2, 90)
+			} else if in.Tip == tg {
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text2, 90)
 			}
 		}
 	}

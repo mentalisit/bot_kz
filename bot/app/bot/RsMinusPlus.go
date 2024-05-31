@@ -3,71 +3,65 @@ package bot
 import (
 	"context"
 	"fmt"
+	"kz_bot/models"
 	"time"
 )
 
 //lang ok
 
-func (b *Bot) Plus() bool {
-	if b.debug {
-		fmt.Printf("in Plus %+v\n", b.in)
-	}
-	b.iftipdelete()
+func (b *Bot) Plus(in models.InMessage) bool {
+	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
 
-	countName := b.storage.Count.CountNameQueueCorp(ctx, b.in.Name, b.in.Config.CorpName)
+	countName := b.storage.Count.CountNameQueueCorp(ctx, in.Name, in.Config.CorpName)
 	message := ""
 	ins := false
-	if countName > 0 && b.in.Option.Reaction {
-		b.iftipdelete()
-		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
+	if countName > 0 && in.Option.Reaction {
+		b.iftipdelete(in)
+		t := b.storage.Timers.UpdateMitutsQueue(ctx, in.Name, in.Config.CorpName)
 		if t.Timedown > 3 {
 			message = fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.getText("info_cannot_click_plus"), t.Lvlkz, b.getText("you_will_still"), t.Timedown, b.getText("min"))
+				t.Mention, b.getText(in, "info_cannot_click_plus"), t.Lvlkz, b.getText(in, "you_will_still"), t.Timedown, b.getText(in, "min"))
 		} else if t.Timedown <= 3 {
 			ins = true
-			message = t.Mention + b.getText("timer_updated")
-			b.in.Lvlkz = t.Lvlkz
-			b.in.Option.Reaction = false
-			b.QueueLevel()
+			message = t.Mention + b.getText(in, "timer_updated")
+			in.Lvlkz = t.Lvlkz
+			in.Option.Reaction = false
+			go b.QueueLevel(in)
 		}
-		b.ifTipSendTextDelSecond(message, 10)
-		//if b.in.Tip == ds {
-		//	b.client.Ds.DeleteMessage(b.in.Config.DsChannel, b.in.Ds.Mesid)
-		//} else if b.in.Tip == tg {
-		//	b.client.Tg.DelMessage(b.in.Config.TgChannel, b.in.Tg.Mesid)
+		b.ifTipSendTextDelSecond(in, message, 10)
+		//if in.Tip == ds {
+		//	b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
+		//} else if in.Tip == tg {
+		//	b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
 		//}
 	}
 	return ins
 }
-func (b *Bot) Minus() bool {
-	if b.debug {
-		fmt.Printf("in Minus %+v\n", b.in)
-	}
-	b.iftipdelete()
+func (b *Bot) Minus(in models.InMessage) bool {
 	bb := false
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	countNames := b.storage.Count.CountNameQueueCorp(ctx, b.in.Name, b.in.Config.CorpName)
-	if countNames > 0 && b.in.Option.Reaction {
-		b.iftipdelete()
-		t := b.storage.Timers.UpdateMitutsQueue(ctx, b.in.Name, b.in.Config.CorpName)
-		if t.Name == b.in.Name && t.Timedown > 3 {
+	countNames := b.storage.Count.CountNameQueueCorp(ctx, in.Name, in.Config.CorpName)
+	if countNames > 0 && in.Option.Reaction {
+		b.iftipdelete(in)
+		t := b.storage.Timers.UpdateMitutsQueue(ctx, in.Name, in.Config.CorpName)
+		if t.Name == in.Name && t.Timedown > 3 {
 			message := fmt.Sprintf("%s %s%s %s %d%s",
-				t.Mention, b.getText("info_cannot_click_minus"), t.Lvlkz, b.getText("you_will_still"), t.Timedown, b.getText("min"))
-			b.ifTipSendTextDelSecond(message, 10)
-		} else if t.Name == b.in.Name && t.Timedown <= 3 {
-			b.in.Lvlkz = t.Lvlkz
+				t.Mention, b.getText(in, "info_cannot_click_minus"), t.Lvlkz, b.getText(in, "you_will_still"), t.Timedown, b.getText(in, "min"))
+			b.ifTipSendTextDelSecond(in, message, 10)
+		} else if t.Name == in.Name && t.Timedown <= 3 {
+			in.Lvlkz = t.Lvlkz
 			bb = true
-			b.in.Option.Reaction = false
-			b.in.Option.Update = true
-			b.RsMinus()
+			in.Option.Reaction = false
+			in.Option.Update = true
+			go b.RsMinus(in)
 		}
-		if b.in.Tip == ds {
-			b.client.Ds.DeleteMessage(b.in.Config.DsChannel, b.in.Ds.Mesid)
-		} else if b.in.Tip == tg {
-			b.client.Tg.DelMessage(b.in.Config.TgChannel, b.in.Tg.Mesid)
+		if in.Tip == ds {
+			b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
+		} else if in.Tip == tg {
+			b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
 		}
 
 	}

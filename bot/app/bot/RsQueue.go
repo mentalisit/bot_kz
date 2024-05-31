@@ -4,87 +4,97 @@ import (
 	"context"
 	"fmt"
 	"kz_bot/config"
+	"kz_bot/models"
 	"kz_bot/pkg/utils"
 	"time"
 )
 
 //lang ok
 
-func (b *Bot) QueueLevel() {
-	if b.in.Config.DsChannel != "1210280495238090782" && config.Instance.BotMode == "dev" {
+func (b *Bot) QueueLevel(in models.InMessage) {
+	if in.Config.DsChannel != "1210280495238090782" && config.Instance.BotMode == "dev" {
 		return
 	}
-	b.iftipdelete()
+	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 
-	count, err := b.storage.Count.CountQueue(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+	count, err := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		return
 	}
 	if count == 0 {
-		b.in.Lvlkz = "d" + b.in.Lvlkz
-		count, err = b.storage.Count.CountQueue(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+		in.Lvlkz = "d" + in.Lvlkz
+		count, err = b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 		if err != nil {
 			return
 		}
 		if count == 0 {
-			b.in.Lvlkz = b.in.Lvlkz[1:]
+			in.Lvlkz = in.Lvlkz[1:]
 		}
 	}
-	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName)
 	if err2 != nil {
 		return
 	}
 	// совподения количество  условие
 	if count == 0 {
-		if !b.in.Option.Queue {
-			text := b.getText("rs_queue") + b.in.Lvlkz + b.getText("empty")
-			b.ifTipSendTextDelSecond(text, 10)
-		} else if b.in.Option.Queue {
-			b.ifTipSendTextDelSecond(b.getText("no_active_queues"), 10)
+		if !in.Option.Queue {
+			text := b.getText(in, "rs_queue") + in.Lvlkz + b.getText(in, "empty")
+			b.ifTipSendTextDelSecond(in, text, 10)
+		} else if in.Option.Queue {
+			b.ifTipSendTextDelSecond(in, b.getText(in, "no_active_queues"), 10)
 		}
 		return
 	}
 
-	u := b.storage.DbFunc.ReadAll(ctx, b.in.Lvlkz, b.in.Config.CorpName)
+	u := b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
 	var n map[string]string
 	n = make(map[string]string)
-	n["lang"] = b.in.Config.Country
-	darkStar, lvlkz := containsSymbolD(b.in.Lvlkz)
-	if b.in.Config.DsChannel != "" {
+	n["lang"] = in.Config.Country
+	n = b.helpers.GetQueueDiscord(n, u)
+
+	texttg := ""
+	if in.Config.TgChannel != "" {
+		ntg := make(map[string]string)
+		ntg["text1"] = fmt.Sprintf("%s%s (%d)\n", b.getText(in, "rs_queue"), in.Lvlkz, numberLvl)
+		ntg["text2"] = fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
+		ntg["min"] = b.getText(in, "min")
+		texttg = b.helpers.GetQueueTelegram(ntg, u)
+	}
+	darkStar, lvlkz := containsSymbolD(in.Lvlkz)
+	if in.Config.DsChannel != "" {
 		if darkStar {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("drs")+lvlkz, b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+lvlkz, in.Config.Guildid)
 		} else {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText("rs")+b.in.Lvlkz, b.in.Config.Guildid)
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz, in.Config.Guildid)
 		}
 		if err != nil {
-			b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", b.in.Config, b.in.Lvlkz))
+			b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", in.Config, in.Lvlkz))
 		}
 	}
 
 	if count == 1 {
 
-		if b.in.Config.DsChannel != "" {
+		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
+				//n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
 
 				emb := b.client.Ds.EmbedDS(n, numberLvl, 1, false)
-				if b.in.Option.Edit {
-					errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
+				if in.Option.Edit {
+					errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 					if errr != nil {
-						b.in.Option.Edit = false
+						in.Option.Edit = false
 					}
 				}
-				if !b.in.Option.Edit {
-					b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
+				if !in.Option.Edit {
+					b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+					dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 
-					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
@@ -93,47 +103,46 @@ func (b *Bot) QueueLevel() {
 				b.wg.Done()
 			}()
 		}
-		if b.in.Config.TgChannel != "" {
+		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
-				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
-				text := fmt.Sprintf("%s %s %s", text1, name1, text2)
-				if b.in.Option.Edit {
-					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
-				} else if !b.in.Option.Edit {
-					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+				//text1 := fmt.Sprintf("%s%s (%d)\n", b.getText(in, "rs_queue"), in.Lvlkz, numberLvl)
+				//name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText(in, "min"), u.User1.Numkzn)
+				//text2 := fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
+				//text := fmt.Sprintf("%s %s", names, text2)
+				if in.Option.Edit {
+					b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
+				} else if !in.Option.Edit {
+					mesidTg := b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
-					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+					b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
 			}()
 		}
 	} else if count == 2 {
-		if b.in.Config.DsChannel != "" {
+		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
-				n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User2.Name, u.User2.Mention, ds), u.User2.Timedown, u.User2.Numkzn)
+				//n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
+				//n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User2.Name, u.User2.Mention, ds), u.User2.Timedown, u.User2.Numkzn)
 				emb := b.client.Ds.EmbedDS(n, numberLvl, 2, false)
-				if b.in.Option.Edit {
-					b.client.Ds.EditComplexButton(u.User1.Dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
-				} else if !b.in.Option.Edit {
-					b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
+				if in.Option.Edit {
+					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+				} else if !in.Option.Edit {
+					b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+					dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 
-					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
@@ -142,55 +151,51 @@ func (b *Bot) QueueLevel() {
 				b.wg.Done()
 			}()
 		}
-		if b.in.Config.TgChannel != "" {
+		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
-				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
-				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min"), u.User2.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
-				text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
-				if b.in.Option.Edit {
-					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
-				} else if !b.in.Option.Edit {
-					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+				//text1 := fmt.Sprintf("%s%s (%d)\n", b.getText(in, "rs_queue"), in.Lvlkz, numberLvl)
+				//name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText(in, "min"), u.User1.Numkzn)
+				//name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText(in, "min"), u.User2.Numkzn)
+				//text2 := fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
+				//text := fmt.Sprintf("%s %s %s", text1, names, text2)
+				if in.Option.Edit {
+					b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
+				} else if !in.Option.Edit {
+					mesidTg := b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
-					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+					b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
 			}()
-		}
-		if b.in.Config.WaChannel != "" {
-
 		}
 
 	} else if count == 3 {
 
-		if b.in.Config.DsChannel != "" {
+		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
-				n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User2.Name, u.User2.Mention, ds), u.User2.Timedown, u.User2.Numkzn)
-				n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(u.User3.Name, u.User3.Mention, ds), u.User3.Timedown, u.User3.Numkzn)
+				//n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
+				//n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User2.Name, u.User2.Mention, ds), u.User2.Timedown, u.User2.Numkzn)
+				//n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User3.Name, u.User3.Mention, ds), u.User3.Timedown, u.User3.Numkzn)
 				emb := b.client.Ds.EmbedDS(n, numberLvl, 3, false)
-				if b.in.Option.Edit {
-					b.client.Ds.EditComplexButton(u.User1.Dsmesid, b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
-				} else if !b.in.Option.Edit {
-					b.client.Ds.DeleteMessage(b.in.Config.DsChannel, u.User1.Dsmesid)
-					dsmesid := b.client.Ds.SendComplex(b.in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(b.in.Lvlkz))
+				if in.Option.Edit {
+					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+				} else if !in.Option.Edit {
+					b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+					dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 
-					//b.client.Ds.AddEnojiRsQueue(b.in.Config.DsChannel, dsmesid)
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
@@ -199,60 +204,54 @@ func (b *Bot) QueueLevel() {
 				b.wg.Done()
 			}()
 		}
-		if b.in.Config.TgChannel != "" {
+		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				text1 := fmt.Sprintf("%s%s (%d)\n", b.getText("rs_queue"), b.in.Lvlkz, numberLvl)
-				name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText("min"), u.User1.Numkzn)
-				name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText("min"), u.User2.Numkzn)
-				name3 := fmt.Sprintf("3️⃣ %s - %d%s (%d) \n",
-					b.emReadName(u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.getText("min"), u.User3.Numkzn)
-				text2 := fmt.Sprintf("\n%s++ - %s", b.in.Lvlkz, b.getText("forced_start"))
-				text := fmt.Sprintf("%s %s %s %s %s", text1, name1, name2, name3, text2)
-				if b.in.Option.Edit {
-					b.client.Tg.EditMessageTextKey(b.in.Config.TgChannel, u.User1.Tgmesid, text, b.in.Lvlkz)
-				} else if !b.in.Option.Edit {
-					mesidTg := b.client.Tg.SendEmded(b.in.Lvlkz, b.in.Config.TgChannel, text)
-					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+				//text1 := fmt.Sprintf("%s%s (%d)\n", b.getText(in, "rs_queue"), in.Lvlkz, numberLvl)
+				//name1 := fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText(in, "min"), u.User1.Numkzn)
+				//name2 := fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User2.Name, u.User2.Mention, tg), u.User2.Timedown, b.getText(in, "min"), u.User2.Numkzn)
+				//name3 := fmt.Sprintf("3️⃣ %s - %d%s (%d) \n",
+				//	b.emReadName(in, u.User3.Name, u.User3.Mention, tg), u.User3.Timedown, b.getText(in, "min"), u.User3.Numkzn)
+				//text2 := fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
+				//text := fmt.Sprintf("%s %s %s", text1, names, text2)
+				if in.Option.Edit {
+					b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
+				} else if !in.Option.Edit {
+					mesidTg := b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
+					err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, b.in.Lvlkz, b.in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
-					b.client.Tg.DelMessage(b.in.Config.TgChannel, u.User1.Tgmesid)
+					b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 				}
 				b.wg.Done()
 			}()
-		}
-		if b.in.Config.WaChannel != "" {
-
 		}
 	}
 	b.wg.Wait()
 }
-func (b *Bot) QueueAll() {
-	if b.debug {
-		fmt.Printf("in QueueAll %+v", b.in)
-	}
+func (b *Bot) QueueAll(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	lvl := b.storage.DbFunc.Queue(ctx, b.in.Config.CorpName)
+	lvl := b.storage.DbFunc.Queue(ctx, in.Config.CorpName)
 	lvlk := utils.RemoveDuplicateElementString(lvl)
 	if len(lvlk) > 0 {
 		for _, corp := range lvlk {
 			if corp != "" {
-				b.in.Option.Queue = true
-				b.in.Lvlkz = corp
-				b.QueueLevel()
+				in.Option.Queue = true
+				in.Lvlkz = corp
+				b.QueueLevel(in)
 
 			}
 		}
-	} else if b.in.Option.Reaction {
-		b.ifTipSendTextDelSecond(b.getText("no_active_queues"), 10)
-		b.iftipdelete()
+	} else if in.Option.Reaction {
+		b.ifTipSendTextDelSecond(in, b.getText(in, "no_active_queues"), 10)
+		b.iftipdelete(in)
 	}
 
 }
