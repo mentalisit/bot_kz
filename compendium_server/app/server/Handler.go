@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
@@ -39,8 +40,9 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 	i := s.GetTokenIdentity(token)
 	if i == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+		return
 	}
-	if i != nil && i.User.GameName != "" {
+	if i.User.GameName != "" {
 		i.User.Username = i.User.GameName
 	}
 	c.JSON(http.StatusOK, i)
@@ -204,4 +206,39 @@ func (s *Server) links(c *gin.Context) {
 </html>
 `
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+}
+
+func (s *Server) api(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "empty token"})
+		return
+	}
+	i := s.GetTokenIdentity(token)
+	if i == nil || i.Token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+		return
+	}
+	userid := c.Query("userid")
+	guildid := c.Query("guildid")
+	if userid == "" || guildid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
+		return
+	}
+	read, _ := s.db.CorpMembersRead(guildid)
+	if len(read) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildid empty members"})
+		return
+	}
+	var memb []models.CorpMember
+	for _, member := range read {
+		if strings.Contains(member.UserId, userid) {
+			memb = append(memb, member)
+		}
+	}
+	if len(memb) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "member not found"})
+		return
+	}
+	c.JSON(http.StatusOK, memb)
 }
