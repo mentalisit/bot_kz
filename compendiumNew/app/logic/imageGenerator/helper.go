@@ -3,12 +3,15 @@ package imageGenerator
 import (
 	"bytes"
 	"fmt"
-	"github.com/fogleman/gg"
-	"github.com/nfnt/resize"
 	"image"
+	"image/gif"
+	_ "image/jpeg"
 	"image/png"
 	"net/http"
 	"strconv"
+
+	"github.com/fogleman/gg"
+	"github.com/nfnt/resize"
 )
 
 var user map[int][2]int
@@ -129,34 +132,53 @@ func addModulesLevel(dc *gg.Context) {
 	dc.DrawStringAnchored(GetLevel(103), x6, y, 0, 0.5)
 	dc.DrawStringAnchored(GetLevel(102), x7, y, 0, 0.5)
 }
-func addAvatars(dc *gg.Context, AvatarURL string, centerX, centerY int) {
-	fmt.Println(AvatarURL)
+func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
+	fmt.Println(avatarURL)
 	// Загружаем изображение аватара
-	response, err := http.Get(AvatarURL)
+	response, err := http.Get(avatarURL)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer response.Body.Close()
+
+	// Определяем тип изображения
+	img, imgType, err := image.Decode(response.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	avatar, _, err := image.Decode(response.Body)
-	if err != nil {
-		fmt.Println(err)
-		//return
+	// Если это GIF, обрабатываем его иначе
+	if imgType == "gif" {
+		response, err = http.Get(avatarURL)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer response.Body.Close()
+
+		gifImg, err := gif.DecodeAll(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// Используем первый кадр GIF для наложения
+		img = gifImg.Image[0]
 	}
-	if avatar == nil {
-		return
-	}
+
 	// Изменяем размер изображения аватара
-	avatar = resize.Resize(185, 185, avatar, resize.Lanczos3)
+	img = resize.Resize(185, 185, img, resize.Lanczos3)
 
 	// Определяем радиус круга
-	radius := 270 / 3 //270
+	radius := 270 / 3
 	// Рисуем круг с изображением
 	dc.ResetClip()
 	dc.DrawCircle(float64(centerX), float64(centerY), float64(radius))
 	dc.Clip()
-	dc.DrawImageAnchored(avatar, centerX, centerY, 0.5, 0.5)
-	response.Body.Close()
+	dc.DrawImageAnchored(img, centerX, centerY, 0.5, 0.5)
+
 	return
 }
 func imageToBytes(img image.Image) ([]byte, error) {
