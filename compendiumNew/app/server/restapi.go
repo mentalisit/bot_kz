@@ -1,12 +1,10 @@
 package server
 
 import (
-	"bytes"
 	"compendium/models"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 func (s *Server) RunServerRestApi() {
@@ -14,6 +12,8 @@ func (s *Server) RunServerRestApi() {
 	router := gin.Default()
 
 	router.POST("/compendium/inbox", s.InboxMessage)
+	router.GET("/compendium/api", s.api)
+	router.GET("/compendium/api/user", s.apiUserAlts)
 
 	err := router.Run(":80")
 	if err != nil {
@@ -32,55 +32,45 @@ func (s *Server) InboxMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, "ok")
 }
 
-const apiname = "kz_bot"
-
-func GetRoles(guildId string) ([]models.CorpRole, error) {
-	data, err := json.Marshal(guildId)
-	if err != nil {
-		return nil, err
+func (s *Server) api(c *gin.Context) {
+	userid := c.Query("userid")
+	guildid := c.Query("guildid")
+	if userid == "" || guildid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
+		return
 	}
-	resp, err := http.Post("http://"+apiname+"/discord/GetRoles", "application/json", bytes.NewBuffer(data))
-	if err != nil {
-		fmt.Println(err)
-		//resp, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
-		return nil, err
+	read, _ := s.db.CorpMembersRead(guildid)
+	if len(read) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "guildid empty members"})
+		return
 	}
-
-	var guildRole []models.CorpRole
-
-	err = json.NewDecoder(resp.Body).Decode(&guildRole)
-	if err != nil {
-		return nil, err
+	var memb []models.CorpMember
+	for _, member := range read {
+		if strings.Contains(member.UserId, userid) {
+			memb = append(memb, member)
+		}
 	}
-
-	return guildRole, nil
+	if len(memb) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "member not found"})
+		return
+	}
+	c.JSON(http.StatusOK, memb)
 }
-func CheckRoleDs(guildId, memderId, roleid string) bool {
-	if roleid == "" {
-		return true
-	}
-	m := models.CheckRoleStruct{
-		GuildId:  guildId,
-		MemberId: memderId,
-		RoleId:   roleid,
-	}
-	data, err := json.Marshal(m)
-	if err != nil {
-		return false
-	}
 
-	resp, err := http.Post("http://"+apiname+"/discord/CheckRole", "application/json", bytes.NewBuffer(data))
-	if err != nil {
-		fmt.Println(err)
-		//resp, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
-		return false
+func (s *Server) apiUserAlts(c *gin.Context) {
+	userid := c.Query("userid")
+	if userid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})
+		return
 	}
-
-	var ok bool
-
-	err = json.NewDecoder(resp.Body).Decode(&ok)
-	if err != nil {
-		return false
+	read, _ := s.db.UsersGetByUserId(userid)
+	if read == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid not found"})
+		return
 	}
-	return ok
+	if len(read.Alts) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "alts not found"})
+		return
+	}
+	c.JSON(http.StatusOK, read.Alts)
 }

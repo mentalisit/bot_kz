@@ -25,10 +25,8 @@ type corpMember struct {
 }
 
 func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextender int) {
-	apiKey := "gGUBIlUAU1uTKWd8HssP27ojG0DugoAaPslwFGTDSAbEM6UM"
-
 	// Формирование URL-адреса
-	url := fmt.Sprintf("https://compendiumnew.mentalisit.myds.me/compendium/api/tech?token=%s&userid=%s&guildid=%s", apiKey, userID, guildid)
+	url := fmt.Sprintf("http://compendiumnew/compendium/api?userid=%s&guildid=%s", userID, guildid)
 
 	// Выполнение GET-запроса
 	response, err := http.Get(url)
@@ -65,5 +63,40 @@ func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextend
 			genesis = datum.Tech[508][0]
 		}
 	}
+	go fmt.Println("Alts: ", Get2AltsUserId(userID))
 	return
+}
+
+func Get2AltsUserId(userID string) (alts []string) {
+	// Формирование URL-адреса
+	url := fmt.Sprintf("http://compendiumnew/compendium/api/user?userid=%s", userID)
+
+	// Выполнение GET-запроса
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Ошибка при выполнении запроса:", err)
+		return
+	}
+	defer response.Body.Close()
+
+	// Проверка кода ответа
+	if response.StatusCode != http.StatusOK {
+		fmt.Printf("Неправильный статус код: %d\n", response.StatusCode)
+		return
+	}
+
+	// Чтение тела ответа
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Ошибка при чтении ответа:", err)
+		return
+	}
+
+	// Декодирование JSON-данных в структуру TechnicalData
+	err = json.Unmarshal(body, &alts)
+	if err != nil {
+		fmt.Println("Ошибка при декодировании JSON:", err)
+		return
+	}
+	return alts
 }

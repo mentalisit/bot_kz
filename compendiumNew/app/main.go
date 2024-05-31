@@ -16,7 +16,7 @@ func main() {
 	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
 	st := storage.NewStorage(log, cfg)
 
-	s := server.NewServer(log, cfg, st)
+	s := server.NewServer(log, st)
 	logic.NewCompendium(log, s.In, st)
 
 	log.Info("Service compendiumNew load")
