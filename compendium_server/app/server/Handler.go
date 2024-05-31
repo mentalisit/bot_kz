@@ -215,17 +215,17 @@ func (s *Server) api(c *gin.Context) {
 		return
 	}
 	i := s.GetTokenIdentity(token)
-	if i == nil || i.Token == "" {
+	if i == nil || i.Token == "" || i.Guild.ID != "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
 		return
 	}
 	userid := c.Query("userid")
-	guildid := c.Query("guildid")
-	if userid == "" || guildid == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
+	if userid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})
 		return
 	}
-	read, _ := s.db.CorpMembersRead(guildid)
+
+	read, _ := s.db.CorpMembersRead(i.Guild.ID)
 	if len(read) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "guildid empty members"})
 		return
