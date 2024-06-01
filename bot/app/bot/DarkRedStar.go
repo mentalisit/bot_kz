@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"kz_bot/bot/helpers"
 	"kz_bot/models"
 	"regexp"
 	"strconv"
@@ -34,7 +35,7 @@ func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
 		in.Timekz = strconv.Itoa(timekzz)
 	}
 
-	re2 := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])(\+)?$`) // две переменные
+	re2 := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])([\+]|[\?])?([1-5])?$`) // две переменные
 	arr2 := (re2.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arr2) > 0 {
 		kz = true
@@ -43,6 +44,14 @@ func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
 		in.Timekz = "30"
 		if arr2[0][3] == "+" {
 			in.NameMention = "$" + in.NameMention
+		}
+		if arr2[0][3] == "?" && arr2[0][4] != "" {
+			atoi, _ := strconv.Atoi(arr2[0][4])
+			b.darkAlt(in, atoi)
+			return true
+		} else if arr2[0][3] == "?" {
+			b.darkAlt(in, 1)
+			return true
 		}
 	}
 
@@ -71,20 +80,40 @@ func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
 
 	switch kzb {
 	case "*":
-		b.RsDarkPlus(in)
+		b.RsDarkPlus(in, "")
 	case "+":
-		b.RsDarkPlus(in)
+		b.RsDarkPlus(in, "")
 	case "-":
 		b.RsMinus(in)
 	case "*+":
-		b.RsDarkPlus(in)
+		b.RsDarkPlus(in, "")
 
 	default:
 		kz = false
 	}
 	return kz
 }
-func (b *Bot) RsDarkPlus(in models.InMessage) {
+func (b *Bot) darkAlt(in models.InMessage, i int) {
+	if in.Tip == ds {
+		alts := helpers.Get2AltsUserId(in.Ds.Nameid)
+		alt := ""
+		lenAlts := len(alts)
+		if lenAlts > 0 {
+			if lenAlts == 1 || i == 1 {
+				alt = alts[0]
+			} else if i > 1 {
+				i = i - 1
+				if lenAlts > i {
+					alt = alts[i]
+				}
+			}
+		}
+		b.RsDarkPlus(in, alt)
+	}
+}
+
+func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
+	b.helpers.ReadNameModules(in, alt)
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.iftipdelete(in)
@@ -128,6 +157,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 			Mention:  in.NameMention,
 			Numkzn:   numkzN,
 			Timedown: timekz,
+			Wamesid:  alt,
 		}
 
 		texttg := ""
@@ -137,8 +167,6 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 			ntg["text2"] = fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
 			ntg["min"] = b.getText(in, "min")
 		}
-
-		go b.helpers.ReadNameModules(in)
 
 		if countQueue == 0 {
 			if in.Config.DsChannel != "" {
@@ -223,7 +251,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 		}
 		if countQueue < 2 {
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 		}
 
 		if countQueue == 2 {
@@ -238,10 +266,12 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 				numkzL = numkzEvent
 			}
 
+			u.User3 = UserIn
+
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					n1, n2, _, n3 := b.nameMention(in, u, ds)
+					n1, n2, n3, _ := b.helpers.NameMention(in, u, ds)
 					go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
 						fmt.Sprintf("🚀 3/3 %s %s", in.Name, b.getText(in, "you_joined_queue")), 10)
@@ -280,7 +310,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					n1, n2, _, n3 := b.nameMention(in, u, tg)
+					n1, n2, n3, _ := b.helpers.NameMention(in, u, tg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
 						in.Name+b.getText(in, "drs_queue_closed")+in.Lvlkz[1:], 10)
@@ -306,8 +336,8 @@ func (b *Bot) RsDarkPlus(in models.InMessage) {
 			}
 
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
-			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
 				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 				if err != nil {

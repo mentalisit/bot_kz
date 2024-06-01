@@ -35,65 +35,6 @@ func (b *Bot) ifTipSendTextDelSecond(in models.InMessage, text string, time int)
 	}
 }
 
-//func (b *Bot) emReadName(in models.InMessage, name, nameMention, tip string) string { // склеиваем имя и эмоджи
-//	t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
-//	newName := name
-//	if tip == ds {
-//		newName = nameMention
-//	} else {
-//		newName = name
-//	}
-//
-//	if len(t.Name) > 0 {
-//		if tip == ds && tip == t.Tip {
-//			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", nameMention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-//		} else if tip == tg && tip == t.Tip {
-//			newName = fmt.Sprintf("%s %s%s%s%s", name, t.Em1, t.Em2, t.Em3, t.Em4)
-//			if t.Weapon != "" {
-//				newName = fmt.Sprintf("%s [%s] %s%s%s%s", name, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-//			}
-//		}
-//	} else if in.Tip == ds && in.Config.Guildid == "716771579278917702" && in.Name == name {
-//		genesis, enrich, rsextender := helpers.GetTechDataUserId(in.Ds.Nameid)
-//		b.storage.Emoji.EmInsertEmpty(context.Background(), "ds", name)
-//		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-//		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-//		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-//		newName = fmt.Sprintf("%s ", nameMention)
-//		if rsextender != 0 {
-//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "1", one)
-//			newName += one
-//		}
-//		if genesis != 0 {
-//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "2", two)
-//			newName += two
-//		}
-//		if enrich != 0 {
-//			b.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "3", three)
-//			newName += three
-//		}
-//
-//	}
-//	return newName
-//}
-
-func (b *Bot) emReadMention(name, nameMention, tip string) string { // склеиваем имя и эмоджи
-	t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
-	newName := nameMention
-
-	if len(t.Name) > 0 {
-		if tip == ds && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", nameMention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-		} else if tip == tg && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s%s%s%s", nameMention, t.Em1, t.Em2, t.Em3, t.Em4)
-			if t.Weapon != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", nameMention, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-		}
-	}
-	return newName
-}
-
 func (b *Bot) updateCompendiumModules(in models.InMessage) {
 	b.iftipdelete(in)
 	b.ifTipSendMentionText(in, b.helpers.UpdateCompendiumModules(in))
@@ -106,30 +47,6 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name)
 	}
 	return admin
-}
-
-func (b *Bot) nameMention(in models.InMessage, u models.Users, tip string) (n1, n2, n3, n4 string) {
-	if u.User1.Tip == tip {
-		n1 = b.emReadMention(u.User1.Name, u.User1.Mention, tip)
-	} else {
-		n1 = u.User1.Name
-	}
-	if u.User2.Tip == tip {
-		n2 = b.emReadMention(u.User2.Name, u.User2.Mention, tip)
-	} else {
-		n2 = u.User2.Name
-	}
-	if u.User3.Tip == tip {
-		n3 = b.emReadMention(u.User3.Name, u.User3.Mention, tip)
-	} else {
-		n3 = u.User3.Name
-	}
-	if in.Tip == tip {
-		n4 = b.emReadMention(in.Name, in.NameMention, tip)
-	} else {
-		n4 = in.Name
-	}
-	return
 }
 
 func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях

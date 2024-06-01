@@ -130,18 +130,9 @@ func (b *Bot) lQueue(in models.InMessage) (bb bool) {
 		go b.QueueLevel(in)
 	}
 	//rus
-	if in.Mtext == "Очередь" || in.Mtext == "очередь" {
+	if in.Mtext == "Очередь" || in.Mtext == "очередь" || in.Mtext == "Черга" || in.Mtext == "черга" || in.Mtext == "Queue" || in.Mtext == "queue" {
 		bb = true
-		go b.QueueAll(in)
-	}
-	//ukr
-	if in.Mtext == "Черга" || in.Mtext == "черга" {
-		bb = true
-		go b.QueueAll(in)
-	}
-	//eng
-	if in.Mtext == "Queue" || in.Mtext == "queue" {
-		bb = true
+		b.iftipdelete(in)
 		go b.QueueAll(in)
 	}
 
