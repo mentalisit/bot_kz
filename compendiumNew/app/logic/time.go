@@ -2,7 +2,9 @@ package logic
 
 import (
 	"compendium/models"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"regexp"
 	"strconv"
 	"strings"
@@ -60,15 +62,30 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 	if offset < 0 {
 		timeZona = fmt.Sprintf("UTC%+v", offset)
 	}
+
+	cm := models.CorpMember{
+		Name:       m.Name,
+		GuildId:    m.GuildId,
+		Avatar:     m.AvatarF,
+		Tech:       map[int][2]int{},
+		AvatarUrl:  m.Avatar,
+		TimeZone:   timeZona,
+		ZoneOffset: offsetInt,
+	}
+
 	if mentionName == "" {
 		err := c.corpMember.CorpMemberTZUpdate(m.NameId, m.GuildId, timeZona, offsetInt)
 		if err != nil {
-			c.log.ErrorErr(err)
-			return
-		} else {
-			text := fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, m.Name, timeZona)
-			c.sendChat(m, text)
+			if errors.Is(err, pgx.ErrNoRows) {
+				cm.UserId = m.NameId
+				_ = c.corpMember.CorpMemberInsert(cm)
+			} else {
+				c.log.ErrorErr(err)
+				return
+			}
 		}
+		text := fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, m.Name, timeZona)
+		c.sendChat(m, text)
 	} else {
 		re := regexp.MustCompile(`<@(\d+)>|@(\S+)`)
 
@@ -79,8 +96,13 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 			//ds nameid
 			err := c.corpMember.CorpMemberTZUpdate(matches[1], m.GuildId, timeZona, offsetInt)
 			if err != nil {
-				c.log.ErrorErr(err)
-				return
+				if errors.Is(err, pgx.ErrNoRows) {
+					cm.UserId = matches[1]
+					_ = c.corpMember.CorpMemberInsert(cm)
+				} else {
+					c.log.ErrorErr(err)
+					return
+				}
 			}
 			text = fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, mentionName, timeZona)
 		} else if matches[2] != "" {
@@ -92,8 +114,13 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 			}
 			err = c.corpMember.CorpMemberTZUpdate(user.ID, m.GuildId, timeZona, offsetInt)
 			if err != nil {
-				c.log.ErrorErr(err)
-				return
+				if errors.Is(err, pgx.ErrNoRows) {
+					cm.UserId = user.ID
+					_ = c.corpMember.CorpMemberInsert(cm)
+				} else {
+					c.log.ErrorErr(err)
+					return
+				}
 			}
 			text = fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, matches[2], timeZona)
 		}

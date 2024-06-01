@@ -4,6 +4,7 @@ import (
 	"compendium/models"
 	"context"
 	"encoding/json"
+	"github.com/jackc/pgx/v4"
 	"time"
 )
 
@@ -94,7 +95,10 @@ func getTimeStrings(offset int) (string, string) {
 }
 func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error {
 	sqlUpd := `update hs_compendium.corpmember set zonaoffset = $1,timezona = $2 where userid = $3 AND guildid = $4`
-	_, err := d.db.Exec(context.Background(), sqlUpd, offset, timeZone, userid, guildid)
+	row, err := d.db.Exec(context.Background(), sqlUpd, offset, timeZone, userid, guildid)
+	if row.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
 	return err
 }
 
