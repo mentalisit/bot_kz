@@ -21,6 +21,11 @@ func getDictionaryEnJson() []byte {
 "IS_DUE_TO_RETURN":"%s %s's %s is due to return at %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"time has already passed",
 "H_M_S":"%dh %dm %ds",
-"CODE_OUTDATED":"the code is outdated"
+"CODE_OUTDATED":"the code is outdated",
+"I_COULD_NOT_FIND_ANY":"%s, I could not find any timezones matching '%s'",
+"TIMEZONA_SET":"%s,Timezona for %s set to %s",
+"TIMEZONA_IS_CURRENTLY":"%s, Timezona for %s is currently set to '%s'",
+"LOCAL_TIME_FOR_EVERYONE":"%s Local time for everyone:",
+"UNLISTED_MEMBERS":"Unlisted members have no timezone setting. They can use the %tz set -5 command to set it."
 }}`)
 }

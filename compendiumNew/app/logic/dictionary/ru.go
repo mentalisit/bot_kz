@@ -21,6 +21,11 @@ func getDictionaryRuJson() []byte {
 "IS_DUE_TO_RETURN":"%s %s %s должен вернуться в %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"время уже прошло",
 "H_M_S":"%dч %dм %dс",
-"CODE_OUTDATED":"код устарел"
+"CODE_OUTDATED":"код устарел",
+"I_COULD_NOT_FIND_ANY":"%s, мне не удалось найти часовые пояса, соответствующие '%s'",
+"TIMEZONA_SET":"%s, часовой пояс для %s установлен на %s",
+"TIMEZONA_IS_CURRENTLY":"%s, часовой пояс для %s в настоящее время установлен на '%s'",
+"LOCAL_TIME_FOR_EVERYONE":"%s Местное время для всех:",
+"UNLISTED_MEMBERS":"У участников, не включенных в список, нет настройки часового пояса. Чтобы установить его, они могут использовать команду %tz set +3."
 }}`)
 }

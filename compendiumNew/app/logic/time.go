@@ -43,7 +43,7 @@ func (c *Hs) TzTimeSet(m models.IncomingMessage) bool {
 	// Пытаемся загрузить местоположение
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
-		text := fmt.Sprintf("%s, I could not find any timezones matching '%s'", m.MentionName, timezone)
+		text := fmt.Sprintf(c.getText(m, "I_COULD_NOT_FIND_ANY"), m.MentionName, timezone)
 		c.sendChat(m, text)
 	}
 
@@ -84,7 +84,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 				return
 			}
 		}
-		text := fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, m.Name, timeZona)
+		text := fmt.Sprintf(c.getText(m, "TIMEZONA_SET"), m.MentionName, m.Name, timeZona)
 		c.sendChat(m, text)
 	} else {
 		re := regexp.MustCompile(`<@(\d+)>|@(\S+)`)
@@ -104,7 +104,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 					return
 				}
 			}
-			text = fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, mentionName, timeZona)
+			text = fmt.Sprintf(c.getText(m, "TIMEZONA_SET"), m.MentionName, mentionName, timeZona)
 		} else if matches[2] != "" {
 			//tg name
 			user, err := c.users.UsersGetByUserName(matches[2])
@@ -122,7 +122,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 					return
 				}
 			}
-			text = fmt.Sprintf("%s,Timezona for %s set to %s", m.MentionName, matches[2], timeZona)
+			text = fmt.Sprintf(c.getText(m, "TIMEZONA_SET"), m.MentionName, matches[2], timeZona)
 		}
 		if text != "" {
 			c.sendChat(m, text)
@@ -132,15 +132,14 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 func (c *Hs) TzGet(m models.IncomingMessage) bool {
 	if strings.HasPrefix(m.Text, "%tz get") {
 		members, err := c.corpMember.CorpMembersRead(m.GuildId)
-		prepareText := "%s, Timezona for %s is currently set to '%s'"
 		if err != nil {
 			c.log.ErrorErr(err)
-			c.sendChat(m, fmt.Sprintf(prepareText, m.MentionName, m.Name, "Not set"))
+			c.sendChat(m, fmt.Sprintf(c.getText(m, "TIMEZONA_IS_CURRENTLY"), m.MentionName, m.Name, "Not set"))
 			return false
 		}
 		for _, member := range members {
 			if member.UserId == m.NameId {
-				text := fmt.Sprintf(prepareText, m.MentionName, m.Name, member.TimeZone)
+				text := fmt.Sprintf(c.getText(m, "TIMEZONA_IS_CURRENTLY"), m.MentionName, m.Name, member.TimeZone)
 				c.sendChat(m, text)
 				return true
 			}
@@ -149,7 +148,7 @@ func (c *Hs) TzGet(m models.IncomingMessage) bool {
 	return false
 }
 func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
-	if strings.HasPrefix(m.Text, "%time") {
+	if strings.HasPrefix(m.Text, "%time") || strings.HasPrefix(m.Text, "%время") {
 		members, err := c.corpMember.CorpMembersRead(m.GuildId)
 		if err != nil {
 			c.log.ErrorErr(err)
@@ -167,9 +166,9 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 				data = append(data, newRow)
 			}
 		}
-		text := fmt.Sprintf("%s Local time for everyone:", m.MentionName)
+		text := fmt.Sprintf(c.getText(m, "LOCAL_TIME_FOR_EVERYONE"), m.MentionName)
 		c.sendFormatedText(m, text, data)
-		c.sendChat(m, "Unlisted members have no timezone setting. They can use the %tz command to set it.")
+		c.sendChat(m, c.getText(m, "UNLISTED_MEMBERS"))
 		return true
 	}
 	return false

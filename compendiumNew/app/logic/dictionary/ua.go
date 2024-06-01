@@ -21,6 +21,11 @@ func getDictionaryUkJson() []byte {
 "IS_DUE_TO_RETURN":"%s %s %s має повернутися о %s (%s)",
 "TIME_HAS_ALREADY_PASSED":"час вже пройшов",
 "H_M_S":"%dг %dхв %dс",
-"CODE_OUTDATED":"код застарів"
+"CODE_OUTDATED":"код застарів",
+"I_COULD_NOT_FIND_ANY":"%s, мені не вдалося знайти часові пояси, що відповідають '%s'",
+"TIMEZONA_SET":"%s, часовий пояс для %s встановлено на %s",
+"TIMEZONA_IS_CURRENTLY":"%s, часовий пояс для %s наразі встановлено '%s'",
+"LOCAL_TIME_FOR_EVERYONE":"%s місцевий час для всіх:",
+"UNLISTED_MEMBERS":"Незазначені учасники не мають налаштувань часового поясу. Вони можуть використовувати команду %tz set +2, щоб встановити його."
 }}`)
 }
