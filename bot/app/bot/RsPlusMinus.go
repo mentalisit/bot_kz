@@ -218,7 +218,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					n1, n2, n3, n4 := b.helpers.NameMention(in, u, ds)
+					n1, n2, n3, n4 := b.helpers.NameMention(u, ds)
 					go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
 						fmt.Sprintf(" 4/4 %s %s", in.Name, b.getText(in, "you_joined_queue")), 10)
@@ -254,7 +254,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					n1, n2, n3, n4 := b.helpers.NameMention(in, u, tg)
+					n1, n2, n3, n4 := b.helpers.NameMention(u, tg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
 						in.Name+b.getText(in, "rs_queue_closed")+in.Lvlkz, 10)

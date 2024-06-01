@@ -143,7 +143,7 @@ func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
 	return " загружено из компендиум бота " + one + two + three
 }
 
-func (h *Helpers) NameMention(in models.InMessage, u models.Users, tip string) (n1, n2, n3, n4 string) {
+func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
 	if u.User1.Tip == tip {
 		n1 = h.emReadMention(u.User1, tip)
 	} else {
@@ -159,10 +159,10 @@ func (h *Helpers) NameMention(in models.InMessage, u models.Users, tip string) (
 	} else {
 		n3 = u.User3.Name
 	}
-	if in.Tip == tip {
+	if u.User4.Tip == tip {
 		n4 = h.emReadMention(u.User4, tip)
 	} else {
-		n4 = in.Name
+		n4 = u.User4.Name
 	}
 	return
 }

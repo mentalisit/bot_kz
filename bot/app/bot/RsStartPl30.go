@@ -50,7 +50,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.DsChannel != "" {
 					b.wg.Add(1)
 					go func() {
-						name1, _, _, _ := b.helpers.NameMention(in, u, ds)
+						name1, _, _, _ := b.helpers.NameMention(u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz,
 							b.getText(in, "was_launched_incomplete"), name1, b.getText(in, "go"), textEvent)
@@ -77,7 +77,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.TgChannel != "" {
 					b.wg.Add(1)
 					go func() {
-						name1, _, _, _ := b.helpers.NameMention(in, u, tg)
+						name1, _, _, _ := b.helpers.NameMention(u, tg)
 						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n1. %s\n%s %s",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz,
@@ -98,7 +98,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.DsChannel != "" { //discord
 					b.wg.Add(1)
 					go func() {
-						name1, name2, _, _ := b.helpers.NameMention(in, u, ds)
+						name1, name2, _, _ := b.helpers.NameMention(u, ds)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"))
 						text2 := fmt.Sprintf("%s\n%s\n%s %s", name1, name2, b.getText(in, "go"), textEvent)
@@ -126,7 +126,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.TgChannel != "" { //telegram
 					b.wg.Add(1)
 					go func() {
-						name1, name2, _, _ := b.helpers.NameMention(in, u, tg)
+						name1, name2, _, _ := b.helpers.NameMention(u, tg)
 						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text1 := fmt.Sprintf("🚀 %s%s (%d) %s \n\n",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"))
@@ -148,7 +148,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.DsChannel != "" { //discord
 					b.wg.Add(1)
 					go func() {
-						name1, name2, name3, _ := b.helpers.NameMention(in, u, ds)
+						name1, name2, name3, _ := b.helpers.NameMention(u, ds)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"),
 							name1, name2, name3, b.getText(in, "go"), textEvent)
@@ -171,7 +171,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				if in.Config.TgChannel != "" { //telegram
 					b.wg.Add(1)
 					go func() {
-						name1, name2, name3, _ := b.helpers.NameMention(in, u, tg)
+						name1, name2, name3, _ := b.helpers.NameMention(u, tg)
 						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 						text := fmt.Sprintf("🚀 %s%s (%d) %s \n\n%s\n%s\n%s\n%s %s",
 							b.getText(in, "rs_queue"), in.Lvlkz, numberkz, b.getText(in, "was_launched_incomplete"),
