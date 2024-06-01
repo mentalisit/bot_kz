@@ -20,7 +20,15 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 	}
 	if count == 0 {
 		if guildid == "716771579278917702" {
-			getOldCompendium := GetOldCompendium(userid)
+			apiKey := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ODI4ODIxMzc4NDIxMjI3NzMiLCJndWlsZElkIjoiNzE2NzcxNTc5Mjc4OTE3NzAyIiwiaWF0IjoxNzA2MjM3MzY0LCJleHAiOjE3Mzc3OTQ5NjQsInN1YiI6ImFwaSJ9.Wsf-2U8GDGaCNpxafRIUABIKO3zLyYKvPYWzxtbK-LE"
+			getOldCompendium := GetOldCompendium(apiKey, userid)
+			if getOldCompendium != nil {
+				tech = getOldCompendium
+			}
+		}
+		if guildid == "398761209022644224" {
+			apiKey := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5NTIwMDAzOTIxNTYyODY5NzYiLCJndWlsZElkIjoiMzk4NzYxMjA5MDIyNjQ0MjI0IiwiaWF0IjoxNzE3MjU2NDk1LCJleHAiOjE3NDg4MTQwOTUsInN1YiI6ImFwaSJ9.EMULGfwaCLupVeBPOsSrUyBxISqXYZK4_nGHgmM96Xg"
+			getOldCompendium := GetOldCompendium(apiKey, userid)
 			if getOldCompendium != nil {
 				tech = getOldCompendium
 			}
@@ -135,9 +143,7 @@ func (d *Db) TechGetCount(userid, guildid string) (int, error) {
 	}
 	return count, nil
 }
-func GetOldCompendium(userID string) []byte {
-	apiKey := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ODI4ODIxMzc4NDIxMjI3NzMiLCJndWlsZElkIjoiNzE2NzcxNTc5Mjc4OTE3NzAyIiwiaWF0IjoxNzA2MjM3MzY0LCJleHAiOjE3Mzc3OTQ5NjQsInN1YiI6ImFwaSJ9.Wsf-2U8GDGaCNpxafRIUABIKO3zLyYKvPYWzxtbK-LE"
-
+func GetOldCompendium(apiKey, userID string) []byte {
 	// Формирование URL-адреса
 	url := fmt.Sprintf("https://bot.hs-compendium.com/compendium/api/tech?token=%s&userid=%s", apiKey, userID)
 
