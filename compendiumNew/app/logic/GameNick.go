@@ -22,7 +22,7 @@ func (c *Hs) setGameName(m models.IncomingMessage) bool {
 			user, err := c.users.UsersGetByUserId(m.NameId)
 			if err != nil {
 				c.log.ErrorErr(err)
-				text := fmt.Sprintf("%s you are not found in the database, please send %%connect", m.MentionName)
+				text := fmt.Sprintf(c.getText(m, "YOU_ARE_NOT_FOUND"), m.MentionName)
 				c.sendChat(m, text)
 				return true
 			}
@@ -33,20 +33,13 @@ func (c *Hs) setGameName(m models.IncomingMessage) bool {
 				c.log.InfoStruct("UsersUpdate", user)
 				return false
 			}
-			text := fmt.Sprintf("%s, game name set to '%s'", m.MentionName, gameName)
+			text := fmt.Sprintf(c.getText(m, "GAME_NAME_SET"), m.MentionName, gameName)
 			c.sendChat(m, text)
 			return true
 		} else {
 			split := strings.Split(after, " ")
-			if split[0] == "ник" || split[0] == "nick" {
-				helpText := "The %nick command is used to set the name,\n" +
-					"`%nick name` if the name does not contain spaces\n" +
-					"or\n" +
-					"`%nick \"my name\"` if the name consists of several words\n" +
-					"example\n" +
-					"`%nick Vasya`\n" +
-					"`%nick \"Vasya Ivanov\"`"
-				c.sendChat(m, fmt.Sprintf("%s, %s", m.MentionName, helpText))
+			if split[0] == "ник" || split[0] == "nick" || split[0] == "нік" {
+				c.sendChat(m, fmt.Sprintf(c.getText(m, "HELP_NICKNAME"), m.MentionName))
 				return true
 
 			}

@@ -26,6 +26,9 @@ func getDictionaryEnJson() []byte {
 "TIMEZONA_SET":"%s,Timezona for %s set to %s",
 "TIMEZONA_IS_CURRENTLY":"%s, Timezona for %s is currently set to '%s'",
 "LOCAL_TIME_FOR_EVERYONE":"%s Local time for everyone:",
-"UNLISTED_MEMBERS":"Unlisted members have no timezone setting. They can use the %tz set -5 command to set it."
+"UNLISTED_MEMBERS":"Unlisted members have no timezone setting. They can use the %tz set -5 command to set it.",
+"YOU_ARE_NOT_FOUND":"%s you are not found in the database, please send %%connect",
+"GAME_NAME_SET":"%s, game name set to '%s'",
+"HELP_NICKNAME":"%s, The %%nick command is used to set the name,\n'%%nick name' if the name does not contain spaces\nor\n'%%nick \"my name\"' if the name consists of several words\nexample\n'%%nick Vasya'\n'%%nick \"Vasya Ivanov\""
 }}`)
 }
