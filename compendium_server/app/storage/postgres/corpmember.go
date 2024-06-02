@@ -53,10 +53,12 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 
 		getAll, errGet := d.TechGetAll(t)
 		if errGet != nil {
+			d.log.InfoStruct("TechGetAll(t)", t)
 			return nil, errGet
 		}
 		user, erru := d.UsersGetByUserId(t.UserId)
 		if erru != nil {
+			d.log.InfoStruct("UsersGetByUserId", t)
 			d.log.ErrorErr(erru)
 		}
 

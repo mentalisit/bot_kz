@@ -3,6 +3,7 @@ package postgres
 import (
 	"compendium/models"
 	"context"
+	"github.com/jackc/pgx/v4"
 	"github.com/lib/pq"
 )
 
@@ -38,7 +39,7 @@ func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
 	err := d.db.QueryRow(context.Background(), selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
-		return nil, err
+		return nil, pgx.ErrNoRows
 	}
 	return &u, nil
 }
@@ -47,6 +48,16 @@ func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
 	var id int
 	selectUser := "SELECT * FROM hs_compendium.users WHERE username = $1 "
 	err := d.db.QueryRow(context.Background(), selectUser, username).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+func (d *Db) UsersFindByGameName(gameName string) (*models.User, error) {
+	var u models.User
+	var id int
+	selectUser := "SELECT * FROM hs_compendium.users WHERE gamename = $1 "
+	err := d.db.QueryRow(context.Background(), selectUser, gameName).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
 		return nil, err
 	}

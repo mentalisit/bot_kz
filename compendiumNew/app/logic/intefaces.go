@@ -36,6 +36,7 @@ type Users interface {
 	UsersInsert(u models.User) error
 	UsersGetByUserId(userid string) (*models.User, error)
 	UsersGetByUserName(username string) (*models.User, error)
+	UsersFindByGameName(gameName string) (*models.User, error)
 	UserGetCountByUserId(userid string) (int, error)
 	UsersUpdate(u models.User) error
 }

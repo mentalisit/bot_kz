@@ -59,6 +59,13 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 		}
 		user, erru := d.UsersGetByUserId(t.UserId)
 		if erru != nil {
+			d.UsersInsert(models.User{
+				ID:        t.UserId,
+				Username:  t.Name,
+				AvatarURL: t.AvatarUrl,
+				Alts:      []string{},
+			})
+			d.log.InfoStruct("New UsersGetByUserId", t)
 			d.log.ErrorErr(err)
 		}
 
