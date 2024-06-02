@@ -14,6 +14,8 @@ RUN go build -o ./bin/app main.go
 
 FROM alpine:3.19 AS runner
 
+RUN apk add --no-cache tzdata
+ENV TZ=America/Winnipeg
 COPY --from=builder /usr/local/src/bin/app /
 COPY config.yml /config.yml
 CMD ["/app"]
