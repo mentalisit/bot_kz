@@ -167,7 +167,13 @@ func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string
 	return
 }
 func (h *Helpers) emReadMention(u models.Sborkz, tip string) string { // склеиваем имя и эмоджи
-	t := h.storage.Emoji.EmojiModuleReadUsers(context.Background(), u.Name, tip)
+	t := models.EmodjiUser{}
+	if u.Wamesid != "" {
+		t = h.storage.Emoji.EmojiModuleReadUsers(context.Background(), u.Wamesid, tip)
+	} else {
+		t = h.storage.Emoji.EmojiModuleReadUsers(context.Background(), u.Name, tip)
+	}
+
 	newName := u.Mention
 
 	if len(t.Name) > 0 {
