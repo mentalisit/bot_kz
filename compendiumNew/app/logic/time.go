@@ -72,6 +72,11 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 		TimeZone:   timeZona,
 		ZoneOffset: offsetInt,
 	}
+	u := models.User{
+		Username:  m.Name,
+		AvatarURL: m.Avatar,
+		Alts:      []string{},
+	}
 
 	if mentionName == "" {
 		err := c.corpMember.CorpMemberTZUpdate(m.NameId, m.GuildId, timeZona, offsetInt)
@@ -79,6 +84,8 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 			if errors.Is(err, pgx.ErrNoRows) {
 				cm.UserId = m.NameId
 				_ = c.corpMember.CorpMemberInsert(cm)
+				u.ID = m.NameId
+				_ = c.users.UsersInsert(u)
 			} else {
 				c.log.ErrorErr(err)
 				return
@@ -99,6 +106,8 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 				if errors.Is(err, pgx.ErrNoRows) {
 					cm.UserId = matches[1]
 					_ = c.corpMember.CorpMemberInsert(cm)
+					u.ID = matches[1]
+					_ = c.users.UsersInsert(u)
 				} else {
 					c.log.ErrorErr(err)
 					return
@@ -117,6 +126,8 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 				if errors.Is(err, pgx.ErrNoRows) {
 					cm.UserId = user.ID
 					_ = c.corpMember.CorpMemberInsert(cm)
+					u.ID = user.ID
+					_ = c.users.UsersInsert(u)
 				} else {
 					c.log.ErrorErr(err)
 					return
