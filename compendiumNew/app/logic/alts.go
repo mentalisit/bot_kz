@@ -73,7 +73,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 					return false
 				}
 			} else {
-				c.sendChat(m, fmt.Sprintf("NO_ALTOS_FOUND"))
+				c.sendChat(m, fmt.Sprintf(c.getText(m, "NO_ALTOS_FOUND")))
 			}
 
 			c.log.Info(fmt.Sprintf("User %s alts delete %+v", u.Username, split[2]))

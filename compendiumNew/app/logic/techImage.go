@@ -69,17 +69,17 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 		if err != nil {
 			c.log.Info(err.Error())
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-			return false
+			return true
 		}
 		if user == nil {
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-			return false
+			return true
 		}
 		techBytes, err := c.tech.TechGet(user.Username, user.ID, m.GuildId)
 		if err != nil {
 			c.log.ErrorErr(err)
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-			return false
+			return true
 		}
 		picName := user.Username
 		if user.GameName != "" {
@@ -111,7 +111,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 			techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.GuildId)
 			if userID == "" {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-				return false
+				return true
 			}
 		}
 
@@ -119,7 +119,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 		if err != nil || user == nil {
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			c.log.ErrorErr(err)
-			return false
+			return true
 		}
 		if user.Username == userName && user.GameName != "" {
 			userName = user.GameName
