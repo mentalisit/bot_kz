@@ -2,22 +2,53 @@ package restapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"kz_bot/models"
 	"net/http"
+	"runtime"
+	"time"
 )
 
-func SendCompendiumApp(m any) error {
+func SendCompendiumApp(m models.IncomingMessage) error {
+	fmt.Printf("Горутин  %d\n", runtime.NumGoroutine())
+	fmt.Printf("Sending compendium app %s %s %s\n", m.GuildName, m.Name, m.Text)
 	data, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	_, err = http.Post("http://compendiumnew/compendium/inbox", "application/json", bytes.NewBuffer(data))
+	// Создаем контекст с тайм-аутом 3 секунды
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel() // Освобождаем ресурсы контекста после завершения функции
+
+	// Создаем новый запрос с контекстом
+	req, err := http.NewRequestWithContext(ctx, "POST", "http://compendiumnew/compendium/inbox", bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.131:880/compendium/inbox", "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			return err
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Создаем клиент с тайм-аутом
+	client := &http.Client{}
+
+	// Выполняем запрос
+	resp, err := client.Do(req)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Println("Время ожидания запроса истекло")
+		} else {
+			fmt.Println("Ошибка при выполнении запроса:", err)
 		}
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Проверка кода ответа
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("неправильный статус код: %d", resp.StatusCode)
 	}
 
 	return nil

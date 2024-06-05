@@ -98,7 +98,8 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		return
 	}
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
-		fmt.Printf("Горутин %d\n", runtime.NumGoroutine())
+		fmt.Printf("Горутин  %d\n", runtime.NumGoroutine())
+		fmt.Printf("LogicRs %s %s %s\n", in.Config.CorpName, in.Name, in.Mtext)
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
 		} else if b.lSubs(in) {
@@ -236,4 +237,9 @@ func (b *Bot) Autohelp() {
 		}()
 	}
 	time.Sleep(time.Minute)
+	gorutine := runtime.NumGoroutine()
+	if gorutine > 120 {
+		b.log.Info(fmt.Sprintf("Горутин  %d\n", gorutine))
+	}
+
 }
