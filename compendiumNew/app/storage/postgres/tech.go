@@ -69,8 +69,10 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
 	q, err := d.db.Query(context.Background(), sel, cm.UserId, cm.GuildId)
 	if err != nil {
-		return acm, err
+		return nil, err
 	}
+	defer q.Close()
+
 	for q.Next() {
 		var ncm models.CorpMember
 		ncm = cm
@@ -86,16 +88,19 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 			return nil, err
 		}
 		if len(techl) > 0 {
-			m := make(map[int][2]int)
+			ncm.Tech = make(map[int][2]int)
 			for i, level := range techl {
-				m[i] = [2]int{level.Level}
+				ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
 			}
-			ncm.Tech = m
 		}
 		acm = append(acm, ncm)
 	}
+	if err = q.Err(); err != nil { // Проверка ошибок после завершения итерации
+		return nil, err
+	}
 	return acm, nil
 }
+
 func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
 	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3 and guildid = $4`
 	updresult, err := d.db.Exec(context.Background(), upd, tech, username, userid, guildid)

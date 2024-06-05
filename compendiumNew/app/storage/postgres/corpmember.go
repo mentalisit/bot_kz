@@ -85,9 +85,9 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	return mm, nil
 }
 
-func (d *Db) CorpMembersApiRead(guildid string) ([]models.CorpMember, error) {
-	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(context.Background(), sel, guildid)
+func (d *Db) CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error) {
+	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
+	results, err := d.db.Query(context.Background(), sel, guildid, userid)
 	if err != nil {
 		return nil, err
 	}

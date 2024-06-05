@@ -39,8 +39,8 @@ func (s *Server) api(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
 		return
 	}
-	read, _ := s.db.CorpMembersApiRead(guildid)
-	if len(read) == 0 {
+	read, _ := s.db.CorpMembersApiRead(guildid, userid)
+	if len(read) == 0 || read == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "guildid empty members"})
 		return
 	}
