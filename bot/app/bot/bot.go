@@ -8,6 +8,7 @@ import (
 	"kz_bot/config"
 	"kz_bot/models"
 	"kz_bot/storage"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,11 +68,11 @@ func (b *Bot) loadInbox() {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
 		case in := <-b.client.Ds.ChanRsMessage:
-			b.LogicRs(in)
+			go b.LogicRs(in)
 		case in := <-b.client.Tg.ChanRsMessage:
-			b.LogicRs(in)
+			go b.LogicRs(in)
 		case in := <-b.inbox:
-			b.LogicRs(in)
+			go b.LogicRs(in)
 		}
 	}
 }
@@ -97,6 +98,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		return
 	}
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
+		fmt.Printf("Горутин %d", runtime.NumGoroutine())
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
 		} else if b.lSubs(in) {
