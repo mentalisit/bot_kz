@@ -51,6 +51,7 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	var acm []models.CorpMember
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
 	q, err := d.db.Query(context.Background(), sel, cm.UserId, cm.GuildId)
+	defer q.Close()
 	if err != nil {
 		return acm, err
 	}

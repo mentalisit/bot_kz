@@ -37,10 +37,10 @@ func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
 	selectRoLes := `SELECT id,role FROM hs_compendium.guildroles WHERE guildid = $1`
 	var roles []models.CorpRole
 	rows, err := d.db.Query(context.Background(), selectRoLes, guildid)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var role models.CorpRole
 		var id int

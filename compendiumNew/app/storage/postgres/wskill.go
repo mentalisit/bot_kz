@@ -22,10 +22,10 @@ func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
 	selectWsKill := `SELECT * FROM hs_compendium.wskill WHERE guildid = $1`
 	var wskill []models.WsKill
 	rows, err := d.db.Query(context.Background(), selectWsKill, guildid)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var w models.WsKill
 		var id int
@@ -45,13 +45,13 @@ func (d *Db) WsKillReadAll() ([]models.WsKill, error) {
 	selectWsKill := `SELECT * FROM hs_compendium.wskill`
 	var wskill []models.WsKill
 	rows, err := d.db.Query(context.Background(), selectWsKill)
+	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var w models.WsKill
 		var id int

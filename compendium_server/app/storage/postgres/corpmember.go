@@ -42,6 +42,7 @@ import (
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
 	results, err := d.db.Query(context.Background(), sel, guildid)
+	defer results.Close()
 	if err != nil {
 		return nil, err
 	}

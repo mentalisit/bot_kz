@@ -35,6 +35,7 @@ func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
 	selectRoLes := `SELECT id,role FROM hs_compendium.guildroles WHERE guildid = $1`
 	var roles []models.CorpRole
 	rows, err := d.db.Query(context.Background(), selectRoLes, guildid)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +81,7 @@ func (d *Db) GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, e
 	selectUsers := `SELECT username FROM compendium.guildrole WHERE guildid = $1 AND role = $2`
 	var users []string
 	rows, err := d.db.Query(context.Background(), selectUsers, guildid, RoleName)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
