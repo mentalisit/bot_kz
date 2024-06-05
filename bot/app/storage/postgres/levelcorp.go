@@ -47,6 +47,7 @@ func (d *Db) ReadCorpLevelAll() ([]models.LevelCorp, error) {
 	var n []models.LevelCorp
 	sel := "SELECT * FROM kzbot.corplevel"
 	results, err := d.db.Query(context.Background(), sel)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil, err

@@ -9,6 +9,7 @@ import (
 func (d *Db) EmojiModuleReadUsers(ctx context.Context, name, tip string) models.EmodjiUser {
 	selec := "SELECT * FROM kzbot.users WHERE name = $1 AND tip = $2"
 	results, err := d.db.Query(ctx, selec, name, tip)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

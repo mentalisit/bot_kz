@@ -11,11 +11,11 @@ func (d *Db) OptimizationSborkz() {
 	// Подсчет активных записей и сортировка по имени
 	query := `SELECT mention,corpname,lvlkz, SUM(active) AS active_sum FROM kzbot.sborkz GROUP BY corpname, mention,lvlkz ORDER BY mention`
 	rows, err := d.db.Query(context.Background(), query)
+	defer rows.Close()
 	if err != nil {
 		d.log.Info(err.Error())
 		return
 	}
-	defer rows.Close()
 	for rows.Next() {
 		var mention string
 		var activeCount int
@@ -36,6 +36,7 @@ func (d *Db) OptimizationSborkz() {
 		if countNames > 5 {
 			sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND mention = $3"
 			results, err := d.db.Query(context.Background(), sel, level, corpname, mention)
+			defer results.Close()
 			if err != nil {
 				d.log.ErrorErr(err)
 			}
@@ -160,10 +161,10 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 
 	// Выполнение запроса
 	rows, err := d.db.Query(context.Background(), query, corpname)
+	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
-	defer rows.Close()
 
 	var levels []string
 

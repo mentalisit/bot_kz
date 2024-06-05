@@ -33,6 +33,7 @@ func (d *Db) ReadNamesMessage(CorpName string, numberkz, numberEvent int) (nd, n
 	var name string
 	sel := "SELECT * FROM kzbot.sborkz WHERE corpname=$1 AND numberkz=$2 AND numberevent = $3 AND active=1"
 	results, err := d.db.Query(ctx, sel, CorpName, numberkz, numberEvent)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

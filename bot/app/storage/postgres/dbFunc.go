@@ -23,6 +23,7 @@ func (d *Db) ReadAll(ctx context.Context, lvlkz, CorpName string) (users models.
 	user := 1
 	sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
 	results, err := d.db.Query(ctx, sel, lvlkz, CorpName)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -77,6 +78,7 @@ func (d *Db) ElseTrue(ctx context.Context, name string) []models.Sborkz {
 	}
 	sel := "SELECT * FROM kzbot.sborkz WHERE name = $1 AND active = 0"
 	results, err := d.db.Query(ctx, sel, name)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -108,6 +110,7 @@ func (d *Db) ReadMesIdDS(ctx context.Context, mesid string) (string, error) {
 	}
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
 	results, err := d.db.Query(ctx, sel, mesid)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -137,6 +140,7 @@ func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, name string) int {
 	var timedown int
 	sel := "SELECT timedown FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0 AND name = $3"
 	results, err := d.db.Query(ctx, sel, lvlkz, CorpName, name)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -164,6 +168,7 @@ func (d *Db) Queue(ctx context.Context, corpname string) []string {
 	}
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
 	results, err := d.db.Query(ctx, sel, corpname)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -193,6 +198,7 @@ func (d *Db) OneMinutsTimer(ctx context.Context) []string {
 		aa := []string{}
 		selC := "SELECT corpname FROM kzbot.sborkz WHERE active = 0"
 		results, err1 := d.db.Query(ctx, selC)
+		defer results.Close()
 		if err1 != nil {
 			d.log.ErrorErr(err)
 		}
@@ -239,6 +245,7 @@ func (d *Db) MessageUpdateMin(ctx context.Context, corpname string) ([]string, [
 	if countCorp > 0 {
 		selS := "SELECT * FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
 		results, err1 := d.db.Query(ctx, selS, corpname)
+		defer results.Close()
 		if err1 != nil {
 			d.log.Error(err1.Error())
 		}
@@ -262,6 +269,7 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 	}
 	sel := "SELECT * FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
 	results, err := d.db.Query(ctx, sel, dsmesid)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -299,6 +307,7 @@ func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.Cor
 	}
 	sel := "SELECT * FROM kzbot.sborkz WHERE tgmesid = $1 AND active = 0"
 	results, err := d.db.Query(ctx, sel, tgmesid)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

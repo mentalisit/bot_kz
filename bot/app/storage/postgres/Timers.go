@@ -12,6 +12,7 @@ func (d *Db) UpdateMitutsQueue(ctx context.Context, name, CorpName string) model
 	}
 	sel := "SELECT * FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 0"
 	results, err := d.db.Query(ctx, sel, name, CorpName)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -44,6 +45,7 @@ func (d *Db) MinusMin(ctx context.Context) []models.Sborkz {
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE active = 0"
 	results, err := d.db.Query(ctx, sel)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

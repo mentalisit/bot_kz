@@ -10,6 +10,7 @@ func (d *Db) TopLevel(ctx context.Context, CorpName, lvlkz string) bool {
 	var good = false
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, "d"+lvlkz)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
@@ -41,6 +42,7 @@ func (d *Db) TopEventLevel(ctx context.Context, CorpName, lvlkz string, numEvent
 	var good = false
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND lvlkz = $2 AND numberevent = $3 GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, numEvent)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
@@ -87,6 +89,7 @@ func (d *Db) TopTemp(ctx context.Context) string {
 
 	sel := "SELECT * FROM kzbot.temptopevent ORDER BY numkz DESC"
 	results, err := d.db.Query(ctx, sel)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return ""
@@ -114,6 +117,7 @@ func (d *Db) TopTempEvent(ctx context.Context) string {
 
 	sel := "SELECT * FROM kzbot.temptopevent ORDER BY points DESC"
 	results, err := d.db.Query(ctx, sel)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return ""
@@ -137,6 +141,7 @@ func (d *Db) TopAll(ctx context.Context, CorpName string) bool {
 	good := false
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active>0 GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
@@ -172,6 +177,7 @@ func (d *Db) TopAllEvent(ctx context.Context, CorpName string, numberevent int) 
 	//синтаксична помилка в або поблизу \"ASC\"
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
@@ -212,6 +218,7 @@ func (d *Db) TopAllEvent(ctx context.Context, CorpName string, numberevent int) 
 func (d *Db) TopAllEventNew(ctx context.Context, CorpName string, numberevent int) []models.Top {
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return []models.Top{}
@@ -254,6 +261,7 @@ func (d *Db) TopAllPerMonth(ctx context.Context, CorpName string) bool {
 	good := false
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
@@ -286,6 +294,7 @@ func (d *Db) TopLevelPerMonth(ctx context.Context, CorpName, lvlkz string) bool 
 	var good = false
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, "d"+lvlkz)
+	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return false
