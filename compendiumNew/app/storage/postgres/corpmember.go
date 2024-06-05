@@ -84,6 +84,29 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	}
 	return mm, nil
 }
+
+func (d *Db) CorpMembersApiRead(guildid string) ([]models.CorpMember, error) {
+	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
+	results, err := d.db.Query(context.Background(), sel, guildid)
+	if err != nil {
+		return nil, err
+	}
+	var mm []models.CorpMember
+	for results.Next() {
+		var t models.CorpMember
+		var id int
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+
+		mm, err = d.TechGetAll(t)
+		if err != nil {
+			return nil, err
+		}
+		return mm, nil
+
+	}
+	return mm, nil
+}
+
 func getTimeStrings(offset int) (string, string) {
 	// Получаем текущее время в UTC
 	now := time.Now().UTC()

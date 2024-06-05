@@ -25,6 +25,7 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 
 type db interface {
 	CorpMembersRead(guildid string) ([]models.CorpMember, error)
+	CorpMembersApiRead(guildid string) ([]models.CorpMember, error)
 	GuildRolesRead(guildid string) ([]models.CorpRole, error)
 	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
 	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
