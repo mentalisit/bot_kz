@@ -32,6 +32,8 @@ func (c *Hs) techImage(m models.IncomingMessage) {
 	user, err := c.users.UsersGetByUserId(m.NameId)
 	if err != nil {
 		c.log.ErrorErr(err)
+		c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
+		return
 	}
 	picName := m.Name
 	if user != nil && user.GameName != "" {
