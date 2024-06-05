@@ -98,7 +98,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		return
 	}
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
-		fmt.Printf("Горутин %d", runtime.NumGoroutine())
+		fmt.Printf("Горутин %d\n", runtime.NumGoroutine())
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
 		} else if b.lSubs(in) {
