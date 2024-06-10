@@ -28,7 +28,7 @@ func (b *Bot) MinusMin() {
 			if t.Corpname != "" {
 				ok, config := b.CheckCorpNameConfig(t.Corpname)
 				if ok {
-					time := strconv.Itoa(t.Timedown)
+					timeDown := strconv.Itoa(t.Timedown)
 
 					in := models.InMessage{
 						Mtext:       "",
@@ -36,7 +36,7 @@ func (b *Bot) MinusMin() {
 						Name:        t.Name,
 						NameMention: t.Mention,
 						Lvlkz:       t.Lvlkz,
-						Timekz:      time,
+						Timekz:      timeDown,
 						Ds: struct {
 							Mesid   string
 							Nameid  string
