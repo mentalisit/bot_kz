@@ -53,12 +53,14 @@ func (b *Bot) GetTextPercent(Config models.CorporationConfig, dark bool) string 
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			b.storage.LevelCorp.InsertUpdateCorpLevel(models.LevelCorp{
-				CorpName: Config.CorpName,
-				Level:    0,
-				EndDate:  time.Time{},
-				HCorp:    "",
-				Percent:  0,
+			b.storage.LevelCorp.InsertUpdateCorpLevel(models.LevelCorps{
+				CorpName:   Config.CorpName,
+				Level:      0,
+				EndDate:    time.Time{},
+				HCorp:      "",
+				Percent:    0,
+				LastUpdate: time.Time{},
+				Relic:      0,
 			})
 			return ""
 		} else {

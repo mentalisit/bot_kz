@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/mentalisit/logger"
+	"sort"
 	"time"
 	"ws/config"
 	"ws/hspublic"
@@ -17,10 +18,6 @@ func main() {
 
 	go server.NewSrv(log, cfg.Port)
 
-	//newContent := hs.GetContentSevenDays()
-	//hs.SavePercent(newContent)
-	//hs.DownloadFile("ws", newContent)
-
 	newContent := hs.GetContentAll()
 	hs.DownloadFile("wsAll", newContent)
 
@@ -29,6 +26,9 @@ func main() {
 
 		if now.Second() == 0 && now.Minute() == 0 {
 			newContent = hs.GetContentSevenDays()
+			sort.Slice(newContent, func(i, j int) bool {
+				return newContent[i].LastModified < newContent[j].LastModified
+			})
 			hs.SavePercent(newContent)
 			//hs.DownloadFile("ws", newContent)
 
