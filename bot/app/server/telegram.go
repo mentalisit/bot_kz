@@ -20,6 +20,7 @@ func (s *Server) telegramSendBridge(c *gin.Context) {
 }
 
 func (s *Server) telegramSendText(c *gin.Context) {
+	parseMode := c.DefaultQuery("parse", "")
 	var m models.SendText
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)
@@ -27,7 +28,7 @@ func (s *Server) telegramSendText(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	mid, err := s.cl.Tg.Send(m.Channel, m.Text)
+	mid, err := s.cl.Tg.Send(m.Channel, m.Text, parseMode)
 	if err != nil {
 		s.log.ErrorErr(err)
 		if err.Error() == "Forbidden: bot can't initiate conversation with a user" {
@@ -42,6 +43,7 @@ func (s *Server) telegramSendText(c *gin.Context) {
 }
 
 func (s *Server) telegramEditMessage(c *gin.Context) {
+	parseMode := c.DefaultQuery("parse", "")
 	var m models.EditText
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)
@@ -53,7 +55,11 @@ func (s *Server) telegramEditMessage(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	s.cl.Tg.EditText(m.Channel, mid, m.Text)
+	err = s.cl.Tg.EditTextParseMode(m.Channel, mid, m.Text, parseMode)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)
+		return
+	}
 	c.JSON(http.StatusOK, "ok")
 }
 

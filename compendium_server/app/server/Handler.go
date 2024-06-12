@@ -70,6 +70,9 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 
 	token := c.GetHeader("authorization")
+
+	token = s.refreshToken(token)
+
 	i := s.GetTokenIdentity(token)
 	if i == nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})

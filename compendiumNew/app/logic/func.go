@@ -115,14 +115,14 @@ func (c *Hs) deleteMessage(m models.IncomingMessage, chat, mid string) error {
 	return nil
 }
 
-func (c *Hs) editMessage(m models.IncomingMessage, chat, mid, text string) error {
+func (c *Hs) editMessage(m models.IncomingMessage, chat, mid, text, ParseMode string) error {
 	if m.Type == "ds" {
 		err := ds.EditMessage(chat, mid, text)
 		if err != nil {
 			return err
 		}
 	} else if m.Type == "tg" {
-		err := tg.EditMessage(chat, mid, text)
+		err := tg.EditMessage(chat, mid, text, ParseMode)
 		if err != nil {
 			return err
 		}

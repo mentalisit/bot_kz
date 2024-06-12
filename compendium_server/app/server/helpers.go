@@ -2,6 +2,8 @@ package server
 
 import (
 	"compendium_s/models"
+	"crypto/rand"
+	"encoding/base64"
 	"strings"
 	"time"
 )
@@ -132,4 +134,27 @@ func (s *Server) CheckCode(code string) models.Identity {
 
 	}
 	return i
+}
+func (s *Server) refreshToken(token string) string {
+	if len(token) < 60 {
+		newToken := GenerateToken()
+		err := s.db.ListUserUpdateToken(token, newToken)
+		if err != nil {
+			return token
+		}
+		return newToken
+	}
+	return token
+}
+func GenerateToken() string {
+	// Вычисляем необходимый размер байт для указанной длины токена
+	tokenBytes := make([]byte, 174)
+	_, err := rand.Read(tokenBytes)
+	if err != nil {
+		return ""
+	}
+
+	// Кодируем байты в строку base64
+	token := base64.URLEncoding.EncodeToString(tokenBytes)
+	return token
 }

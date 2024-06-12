@@ -327,8 +327,9 @@ func (t *Telegram) ChatTyping(chatId string) {
 //		}
 //	}
 //
-// func for compendium sendDM
-func (t *Telegram) Send(chatid string, text string) (string, error) {
+
+// Send func for compendium sendDM
+func (t *Telegram) Send(chatid string, text string, parseMode string) (string, error) {
 	a := strings.SplitN(chatid, "/", 2)
 	chatId, err := strconv.ParseInt(a[0], 10, 64)
 	if err != nil {
@@ -342,6 +343,9 @@ func (t *Telegram) Send(chatid string, text string) (string, error) {
 		}
 	}
 	m := tgbotapi.NewMessage(chatId, text)
+	if parseMode != "" {
+		m.ParseMode = parseMode
+	}
 	m.MessageThreadID = ThreadID
 	message, errs := t.t.Send(m)
 	if errs != nil {

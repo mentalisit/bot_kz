@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 const apinametg = "kz_bot"
@@ -23,6 +25,32 @@ func Send(chatId string, text string) (string, error) {
 	}
 
 	resp, err := http.Post("http://"+apinametg+"/telegram/SendText", "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		//_, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
+		return "", err
+	}
+	if resp.StatusCode == http.StatusForbidden {
+		return "", errors.New("forbidden")
+	}
+	var mid string
+	err = json.NewDecoder(resp.Body).Decode(&mid)
+	if err != nil {
+		return "", err
+	}
+	return mid, err
+}
+
+func SendMarkdownV2(chatId string, text string) (string, error) {
+	m := models.SendText{
+		Text:    escapeMarkdownV2(text),
+		Channel: chatId,
+	}
+	data, err := json.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.Post("http://"+apinametg+"/telegram/SendText?parse=MarkdownV2", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		//_, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
 		return "", err
@@ -77,21 +105,46 @@ func DeleteMessage(ChatId string, MesId string) error {
 	return nil
 }
 
-func EditMessage(chatId, mid string, text string) error {
+func EditMessage(chatId, mid string, text, ParseMode string) error {
 	m := models.EditText{
 		Text:      text,
 		Channel:   chatId,
 		MessageId: mid,
+	}
+
+	url := "http://" + apinametg + "/telegram/edit"
+	if ParseMode != "" {
+		url = url + "?parse=" + ParseMode
+		m.Text = escapeMarkdownV2(text)
 	}
 	data, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	_, err = http.Post("http://"+apinametg+"/telegram/edit", "application/json", bytes.NewBuffer(data))
-	if err != nil {
-		return err
+	resp, errr := http.Post(url, "application/json", bytes.NewBuffer(data))
+	defer resp.Body.Close()
+	if errr != nil {
+		return errr
+	}
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return errors.New(fmt.Sprintf("Code %d body:%s", resp.StatusCode, string(body)))
+	}
+	return nil
+}
+func escapeMarkdownV2(text string) string {
+	// Специальные символы, которые нужно экранировать в MarkdownV2
+	specialChars := "_*~`>#+-=|{}.!"
+
+	var builder strings.Builder
+
+	for _, char := range text {
+		if strings.ContainsRune(specialChars, char) {
+			builder.WriteRune('\\')
+		}
+		builder.WriteRune(char)
 	}
 
-	return err
+	return builder.String()
 }

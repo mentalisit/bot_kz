@@ -80,6 +80,22 @@ func (t *Telegram) EditText(chatid string, editMesId int, textEdit string) {
 		//t.log.Println("Ошибка редактирования EditText ", err)
 	}
 }
+func (t *Telegram) EditTextParseMode(chatid string, editMesId int, textEdit, ParseMode string) error {
+	a := strings.SplitN(chatid, "/", 2)
+	chatId, err := strconv.ParseInt(a[0], 10, 64)
+	if err != nil {
+		t.log.ErrorErr(err)
+	}
+	msg := tgbotapi.NewEditMessageText(chatId, editMesId, escapeMarkdownV2(textEdit))
+	if ParseMode != "" {
+		msg.ParseMode = ParseMode
+	}
+	_, err = t.t.Send(msg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (t *Telegram) CheckAdminTg(chatid string, name string) bool {
 	admin := false
 	a := strings.SplitN(chatid, "/", 2)

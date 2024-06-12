@@ -7,7 +7,7 @@ import (
 
 func GenerateToken() string {
 	// Вычисляем необходимый размер байт для указанной длины токена
-	tokenBytes := make([]byte, 36)
+	tokenBytes := make([]byte, 174)
 	_, err := rand.Read(tokenBytes)
 	if err != nil {
 		return ""

@@ -61,3 +61,11 @@ func (d *Db) ListUserGetUserIdAndGuildId(token string) (userid string, guildid s
 	}
 	return userid, guildid, nil
 }
+func (d *Db) ListUserUpdateToken(tokenOld, tokenNew string) error {
+	upd := `update hs_compendium.list_users set token = $1 where token = $2`
+	_, err := d.db.Exec(context.Background(), upd, tokenNew, tokenOld)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -29,6 +29,7 @@ type ListUser interface {
 	ListUserGetCountByGuildIdByUserId(guildid, userid string) (int, error)
 	ListUserUpdate(token, userid, guildid string) error
 	ListUserGetToken(userid, guildid string) (string, error)
+	ListUserUpdateToken(tokenOld, tokenNew string) error
 	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
 }
 
