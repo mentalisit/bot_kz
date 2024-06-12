@@ -276,11 +276,12 @@ func (d *Discord) ChannelTyping(ChannelID string) {
 
 func (d *Discord) SendDmText(text, AuthorID string) {
 	dm := d.dmChannel(AuthorID)
-	_, err := d.S.ChannelMessageSend(dm, text)
+	mes, err := d.S.ChannelMessageSend(dm, text)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
 	}
+	d.DeleteMesageSecond(dm, mes.ID, 600)
 }
 
 func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageComponent {

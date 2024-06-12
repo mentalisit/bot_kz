@@ -17,11 +17,13 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		return
 	}
 	if m.GuildID == "" {
-		d.log.Info(m.Author.Username + ": " + m.Content)
+		d.log.Info("DM " + m.Author.Username + ": " + m.Content)
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)
 		} else {
-			d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь тут, пиши в канале ")
+			mid := d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь тут, пиши в канале ")
+			d.DeleteMesageSecond(m.ChannelID, mid, 600)
+			d.DeleteMesageSecond(m.ChannelID, m.ID, 600)
 		}
 		//DM message
 		return

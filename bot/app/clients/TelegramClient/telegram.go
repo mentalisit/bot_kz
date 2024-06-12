@@ -8,6 +8,7 @@ import (
 	"kz_bot/models"
 	"kz_bot/pkg/clientTelegram"
 	"kz_bot/storage"
+	"strconv"
 )
 
 type Telegram struct {
@@ -99,8 +100,13 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 	} else {
 		//нужно решить что тут делать
 		text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
-		mes := tgbotapi.NewMessage(m.Chat.ID, text)
-		_, _ = t.t.Send(mes)
+		ThreadID := m.MessageThreadID
+		if !m.IsTopicMessage && ThreadID != 0 {
+			ThreadID = 0
+		}
+		ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
+		t.SendChannelDelSecond(ChatId, text, 600)
+		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
 		t.log.Info("DM " + m.From.String() + ": " + m.Text)
 	}
 
