@@ -86,7 +86,7 @@ func (t *Telegram) EditTextParseMode(chatid string, editMesId int, textEdit, Par
 	if err != nil {
 		t.log.ErrorErr(err)
 	}
-	msg := tgbotapi.NewEditMessageText(chatId, editMesId, escapeMarkdownV2(textEdit))
+	msg := tgbotapi.NewEditMessageText(chatId, editMesId, textEdit)
 	if ParseMode != "" {
 		msg.ParseMode = ParseMode
 	}
