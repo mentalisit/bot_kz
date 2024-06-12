@@ -97,19 +97,19 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 }
 func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 	i := models.IncomingMessage{
-		Text:         m.Text,
-		DmChat:       strconv.FormatInt(m.From.ID, 10),
-		Name:         m.From.String(),
-		MentionName:  "@" + m.From.String(),
-		NameId:       strconv.FormatInt(m.From.ID, 10),
-		NickName:     "", //нет способа извлечь ник кроме member.CustomTitle
-		Avatar:       t.getAvatarIsExist(m.From.ID),
-		AvatarF:      "tg",
-		ChannelId:    ChatId,
-		GuildId:      strconv.FormatInt(m.Chat.ID, 10),
-		GuildName:    m.Chat.Title,
-		GuildAvatarF: "tg",
-		Type:         "tg",
+		Text:        m.Text,
+		DmChat:      strconv.FormatInt(m.From.ID, 10),
+		Name:        m.From.String(),
+		MentionName: "@" + m.From.String(),
+		NameId:      strconv.FormatInt(m.From.ID, 10),
+		NickName:    "", //нет способа извлечь ник кроме member.CustomTitle
+		Avatar:      t.loadAvatarIsExist(m.From.ID),
+		//AvatarF:      "tg",
+		ChannelId: ChatId,
+		GuildId:   strconv.FormatInt(m.Chat.ID, 10),
+		GuildName: m.Chat.Title,
+		//GuildAvatarF: "tg",
+		Type: "tg",
 	}
 	chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: m.Chat.ChatConfig()})
 	if err != nil {
@@ -119,9 +119,9 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 		fileconfig := tgbotapi.FileConfig{FileID: chat.Photo.BigFileID}
 		file, _ := t.t.GetFile(fileconfig)
 		if file.FileID != "" {
-			i.GuildAvatar = "https://api.telegram.org/file/bot" + t.t.Token + "/" + file.FilePath
+			_, url := t.SaveAvatarLocalCache(strconv.FormatInt(m.Chat.ID, 10), "https://api.telegram.org/file/bot"+t.t.Token+"/"+file.FilePath)
+			i.GuildAvatar = url
 		}
-
 	}
 	member, _ := t.t.GetChatMember(tgbotapi.GetChatMemberConfig{ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
 		ChatConfig: tgbotapi.ChatConfig{

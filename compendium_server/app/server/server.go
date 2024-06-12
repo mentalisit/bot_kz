@@ -49,6 +49,8 @@ func (s *Server) RunServer(port string) {
 
 	router.GET("/compendium/api/tech", s.api)
 
+	router.Static("/compendium/avatars", "compendium/avatars")
+
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")
 	if err != nil {
