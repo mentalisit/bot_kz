@@ -105,3 +105,12 @@ func (s *Server) discordSendPic(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Discord successfully"})
 }
+func (s *Server) discordGetAvatarUrl(c *gin.Context) {
+	userid := c.Query("userid")
+	if userid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})
+		return
+	}
+	urlAvatar := s.cl.Ds.GetAvatarUrl(userid)
+	c.JSON(http.StatusOK, urlAvatar)
+}

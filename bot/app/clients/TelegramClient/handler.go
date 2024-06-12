@@ -258,3 +258,27 @@ func (t *Telegram) handlePoll(message *tgbotapi.Message) {
 //		}
 //	}
 //}
+
+func (t *Telegram) GetAvatarUrl(userId int64) string {
+	photos, err := t.t.GetUserProfilePhotos(tgbotapi.UserProfilePhotosConfig{UserID: userId, Limit: 1})
+	if err != nil || len(photos.Photos) == 0 {
+		return ""
+	}
+
+	// Берем первый файл из списка фотографий профиля
+	fileID := photos.Photos[0][0].FileID
+
+	// Получаем файл по file_id
+	file, err := t.t.GetFile(tgbotapi.FileConfig{
+		FileID: fileID,
+	})
+	if err != nil {
+		return ""
+	}
+
+	fileURL := file.Link(t.t.Token)
+
+	_, newUrl := t.SaveAvatarLocalCache(strconv.FormatInt(userId, 10), fileURL)
+
+	return newUrl
+}

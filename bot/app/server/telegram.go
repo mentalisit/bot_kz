@@ -107,3 +107,17 @@ func (s *Server) telegramSendDelSecond(c *gin.Context) {
 	s.cl.Tg.SendChannelDelSecond(m.Channel, m.Text, m.Seconds)
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Discord successfully"})
 }
+func (s *Server) telegramGetAvatarUrl(c *gin.Context) {
+	userid := c.Query("userid")
+	if userid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})
+		return
+	}
+	parseInt, err := strconv.ParseInt(userid, 10, 64)
+	if err != nil {
+		s.log.ErrorErr(err)
+		return
+	}
+	urlAvatar := s.cl.Tg.GetAvatarUrl(parseInt)
+	c.JSON(http.StatusOK, urlAvatar)
+}

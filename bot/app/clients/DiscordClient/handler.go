@@ -661,3 +661,11 @@ var (
 		},
 	}
 )
+
+func (d *Discord) GetAvatarUrl(userId string) string {
+	user, err := d.S.User(userId)
+	if err != nil {
+		return ""
+	}
+	return user.AvatarURL("")
+}
