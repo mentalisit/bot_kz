@@ -110,7 +110,6 @@ func (t *Telegram) SaveAvatarLocalCache(userID, url string) (bool, string) {
 		// Файл существует, проверяем его размер
 		if fileInfo.Size() == resp.ContentLength {
 			// Размеры совпадают, пропускаем скачивание
-			fmt.Println("Файл уже существует и имеет тот же размер, пропуск скачивания.")
 			return true, newUrl
 		}
 	}

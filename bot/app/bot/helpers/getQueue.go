@@ -6,6 +6,8 @@ import (
 	"github.com/mentalisit/logger"
 	"kz_bot/models"
 	"kz_bot/storage"
+	"regexp"
+	"strconv"
 )
 
 const ds = "ds"
@@ -97,9 +99,9 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.Ds.Nameid, in.Ds.Guildid)
 
-		genesis := max(genesis1, genesis2)
-		enrich := max(enrich1, enrich2)
-		rsextender := max(rsextender1, rsextender2)
+		genesis := max(genesis1, genesis2, extractNumbers(t.Module2))
+		enrich := max(enrich1, enrich2, extractNumbers(t.Module3))
+		rsextender := max(rsextender1, rsextender2, extractNumbers(t.Module1))
 		fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
 
 		if t.Name == "" {
@@ -193,4 +195,17 @@ func (h *Helpers) emReadMention(u models.Sborkz, tip string) string { // скл�
 		}
 	}
 	return newName
+}
+func extractNumbers(input string) int {
+	re := regexp.MustCompile(`\d+`)
+	matches := re.FindAllString(input, -1)
+
+	if len(matches) == 0 {
+		return 0
+	}
+	level, err := strconv.Atoi(matches[len(matches)-1])
+	if err != nil || level > 16 {
+		return 0
+	}
+	return level
 }
