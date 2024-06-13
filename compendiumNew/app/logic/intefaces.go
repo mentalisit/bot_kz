@@ -6,6 +6,7 @@ type CorpMember interface {
 	CorpMemberInsert(cm models.CorpMember) error
 	CorpMembersRead(guildid string) ([]models.CorpMember, error)
 	CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error
+	CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error
 	CorpMemberByUserId(userId string) (*models.CorpMember, error)
 }
 
@@ -20,6 +21,7 @@ type Tech interface {
 type Guilds interface {
 	GuildInsert(u models.Guild) error
 	GuildGet(guildid string) (*models.Guild, error)
+	GuildGetAll() ([]models.Guild, error)
 	GuildGetCountByGuildId(guildid string) (int, error)
 	GuildUpdate(u models.Guild) error
 }

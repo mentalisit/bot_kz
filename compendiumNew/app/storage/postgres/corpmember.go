@@ -144,6 +144,29 @@ func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
 	}
 	return &u, nil
 }
+func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
+	sqlUpd := `update hs_compendium.corpmember set avatarurl = $1 where userid = $2 AND guildid = $3`
+	row, err := d.db.Exec(context.Background(), sqlUpd, avatarurl, userid, guildid)
+	if row.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	if err != nil {
+		return err
+	}
+	user, err := d.UsersGetByUserId(userid)
+	if err != nil {
+		return err
+	}
+	u := *user
+	u.AvatarURL = avatarurl
+
+	err = d.UsersUpdate(u)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 //func (d *Db) CorpMemberReadByUserId(ctx context.Context, userId, guildid string) models.CorpMember {
 //	sel := "SELECT * FROM compendium.corpmember WHERE userid = $1 AND guildid = $2"

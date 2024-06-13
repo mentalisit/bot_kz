@@ -51,3 +51,21 @@ func (d *Db) GuildUpdate(u models.Guild) error {
 	}
 	return nil
 }
+func (d *Db) GuildGetAll() ([]models.Guild, error) {
+	sel := "SELECT * FROM hs_compendium.guilds"
+	results, err := d.db.Query(context.Background(), sel)
+	defer results.Close()
+	if err != nil {
+		return nil, err
+	}
+	var mm []models.Guild
+	for results.Next() {
+		var t models.Guild
+		var id int
+
+		err = results.Scan(&id, &t.URL, &t.ID, &t.Name, &t.Icon, &t.Type)
+
+		mm = append(mm, t)
+	}
+	return mm, nil
+}

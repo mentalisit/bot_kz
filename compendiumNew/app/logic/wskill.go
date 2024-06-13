@@ -275,7 +275,10 @@ func (c *Hs) wsKillTimer() {
 					}
 				}
 			}
-			time.Sleep(50 * time.Second)
+			time.Sleep(20 * time.Second)
+		} else if now.Hour() == 23 && now.Minute() == 45 && now.Second() == 30 {
+			go c.updateAvatars()
+			time.Sleep(time.Second)
 		} else {
 			time.Sleep(time.Second)
 		}
