@@ -15,6 +15,11 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	if err != nil {
 		return err
 	}
+	techOld, tzNameOld, tzOffsetOld := GetOldCompendium(cm.GuildId, cm.UserId)
+	if tzNameOld != "" {
+		cm.TimeZone = tzNameOld
+		cm.ZoneOffset = tzOffsetOld
+	}
 	if count == 0 {
 		insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
 		_, err = d.db.Exec(context.Background(), insert, cm.Name, cm.UserId, cm.GuildId, cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
@@ -26,7 +31,10 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	if err != nil {
 		return err
 	}
-	if len(cm.Tech) == 0 {
+	if len(cm.Tech) == 0 && len(techOld) > 0 {
+		techBytes = techOld
+	}
+	if len(cm.Tech) == 0 && len(techBytes) == 0 {
 		tech := make(map[int]models.TechLevel)
 		tech[701] = models.TechLevel{
 			Ts:    0,

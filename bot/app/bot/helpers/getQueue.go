@@ -94,8 +94,8 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		t := h.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, ds)
 
 		genesis1, enrich1, rsextender1 := 0, 0, 0
-		if in.Config.Guildid == "716771579278917702" && name == in.Name {
-			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.Ds.Nameid)
+		if name == in.Name {
+			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
 		}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.Ds.Nameid, in.Ds.Guildid)
 
@@ -122,7 +122,7 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 	}
 }
 func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
-	genesis, enrich, rsextender := GetTechDataUserId(in.Ds.Nameid)
+	genesis, enrich, rsextender := GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
 	if genesis+enrich+rsextender == 0 {
 		genesis, enrich, rsextender = Get2TechDataUserId(in.Name, in.Ds.Nameid, in.Ds.Guildid)
 		if genesis+enrich+rsextender == 0 {
