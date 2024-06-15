@@ -110,7 +110,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		userName = i.User.Username
 	}
 
-	fmt.Printf("mode %s TwinOrName %s\n", mode, userName)
+	fmt.Printf("mode %s corporation %s Name %s\n", mode, i.Guild.Name, userName)
 
 	if mode == "get" {
 		sd := models.SyncData{

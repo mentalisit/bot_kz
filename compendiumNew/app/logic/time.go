@@ -159,7 +159,7 @@ func (c *Hs) TzGet(m models.IncomingMessage) bool {
 	return false
 }
 func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
-	if strings.HasPrefix(m.Text, "%time") || strings.HasPrefix(m.Text, "%время") {
+	if strings.HasPrefix(m.Text, "%time") || strings.HasPrefix(m.Text, "%время") || strings.HasPrefix(m.Text, "%час") {
 		members, err := c.corpMember.CorpMembersRead(m.GuildId)
 		if err != nil {
 			c.log.ErrorErr(err)

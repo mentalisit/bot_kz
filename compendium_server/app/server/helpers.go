@@ -11,8 +11,7 @@ import (
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
 	userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
 	if err != nil {
-		s.log.ErrorErr(err)
-		s.log.Info("get user by token: " + token)
+		s.log.Info("get user by token: " + token + " " + err.Error())
 		return nil
 	}
 	var i models.Identity
@@ -107,7 +106,7 @@ func (s *Server) CheckCode(code string) models.Identity {
 	var i models.Identity
 	coder, err := s.db.CodeGet(code)
 	if err != nil {
-		s.log.ErrorErr(err)
+		s.log.Info("CheckCode " + err.Error())
 		return i
 	}
 

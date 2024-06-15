@@ -10,7 +10,7 @@ import (
 func (c *Hs) setGameName(m models.IncomingMessage) bool {
 	after, found := strings.CutPrefix(m.Text, "%")
 	if found {
-		re := regexp.MustCompile(`^(nick|ник) ("([^"]+)"|(\S+))$`)
+		re := regexp.MustCompile(`^(nick|ник|нік) ("([^"]+)"|(\S+))$`)
 		matches := re.FindStringSubmatch(after)
 		if len(matches) > 0 {
 			gameName := ""
