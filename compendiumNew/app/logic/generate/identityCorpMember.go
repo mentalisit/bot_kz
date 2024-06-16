@@ -19,7 +19,7 @@ func GenerateIdentity(m models.IncomingMessage) (models.Identity, models.CorpMem
 			//Icon: m.GuildAvatarF,
 			Type: m.Type,
 		},
-		Token: GenerateToken(),
+		Token: m.Type + m.GuildId + "." + m.NameId + GenerateToken(),
 	}
 
 	cm := models.CorpMember{

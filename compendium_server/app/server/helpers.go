@@ -136,7 +136,7 @@ func (s *Server) CheckCode(code string) models.Identity {
 }
 func (s *Server) refreshToken(token string) string {
 	if len(token) < 60 {
-		newToken := GenerateToken()
+		newToken := s.checkPrefixToken(token)
 		err := s.db.ListUserUpdateToken(token, newToken)
 		if err != nil {
 			return token
@@ -156,4 +156,20 @@ func GenerateToken() string {
 	// Кодируем байты в строку base64
 	token := base64.URLEncoding.EncodeToString(tokenBytes)
 	return token
+}
+
+func (s *Server) checkPrefixToken(token string) string {
+	userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
+	if err != nil || userid == "" || guildid == "" {
+		s.log.Info("err || userid == nil || guildid == nil")
+		return token
+	}
+	guildGet, err := s.db.GuildGet(guildid)
+	if err != nil || guildGet.Name == "" {
+		s.log.Info("err || guildGet.Name == nil")
+		return token
+	}
+
+	newToken := guildGet.Type + guildid + "." + userid + GenerateToken()
+	return newToken
 }

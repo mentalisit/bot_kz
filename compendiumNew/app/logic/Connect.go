@@ -25,14 +25,19 @@ func (c *Hs) connect(m models.IncomingMessage) {
 
 	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
 	if tokenOld != "" {
+		prefixToken := m.Type + m.GuildId + "." + m.NameId
 		if len(tokenOld) < 60 {
-			newToken := generate.GenerateToken()
+			newToken := prefixToken + generate.GenerateToken()
 			err = c.listUser.ListUserUpdateToken(tokenOld, newToken)
 			if err == nil {
 				newIdentify.Token = newToken
 			}
 		} else {
-			newIdentify.Token = tokenOld
+			if strings.Contains(tokenOld, prefixToken) {
+				newIdentify.Token = tokenOld
+			} else {
+				newIdentify.Token = prefixToken + tokenOld
+			}
 		}
 	}
 
