@@ -33,6 +33,6 @@ func (c *Hs) regular(m models.IncomingMessage) {
 	} else if c.TzTime(m) {
 	} else if c.setGameName(m) {
 	} else {
-		c.log.Info("else " + m.Text)
+		c.log.Info(fmt.Sprintf("else %+v\n", m))
 	}
 }

@@ -245,7 +245,7 @@ func (b *Bot) lTop(in models.InMessage) (bb bool) {
 	arr8 := (re8.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arr8) > 0 {
 		in.Lvlkz = arr8[0][2]
-		go b.TopLevel(in)
+		go b.Top(in)
 		bb = true
 		return bb
 	}
@@ -255,21 +255,15 @@ func (b *Bot) lTop(in models.InMessage) (bb bool) {
 	arr8e := (re8e.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arr8e) > 0 {
 		in.Lvlkz = arr8[0][2]
-		go b.TopLevel(in)
+		go b.Top(in)
 		bb = true
 		return bb
 	}
 
 	switch in.Mtext {
-	case "Топ":
+	case "Топ", "Top":
 		bb = true
-		go b.TopAll(in)
-
-	case "Top":
-
-		bb = true
-		go b.TopAll(in)
-
+		go b.Top(in)
 	}
 
 	return bb
