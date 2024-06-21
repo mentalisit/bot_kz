@@ -64,6 +64,7 @@ type db interface {
 	GuildRolesRead(guildid string) ([]models.CorpRole, error)
 	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
 	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
+	ListUserGetByMatch(ttoken string) string
 	ListUserUpdateToken(tokenOld, tokenNew string) error
 	UsersGetByUserId(userid string) (*models.User, error)
 	GuildGet(guildid string) (*models.Guild, error)

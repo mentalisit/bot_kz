@@ -11,8 +11,12 @@ import (
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
 	userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
 	if err != nil {
-		s.log.Info("get user by token: " + token + " " + err.Error())
-		return nil
+		token2 := s.db.ListUserGetByMatch(token)
+		userid, guildid, err = s.db.ListUserGetUserIdAndGuildId(token2)
+		if err != nil {
+			s.log.Info("get user by token: " + token + " " + err.Error())
+			return nil
+		}
 	}
 	var i models.Identity
 	i.Token = token
