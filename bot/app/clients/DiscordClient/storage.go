@@ -27,19 +27,20 @@ func (d *Discord) CheckChannelConfigDS(chatid string) (channelGood bool, config 
 	return false, models.CorporationConfig{}
 }
 
-// AddDsCorpConfig add RsConfig
-func (d *Discord) AddDsCorpConfig(chatName, chatid, guildid, lang string) {
-	c := models.CorporationConfig{
-		CorpName:  chatName,
-		DsChannel: chatid,
-		Country:   lang,
-		Guildid:   guildid,
-	}
-	c.MesidDsHelp = d.HelpChannelUpdate(c)
-	d.storage.ConfigRs.InsertConfigRs(c)
-	d.corpConfigRS[c.CorpName] = c
-	d.log.Info(chatName + " Добавлена в конфиг корпораций ")
-}
+//// AddDsCorpConfig add RsConfig
+//func (d *Discord) AddDsCorpConfig(chatName, chatid, guildid, lang string) {
+//	c := models.CorporationConfig{
+//		CorpName:  chatName,
+//		DsChannel: chatid,
+//		Country:   lang,
+//		Guildid:   guildid,
+//	}
+//	c.MesidDsHelp = d.HelpChannelUpdate(c)
+//	d.storage.ConfigRs.InsertConfigRs(c)
+//	d.corpConfigRS[c.CorpName] = c
+//	d.log.Info(chatName + " Добавлена в конфиг корпораций ")
+//}
+
 func (d *Discord) loadSlashCommand() {
 	for {
 		if len(d.corpConfigRS) > 0 {

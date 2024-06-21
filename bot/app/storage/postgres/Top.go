@@ -394,6 +394,9 @@ func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
 			top = append(top, u)
 		}
 	}
+	sort.Slice(top, func(i, j int) bool {
+		return top[i].Numkz > top[j].Numkz
+	})
 	return top
 }
 
@@ -454,5 +457,8 @@ func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
 		}
 		top = append(top, u)
 	}
+	sort.Slice(top, func(i, j int) bool {
+		return top[i].Numkz > top[j].Numkz
+	})
 	return top
 }
