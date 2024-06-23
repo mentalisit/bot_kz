@@ -285,6 +285,7 @@ func (d *Discord) SendDmText(text, AuthorID string) {
 }
 
 func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageComponent {
+	var mc []discordgo.MessageComponent
 	var components []discordgo.MessageComponent
 	_, config := d.CheckChannelConfigDS(chatid)
 	levels := d.storage.Count.ReadTop5Level(config.CorpName)
@@ -318,9 +319,25 @@ func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageCompone
 
 		}
 	}
-	return []discordgo.MessageComponent{
-		discordgo.ActionsRow{
-			Components: components,
-		},
+	mc = append(mc, discordgo.ActionsRow{Components: components})
+
+	good, CC := d.CheckChannelConfigDS(chatid)
+	if good {
+		event := d.storage.Event.NumActiveEvent(CC.CorpName)
+		if event > 0 {
+			var componentsEvent []discordgo.MessageComponent
+			for i := 7; i < 12; i++ {
+				l := "s" + strconv.Itoa(i)
+				button := discordgo.Button{
+					Label:    l + "+",
+					Style:    discordgo.DangerButton,
+					CustomID: l + "+",
+				}
+				componentsEvent = append(componentsEvent, button)
+			}
+			mc = append(mc, discordgo.ActionsRow{Components: componentsEvent})
+		}
 	}
+
+	return mc
 }
