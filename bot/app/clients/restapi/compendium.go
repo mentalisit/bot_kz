@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"net/http"
-	"runtime"
 	"time"
 )
 
 func SendCompendiumApp(m models.IncomingMessage) error {
-	fmt.Printf("Горутин  %d\n", runtime.NumGoroutine())
+	utils.PrintGoroutine(nil)
 	fmt.Printf("Sending compendium app %s %s %s\n", m.GuildName, m.Name, m.Text)
 	data, err := json.Marshal(m)
 	if err != nil {

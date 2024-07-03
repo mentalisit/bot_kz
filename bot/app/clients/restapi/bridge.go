@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"net/http"
-	"runtime"
 	"time"
 )
 
 func SendBridgeApp(m models.ToBridgeMessage) error {
-	fmt.Printf("Горутин  %d\n", runtime.NumGoroutine())
+	utils.PrintGoroutine(nil)
 	fmt.Printf("Send to bridge: %s %s lenFile:%d Sender: %s Text: %s\n", m.Config.HostRelay, m.ChatId, len(m.Extra), m.Sender, m.Text)
 	data, err := json.Marshal(m)
 	if err != nil {
