@@ -27,10 +27,12 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 
 	if strings.HasPrefix(m.Text, "%") {
 		t.sendToCompendiumFilter(m, ChatId)
+		return
 	}
 
 	if strings.HasPrefix(m.Text, ".") {
 		t.ifPrefixPoint(m)
+		return
 	}
 
 	// RsClient

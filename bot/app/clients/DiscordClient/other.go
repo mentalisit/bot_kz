@@ -162,7 +162,7 @@ func (d *Discord) avatar(m *discordgo.MessageCreate) bool {
 	if ok {
 		arg := strings.Split(strings.ToLower(str), " ")
 		if len(arg) == 2 {
-			if arg[0] == "ава" {
+			if arg[0] == "ава" || arg[0] == "Ава" || arg[0] == "ava" || arg[0] == "Ava" {
 				mentionIds := userMentionRE.FindAllStringSubmatch(arg[1], -1)
 				if len(mentionIds) > 0 {
 					members, err := d.S.GuildMembers(m.GuildID, "", 999)
@@ -284,6 +284,7 @@ func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	member, err := d.S.GuildMember(guildId, memderId)
 	if err != nil {
 		d.log.ErrorErr(err)
+		d.log.Info(fmt.Sprintf("CheckRole guildId %s, memderId %s, roleid %s \n", guildId, memderId, roleid))
 		return false
 	}
 	for _, role := range member.Roles {

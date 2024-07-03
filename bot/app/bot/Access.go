@@ -67,6 +67,9 @@ func (b *Bot) accessDelChannel(in models.InMessage, lang string) {
 		b.configCorp = b.storage.CorpConfigRS
 		b.log.Info("отключение корпорации " + config.CorpName)
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "you_disabled_bot_functions"), 60)
+		if config.MesidDsHelp != "" {
+			go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
+		}
 	}
 }
 func (b *Bot) setLang(in models.InMessage) bool {
