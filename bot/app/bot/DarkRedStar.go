@@ -119,7 +119,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
-	CountName, err := b.storage.Count.СountName(ctx, in.Name, in.Lvlkz, in.Config.CorpName)
+	CountName, err := b.storage.Count.СountName(ctx, in.Username, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		return
 	}
@@ -130,7 +130,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		if err1 != nil {
 			return
 		}
-		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.Name) //проверяем количество боёв по уровню кз игрока
+		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.Username) //проверяем количество боёв по уровню кз игрока
 		if err2 != nil {
 			return
 		}
@@ -154,7 +154,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		timekz, _ := strconv.Atoi(in.Timekz)
 		UserIn := models.Sborkz{
 			Tip:      in.Tip,
-			Name:     in.Name,
+			Name:     in.Username,
 			Mention:  in.NameMention,
 			Numkzn:   numkzN,
 			Timedown: timekz,
@@ -175,10 +175,10 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				go func() {
 					u.User1 = UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
-					//n["name1"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Name, in.NameMention, ds), in.Timekz, numkzN)
+					//n["name1"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Username, in.NameMention, ds), in.Timekz, numkzN)
 					emb := b.client.Ds.EmbedDS(n, numkzL, 1, true)
 					dsmesid = b.client.Ds.SendComplexContent(in.Config.DsChannel,
-						fmt.Sprintf(b.getText(in, "temp_queue_started"), in.Name, n["lvlkz"]))
+						fmt.Sprintf(b.getText(in, "temp_queue_started"), in.Username, n["lvlkz"]))
 					time.Sleep(1 * time.Second)
 					b.client.Ds.EditComplexButton(dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 					b.wg.Done()
@@ -191,7 +191,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					//	"1. %s - %s%s (%d) \n\n"+
 					//	"%s++ - %s",
 					//	b.getText(in, "queue_drs"), in.Lvlkz[1:], numkzL,
-					//	b.emReadName(in, in.Name, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN,
+					//	b.emReadName(in, in.Username, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN,
 					//	in.Lvlkz[1:], b.getText(in, "forced_start"))
 
 					u.User1 = UserIn
@@ -215,9 +215,9 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					u.User2 = UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
 					//n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
-					//n["name2"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Name, in.NameMention, ds), in.Timekz, numkzN)
+					//n["name2"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Username, in.NameMention, ds), in.Timekz, numkzN)
 					emb := b.client.Ds.EmbedDS(n, numkzL, 2, true)
-					text := n["lvlkz"] + fmt.Sprintf(" 2/3 %s %s \n%s", in.Name, b.getText(in, "you_joined_queue"), u.User1.Mention)
+					text := n["lvlkz"] + fmt.Sprintf(" 2/3 %s %s \n%s", in.Username, b.getText(in, "you_joined_queue"), u.User1.Mention)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
 					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 					b.wg.Done()
@@ -230,7 +230,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					//name1 := fmt.Sprintf("1. %s - %d%s (%d) \n",
 					//	b.emReadName(in, u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText(in, "min"), u.User1.Numkzn)
 					//name2 := fmt.Sprintf("2. %s - %s%s (%d) \n",
-					//	b.emReadName(in, in.Name, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN)
+					//	b.emReadName(in, in.Username, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN)
 					//text2 := fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
 					//text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
 
@@ -252,7 +252,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		}
 		if countQueue < 2 {
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 		}
 
 		if countQueue == 2 {
@@ -274,7 +274,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					n1, n2, n3, _ := b.helpers.NameMention(u, ds)
 					go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
-						fmt.Sprintf("🚀 3/3 %s %s", in.Name, b.getText(in, "you_joined_queue")), 10)
+						fmt.Sprintf("🚀 3/3 %s %s", in.Username, b.getText(in, "you_joined_queue")), 10)
 					text := fmt.Sprintf("3/3 %s%s %s\n"+
 						" %s\n"+
 						" %s\n"+
@@ -313,7 +313,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					n1, n2, n3, _ := b.helpers.NameMention(u, tg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
-						in.Name+b.getText(in, "drs_queue_closed")+in.Lvlkz[1:], 10)
+						in.Username+b.getText(in, "drs_queue_closed")+in.Lvlkz[1:], 10)
 					text := fmt.Sprintf("🚀 %s%s %s\n"+
 						"%s\n"+
 						"%s\n"+
@@ -336,7 +336,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			}
 
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
 				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
@@ -349,7 +349,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			go b.SendPercent(in.Config)
 
 			//проверка есть ли игрок в других чатах
-			user := []string{u.User1.Name, u.User2.Name, in.Name}
+			user := []string{u.User1.Name, u.User2.Name, in.Username}
 			go b.elseChat(user)
 		}
 
@@ -394,7 +394,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 	b.iftipdelete(in)
 	ctx := context.Background()
-	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz[1:], in.Config.CorpName, in.Name) //проверяем количество боёв по уровню кз игрока
+	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz[1:], in.Config.CorpName, in.Username) //проверяем количество боёв по уровню кз игрока
 	if err2 != nil {
 		return
 	}
@@ -421,7 +421,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
 	}
 
-	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Name, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 	err := b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 	if err != nil {
 		err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
@@ -431,7 +431,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 
 	//проверка есть ли игрок в других чатах
-	go b.elseChat([]string{in.Name})
+	go b.elseChat([]string{in.Username})
 
 }
 func (b *Bot) sendDmDark(text, userMention string) {

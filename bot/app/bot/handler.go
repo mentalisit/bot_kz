@@ -44,7 +44,7 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 	if in.Tip == ds {
 		admin = b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)
 	} else if in.Tip == tg {
-		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name)
+		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
 	}
 	return admin
 }
@@ -65,7 +65,7 @@ func (b *Bot) elsetrue(name string) { //удаляем игрока с очер�
 			in := models.InMessage{
 				Mtext:       t.Lvlkz + "-",
 				Tip:         t.Tip,
-				Name:        t.Name,
+				Username:    t.Name,
 				NameMention: t.Mention,
 				Lvlkz:       t.Lvlkz,
 				Ds: struct {
@@ -126,7 +126,7 @@ func (b *Bot) Transtale(in models.InMessage) {
 		if in.Mtext != text2 {
 			if in.Tip == ds {
 				go func() {
-					m := b.client.Ds.SendWebhook(text2, in.Name, in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
+					m := b.client.Ds.SendWebhook(text2, in.Username, in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 					b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, m, 90)
 				}()
 			} else if in.Tip == tg {

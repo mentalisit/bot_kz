@@ -122,7 +122,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
-		Name:        m.Author.String(),
+		Username:    m.Author.String(),
 		NameMention: m.Author.Mention(),
 		Ds: struct {
 			Mesid   string

@@ -3,7 +3,8 @@ package models
 type InMessage struct {
 	Mtext         string
 	Tip           string
-	Name          string
+	NameNick      string
+	Username      string
 	NameMention   string
 	Lvlkz, Timekz string
 	Ds            struct {

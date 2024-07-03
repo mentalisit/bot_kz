@@ -94,7 +94,7 @@ func (b *Bot) lSubs(in models.InMessage) (bb bool) {
 
 	readd := regexp.MustCompile(`^(подписать)\s([3-9]|[1][0-2])\s(@\w+)\s([1]|[3])$`)
 	arradd := (readd.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arradd) > 0 && b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name) {
+	if len(arradd) > 0 && b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username) {
 		bb = true
 		atoi, err := strconv.Atoi(arradd[0][4])
 		if err != nil {
@@ -102,7 +102,7 @@ func (b *Bot) lSubs(in models.InMessage) (bb bool) {
 		}
 		a := arradd[0][3]
 		in.NameMention = a
-		in.Name = a[1 : len(a)-1]
+		in.Username = a[1 : len(a)-1]
 		in.Lvlkz = arradd[0][2]
 		go b.Subscribe(in, atoi)
 
@@ -324,7 +324,7 @@ func (b *Bot) lEmoji(in models.InMessage) (bb bool) {
 }
 
 //func (b *Bot) SendALLChannel() (bb bool) {
-//	if in.Name == "Mentalisit" {
+//	if in.Username == "Mentalisit" {
 //		re := regexp.MustCompile(`^(Всем|всем)\s([А-Яа-я\s.]+)$`)
 //		arr := (re.FindAllStringSubmatch(in.Mtext, -1))
 //		if len(arr) > 0 {

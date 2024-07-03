@@ -279,7 +279,7 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 	}
 	in := models.InMessage{
 		Tip:         "ds",
-		Name:        t.Name,
+		Username:    t.Name,
 		NameMention: t.Mention,
 		Lvlkz:       t.Lvlkz,
 		Timekz:      string(t.Timedown),
@@ -317,7 +317,7 @@ func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.Cor
 	}
 	in := models.InMessage{
 		Tip:         "tg",
-		Name:        t.Name,
+		Username:    t.Name,
 		NameMention: t.Mention,
 		Lvlkz:       t.Lvlkz,
 		Timekz:      string(t.Timedown),

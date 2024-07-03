@@ -89,12 +89,12 @@ func (h *Helpers) emReadName(s models.Sborkz, tip string) string { // склеи
 func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 	if in.Tip == ds {
 		if name == "" {
-			name = in.Name
+			name = in.Username
 		}
 		t := h.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, ds)
 
 		genesis1, enrich1, rsextender1 := 0, 0, 0
-		if name == in.Name {
+		if name == in.Username {
 			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
 		}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.Ds.Nameid, in.Ds.Guildid)
@@ -124,7 +124,7 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
 	genesis, enrich, rsextender := GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
 	if genesis+enrich+rsextender == 0 {
-		genesis, enrich, rsextender = Get2TechDataUserId(in.Name, in.Ds.Nameid, in.Ds.Guildid)
+		genesis, enrich, rsextender = Get2TechDataUserId(in.Username, in.Ds.Nameid, in.Ds.Guildid)
 		if genesis+enrich+rsextender == 0 {
 			return "модули не найдены "
 		}
@@ -134,13 +134,13 @@ func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
 	two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
 	three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
 	if rsextender != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Name, "ds", "1", one)
+		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "1", one)
 	}
 	if genesis != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Name, "ds", "2", two)
+		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "2", two)
 	}
 	if enrich != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Name, "ds", "3", three)
+		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "3", three)
 	}
 	return " загружено из компендиум бота " + one + two + three
 }

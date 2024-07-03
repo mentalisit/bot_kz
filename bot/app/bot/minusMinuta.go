@@ -33,7 +33,7 @@ func (b *Bot) MinusMin() {
 					in := models.InMessage{
 						Mtext:       "",
 						Tip:         t.Tip,
-						Name:        t.Name,
+						Username:    t.Name,
 						NameMention: t.Mention,
 						Lvlkz:       t.Lvlkz,
 						Timekz:      timeDown,

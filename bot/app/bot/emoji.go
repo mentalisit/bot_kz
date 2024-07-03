@@ -13,18 +13,18 @@ func (b *Bot) emodjiadd(in models.InMessage, slot, emo string) {
 	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	t := b.storage.Emoji.EmojiModuleReadUsers(ctx, in.Name, in.Tip)
+	t := b.storage.Emoji.EmojiModuleReadUsers(ctx, in.Username, in.Tip)
 	if len(t.Name) == 0 {
-		b.storage.Emoji.EmInsertEmpty(ctx, in.Tip, in.Name)
+		b.storage.Emoji.EmInsertEmpty(ctx, in.Tip, in.Username)
 	}
-	text := b.storage.Emoji.EmojiUpdate(ctx, in.Name, in.Tip, slot, emo)
+	text := b.storage.Emoji.EmojiUpdate(ctx, in.Username, in.Tip, slot, emo)
 	b.ifTipSendTextDelSecond(in, text, 20)
 }
 func (b *Bot) emodjis(in models.InMessage) {
 	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	e := b.storage.Emoji.EmojiModuleReadUsers(ctx, in.Name, in.Tip)
+	e := b.storage.Emoji.EmojiModuleReadUsers(ctx, in.Username, in.Tip)
 
 	text := b.getText(in, "info_set_emoji") +
 		"\n1 " + e.Em1 +
@@ -41,13 +41,13 @@ func (b *Bot) instalNick(in models.InMessage, input string) (ok bool, nick strin
 	if len(words) >= 2 && strings.ToLower(words[0]) == "nick" {
 		nick = words[1]
 		ok = true
-		t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), in.Name, in.Tip)
+		t := b.storage.Emoji.EmojiModuleReadUsers(context.Background(), in.Username, in.Tip)
 		if len(t.Name) == 0 {
-			b.storage.Emoji.EmInsertEmpty(context.Background(), in.Tip, in.Name)
+			b.storage.Emoji.EmInsertEmpty(context.Background(), in.Tip, in.Username)
 		}
-		go b.storage.Emoji.WeaponUpdate(context.Background(), in.Name, in.Tip, nick)
+		go b.storage.Emoji.WeaponUpdate(context.Background(), in.Username, in.Tip, nick)
 	} else if len(words) == 1 && strings.ToLower(words[0]) == "nick" {
-		go b.storage.Emoji.WeaponUpdate(context.Background(), in.Name, in.Tip, "")
+		go b.storage.Emoji.WeaponUpdate(context.Background(), in.Username, in.Tip, "")
 		return true, "удалено"
 	}
 	return ok, nick

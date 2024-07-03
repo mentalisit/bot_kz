@@ -26,7 +26,7 @@ func (b *Bot) EventStart(in models.InMessage) {
 	if event1 > 0 {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "event_mode_enabled"), 10)
 	} else {
-		if in.Tip == ds && (in.Name == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
+		if in.Tip == ds && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
 			b.storage.Event.EventStartInsert(in.Config.CorpName)
 			if in.Config.TgChannel != "" {
 				b.client.Tg.SendChannel(in.Config.TgChannel, text)
@@ -34,7 +34,7 @@ func (b *Bot) EventStart(in models.InMessage) {
 			} else {
 				b.client.Ds.Send(in.Config.DsChannel, text)
 			}
-		} else if in.Tip == tg && (in.Name == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name)) {
+		} else if in.Tip == tg && (in.Username == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)) {
 			b.storage.Event.EventStartInsert(in.Config.CorpName)
 			if in.Config.DsChannel != "" {
 				b.client.Ds.Send(in.Config.DsChannel, text)
@@ -53,14 +53,14 @@ func (b *Bot) EventStop(in models.InMessage) {
 	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 	eventStop := b.getText(in, "event_stopped")
 	eventNull := b.getText(in, "info_event_not_active")
-	if in.Tip == "ds" && (in.Name == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
+	if in.Tip == "ds" && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
 		if event1 > 0 {
 			b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventStop, 60)
 		} else {
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventNull, 10)
 		}
-	} else if in.Tip == tg && (in.Name == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Name)) {
+	} else if in.Tip == tg && (in.Username == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)) {
 		if event1 > 0 {
 			b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventStop, 60)
@@ -78,7 +78,7 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 	message := ""
 	if event1 > 0 {
-		CountEventNames := b.storage.Event.CountEventNames(in.Config.CorpName, in.Name, numKZ, event1)
+		CountEventNames := b.storage.Event.CountEventNames(in.Config.CorpName, in.Username, numKZ, event1)
 		admin := b.checkAdmin(in)
 		if CountEventNames > 0 || admin {
 			pointsGood := b.storage.Event.CountEventsPoints(in.Config.CorpName, numKZ, event1)
@@ -86,7 +86,7 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 				message = b.getText(in, "rs_data_entered")
 			} else if pointsGood == 0 || admin {
 				countEvent := b.storage.Event.UpdatePoints(in.Config.CorpName, numKZ, points, event1) //if error
-				message = fmt.Sprintf("%s %d %s", in.Name, points, b.getText(in, "points_added_to_database"))
+				message = fmt.Sprintf("%s %d %s", in.Username, points, b.getText(in, "points_added_to_database"))
 				b.changeMessageEvent(in, points, countEvent, numKZ, event1)
 			}
 		} else {
@@ -101,11 +101,11 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, numberkz, numberEvent int) {
 	nd, nt, t := b.storage.Event.ReadNamesMessage(in.Config.CorpName, numberkz, numberEvent)
 	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.getText(in, "event_game"), t.Numberkz, t.Lvlkz)
-	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText(in, "contributed"), in.Name, points)
+	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText(in, "contributed"), in.Username, points)
 	if countEvent == 1 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s \n%s", mes1, nd.Name1, mesOld)
-			b.client.Ds.EditWebhook(text, in.Name, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			b.client.Tg.EditText(in.Config.TgChannel, t.Tgmesid, fmt.Sprintf("%s %s \n%s", mes1, nt.Name1, mesOld))
@@ -113,7 +113,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 2 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nd.Name1, nd.Name2, mesOld)
-			b.client.Ds.EditWebhook(text, in.Name, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nt.Name1, nt.Name2, mesOld)
@@ -122,7 +122,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 3 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, mesOld)
-			b.client.Ds.EditWebhook(text, in.Name, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, mesOld)
@@ -131,7 +131,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 4 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, nd.Name4, mesOld)
-			b.client.Ds.EditWebhook(text, in.Name, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)

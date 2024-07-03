@@ -30,7 +30,8 @@ func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *di
 		if ok {
 			in := models.InMessage{
 				Tip:         "ds",
-				Name:        user.Username,
+				Username:    user.Username,
+				NameNick:    user.GlobalName,
 				NameMention: user.Mention(),
 				Ds: struct {
 					Mesid   string
@@ -134,18 +135,12 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 	if len(m.Message.Embeds) > 0 {
 		m.Content += "\u200B"
 	}
-	user := m.Author
-	if m.Member != nil && m.Member.User != nil {
-		user = m.Member.User
-	}
-	if m.Member != nil && m.Member.Nick != "" {
-		user.Username = m.Member.Nick
-	}
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
-		Name:        user.Username,
-		NameMention: user.Mention(),
+		Username:    m.Author.Username,
+		NameNick:    "",
+		NameMention: m.Author.Mention(),
 		Ds: struct {
 			Mesid   string
 			Nameid  string
@@ -153,13 +148,17 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 			Avatar  string
 		}{
 			Mesid:   m.ID,
-			Nameid:  user.ID,
+			Nameid:  m.Author.ID,
 			Guildid: m.GuildID,
-			Avatar:  user.AvatarURL("128"),
+			Avatar:  m.Author.AvatarURL("128"),
 		},
 		Config: config,
 		Option: models.Option{InClient: true},
 	}
+	if m.Member != nil && m.Member.User != nil && m.Member.Nick != "" {
+		in.NameNick = m.Member.Nick
+	}
+
 	d.ChanRsMessage <- in
 
 }

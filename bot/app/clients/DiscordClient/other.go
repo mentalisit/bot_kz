@@ -315,7 +315,21 @@ func (d *Discord) CleanRsBotOtherMessage() {
 			if len(channelMessages) > 0 {
 				t := time.Now().Unix()
 				for _, message := range channelMessages {
+					if message.Author.String() == "Rs_bot#9945" {
+						if len(message.Embeds) > 0 {
+							if IsDifferenceMoreThan5Minutes(message.Embeds[0].Timestamp) {
+								d.log.Info(fmt.Sprintf("Rs_bot#9945 message.Embeds.Title: %+v\ndelete \n", message.Embeds[0].Title))
+								_ = d.S.ChannelMessageDelete(message.ChannelID, message.ID)
+							}
+						} else if time.Now().Sub(message.Timestamp).Hours() < 96 {
+							d.log.Info(fmt.Sprintf("message hours%.1f %+v\n", time.Now().Sub(message.Timestamp).Hours(), message))
+						} else {
+							fmt.Printf("MESSAGE: %+v\n", message)
+						}
+
+					}
 					if message.Author.String() != "RsBot#0000" && message.Author.String() != "Rs_bot#9945" && message.Author.String() != "КзБот#0000" {
+
 						if t-message.Timestamp.Unix() < 1209600 && t-message.Timestamp.Unix() > 180 {
 							if message.Content == "" || !strings.HasPrefix(message.Content, ".") {
 								_ = d.S.ChannelMessageDelete(config.DsChannel, message.ID)
@@ -334,4 +348,27 @@ func (d *Discord) CleanRsBotOtherMessage() {
 		}
 	}
 	fmt.Println("clean OK")
+}
+func IsDifferenceMoreThan5Minutes(timeStr string) bool {
+	// Получаем текущее время
+	currentTime := time.Now()
+
+	// Парсинг переданного времени из строкового представления
+	parsedTime, err := time.Parse(time.RFC3339, timeStr)
+	if err != nil {
+		return false
+	}
+
+	// Вычисление разницы во времени
+	diff := currentTime.Sub(parsedTime)
+	if diff < 0 {
+		diff = -diff
+	}
+
+	// Проверка, превышает ли разница 5 минут
+	if diff > 5*time.Minute {
+		return true
+	}
+
+	return false
 }

@@ -21,7 +21,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 		in := models.InMessage{
 			Mtext:       cb.Data,
 			Tip:         "tg",
-			Name:        name,
+			Username:    name,
 			NameMention: "@" + name,
 			Tg: struct {
 				Mesid int

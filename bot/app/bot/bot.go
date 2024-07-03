@@ -68,11 +68,11 @@ func (b *Bot) loadInbox() {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
 		case in := <-b.client.Ds.ChanRsMessage:
-			go b.LogicRs(in)
+			b.LogicRs(in)
 		case in := <-b.client.Tg.ChanRsMessage:
-			go b.LogicRs(in)
+			b.LogicRs(in)
 		case in := <-b.inbox:
-			go b.LogicRs(in)
+			b.LogicRs(in)
 		}
 	}
 }
@@ -99,7 +99,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 	}
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
 		fmt.Printf("Горутин  %d\n", runtime.NumGoroutine())
-		fmt.Printf("LogicRs %s %s %s\n", in.Config.CorpName, in.Name, in.Mtext)
+		fmt.Printf("LogicRs %s %s %s\n", in.Config.CorpName, in.Username, in.Mtext)
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
 		} else if b.lSubs(in) {
@@ -168,11 +168,11 @@ func (b *Bot) logicIfText(in models.InMessage) bool {
 func (b *Bot) bridge(in models.InMessage) bool {
 	if in.Config.Forward {
 		if in.Tip == ds {
-			text := fmt.Sprintf("(DS)%s \n%s", in.Name, in.Mtext)
+			text := fmt.Sprintf("(DS)%s \n%s", in.Username, in.Mtext)
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 180)
 			go b.cleanChat(in)
 		} else if in.Tip == tg {
-			text := fmt.Sprintf("(TG)%s \n%s", in.Name, in.Mtext)
+			text := fmt.Sprintf("(TG)%s \n%s", in.Username, in.Mtext)
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 180)
 			go b.cleanChat(in)
 		}
