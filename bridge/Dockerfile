@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine3.19 AS builder
+FROM golang:1.23-rc-alpine3.20 AS builder
 
 WORKDIR /usr/local/src
 RUN apk --no-cache add bash git make gcc gettext musl-dev
@@ -12,7 +12,7 @@ COPY app ./
 RUN go build -o ./bin/app main.go
 
 
-FROM alpine:3.19 AS runner
+FROM alpine:3.20 AS runner
 
 RUN apk add --no-cache tzdata
 ENV TZ=America/Winnipeg
