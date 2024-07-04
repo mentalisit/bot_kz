@@ -5,6 +5,7 @@ import (
 	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"regexp"
 	"strconv"
 	"strings"
@@ -162,7 +163,7 @@ func (d *Discord) avatar(m *discordgo.MessageCreate) bool {
 	if ok {
 		arg := strings.Split(strings.ToLower(str), " ")
 		if len(arg) == 2 {
-			if arg[0] == "ава" || arg[0] == "Ава" || arg[0] == "ava" || arg[0] == "Ava" {
+			if arg[0] == "ава" || arg[0] == "ava" {
 				mentionIds := userMentionRE.FindAllStringSubmatch(arg[1], -1)
 				if len(mentionIds) > 0 {
 					members, err := d.S.GuildMembers(m.GuildID, "", 999)
@@ -199,6 +200,10 @@ func (d *Discord) avatar(m *discordgo.MessageCreate) bool {
 					}
 				}
 			}
+		}
+		if arg[0] == "стек" {
+			utils.PrintGoroutinesStack()
+			return true
 		}
 	}
 	return false

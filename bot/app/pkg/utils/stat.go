@@ -28,3 +28,8 @@ func PrintGoroutine(l *logger.Logger) {
 
 	fmt.Println(text)
 }
+func PrintGoroutinesStack() {
+	buf := make([]byte, 1<<16)
+	stacklen := runtime.Stack(buf, true)
+	fmt.Printf("=== Goroutine Stack ===\n%s\n", buf[:stacklen])
+}
