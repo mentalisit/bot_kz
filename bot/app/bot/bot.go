@@ -39,7 +39,7 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		client:     client,
 		log:        log,
 		debug:      cfg.IsDebug,
-		inbox:      make(chan models.InMessage, 10),
+		inbox:      make(chan models.InMessage, 30),
 		configCorp: storage.CorpConfigRS,
 		helpers:    helpers.NewHelpers(log, storage),
 	}
@@ -69,10 +69,19 @@ func (b *Bot) loadInbox() {
 		select {
 		case in := <-b.client.Ds.ChanRsMessage:
 			b.LogicRs(in)
+			if len(b.client.Ds.ChanRsMessage) > 5 {
+				b.log.Info(fmt.Sprintf("len(b.client.Ds.ChanRsMessage) = %d", len(b.client.Ds.ChanRsMessage)))
+			}
 		case in := <-b.client.Tg.ChanRsMessage:
 			b.LogicRs(in)
+			if len(b.client.Tg.ChanRsMessage) > 5 {
+				b.log.Info(fmt.Sprintf("len(b.client.Tg.ChanRsMessage) = %d", len(b.client.Tg.ChanRsMessage)))
+			}
 		case in := <-b.inbox:
 			b.LogicRs(in)
+			if len(b.inbox) > 15 {
+				b.log.Info(fmt.Sprintf("len(b.inbox) = %d\n %+v\n", len(b.inbox), in))
+			}
 		}
 	}
 }

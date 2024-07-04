@@ -21,12 +21,14 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 
 	count, err := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
+		b.log.ErrorErr(err)
 		return
 	}
 	if count == 0 {
 		in.Lvlkz = "d" + in.Lvlkz
 		count, err = b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 		if err != nil {
+			b.log.ErrorErr(err)
 			return
 		}
 		if count == 0 {
@@ -35,6 +37,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 	}
 	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName)
 	if err2 != nil {
+		b.log.ErrorErr(err)
 		return
 	}
 	// совподения количество  условие
@@ -85,6 +88,8 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				if in.Option.Edit {
 					errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 					if errr != nil {
+						b.log.Info(fmt.Sprintf("QueueLevel %s %s", u.User1.Dsmesid, in.Config.DsChannel))
+						b.log.ErrorErr(errr)
 						in.Option.Edit = false
 					}
 				}
@@ -135,8 +140,14 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				//n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User2.Name, u.User2.Mention, ds), u.User2.Timedown, u.User2.Numkzn)
 				emb := b.client.Ds.EmbedDS(n, numberLvl, 2, darkStar)
 				if in.Option.Edit {
-					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
-				} else if !in.Option.Edit {
+					errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+					if errr != nil {
+						b.log.Info(fmt.Sprintf("QueueLevel %s %s", u.User1.Dsmesid, in.Config.DsChannel))
+						b.log.ErrorErr(err)
+						in.Option.Edit = false
+					}
+				}
+				if !in.Option.Edit {
 					b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 
@@ -188,8 +199,14 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				//n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User3.Name, u.User3.Mention, ds), u.User3.Timedown, u.User3.Numkzn)
 				emb := b.client.Ds.EmbedDS(n, numberLvl, 3, darkStar)
 				if in.Option.Edit {
-					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
-				} else if !in.Option.Edit {
+					errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+					if errr != nil {
+						b.log.Info(fmt.Sprintf("QueueLevel %s %s", u.User1.Dsmesid, in.Config.DsChannel))
+						b.log.ErrorErr(err)
+						in.Option.Edit = false
+					}
+				}
+				if !in.Option.Edit {
 					b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
 
@@ -239,7 +256,7 @@ func (b *Bot) QueueAll(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	lvl := b.storage.DbFunc.Queue(ctx, in.Config.CorpName)
-	lvlk := utils.RemoveDuplicateElementString(lvl)
+	lvlk := utils.RemoveDuplicates(lvl)
 	if len(lvlk) > 0 {
 		for _, corp := range lvlk {
 			if corp != "" {
@@ -249,7 +266,7 @@ func (b *Bot) QueueAll(in models.InMessage) {
 
 			}
 		}
-	} else if in.Option.Reaction {
+	} else if in.Option.InClient {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "no_active_queues"), 10)
 		b.iftipdelete(in)
 	}

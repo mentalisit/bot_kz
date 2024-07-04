@@ -95,7 +95,6 @@ func (b *Bot) CheckTimeQueue(in models.InMessage) {
 	atoi, err := strconv.Atoi(in.Timekz)
 	if err != nil {
 		b.log.ErrorErr(err)
-		return
 	}
 	if atoi == 3 {
 		text := in.NameMention + b.getText(in, "info_time_almost_up")

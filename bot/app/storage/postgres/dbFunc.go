@@ -121,7 +121,7 @@ func (d *Db) ReadMesIdDS(ctx context.Context, mesid string) (string, error) {
 		err = results.Scan(&t.Lvlkz)
 		a = append(a, t.Lvlkz)
 	}
-	a = utils.RemoveDuplicateElementString(a)
+	a = utils.RemoveDuplicates(a)
 	if d.debug {
 		fmt.Println("ReadMesIdDS", a)
 	}
@@ -207,7 +207,7 @@ func (d *Db) OneMinutsTimer(ctx context.Context) []string {
 			err = results.Scan(&corpname)
 			a = append(a, corpname)
 		}
-		a = utils.RemoveDuplicateElementString(a)
+		a = utils.RemoveDuplicates(a)
 
 		for _, corp := range a {
 			skip := false
@@ -234,8 +234,8 @@ func (d *Db) MessageUpdateMin(ctx context.Context, corpname string) ([]string, [
 		fmt.Println("MessageUpdateMin", corpname)
 	}
 	var countCorp int
-	ds := []string{}
-	tg := []int{}
+	var ds []string
+	var tg []int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
 	row := d.db.QueryRow(ctx, sel, corpname)
 	err := row.Scan(&countCorp)
@@ -243,23 +243,37 @@ func (d *Db) MessageUpdateMin(ctx context.Context, corpname string) ([]string, [
 		d.log.ErrorErr(err)
 	}
 	if countCorp > 0 {
-		selS := "SELECT * FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
+		selS := "SELECT dsmesid,tgmesid FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
 		results, err1 := d.db.Query(ctx, selS, corpname)
 		defer results.Close()
 		if err1 != nil {
 			d.log.Error(err1.Error())
 		}
 		for results.Next() {
-			var t models.Sborkz
-			err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
-			ds = append(ds, t.Dsmesid)
-			tg = append(tg, t.Tgmesid)
+
+			var dsmesid string
+			var tgmesid int
+
+			err = results.Scan(&dsmesid, &tgmesid)
+
+			if dsmesid != "" {
+				ds = append(ds, dsmesid)
+			}
+			if tgmesid != 0 {
+				tg = append(tg, tgmesid)
+			}
+
 		}
 	}
-	ds = utils.RemoveDuplicateElementString(ds)
-	tg = utils.RemoveDuplicateElementInt(tg)
+	ds = utils.RemoveDuplicates(ds)
+	tg = utils.RemoveDuplicates(tg)
 	if d.debug {
-		fmt.Println("MessageUpdateMin", "ds", ds, "tg", tg)
+		if len(ds) > 0 {
+			fmt.Printf("MessageUpdateMin ds %d %+v \n", len(ds), ds)
+		}
+		if len(tg) > 0 {
+			fmt.Printf("MessageUpdateMin tg %d %+v \n", len(tg), tg)
+		}
 	}
 	return ds, tg
 }
@@ -282,7 +296,7 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 		Username:    t.Name,
 		NameMention: t.Mention,
 		Lvlkz:       t.Lvlkz,
-		Timekz:      string(t.Timedown),
+		Timekz:      strconv.Itoa(t.Timedown),
 		Ds: struct {
 			Mesid   string
 			Nameid  string
@@ -320,7 +334,7 @@ func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.Cor
 		Username:    t.Name,
 		NameMention: t.Mention,
 		Lvlkz:       t.Lvlkz,
-		Timekz:      string(t.Timedown),
+		Timekz:      strconv.Itoa(t.Timedown),
 		Tg: struct {
 			Mesid int
 			//Nameid int64

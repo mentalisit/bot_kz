@@ -50,7 +50,7 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 }
 
 func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
-	user = utils.RemoveDuplicateElementString(user)
+	user = utils.RemoveDuplicates(user)
 	for _, u := range user {
 		if b.storage.Count.CountNameQueue(context.Background(), u) > 0 {
 			b.elsetrue(u)
