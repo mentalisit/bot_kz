@@ -44,16 +44,19 @@ func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
 		c := in.Config
 		c.Country = lang
 
-		b.storage.ConfigRs.InsertConfigRs(c)
-		b.configCorp[c.CorpName] = c
 		b.log.Info(c.CorpName + " Добавлена в конфиг корпораций ")
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "tranks_for_activation"), 60)
+
 		if c.DsChannel != "" {
-			b.client.Ds.Hhelp1(c.DsChannel, lang)
+			c.MesidDsHelp = b.client.Ds.Hhelp1(c.DsChannel, lang)
 		}
 		if c.TgChannel != "" {
-			b.client.Tg.Help(c.TgChannel, lang)
+			c.TgChannel = b.client.Tg.Help1(c.TgChannel, lang)
 		}
+
+		b.storage.ConfigRs.InsertConfigRs(c)
+		b.configCorp[c.CorpName] = c
+
 	}
 }
 func (b *Bot) accessDelChannel(in models.InMessage, lang string) {

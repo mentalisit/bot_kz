@@ -11,6 +11,11 @@ func (t *Telegram) Help(Channel string, lang string) {
 	mid := t.SendHelp(Channel, text)
 	t.DelMessageSecond(Channel, strconv.Itoa(mid), 180)
 }
+func (t *Telegram) Help1(Channel string, lang string) string {
+	text := fmt.Sprintf("%s\n%s ", t.getLanguage(lang, "information"), t.getLanguage(lang, "info_help_text"))
+	mid := t.SendHelp(Channel, text)
+	return strconv.Itoa(mid)
+}
 
 // команда хелп
 func (t *Telegram) help(chatid string, mesid string) {
