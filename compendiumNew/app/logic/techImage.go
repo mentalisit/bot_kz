@@ -110,8 +110,10 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 		techBytes, userID, err := c.tech.TechGetName(userName, m.GuildId)
 		if err != nil || userID == "" {
 			userGetNick, _ := c.users.UsersFindByGameName(userName)
-			techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.GuildId)
-			if userID == "" {
+			if userGetNick != nil {
+				techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.GuildId)
+			}
+			if userID == "" || techBytes == nil {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 				return true
 			}
