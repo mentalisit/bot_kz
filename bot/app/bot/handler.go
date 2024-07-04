@@ -42,7 +42,7 @@ func (b *Bot) updateCompendiumModules(in models.InMessage) {
 func (b *Bot) checkAdmin(in models.InMessage) bool {
 	admin := false
 	if in.Tip == ds {
-		admin = b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)
+		admin = b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel)
 	} else if in.Tip == tg {
 		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
 	}
@@ -66,16 +66,15 @@ func (b *Bot) elsetrue(name string) { //удаляем игрока с очер�
 				Mtext:       t.Lvlkz + "-",
 				Tip:         t.Tip,
 				Username:    t.Name,
+				UserId:      t.UserId,
 				NameMention: t.Mention,
 				Lvlkz:       t.Lvlkz,
 				Ds: struct {
 					Mesid   string
-					Nameid  string
 					Guildid string
 					Avatar  string
 				}{
 					Mesid:   t.Dsmesid,
-					Nameid:  "",
 					Guildid: ""},
 				Tg: struct {
 					Mesid int

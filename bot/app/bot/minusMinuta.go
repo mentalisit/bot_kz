@@ -17,11 +17,11 @@ import (
 func (b *Bot) MinusMin() {
 	tt := b.storage.Timers.MinusMin(context.Background())
 
-	go b.myQueue(tt)
-
 	if conf.Instance.BotMode == "dev" {
 		return
 	}
+
+	go b.myQueue(tt)
 
 	if len(tt) > 0 {
 		for _, t := range tt {
@@ -34,17 +34,16 @@ func (b *Bot) MinusMin() {
 						Mtext:       "",
 						Tip:         t.Tip,
 						Username:    t.Name,
+						UserId:      t.UserId,
 						NameMention: t.Mention,
 						Lvlkz:       t.Lvlkz,
 						Timekz:      timeDown,
 						Ds: struct {
 							Mesid   string
-							Nameid  string
 							Guildid string
 							Avatar  string
 						}{
 							Mesid:   t.Dsmesid,
-							Nameid:  "",
 							Guildid: config.Guildid,
 						},
 						Tg: struct {

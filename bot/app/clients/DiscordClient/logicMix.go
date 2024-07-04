@@ -31,16 +31,15 @@ func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *di
 			in := models.InMessage{
 				Tip:         "ds",
 				Username:    user.Username,
+				UserId:      user.ID,
 				NameNick:    "",
 				NameMention: user.Mention(),
 				Ds: struct {
 					Mesid   string
-					Nameid  string
 					Guildid string
 					Avatar  string
 				}{
 					Mesid:   r.MessageID,
-					Nameid:  user.ID,
 					Guildid: config.Guildid,
 					Avatar:  user.AvatarURL("128"),
 				},
@@ -49,6 +48,13 @@ func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *di
 				Option: models.Option{
 					Reaction: true},
 			}
+
+			if r.Member != nil && r.Member.Nick != "" {
+				in.NameNick = r.Member.Nick
+			} else if in.NameNick == "" && user.GlobalName != "" {
+				in.NameNick = user.GlobalName
+			}
+
 			d.reactionUserRemove(r)
 
 			if r.Emoji.Name == emPlus {
@@ -139,23 +145,22 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 		Mtext:       m.Content,
 		Tip:         "ds",
 		Username:    m.Author.Username,
+		UserId:      m.Author.ID,
 		NameNick:    "",
 		NameMention: m.Author.Mention(),
 		Ds: struct {
 			Mesid   string
-			Nameid  string
 			Guildid string
 			Avatar  string
 		}{
 			Mesid:   m.ID,
-			Nameid:  m.Author.ID,
 			Guildid: m.GuildID,
 			Avatar:  m.Author.AvatarURL("128"),
 		},
 		Config: config,
 		Option: models.Option{InClient: true},
 	}
-	if m.Member != nil && m.Member.User != nil && m.Member.Nick != "" {
+	if m.Member != nil && m.Member.Nick != "" {
 		in.NameNick = m.Member.Nick
 	}
 

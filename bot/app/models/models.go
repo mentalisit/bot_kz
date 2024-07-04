@@ -5,11 +5,11 @@ type InMessage struct {
 	Tip           string
 	NameNick      string
 	Username      string
+	UserId        string
 	NameMention   string
 	Lvlkz, Timekz string
 	Ds            struct {
 		Mesid   string
-		Nameid  string
 		Guildid string
 		Avatar  string
 	}
@@ -41,6 +41,7 @@ type Sborkz struct {
 	Id          int
 	Corpname    string
 	Name        string
+	UserId      string
 	Mention     string
 	Tip         string
 	Dsmesid     string

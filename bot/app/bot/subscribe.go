@@ -33,7 +33,7 @@ func (b *Bot) Subscribe(in models.InMessage, tipPing int) {
 		if tipPing == 3 {
 			argRoles = b.getText(in, "rs") + in.Lvlkz + "+"
 		}
-		subscribeCode := b.client.Ds.Subscribe(in.Ds.Nameid, argRoles, in.Config.Guildid)
+		subscribeCode := b.client.Ds.Subscribe(in.UserId, argRoles, in.Config.Guildid)
 		var text string
 		if subscribeCode == 0 {
 			text = fmt.Sprintf("%s %s %s", in.NameMention, b.getText(in, "you_subscribed_to"), argRoles)
@@ -76,7 +76,7 @@ func (b *Bot) Unsubscribe(in models.InMessage, tipPing int) {
 		if tipPing == 3 {
 			argRoles = b.getText(in, "rs") + in.Lvlkz + "+"
 		}
-		unsubscribeCode := b.client.Ds.Unsubscribe(in.Ds.Nameid, argRoles, in.Config.Guildid)
+		unsubscribeCode := b.client.Ds.Unsubscribe(in.UserId, argRoles, in.Config.Guildid)
 		text := ""
 		if unsubscribeCode == 0 {
 			text = fmt.Sprintf("%s %s %s", in.NameMention, b.getText(in, "you_not_subscribed_to_role"), argRoles)

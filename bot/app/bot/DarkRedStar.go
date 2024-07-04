@@ -95,7 +95,7 @@ func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
 }
 func (b *Bot) darkAlt(in models.InMessage, i int) {
 	if in.Tip == ds {
-		alts := helpers.Get2AltsUserId(in.Ds.Nameid)
+		alts := helpers.Get2AltsUserId(in.UserId)
 		alt := ""
 		lenAlts := len(alts)
 		if lenAlts > 0 {

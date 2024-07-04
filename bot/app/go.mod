@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/bas24/googletranslatefree v0.0.0-20231117033553-f5859fe54d30
-	github.com/bwmarrin/discordgo v0.28.1
+	github.com/bwmarrin/discordgo v0.28.2-0.20240622145303-28f8d4252d9e
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0

@@ -26,7 +26,7 @@ func (b *Bot) EventStart(in models.InMessage) {
 	if event1 > 0 {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "event_mode_enabled"), 10)
 	} else {
-		if in.Tip == ds && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
+		if in.Tip == ds && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel)) {
 			b.storage.Event.EventStartInsert(in.Config.CorpName)
 			if in.Config.TgChannel != "" {
 				b.client.Tg.SendChannel(in.Config.TgChannel, text)
@@ -53,7 +53,7 @@ func (b *Bot) EventStop(in models.InMessage) {
 	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 	eventStop := b.getText(in, "event_stopped")
 	eventNull := b.getText(in, "info_event_not_active")
-	if in.Tip == "ds" && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.Ds.Nameid, in.Config.DsChannel)) {
+	if in.Tip == "ds" && (in.Username == "Mentalisit" || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel)) {
 		if event1 > 0 {
 			b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventStop, 60)

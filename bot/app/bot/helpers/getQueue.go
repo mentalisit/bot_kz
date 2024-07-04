@@ -95,9 +95,9 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 
 		genesis1, enrich1, rsextender1 := 0, 0, 0
 		if name == in.Username {
-			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
+			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.UserId, in.Config.Guildid)
 		}
-		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.Ds.Nameid, in.Ds.Guildid)
+		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
 
 		genesis := max(genesis1, genesis2, extractNumbers(t.Module2))
 		enrich := max(enrich1, enrich2, extractNumbers(t.Module3))
@@ -122,9 +122,9 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 	}
 }
 func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
-	genesis, enrich, rsextender := GetTechDataUserId(in.Ds.Nameid, in.Config.Guildid)
+	genesis, enrich, rsextender := GetTechDataUserId(in.UserId, in.Config.Guildid)
 	if genesis+enrich+rsextender == 0 {
-		genesis, enrich, rsextender = Get2TechDataUserId(in.Username, in.Ds.Nameid, in.Ds.Guildid)
+		genesis, enrich, rsextender = Get2TechDataUserId(in.Username, in.UserId, in.Ds.Guildid)
 		if genesis+enrich+rsextender == 0 {
 			return "модули не найдены "
 		}

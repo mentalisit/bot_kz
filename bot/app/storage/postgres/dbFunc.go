@@ -294,17 +294,16 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 	in := models.InMessage{
 		Tip:         "ds",
 		Username:    t.Name,
+		UserId:      t.UserId,
 		NameMention: t.Mention,
 		Lvlkz:       t.Lvlkz,
 		Timekz:      strconv.Itoa(t.Timedown),
 		Ds: struct {
 			Mesid   string
-			Nameid  string
 			Guildid string
 			Avatar  string
 		}{
 			Mesid:   t.Dsmesid,
-			Nameid:  "",
 			Guildid: config.Guildid,
 		},
 		Config: config,

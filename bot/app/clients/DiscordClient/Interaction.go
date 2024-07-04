@@ -118,29 +118,30 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
 			user = i.Interaction.Member.User
 		}
-		if i.Interaction.Member != nil && i.Interaction.Member.Nick != "" {
-			user.Username = i.Interaction.Member.Nick
-		}
+
 		in := models.InMessage{
 			Mtext:       i.MessageComponentData().CustomID,
 			Tip:         "ds",
 			Username:    user.Username,
+			UserId:      user.ID,
 			NameNick:    "",
 			NameMention: user.Mention(),
 			Ds: struct {
 				Mesid   string
-				Nameid  string
 				Guildid string
 				Avatar  string
 			}{
 				Mesid:   i.Interaction.Message.ID,
-				Nameid:  user.ID,
 				Guildid: i.Interaction.GuildID,
 				Avatar:  user.AvatarURL("128"),
 			},
 			Config: config,
 			Option: models.Option{Reaction: true},
 		}
+		if i.Interaction.Member != nil && i.Interaction.Member.Nick != "" {
+			in.NameNick = i.Interaction.Member.Nick
+		}
+
 		d.ChanRsMessage <- in
 		err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredMessageUpdate,
