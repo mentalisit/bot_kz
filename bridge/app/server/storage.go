@@ -8,7 +8,7 @@ import (
 func (b *Bridge) LoadConfig() {
 	var i = 0
 	var bridge string
-	bc, _ := GetBridgeConfig()
+	bc := b.storage.DBReadBridgeConfig()
 	for _, configBridge := range bc {
 		b.configs[configBridge.NameRelay] = configBridge
 		i++
@@ -28,17 +28,11 @@ func (b *Bridge) CacheNameBridge(nameRelay string) (bool, models.BridgeConfig) {
 }
 func (b *Bridge) AddNewBridgeConfig() {
 	b.configs[b.in.Config.NameRelay] = *b.in.Config
-	b.InsertBridgeChat(*b.in.Config)
+	b.storage.InsertBridgeChat(*b.in.Config)
 }
 func (b *Bridge) AddBridgeConfig() {
-	b.UpdateBridgeChat(*b.in.Config)
 	b.configs[b.in.Config.NameRelay] = *b.in.Config
-}
-func (b *Bridge) InsertBridgeChat(br models.BridgeConfig) {
-	MarshalDataStorage(br, "insert")
-}
-func (b *Bridge) UpdateBridgeChat(br models.BridgeConfig) {
-	MarshalDataStorage(br, "update")
+	b.storage.UpdateBridgeChat(*b.in.Config)
 }
 
 func (b *Bridge) CacheCheckChannelConfigDS(chatIdDs string) (bool, models.BridgeConfig) {

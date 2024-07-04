@@ -3,6 +3,7 @@ package main
 import (
 	"bridge/config"
 	"bridge/server"
+	"bridge/storage"
 	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
@@ -14,7 +15,8 @@ func main() {
 
 	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
 
-	server.NewBridge(log)
+	st := storage.NewStorage(log, cfg)
+	server.NewBridge(log, st)
 
 	log.Info("Service bridge load")
 	//ожидаем сигнала завершения

@@ -4,6 +4,7 @@ import (
 	ds "bridge/Discord"
 	tg "bridge/Telegram"
 	"bridge/models"
+	"bridge/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
 	"net/http"
@@ -17,14 +18,16 @@ type Bridge struct {
 	configs  map[string]models.BridgeConfig
 	discord  *ds.Discord
 	telegram *tg.Telegram
+	storage  BridgeConfig
 }
 
-func NewBridge(log *logger.Logger) *Bridge {
+func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
 	bridge := &Bridge{
 		log:      log,
 		configs:  make(map[string]models.BridgeConfig),
 		discord:  ds.NewDiscord(log),
 		telegram: tg.NewTelegram(log),
+		storage:  st.DB,
 	}
 	bridge.LoadConfig()
 	go bridge.ServerRun()
@@ -37,6 +40,8 @@ func (b *Bridge) ServerRun() {
 	router := gin.Default()
 	// Обработчик для принятия сообщений от DiscordService
 	router.POST("/bridge/inbox", b.indoxBridge)
+	//
+	router.GET("/bridge/config", b.configBridge)
 
 	err := router.Run(":80")
 	if err != nil {
@@ -55,4 +60,16 @@ func (b *Bridge) indoxBridge(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Message received successfully"})
 
 	go b.logic(mes)
+}
+
+func (b *Bridge) configBridge(c *gin.Context) {
+	config := b.storage.DBReadBridgeConfig()
+	c.JSON(http.StatusOK, config)
+}
+
+type BridgeConfig interface {
+	DBReadBridgeConfig() []models.BridgeConfig
+	UpdateBridgeChat(br models.BridgeConfig)
+	InsertBridgeChat(br models.BridgeConfig)
+	DeleteBridgeChat(br models.BridgeConfig)
 }
