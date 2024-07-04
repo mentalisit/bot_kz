@@ -192,11 +192,10 @@ func (b *Bot) Autohelp() {
 			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
 				text := fmt.Sprintf("%s \n%s", b.getLanguageText(s.Country, "info_bot_delete_msg"), b.getLanguageText(s.Country, "info_help_text"))
 				if s.MesidTgHelp != "" {
-					mID, err := strconv.Atoi(s.MesidTgHelp)
-					if err != nil {
-						return
+					mID, _ := strconv.Atoi(s.MesidTgHelp)
+					if mID != 0 {
+						go b.client.Tg.DelMessage(s.TgChannel, mID)
 					}
-					go b.client.Tg.DelMessage(s.TgChannel, mID)
 				}
 				mid := b.client.Tg.SendHelp(s.TgChannel, strings.Replace(text, "3", "10", 1))
 				s.MesidTgHelp = strconv.Itoa(mid)
@@ -206,11 +205,10 @@ func (b *Bot) Autohelp() {
 				if split[1] != "0" {
 					text := fmt.Sprintf("%s\n%s ", b.getLanguageText(s.Country, "information"), b.getLanguageText(s.Country, "info_help_text"))
 					if s.MesidTgHelp != "" {
-						mID, err := strconv.Atoi(s.MesidTgHelp)
-						if err != nil {
-							return
+						mID, _ := strconv.Atoi(s.MesidTgHelp)
+						if mID != 0 {
+							go b.client.Tg.DelMessage(s.TgChannel, mID)
 						}
-						go b.client.Tg.DelMessage(s.TgChannel, mID)
 					}
 					mid := b.client.Tg.SendHelp(s.TgChannel, text)
 					s.MesidTgHelp = strconv.Itoa(mid)
