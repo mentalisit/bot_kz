@@ -7,7 +7,7 @@ import (
 
 // BridgeCheckChannelConfigDS bridge
 func (d *Discord) BridgeCheckChannelConfigDS(ChatId string) (bool, models.BridgeConfig) {
-	for _, config := range d.bridgeConfig {
+	for _, config := range *d.bridgeConfig {
 		for _, channelD := range config.ChannelDs {
 			if channelD.ChannelId == ChatId {
 				return true, config

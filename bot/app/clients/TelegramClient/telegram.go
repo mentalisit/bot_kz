@@ -17,7 +17,7 @@ type Telegram struct {
 	log           *logger.Logger
 	storage       *storage.Storage
 	debug         bool
-	bridgeConfig  map[string]models.BridgeConfig
+	bridgeConfig  *map[string]models.BridgeConfig
 	corpConfigRS  map[string]models.CorporationConfig
 }
 
@@ -33,7 +33,7 @@ func NewTelegram(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot)
 		log:           log,
 		storage:       st,
 		debug:         cfg.IsDebug,
-		bridgeConfig:  st.BridgeConfigs,
+		bridgeConfig:  &st.BridgeConfigs,
 		corpConfigRS:  st.CorpConfigRS,
 	}
 

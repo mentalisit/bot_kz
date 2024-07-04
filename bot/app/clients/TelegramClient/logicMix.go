@@ -240,7 +240,6 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 		}
 		time.Sleep(3 * time.Second)
 		t.storage.ReloadDbArray()
-		t.bridgeConfig = t.storage.BridgeConfigs
 	}()
 
 }

@@ -125,7 +125,7 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			Mtext:       i.MessageComponentData().CustomID,
 			Tip:         "ds",
 			Username:    user.Username,
-			NameNick:    user.GlobalName,
+			NameNick:    "",
 			NameMention: user.Mention(),
 			Ds: struct {
 				Mesid   string

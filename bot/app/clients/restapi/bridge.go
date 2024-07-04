@@ -53,3 +53,37 @@ func SendBridgeApp(m models.ToBridgeMessage) error {
 
 	return nil
 }
+func ReadBridgeConfig() map[string]models.BridgeConfig {
+	var br []models.BridgeConfig
+	resp, err := http.Get("http://bridge/bridge/config")
+	if err != nil {
+		resp, err = http.Get("http://192.168.100.131:808/bridge/config")
+		if err != nil {
+			return nil
+		}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&br)
+	if err != nil {
+		return nil
+	}
+
+	var bridgeCounter = 0
+	var bridge string
+
+	bridgeConfig := make(map[string]models.BridgeConfig)
+
+	for _, configBridge := range br {
+		bridgeConfig[configBridge.NameRelay] = configBridge
+		bridgeCounter++
+		bridge = bridge + fmt.Sprintf("%s, ", configBridge.HostRelay)
+	}
+	fmt.Printf("Загружено конфиг мостов %d : %s\n", bridgeCounter, bridge)
+
+	return bridgeConfig
+}

@@ -4,7 +4,7 @@ import "kz_bot/models"
 
 // BridgeCheckChannelConfigTg bridge
 func (t *Telegram) bridgeCheckChannelConfigTg(mId string) (bool, models.BridgeConfig) {
-	for _, config := range t.bridgeConfig {
+	for _, config := range *t.bridgeConfig {
 		for _, channelD := range config.ChannelTg {
 			if channelD.ChannelId == mId {
 				return true, config

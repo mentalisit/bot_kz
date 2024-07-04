@@ -4,21 +4,11 @@ import (
 	"kz_bot/models"
 )
 
-type Caache interface {
-	ReloadConfig()
-	//AddCorp(CorpName string, DsChannel string, TgChannel int64, WaChannel string, DelMesComplite int, mesiddshelp string, Country string, guildid string)
-
-	CheckChannelConfigWA(chatid string) (channelGood bool, config models.CorporationConfig)
-	CheckChannelConfigTG(chatid int64) (channelGood bool, config models.CorporationConfig)
-	CheckCorpNameConfig(corpname string) (channelGood bool, config models.CorporationConfig)
-	ReadAllChannel() (chatDS []string, chatTG []int64, chatWA []string)
-}
 type ConfigRs interface {
 	InsertConfigRs(c models.CorporationConfig)
 	ReadConfigRs() []models.CorporationConfig
 	DeleteConfigRs(c models.CorporationConfig)
-	AutoHelpUpdateMesid(c models.CorporationConfig)
-	AutoHelp() []models.CorporationConfig
+	UpdateConfigRs(c models.CorporationConfig)
 }
 
 func (s *Storage) DeleteConfigRs(c models.CorporationConfig) {

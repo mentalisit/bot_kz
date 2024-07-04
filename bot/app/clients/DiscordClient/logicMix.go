@@ -31,7 +31,7 @@ func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *di
 			in := models.InMessage{
 				Tip:         "ds",
 				Username:    user.Username,
-				NameNick:    user.GlobalName,
+				NameNick:    "",
 				NameMention: user.Mention(),
 				Ds: struct {
 					Mesid   string

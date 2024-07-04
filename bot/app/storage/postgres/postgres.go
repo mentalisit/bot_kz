@@ -37,12 +37,13 @@ func (d *Db) createTable() {
             id             BIGSERIAL PRIMARY KEY,
             corpname       TEXT,
             dschannel      TEXT,
-            tgchannel      BIGINT,
-            wachannel      TEXT,
+            tgchannel      TEXT,
             mesiddshelp    TEXT,
-            mesidtghelp    BIGINT,
+            mesidtghelp    TEXT,
+            country        TEXT,
             delmescomplite BIGINT,
-            guildid        TEXT
+            guildid        TEXT,
+            forvard        boolean
         );
     `)
 	if err != nil {

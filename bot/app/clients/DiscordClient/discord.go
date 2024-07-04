@@ -14,13 +14,12 @@ import (
 
 type Discord struct {
 	ChanRsMessage chan models.InMessage
-	//ChanBridgeMessage chan models.BridgeMessage
-	S            *discordgo.Session
-	webhook      *transmitter.Transmitter
-	log          *logger.Logger
-	storage      *storage.Storage
-	bridgeConfig map[string]models.BridgeConfig
-	corpConfigRS map[string]models.CorporationConfig
+	S             *discordgo.Session
+	webhook       *transmitter.Transmitter
+	log           *logger.Logger
+	storage       *storage.Storage
+	bridgeConfig  *map[string]models.BridgeConfig
+	corpConfigRS  map[string]models.CorporationConfig
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
@@ -36,7 +35,7 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		storage:       st,
 		ChanRsMessage: make(chan models.InMessage, 10),
 		//ChanBridgeMessage: make(chan models.BridgeMessage, 20),
-		bridgeConfig: st.BridgeConfigs,
+		bridgeConfig: &st.BridgeConfigs,
 		corpConfigRS: st.CorpConfigRS,
 	}
 	go ds.AddHandler(DS.messageHandler)

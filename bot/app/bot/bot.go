@@ -184,7 +184,7 @@ func (b *Bot) Autohelp() {
 	mtime := tm.Format("15:04")
 	EvenOrOdd, _ := strconv.Atoi((tm.Format("2006-01-02"))[8:])
 	if mtime == "12:00" {
-		a := b.storage.ConfigRs.AutoHelp()
+		a := b.storage.ConfigRs.ReadConfigRs()
 		for _, s := range a {
 			if s.DsChannel != "" {
 				s.MesidDsHelp = b.client.Ds.HelpChannelUpdate(s)
@@ -216,19 +216,19 @@ func (b *Bot) Autohelp() {
 					s.MesidTgHelp = strconv.Itoa(mid)
 				}
 			}
-			b.storage.ConfigRs.AutoHelpUpdateMesid(s)
+			b.storage.ConfigRs.UpdateConfigRs(s)
 		}
 		time.Sleep(time.Minute)
 		go b.client.Ds.CleanRsBotOtherMessage()
 	} else if tm.Minute() == 0 {
 		go func() {
-			a := b.storage.ConfigRs.AutoHelp()
+			a := b.storage.ConfigRs.ReadConfigRs()
 			for _, s := range a {
 				if s.DsChannel != "" {
 					MesidDsHelp := b.client.Ds.HelpChannelUpdate(s)
 					if MesidDsHelp != s.MesidDsHelp {
 						s.MesidDsHelp = MesidDsHelp
-						b.storage.ConfigRs.AutoHelpUpdateMesid(s)
+						b.storage.ConfigRs.UpdateConfigRs(s)
 					}
 					in := models.InMessage{Config: s}
 					b.QueueAll(in)

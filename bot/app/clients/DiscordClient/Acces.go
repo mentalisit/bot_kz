@@ -122,7 +122,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 	in := models.InMessage{
 		Mtext:       m.Content,
 		Tip:         "ds",
-		Username:    m.Author.String(),
+		Username:    m.Author.Username,
 		NameMention: m.Author.Mention(),
 		Ds: struct {
 			Mesid   string
@@ -171,7 +171,6 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		go func() {
 			time.Sleep(5 * time.Second)
 			d.storage.ReloadDbArray()
-			d.bridgeConfig = d.storage.BridgeConfigs
 		}()
 
 	}()
