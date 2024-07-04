@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compendium/models"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -70,7 +71,10 @@ func SendChannelPic(chatId, text string, pic []byte) error {
 		//resp, err = http.Post("http://192.168.100.155:802/data", "application/json", bytes.NewBuffer(data))
 		return err
 	}
-	fmt.Println("resp.Status", resp.Status)
+	if resp.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("resp.StatusCode %d", resp.StatusCode))
+	}
+
 	return nil
 }
 

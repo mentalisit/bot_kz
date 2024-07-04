@@ -133,7 +133,6 @@ func addModulesLevel(dc *gg.Context) {
 	dc.DrawStringAnchored(GetLevel(102), x7, y, 0, 0.5)
 }
 func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
-	fmt.Println(avatarURL)
 	// Загружаем изображение аватара
 	response, err := http.Get(avatarURL)
 	if err != nil {
