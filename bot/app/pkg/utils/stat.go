@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mentalisit/logger"
 	"runtime"
+	"time"
 )
 
 var log *logger.Logger
@@ -13,7 +14,10 @@ func PrintGoroutine(l *logger.Logger) {
 		log = l
 	}
 	goroutine := runtime.NumGoroutine()
-	text := fmt.Sprintf("Горутин  %d\n", goroutine)
+	tm := time.Now()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
 	if log != nil {
 		if goroutine > 120 {
 			log.Info(text)

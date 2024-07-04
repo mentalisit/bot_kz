@@ -236,6 +236,6 @@ func (b *Bot) Autohelp() {
 			}
 		}()
 	}
-	time.Sleep(time.Minute)
 	utils.PrintGoroutine(b.log)
+	time.Sleep(time.Minute)
 }
