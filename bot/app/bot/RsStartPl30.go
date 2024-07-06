@@ -16,7 +16,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 	b.iftipdelete(in)
-	countName, err := b.storage.Count.СountName(ctx, in.Username, in.Lvlkz, in.Config.CorpName)
+	countName, err := b.storage.Count.СountName(ctx, in.UserId, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		return
 	}
@@ -106,7 +106,8 @@ func (b *Bot) RsStart(in models.InMessage) {
 						if in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 							if u.User1.Tip == ds {
-								go b.sendDmDark(text, u.User1.Mention)
+								//go b.sendDmDark(text, u.User1.Mention)
+								go b.client.Ds.SendDmText(text, u.User1.UserId)
 							}
 						} else {
 							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
@@ -201,7 +202,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 			//отправляем сообщение о корпорациях с %
 			go b.SendPercent(in.Config)
 
-			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, in.Username}
+			user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
 			b.elseChat(user)
 		}
 	}
@@ -209,18 +210,18 @@ func (b *Bot) RsStart(in models.InMessage) {
 func (b *Bot) Pl30(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	countName := b.storage.Count.CountNameQueue(ctx, in.Username)
+	countName := b.storage.Count.CountNameQueue(ctx, in.UserId)
 	text := ""
 	if countName == 0 {
 		text = in.NameMention + b.getText(in, "you_out_of_queue")
 	} else if countName > 0 {
-		timedown := b.storage.DbFunc.P30Pl(ctx, in.Lvlkz, in.Config.CorpName, in.Username)
+		timedown := b.storage.DbFunc.P30Pl(ctx, in.Lvlkz, in.Config.CorpName, in.UserId)
 		if timedown >= 150 {
 			text = fmt.Sprintf("%s %s %d %s",
 				in.NameMention, b.getText(in, "info_max_queue_time"), timedown, b.getText(in, "min"))
 		} else {
 			text = in.NameMention + b.getText(in, "timer_updated")
-			b.storage.DbFunc.UpdateTimedown(ctx, in.Lvlkz, in.Config.CorpName, in.Username)
+			b.storage.DbFunc.UpdateTimedown(ctx, in.Lvlkz, in.Config.CorpName, in.UserId)
 			in.Option.Pl30 = true
 			in.Option.Edit = true
 			b.QueueLevel(in)

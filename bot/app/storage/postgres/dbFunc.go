@@ -31,7 +31,7 @@ func (d *Db) ReadAll(ctx context.Context, lvlkz, CorpName string) (users models.
 		var t models.Sborkz
 		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid,
 			&t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz,
-			&t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+			&t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 		if user == 1 {
 			u.User1 = t
 		} else if user == 2 {
@@ -48,7 +48,7 @@ func (d *Db) ReadAll(ctx context.Context, lvlkz, CorpName string) (users models.
 	}
 	return u
 }
-func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
+func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now()
 	mdate := (tm.Format("2006-01-02"))
@@ -62,22 +62,22 @@ func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, 
 	}
 	ctx = context.Background()
 
-	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
+	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
                    numkzn,numberkz,numberevent,eventpoints,active,timedown) 
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`
-	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, nameMention, tip, dsmesid, tgmesid,
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
+	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
 		wamesid, mtime, mdate, lvlkz, numkzN, 0, numevent, 0, 0, timekzz)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
-func (d *Db) ElseTrue(ctx context.Context, name string) []models.Sborkz {
+func (d *Db) ElseTrue(ctx context.Context, userid string) []models.Sborkz {
 	if d.debug {
-		fmt.Println("ElseTrue", name)
+		fmt.Println("ElseTrue", userid)
 	}
-	sel := "SELECT * FROM kzbot.sborkz WHERE name = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, name)
+	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
+	results, err := d.db.Query(ctx, sel, userid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -85,20 +85,20 @@ func (d *Db) ElseTrue(ctx context.Context, name string) []models.Sborkz {
 	var tt []models.Sborkz
 	var t models.Sborkz
 	for results.Next() {
-		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.UserId, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 		tt = append(tt, t)
 	}
 	if d.debug {
-		fmt.Println("ElseTrue", name, t)
+		fmt.Println("ElseTrue", userid, t)
 	}
 	return tt
 }
-func (d *Db) DeleteQueue(ctx context.Context, name, lvlkz, CorpName string) {
+func (d *Db) DeleteQueue(ctx context.Context, userid, lvlkz, CorpName string) {
 	if d.debug {
-		fmt.Println("DeleteQueue", name, lvlkz, CorpName)
+		fmt.Println("DeleteQueue", userid, lvlkz, CorpName)
 	}
-	del := "delete from kzbot.sborkz where name = $1 AND lvlkz = $2 AND corpname = $3 AND active = 0"
-	_, err := d.db.Exec(ctx, del, name, lvlkz, CorpName)
+	del := "delete from kzbot.sborkz where userid = $1 AND lvlkz = $2 AND corpname = $3 AND active = 0"
+	_, err := d.db.Exec(ctx, del, userid, lvlkz, CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -133,13 +133,13 @@ func (d *Db) ReadMesIdDS(ctx context.Context, mesid string) (string, error) {
 	}
 }
 
-func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, name string) int {
+func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, userid string) int {
 	if d.debug {
-		fmt.Println("P30Pl", lvlkz, CorpName, name)
+		fmt.Println("P30Pl", lvlkz, CorpName, userid)
 	}
 	var timedown int
-	sel := "SELECT timedown FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0 AND name = $3"
-	results, err := d.db.Query(ctx, sel, lvlkz, CorpName, name)
+	sel := "SELECT timedown FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0 AND userid = $3"
+	results, err := d.db.Query(ctx, sel, lvlkz, CorpName, userid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -152,12 +152,12 @@ func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, name string) int {
 	}
 	return timedown
 }
-func (d *Db) UpdateTimedown(ctx context.Context, lvlkz, CorpName, name string) {
+func (d *Db) UpdateTimedown(ctx context.Context, lvlkz, CorpName, userid string) {
 	if d.debug {
-		fmt.Println("UpdateTimedown", lvlkz, CorpName, name)
+		fmt.Println("UpdateTimedown", lvlkz, CorpName, userid)
 	}
-	upd := `update kzbot.sborkz set timedown = timedown+30 where lvlkz = $1 AND corpname = $2 AND name = $3`
-	_, err := d.db.Exec(ctx, upd, lvlkz, CorpName, name)
+	upd := `update kzbot.sborkz set timedown = timedown+30 where lvlkz = $1 AND corpname = $2 AND userid = $3`
+	_, err := d.db.Exec(ctx, upd, lvlkz, CorpName, userid)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -289,7 +289,7 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 	}
 	var t models.Sborkz
 	for results.Next() {
-		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 	}
 	in := models.InMessage{
 		Tip:         "ds",
@@ -326,7 +326,7 @@ func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.Cor
 	}
 	var t models.Sborkz
 	for results.Next() {
-		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 	}
 	in := models.InMessage{
 		Tip:         "tg",

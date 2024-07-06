@@ -80,6 +80,7 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 		Mtext:       m.Text,
 		Tip:         "tg",
 		Username:    name,
+		UserId:      strconv.FormatInt(m.From.ID, 10),
 		NameNick:    "", //нет способа извлечь ник кроме member.CustomTitle
 		NameMention: "@" + name,
 		Tg: struct {
@@ -197,6 +198,7 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 		Mtext:       m.Text,
 		Tip:         "tg",
 		Username:    m.From.String(),
+		UserId:      strconv.FormatInt(m.From.ID, 10),
 		NameMention: "@" + m.From.String(),
 		Tg: struct {
 			Mesid int

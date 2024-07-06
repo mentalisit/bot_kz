@@ -119,8 +119,9 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
-	CountName, err := b.storage.Count.СountName(ctx, in.Username, in.Lvlkz, in.Config.CorpName)
+	CountName, err := b.storage.Count.СountName(ctx, in.UserId, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
+		b.log.ErrorErr(err)
 		return
 	}
 	if CountName == 1 { //проверяем есть ли игрок в очереди
@@ -130,7 +131,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		if err1 != nil {
 			return
 		}
-		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.Username) //проверяем количество боёв по уровню кз игрока
+		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 		if err2 != nil {
 			return
 		}
@@ -155,6 +156,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		UserIn := models.Sborkz{
 			Tip:      in.Tip,
 			Name:     in.Username,
+			UserId:   in.UserId,
 			Mention:  in.NameMention,
 			Numkzn:   numkzN,
 			Timedown: timekz,
@@ -252,7 +254,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 		}
 		if countQueue < 2 {
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 		}
 
 		if countQueue == 2 {
@@ -289,10 +291,12 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					if in.Tip == ds {
 						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
 						if u.User1.Tip == ds {
-							go b.sendDmDark(b.getText(in, "go"), u.User1.Mention)
+							//go b.sendDmDark(b.getText(in, "go"), u.User1.Mention)
+							go b.client.Ds.SendDmText(b.getText(in, "go"), u.User1.UserId)
 						}
 						if u.User2.Tip == ds {
-							go b.sendDmDark(b.getText(in, "go"), u.User2.Mention)
+							//go b.sendDmDark(b.getText(in, "go"), u.User2.Mention)
+							go b.client.Ds.SendDmText(b.getText(in, "go"), u.User2.UserId)
 						}
 					} else {
 						dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
@@ -336,7 +340,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			}
 
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
 				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
@@ -349,7 +353,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			go b.SendPercent(in.Config)
 
 			//проверка есть ли игрок в других чатах
-			user := []string{u.User1.Name, u.User2.Name, in.Username}
+			user := []string{u.User1.UserId, u.User2.UserId, in.UserId}
 			go b.elseChat(user)
 		}
 
@@ -394,7 +398,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 	b.iftipdelete(in)
 	ctx := context.Background()
-	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz[1:], in.Config.CorpName, in.Username) //проверяем количество боёв по уровню кз игрока
+	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz[1:], in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 	if err2 != nil {
 		return
 	}
@@ -408,6 +412,9 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
 	if numberevent > 0 {
 		numkzL = numkzEvent
+	} else {
+		//todo send not event
+		return
 	}
 	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", in.Lvlkz, in.NameMention, b.getText(in, "go"), textEvent)
 	if in.Config.DsChannel != "" {
@@ -421,7 +428,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
 	}
 
-	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 	err := b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 	if err != nil {
 		err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
@@ -431,15 +438,16 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 
 	//проверка есть ли игрок в других чатах
-	go b.elseChat([]string{in.Username})
+	go b.elseChat([]string{in.UserId})
 
 }
-func (b *Bot) sendDmDark(text, userMention string) {
-	mentionRegexDs := regexp.MustCompile(`<@(\d+)>`)
-	match := mentionRegexDs.FindStringSubmatch(userMention)
-	if len(match) > 1 {
-		id := match[1]
-		b.client.Ds.SendDmText(text, id)
-	}
 
-}
+//func (b *Bot) sendDmDark(text, userMention string) {
+//	mentionRegexDs := regexp.MustCompile(`<@(\d+)>`)
+//	match := mentionRegexDs.FindStringSubmatch(userMention)
+//	if len(match) > 1 {
+//		id := match[1]
+//		b.client.Ds.SendDmText(text, id)
+//	}
+//
+//}

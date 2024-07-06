@@ -16,7 +16,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 	b.iftipdelete(in)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
-	CountName, err := b.storage.Count.СountName(ctx, in.Username, in.Lvlkz, in.Config.CorpName)
+	CountName, err := b.storage.Count.СountName(ctx, in.UserId, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		return
 	}
@@ -27,7 +27,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 		if err1 != nil {
 			return
 		}
-		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.Username) //проверяем количество боёв по уровню кз игрока
+		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 		if err2 != nil {
 			return
 		}
@@ -51,6 +51,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 		timekz, _ := strconv.Atoi(in.Timekz)
 		UserIn := models.Sborkz{
 			Name:     in.Username,
+			UserId:   in.UserId,
 			Mention:  in.NameMention,
 			Numkzn:   numkzN,
 			Timedown: timekz,
@@ -199,7 +200,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 		}
 		if countQueue <= 2 {
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 		}
 
 		if countQueue == 3 {
@@ -281,7 +282,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			}
 
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
 				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
@@ -294,7 +295,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			go b.SendPercent(in.Config)
 
 			//проверка есть ли игрок в других чатах
-			user := []string{u.User1.Name, u.User2.Name, u.User3.Name, in.Username}
+			user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
 			go b.elseChat(user)
 
 		}
@@ -308,7 +309,7 @@ func (b *Bot) RsMinus(in models.InMessage) {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 
-	CountNames, err := b.storage.Count.СountName(ctx, in.Username, in.Lvlkz, in.Config.CorpName) //проверяем есть ли игрок в очереди
+	CountNames, err := b.storage.Count.СountName(ctx, in.UserId, in.Lvlkz, in.Config.CorpName) //проверяем есть ли игрок в очереди
 	if err != nil {
 		b.log.ErrorErr(err)
 		return
@@ -319,7 +320,7 @@ func (b *Bot) RsMinus(in models.InMessage) {
 		//чтение айди очечреди
 		u := b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
 		//удаление с БД
-		b.storage.DbFunc.DeleteQueue(ctx, in.Username, in.Lvlkz, in.Config.CorpName)
+		b.storage.DbFunc.DeleteQueue(ctx, in.UserId, in.Lvlkz, in.Config.CorpName)
 		//проверяем очередь
 		countQueue, err2 := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
 		if err2 != nil {

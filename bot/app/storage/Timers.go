@@ -6,7 +6,7 @@ import (
 )
 
 type Timers interface {
-	UpdateMitutsQueue(ctx context.Context, name, CorpName string) models.Sborkz
+	UpdateMitutsQueue(ctx context.Context, userid, CorpName string) models.Sborkz
 	MinusMin(ctx context.Context) []models.Sborkz
 }
 type TimeDeleteMessage interface {

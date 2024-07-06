@@ -22,6 +22,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 			Mtext:       cb.Data,
 			Tip:         "tg",
 			Username:    name,
+			UserId:      strconv.FormatInt(cb.From.ID, 10),
 			NameMention: "@" + name,
 			Tg: struct {
 				Mesid int

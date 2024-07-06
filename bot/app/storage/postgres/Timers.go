@@ -6,12 +6,12 @@ import (
 	"kz_bot/models"
 )
 
-func (d *Db) UpdateMitutsQueue(ctx context.Context, name, CorpName string) models.Sborkz {
+func (d *Db) UpdateMitutsQueue(ctx context.Context, userid, CorpName string) models.Sborkz {
 	if d.debug {
-		fmt.Println("UpdateMitutsQueue", name, CorpName)
+		fmt.Println("UpdateMitutsQueue", userid, CorpName)
 	}
-	sel := "SELECT * FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 0"
-	results, err := d.db.Query(ctx, sel, name, CorpName)
+	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
+	results, err := d.db.Query(ctx, sel, userid, CorpName)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -20,18 +20,18 @@ func (d *Db) UpdateMitutsQueue(ctx context.Context, name, CorpName string) model
 	for results.Next() {
 
 		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time,
-			&t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+			&t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 
-		if t.Name == name && t.Timedown <= 3 {
-			upd := "update kzbot.sborkz set timedown = timedown + 30 where active = 0 AND name = $1 AND corpname = $2"
-			_, err = d.db.Exec(ctx, upd, t.Name, t.Corpname)
+		if t.UserId == userid && t.Timedown <= 3 {
+			upd := "update kzbot.sborkz set timedown = timedown + 30 where active = 0 AND userid = $1 AND corpname = $2"
+			_, err = d.db.Exec(ctx, upd, t.UserId, t.Corpname)
 			if err != nil {
 				d.log.ErrorErr(err)
 			}
 		}
 	}
 	if d.debug {
-		fmt.Println("UpdateMitutsQueue", name, CorpName, t)
+		fmt.Println("UpdateMitutsQueue", userid, CorpName, t)
 	}
 	return t
 }
@@ -52,7 +52,7 @@ func (d *Db) MinusMin(ctx context.Context) []models.Sborkz {
 	var tt []models.Sborkz
 	for results.Next() {
 		var t models.Sborkz
-		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown)
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 		tt = append(tt, t)
 
 	}
