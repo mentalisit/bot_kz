@@ -327,7 +327,7 @@ func (d *Discord) CleanRsBotOtherMessage() {
 								d.log.Info(fmt.Sprintf("Rs_bot#9945 message.Embeds.Title: %+v\ndelete \n", message.Embeds[0].Title))
 								_ = d.S.ChannelMessageDelete(message.ChannelID, message.ID)
 							}
-						} else if time.Now().Sub(message.Timestamp).Hours() < 96 {
+						} else if time.Now().Sub(message.Timestamp).Hours() < 96 && !strings.Contains(message.Content, "Черга") {
 							d.log.Info(fmt.Sprintf("message hours%.1f %+v\n", time.Now().Sub(message.Timestamp).Hours(), message))
 						} else {
 							fmt.Printf("MESSAGE: %+v\n", message)
