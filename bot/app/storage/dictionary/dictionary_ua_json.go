@@ -76,5 +76,6 @@ func getDictionaryUaJson() []byte {
 "select_module_level":"Вибрано модуль: %s, рівень: %d",
 "delete_module_level":"Видалений модуль: %s, рівень: %d",
 "install_weapon":"Встановлено зброю: %s",
-"temp1_queue":"Черга чз%s (%d)\n1️⃣ %s - %sхв. (%d)\n\n%s++ - примусовий старт"}}`)
+"temp1_queue":"Черга чз%s (%d)\n1️⃣ %s - %sхв. (%d)\n\n%s++ - примусовий старт",
+"USE_COMPENDIUM":"використовуйте компендіум для встановлення модулів"}}`)
 }

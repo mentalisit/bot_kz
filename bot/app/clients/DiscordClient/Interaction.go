@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"kz_bot/bot/helpers"
 	"kz_bot/models"
 	"strconv"
 	"time"
@@ -17,6 +18,12 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate, locale str
 	response := fmt.Sprintf(d.getLanguage(locale, "select_module_level"), module, level)
 	if level == 0 {
 		response = fmt.Sprintf(d.getLanguage(locale, "delete_module_level"), module, level)
+	}
+
+	user := i.Interaction.Member.User
+	use := existCompendiumData(user.Username, user.ID, i.Interaction.GuildID)
+	if use {
+		response = d.getLanguage(locale, "USE_COMPENDIUM")
 	}
 	// Отправка ответа
 	err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -36,6 +43,11 @@ func (d *Discord) handleModuleCommand(i *discordgo.InteractionCreate, locale str
 			return
 		}
 	}()
+
+	if use {
+		return
+	}
+
 	d.updateModuleOrWeapon(i.Interaction.Member.User.Username, module, strconv.FormatInt(level, 10))
 }
 
@@ -151,4 +163,17 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			return
 		}
 	}
+}
+
+func existCompendiumData(name, userid, guildid string) bool {
+	genesis1, enrich1, rsextender1 := helpers.GetTechDataUserId(userid, guildid)
+	genesis2, enrich2, rsextender2 := helpers.Get2TechDataUserId(name, userid, guildid)
+
+	genesis := max(genesis1, genesis2)
+	enrich := max(enrich1, enrich2)
+	rsextender := max(rsextender1, rsextender2)
+	if genesis == 0 && enrich == 0 && rsextender == 0 {
+		return false
+	}
+	return true
 }

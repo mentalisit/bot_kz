@@ -99,9 +99,21 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
 
-		genesis := max(genesis1, genesis2, extractNumbers(t.Module2))
-		enrich := max(enrich1, enrich2, extractNumbers(t.Module3))
-		rsextender := max(rsextender1, rsextender2, extractNumbers(t.Module1))
+		genesis := max(genesis1, genesis2)
+		if genesis == 0 {
+			genesis = extractNumbers(t.Module2)
+		}
+
+		enrich := max(enrich1, enrich2)
+		if enrich == 0 {
+			enrich = extractNumbers(t.Module3)
+		}
+
+		rsextender := max(rsextender1, rsextender2)
+		if rsextender == 0 {
+			rsextender = extractNumbers(t.Module1)
+		}
+
 		fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
 
 		if t.Name == "" {

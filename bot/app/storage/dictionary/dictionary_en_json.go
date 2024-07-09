@@ -76,5 +76,6 @@ func getDictionaryEnJson() []byte {
 "select_module_level":"Module selected: %s, level: %d",
 "delete_module_level":"Removed module: %s, level: %d",
 "install_weapon":"Weapon installed: %s",
-"temp1_queue":"Queue RS%s (%d)\n1️⃣ %s - %smin. (%d)\n\n%s++ - forced start"}}`)
+"temp1_queue":"Queue RS%s (%d)\n1️⃣ %s - %smin. (%d)\n\n%s++ - forced start",
+"USE_COMPENDIUM":"use compendium to install modules"}}`)
 }

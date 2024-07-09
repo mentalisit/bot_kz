@@ -76,5 +76,6 @@ func getDictionaryDeJson() []byte {
   "select_module_level":"Module selected: %s, level: %d",
   "delete_module_level": "Modul %s, Level %d entfernt.",
   "install_weapon":"Installierte Waffe: %s",
-  "temp1_queue":"Warteschlange RR%s (%d)\n1\uFE0F⃣ %s - %smin. (%D)\n\n%s++ – erzwungener Start"}}`)
+  "temp1_queue":"Warteschlange RR%s (%d)\n1\uFE0F⃣ %s - %smin. (%D)\n\n%s++ – erzwungener Start",
+  "USE_COMPENDIUM":"Verwenden Sie Compendium, um Module zu installieren"}}`)
 }

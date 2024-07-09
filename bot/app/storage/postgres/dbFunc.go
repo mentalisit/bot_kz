@@ -85,7 +85,7 @@ func (d *Db) ElseTrue(ctx context.Context, userid string) []models.Sborkz {
 	var tt []models.Sborkz
 	var t models.Sborkz
 	for results.Next() {
-		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.UserId, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time, &t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 		tt = append(tt, t)
 	}
 	if d.debug {
