@@ -22,7 +22,13 @@ func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLe
 	}
 	return m, mi
 }
-func (c *Hs) techImage(m models.IncomingMessage) {
+func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
+	if m.Text == "%т и" || m.Text == "%t i" || m.Text == "%т і" {
+		tech = true
+	}
+	if !tech {
+		return false
+	}
 	mBytes, err := c.tech.TechGet(m.Name, m.NameId, m.GuildId)
 	if err != nil {
 		c.log.ErrorErr(err)
@@ -47,7 +53,7 @@ func (c *Hs) techImage(m models.IncomingMessage) {
 		m.GuildName,
 		mt)
 	c.sendChatPic(m, "", userPic)
-
+	return
 }
 
 func (c *Hs) techImageName(m models.IncomingMessage) bool {

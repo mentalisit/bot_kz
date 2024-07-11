@@ -10,7 +10,15 @@ import (
 
 const urlLink = "https://mentalisit.github.io/HadesSpace/"
 
-func (c *Hs) connect(m models.IncomingMessage) {
+func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
+	if helperCommand(m.Text, "connect") ||
+		helperCommand(m.Text, "подключить") ||
+		helperCommand(m.Text, "підключити") {
+		conn = true
+	}
+	if !conn {
+		return false
+	}
 	text := fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName)
 	mid1, err := c.sendDM(m, text)
 	if err != nil && err.Error() == "forbidden" {
@@ -78,6 +86,8 @@ func (c *Hs) connect(m models.IncomingMessage) {
 	}
 
 	go c.timerEditMessage(m, mid1, mid2, mid3)
+
+	return
 }
 
 func (c *Hs) generateCodeAndSave(Identity models.Identity) string {

@@ -5,6 +5,7 @@ import (
 	"compendium/logic/tg"
 	"compendium/models"
 	"fmt"
+	"strings"
 )
 
 func (c *Hs) sendChat(m models.IncomingMessage, text string) {
@@ -128,4 +129,18 @@ func (c *Hs) editMessage(m models.IncomingMessage, chat, mid, text, ParseMode st
 		}
 	}
 	return nil
+}
+func helperCommand(text, command string) bool {
+	removePrefix, pr := strings.CutPrefix(text, "%")
+	if pr {
+		toLower := strings.ToLower(removePrefix)
+		af := strings.Split(toLower, " ")
+		for _, s := range af {
+			if s == command {
+				return true
+			}
+		}
+	}
+
+	return false
 }
