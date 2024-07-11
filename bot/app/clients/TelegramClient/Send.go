@@ -2,6 +2,7 @@ package TelegramClient
 
 import (
 	"bytes"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"kz_bot/models"
 	"path/filepath"
@@ -591,7 +592,9 @@ func (t *Telegram) SendHelp(chatid string, text string) int {
 
 	message, err := t.t.Send(msg)
 	if err != nil {
+		t.log.Info(fmt.Sprintf("ERR chatid %s\n", chatid))
 		t.log.ErrorErr(err)
+		return 0
 	}
 
 	return message.MessageID

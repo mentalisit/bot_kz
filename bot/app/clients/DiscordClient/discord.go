@@ -86,7 +86,11 @@ func (d *Discord) QueueSend(text, username string) {
 		}
 		id = send.ID
 	} else if id != "" {
-		message, _ := d.S.ChannelMessage(chatid, id)
+		message, errs := d.S.ChannelMessage(chatid, id)
+		if errs != nil {
+			d.log.ErrorErr(errs)
+			return
+		}
 
 		if message.Content == "нет активных очередей" && (text == "" || text == "нет активных очередей") {
 			return
