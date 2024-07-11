@@ -4,6 +4,7 @@ import (
 	"fmt"
 	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
+	"kz_bot/clients/restapi"
 	"kz_bot/models"
 	"kz_bot/pkg/utils"
 	"regexp"
@@ -290,6 +291,15 @@ func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	if err != nil {
 		d.log.ErrorErr(err)
 		d.log.Info(fmt.Sprintf("CheckRole guildId %s, memderId %s, roleid %s \n", guildId, memderId, roleid))
+
+		i := models.IncomingMessage{
+			Text:    "%GuildMemberRemove",
+			NameId:  memderId,
+			GuildId: guildId,
+			Type:    "ds",
+		}
+
+		_ = restapi.SendCompendiumApp(i)
 		return false
 	}
 	for _, role := range member.Roles {
