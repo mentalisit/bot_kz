@@ -34,14 +34,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	if len(cm.Tech) == 0 && len(techOld) > 0 {
 		techBytes = techOld
 	}
-	if len(cm.Tech) == 0 && len(techBytes) == 0 {
-		tech := make(map[int]models.TechLevel)
-		tech[701] = models.TechLevel{
-			Ts:    0,
-			Level: 0,
-		}
-		techBytes, _ = json.Marshal(tech)
-	}
+
 	err = d.TechInsert(cm.Name, cm.UserId, cm.GuildId, techBytes)
 	if err != nil {
 		return err

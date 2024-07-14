@@ -16,6 +16,14 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 		return err
 	}
 	if count == 0 {
+		if len(tech) <= 2 || tech == nil {
+			techEmpty := make(map[int]models.TechLevel)
+			techEmpty[701] = models.TechLevel{
+				Ts:    0,
+				Level: 0,
+			}
+			tech, _ = json.Marshal(techEmpty)
+		}
 		insert := `INSERT INTO hs_compendium.tech(username, userid, guildid, tech) VALUES ($1,$2,$3,$4)`
 		_, err = d.db.Exec(context.Background(), insert, username, userid, guildid, tech)
 		if err != nil {

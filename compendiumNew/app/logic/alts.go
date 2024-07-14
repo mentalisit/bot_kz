@@ -2,7 +2,6 @@ package logic
 
 import (
 	"compendium/models"
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -27,14 +26,8 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 				}
 			}
 			alts = append(alts, split[2])
-			tech := make(map[int]models.TechLevel)
-			tech[701] = models.TechLevel{
-				Ts:    0,
-				Level: 0,
-			}
-			techBytes, _ := json.Marshal(tech)
 
-			_ = c.tech.TechInsert(split[2], m.NameId, m.GuildId, techBytes)
+			_ = c.tech.TechInsert(split[2], m.NameId, m.GuildId, nil)
 			u.Alts = alts
 			err = c.users.UsersUpdate(*u)
 			if err != nil {
