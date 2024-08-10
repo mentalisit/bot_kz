@@ -168,6 +168,14 @@ func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
 
 	return nil
 }
+func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
+	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2`
+	_, err := d.db.Exec(context.Background(), deleteMember, guildid, nameId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 //func (d *Db) CorpMemberReadByUserId(ctx context.Context, userId, guildid string) models.CorpMember {
 //	sel := "SELECT * FROM compendium.corpmember WHERE userid = $1 AND guildid = $2"

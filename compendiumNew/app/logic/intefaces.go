@@ -8,6 +8,7 @@ type CorpMember interface {
 	CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error
 	CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error
 	CorpMemberByUserId(userId string) (*models.CorpMember, error)
+	CorpMemberDelete(guildid string, nameId string) error
 }
 
 type Tech interface {

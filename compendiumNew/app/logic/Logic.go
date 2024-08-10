@@ -18,6 +18,7 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	} else if c.wskill(m) {
 	} else if c.TzTime(m) {
 	} else if c.setGameName(m) {
+	} else if c.removeMember(m) {
 	} else {
 		c.log.Info(fmt.Sprintf("else %+v\n", m))
 	}
