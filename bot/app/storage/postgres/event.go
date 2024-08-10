@@ -73,11 +73,11 @@ func (d *Db) ReadNamesMessage(CorpName string, numberkz, numberEvent int) (nd, n
 	}
 	return nd, nt, t
 }
-func (d *Db) CountEventNames(CorpName, name string, numberkz, numEvent int) (countEventNames int) {
+func (d *Db) CountEventNames(CorpName, mention string, numberkz, numEvent int) (countEventNames int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
-	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname = $1 AND numberkz=$2  AND active=1 AND name=$3 AND numberevent = $4"
-	row := d.db.QueryRow(ctx, sel, CorpName, numberkz, name, numEvent)
+	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname = $1 AND numberkz=$2  AND active=1 AND mention=$3 AND numberevent = $4"
+	row := d.db.QueryRow(ctx, sel, CorpName, numberkz, mention, numEvent)
 	err := row.Scan(&countEventNames)
 	if err != nil {
 		d.log.ErrorErr(err)

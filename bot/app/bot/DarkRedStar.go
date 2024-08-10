@@ -69,7 +69,7 @@ func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
 	arr2s := (re2s.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arr2s) > 0 {
 		kz = true
-		in.Lvlkz = arr2s[0][2]
+		in.Lvlkz = "d" + arr2s[0][2]
 		kzbs := arr2s[0][3]
 		in.Timekz = "1"
 		if kzbs == "+" {
@@ -398,11 +398,11 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 	b.iftipdelete(in)
 	ctx := context.Background()
-	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz[1:], in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 	if err2 != nil {
 		return
 	}
-	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz[1:], in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
+	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
 	if err3 != nil {
 		return
 	}
@@ -414,6 +414,7 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 		numkzL = numkzEvent
 	} else {
 		//todo send not event
+		b.ifTipSendTextDelSecond(in, "event not active ", 30)
 		return
 	}
 	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", in.Lvlkz, in.NameMention, b.getText(in, "go"), textEvent)

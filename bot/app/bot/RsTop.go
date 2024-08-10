@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"kz_bot/models"
+	"strings"
 )
 
 // lang ok
@@ -44,7 +45,7 @@ func (b *Bot) Top(in models.InMessage) {
 				b.getText(in, "top_participants"), b.getText(in, "event"))
 			resultsTop = b.storage.Top.TopAllEventNew(in.Config.CorpName, numEvent)
 		}
-
+		resultsTop = mergeAndSumTops(resultsTop)
 	}
 	if len(resultsTop) == 0 {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "no_history"), 20)
@@ -250,3 +251,33 @@ func (b *Bot) Top(in models.InMessage) {
 //		}
 //	}
 //}
+
+func mergeAndSumTops(tops []models.Top) []models.Top {
+	merged := make(map[string]models.Top)
+
+	for _, top := range tops {
+		// Удаляем знак $ из начала строки
+		name := top.Name
+		if strings.HasPrefix(name, "$") {
+			name = strings.TrimPrefix(name, "$")
+		}
+
+		// Объединяем элементы с одинаковыми именами
+		if existing, found := merged[name]; found {
+			existing.Numkz += top.Numkz
+			existing.Points += top.Points
+			merged[name] = existing
+		} else {
+			top.Name = name
+			merged[name] = top
+		}
+	}
+
+	// Преобразуем карту обратно в срез
+	var result []models.Top
+	for _, top := range merged {
+		result = append(result, top)
+	}
+
+	return result
+}

@@ -84,7 +84,7 @@ import (
 func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top {
 	ctx := context.Background()
 	var top []models.Top
-	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND lvlkz = $2 AND numberevent = $3 GROUP BY name LIMIT 50"
+	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND lvlkz = $2 AND numberevent = $3 GROUP BY mention LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, numEvent)
 	defer results.Close()
 	if err != nil {
@@ -96,7 +96,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 		var u models.Top
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
-			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND lvlkz = $4"
+			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND lvlkz = $4"
 			row := d.db.QueryRow(ctx, selC, u.Name, CorpName, numEvent, lvlkz)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
@@ -104,7 +104,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 				return top
 			}
 
-			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND lvlkz = $4"
+			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND lvlkz = $4"
 			row4 := d.db.QueryRow(ctx, selS, u.Name, CorpName, numEvent, lvlkz)
 			err4 := row4.Scan(&u.Points)
 			if err4 != nil {
@@ -260,7 +260,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 
 func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top) {
 	ctx := context.Background()
-	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY name LIMIT 50"
+	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY mention LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
 	defer results.Close()
 	if err != nil {
@@ -272,14 +272,14 @@ func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top)
 		var u models.Top
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
-			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
+			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
 			row := d.db.QueryRow(ctx, selC, u.Name, CorpName, numberevent)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
 				d.log.ErrorErr(err)
 				continue
 			}
-			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE name = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
+			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
 			row4 := d.db.QueryRow(ctx, selS, u.Name, CorpName, numberevent)
 			err4 := row4.Scan(&u.Points)
 			if err4 != nil {

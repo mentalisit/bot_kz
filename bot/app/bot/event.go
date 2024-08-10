@@ -78,7 +78,7 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 	message := ""
 	if event1 > 0 {
-		CountEventNames := b.storage.Event.CountEventNames(in.Config.CorpName, in.Username, numKZ, event1)
+		CountEventNames := b.storage.Event.CountEventNames(in.Config.CorpName, in.NameMention, numKZ, event1)
 		admin := b.checkAdmin(in)
 		if CountEventNames > 0 || admin {
 			pointsGood := b.storage.Event.CountEventsPoints(in.Config.CorpName, numKZ, event1)
