@@ -128,6 +128,7 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 	tMessage, err1 := t.t.Send(m)
 	if err1 != nil {
 		t.log.Error(err1.Error())
+		t.log.Info(chatid + " " + text)
 	}
 	if second <= 60 {
 		go func() {

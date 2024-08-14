@@ -33,6 +33,7 @@ func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 		message, err := d.S.ChannelMessageSend(chatid, text)
 		if err != nil {
 			d.log.ErrorErr(err)
+			d.log.Info(chatid + " " + text)
 			return
 		}
 		if second <= 60 {

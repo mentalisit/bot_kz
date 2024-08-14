@@ -327,14 +327,24 @@ func (b *Bot) lEmoji(in models.InMessage) (bb bool) {
 func (b *Bot) SendALLChannel(in models.InMessage) (bb bool) {
 	text, found := strings.CutPrefix(in.Mtext, ".всем")
 	if found && b.checkAdmin(in) {
-		for _, config := range b.configCorp {
-			if config.DsChannel != "" {
-				b.client.Ds.Send(config.DsChannel, text)
-			}
-			if config.TgChannel != "" {
-				b.client.Tg.SendChannel(config.TgChannel, text)
-			}
+		if in.Tip == ds {
+			go b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
+		} else if in.Tip == tg {
+			go b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
 		}
+
+		b.ifTipSendTextDelSecond(in, "Начата рассылка.", 20)
+
+		go func() {
+			for _, config := range b.configCorp {
+				if config.DsChannel != "" {
+					b.client.Ds.SendChannelDelSecond(config.DsChannel, text, 86400)
+				}
+				if config.TgChannel != "" {
+					b.client.Tg.SendChannelDelSecond(config.TgChannel, text, 86400)
+				}
+			}
+		}()
 
 		bb = true
 	}

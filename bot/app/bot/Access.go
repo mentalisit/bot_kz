@@ -26,6 +26,9 @@ func (b *Bot) accessChat(in models.InMessage) {
 		case "паника":
 			b.log.Panic("перезагрузка по требованию")
 		default:
+			if b.SendALLChannel(in) {
+				return
+			}
 			if b.setLang(in) {
 				return
 			}
