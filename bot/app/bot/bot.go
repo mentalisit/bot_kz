@@ -121,7 +121,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		} else if b.logicIfText(in) {
 		} else if b.bridge(in) {
 			//} else if b.lIfCommand() {
-			//} else if b.SendALLChannel() {
+		} else if b.SendALLChannel(in) {
 		} else {
 			b.cleanChat(in)
 			//go b.Transtale()//нужно решить проблему с ошибками

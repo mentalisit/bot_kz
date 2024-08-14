@@ -5,6 +5,7 @@ import (
 	"kz_bot/models"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 // lang ok
@@ -323,41 +324,20 @@ func (b *Bot) lEmoji(in models.InMessage) (bb bool) {
 	return bb
 }
 
-//func (b *Bot) SendALLChannel() (bb bool) {
-//	if in.Username == "Mentalisit" {
-//		re := regexp.MustCompile(`^(Всем|всем)\s([А-Яа-я\s.]+)$`)
-//		arr := (re.FindAllStringSubmatch(in.Mtext, -1))
-//		if len(arr) > 0 {
-//			fmt.Println(arr[0])
-//			bb = true
-//
-//			text := arr[0][2]
-//
-//			d, t, w := b.storage.Cache.ReadAllChannel()
-//			if len(d) > 0 {
-//				for _, chatds := range d {
-//					b.client.Ds.Send(chatds, text)
-//				}
-//			}
-//			if len(t) > 0 {
-//				for _, chattg := range t {
-//					b.client.Tg.SendChannel(chattg, text)
-//				}
-//			}
-//
-//		}
-// Создаем регулярное выражение для поиска "История" и захвата всего после него
-//re := regexp.MustCompile(`^История\s*(.*)$`)
-//
-//// Используем регулярное выражение для извлечения всего после "История"
-//match := re.FindStringSubmatch(inputString)
-//
-//if len(match) == 2 {
-//resultString := match[1]
-//fmt.Println(resultString + ".")
-//} else {
-//fmt.Println("Совпадение не найдено")
-//}
-//	}
-//	return bb
-//}
+func (b *Bot) SendALLChannel(in models.InMessage) (bb bool) {
+	text, found := strings.CutPrefix(in.Mtext, ".всем")
+	if found && b.checkAdmin(in) {
+		for _, config := range b.configCorp {
+			if config.DsChannel != "" {
+				b.client.Ds.Send(config.DsChannel, text)
+			}
+			if config.TgChannel != "" {
+				b.client.Tg.SendChannel(config.TgChannel, text)
+			}
+		}
+
+		bb = true
+	}
+
+	return bb
+}

