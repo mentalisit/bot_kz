@@ -8,22 +8,9 @@ import (
 
 func (h *HS) SavePercent(newContent []models.Content) {
 
-	//var count int
-
-	//listHCorp := make(map[string]models.LevelCorp)
-	//all, err := h.p.ReadCorpLevelAll()
-	//if err != nil {
-	//	h.log.ErrorErr(err)
-	//	return
-	//}
-	//for _, corp := range all {
-	//	listHCorp[corp.HCorp] = corp
-	//}
-
 	listHCorps := h.getMapLevelCorps()
 
 	for _, cont := range newContent {
-		//count++
 		corpData := h.r.ReadCorpData(cont.Key)
 		if corpData == nil {
 			corpData = h.GetCorporationsData(cont.Key)
@@ -43,7 +30,7 @@ func (h *HS) SavePercent(newContent []models.Content) {
 		}
 		h.Relic(listHCorps, corpData)
 	}
-	fmt.Println("SavePercent OK")
+
 	h.recalculateCorpLevel()
 }
 func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.CorporationsData) {
@@ -54,7 +41,7 @@ func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.Corporati
 			c.Relic = c.Relic + corpData.Corporation1Score
 
 			h.p.InsertUpdateCorpsLevel(c)
-			fmt.Println(c)
+			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -65,7 +52,7 @@ func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.Corporati
 			c.Relic = c.Relic + corpData.Corporation2Score
 
 			h.p.InsertUpdateCorpsLevel(c)
-			fmt.Println(c)
+			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -127,7 +114,7 @@ func (h *HS) recalculateCorpLevel() {
 			corps.Level = level(corps.Relic)
 			corps.Percent = corps.Level - 1
 			h.p.InsertUpdateCorpsLevel(corps)
-			fmt.Println(corps)
+			h.log.InfoStruct("recalculateCorpLevel", corps)
 		}
 	}
 }
