@@ -14,7 +14,10 @@ func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLe
 	err := json.Unmarshal(b, &m)
 	if err != nil {
 		c.log.ErrorErr(err)
-		return nil, nil
+		m[701] = models.TechLevel{
+			Ts:    0,
+			Level: 0,
+		}
 	}
 	var mi = make(models.TechLevelArray)
 	for i, le := range m {
@@ -38,6 +41,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	user, err := c.users.UsersGetByUserId(m.NameId)
 	if err != nil {
 		c.log.ErrorErr(err)
+		c.log.InfoStruct("techImage", m)
 		c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 		return
 	}
