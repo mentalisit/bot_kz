@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium_s/models"
+	"compendium_s/server/original"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,15 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 
 	identity := s.CheckCode(code)
 
+	if identity.Token == "" {
+		checkIdentity, err1 := original.CheckIdentity(code)
+		if err1 == nil && checkIdentity != nil && checkIdentity.Token != "" {
+			checkIdentity.User.Discriminator = "original"
+			c.JSON(http.StatusOK, checkIdentity)
+			//c.JSON(http.StatusForbidden, gin.H{"error": checkIdentity.User.Username + " please use the default client"})
+			return
+		}
+	}
 	// Проверка на наличие токена в полученной идентификации
 	if identity.Token == "" {
 		fmt.Println(code, identity)

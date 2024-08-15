@@ -4,6 +4,7 @@ import (
 	"compendium_s/models"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -110,14 +111,12 @@ func (s *Server) CheckCode(code string) models.Identity {
 	var i models.Identity
 	coder, err := s.db.CodeGet(code)
 	if err != nil {
-		s.log.Info("CheckCode " + err.Error())
-		return i
+		fmt.Println("CheckCode " + err.Error())
 	}
 
 	if coder != nil && coder.Code == code {
 		if time.Now().Unix() < coder.Timestamp+600 {
 			i = coder.Identity
-			return i
 		}
 	}
 	if code == "test-test-test" {

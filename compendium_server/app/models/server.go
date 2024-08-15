@@ -16,11 +16,11 @@ type Code struct {
 	Identity  Identity
 }
 
-//type IdentityGET struct {
-//	User  User    `json:"user"`
-//	Guild []Guild `json:"guilds"`
-//	Token string  `json:"token"`
-//}
+type IdentityGET struct {
+	User  User    `json:"user"`
+	Guild []Guild `json:"guilds"`
+	Token string  `json:"token"`
+}
 
 type User struct {
 	ID            string   `json:"id"`
