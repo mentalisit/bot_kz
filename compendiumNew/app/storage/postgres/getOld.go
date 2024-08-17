@@ -18,6 +18,9 @@ func GetOldCompendium(guildid, userID string) (tech []byte, TzName string, TzOff
 	if guildid == "632245873769971732" {
 		apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3Nzc4ODE5MzYyMDY3NTc5MjkiLCJndWlsZElkIjoiNjMyMjQ1ODczNzY5OTcxNzMyIiwiaWF0IjoxNzE4MjA5MDUwLCJleHAiOjE3NDk3NjY2NTAsInN1YiI6ImFwaSJ9.Q64sbMk9-VEzTIKXWFCTabxTk_y860bQKecyFFjTuT4"
 	}
+	if guildid == "656495834195558402" {
+		apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ODI4ODIxMzc4NDIxMjI3NzMiLCJndWlsZElkIjoiNjU2NDk1ODM0MTk1NTU4NDAyIiwiaWF0IjoxNzIzOTExMzQwLCJleHAiOjE3NTU0Njg5NDAsInN1YiI6ImFwaSJ9.8HWmQsRCbrLYAeseYMKV_-VEk-2vuJUMDxxWwnJTWgE"
+	}
 
 	if apiKey == "" {
 		return nil, "", 0
