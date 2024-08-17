@@ -430,9 +430,9 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 
 	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
-	err := b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
+	err := b.storage.Update.UpdateCompliteSolo(ctx, in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
 	if err != nil {
-		err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
+		err = b.storage.Update.UpdateCompliteSolo(context.Background(), in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
 		if err != nil {
 			b.log.ErrorErr(err)
 		}

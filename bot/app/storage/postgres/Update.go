@@ -42,3 +42,25 @@ func (d *Db) UpdateCompliteRS(ctx context.Context, lvlkz string, dsmesid string,
 	}
 	return nil
 }
+func (d *Db) UpdateCompliteSolo(ctx context.Context, lvlkz string, dsmesid string, tgmesid int, numberkz int, numberevent int, corpname string) error {
+	upd := `update kzbot.sborkz set active = 1,numberkz = $1,numberevent = $2 
+				where lvlkz = $3 AND corpname = $4 AND dsmesid = $5 AND tgmesid = $6 AND active = 0`
+	_, err := d.db.Exec(ctx, upd, numberkz, numberevent, lvlkz, corpname, dsmesid, tgmesid)
+	if err != nil {
+		return err
+	}
+
+	updN := `update kzbot.numkz set number=number+1 where lvlkz = $1 AND corpname = $2`
+	_, err = d.db.Exec(ctx, updN, lvlkz, corpname)
+	if err != nil {
+		return err
+	}
+	if numberevent > 0 {
+		updE := `update kzbot.rsevent set number = number+1  where corpname = $1 AND activeevent = 1`
+		_, err = d.db.Exec(ctx, updE, corpname)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

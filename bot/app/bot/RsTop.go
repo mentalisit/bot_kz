@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"kz_bot/models"
+	"sort"
 	"strings"
 )
 
@@ -278,6 +279,10 @@ func mergeAndSumTops(tops []models.Top) []models.Top {
 	for _, top := range merged {
 		result = append(result, top)
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Points > result[j].Points
+	})
 
 	return result
 }
