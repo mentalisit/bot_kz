@@ -16,3 +16,8 @@ type CheckRoleStruct struct {
 //	Channel string `json:"channel"`
 //	Pic     []byte `json:"pic"`
 //}
+
+type DsMembersRoles struct {
+	Userid  string   `json:"userid"`
+	RolesId []string `json:"rolesId"`
+}

@@ -309,6 +309,21 @@ func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	}
 	return false
 }
+func (d *Discord) GetMembersRoles(guildid string) (mm []models.DsMembersRoles) {
+	members, err := d.S.GuildMembers(guildid, "", 1000)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	for _, member := range members {
+		m := models.DsMembersRoles{
+			Userid:  member.User.ID,
+			RolesId: member.Roles,
+		}
+		mm = append(mm, m)
+	}
+
+	return mm
+}
 
 func (d *Discord) CleanRsBotOtherMessage() {
 	defer func() {

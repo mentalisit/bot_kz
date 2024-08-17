@@ -32,6 +32,7 @@ func (s *Server) runServer() {
 		ds.POST("/edit", s.discordEditMessage)
 		ds.POST("/GetRoles", s.discordGetRoles)
 		ds.POST("/CheckRole", s.discordCheckRole)
+		ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
 		ds.POST("/SendPic", s.discordSendPic)
 		ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
 	}

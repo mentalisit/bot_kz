@@ -40,6 +40,7 @@ func (s *Server) GetTokenIdentity(token string) *models.Identity {
 }
 
 func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData {
+	s.roles.LoadGuild(i.Guild.ID)
 	c := models.CorpData{}
 	c.Members = []models.CorpMember{}
 
@@ -74,7 +75,7 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 					split := strings.Split(member.UserId, "/")
 					uid = split[0]
 				}
-				if CheckRoleDs(i.Guild.ID, uid, roleId) {
+				if s.roles.CheckRoleDs(i.Guild.ID, uid, roleId) {
 					c.Members = append(c.Members, member)
 				}
 			}

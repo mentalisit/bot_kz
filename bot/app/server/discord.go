@@ -89,6 +89,19 @@ func (s *Server) discordCheckRole(c *gin.Context) {
 	ok := s.cl.Ds.CheckRole(m.GuildId, m.MemberId, m.RoleId)
 	c.JSON(http.StatusOK, ok)
 }
+
+func (s *Server) discordGetMembersRoles(c *gin.Context) {
+	var guildId string
+	if err := c.ShouldBindJSON(&guildId); err != nil {
+		s.log.ErrorErr(err)
+		s.log.InfoStruct("discordGetMembersRoles", c.Request.Body)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	roles := s.cl.Ds.GetMembersRoles(guildId)
+	c.JSON(http.StatusOK, roles)
+}
+
 func (s *Server) discordSendPic(c *gin.Context) {
 	var m models.SendPic
 	if err := c.ShouldBindJSON(&m); err != nil {

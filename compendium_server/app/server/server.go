@@ -10,15 +10,17 @@ import (
 )
 
 type Server struct {
-	log *logger.Logger
-	db  db
+	log   *logger.Logger
+	db    db
+	roles *Roles
 	//In  chan models.IncomingMessage
 }
 
 func NewServer(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage) *Server {
 	s := &Server{
-		log: log,
-		db:  st.DB,
+		log:   log,
+		db:    st.DB,
+		roles: NewRoles(log),
 		//In:  make(chan models.IncomingMessage, 10),
 	}
 
