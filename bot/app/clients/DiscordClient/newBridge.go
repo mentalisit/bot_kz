@@ -7,36 +7,54 @@ import (
 	"kz_bot/clients/restapi"
 	"kz_bot/models"
 	"path/filepath"
+	"time"
 )
 
 func (d *Discord) filterNewBridge(m *discordgo.MessageCreate, mes models.ToBridgeMessage) {
-	mes.Text = d.replaceTextMessage(m.Content, m.GuildID)
-	mes.Sender = d.getAuthorName(m)
-	mes.Tip = "ds"
-	mes.MesId = m.ID
-	mes.GuildId = m.GuildID
-	mes.TimestampUnix = m.Timestamp.Unix()
-	mes.Avatar = m.Author.AvatarURL("")
+	timeout := 25 * time.Second
 
-	d.handleDownloadBridge(&mes, m)
+	done := make(chan struct{})
 
-	if m.ReferencedMessage != nil {
-		usernameR := m.ReferencedMessage.Author.String() //.Username
-		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
-			usernameR = m.ReferencedMessage.Member.Nick
+	go func() {
+		mes.Text = d.replaceTextMessage(m.Content, m.GuildID)
+		mes.Sender = d.getAuthorName(m)
+		mes.Tip = "ds"
+		mes.MesId = m.ID
+		mes.GuildId = m.GuildID
+		mes.TimestampUnix = m.Timestamp.Unix()
+		mes.Avatar = m.Author.AvatarURL("")
+
+		d.handleDownloadBridge(&mes, m)
+
+		if m.ReferencedMessage != nil {
+			usernameR := m.ReferencedMessage.Author.String()
+			if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
+				usernameR = m.ReferencedMessage.Member.Nick
+			}
+			mes.Reply = &models.BridgeMessageReply{
+				TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
+				Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+				Avatar:      m.ReferencedMessage.Author.AvatarURL(""),
+				UserName:    usernameR,
+			}
 		}
-		mes.Reply = &models.BridgeMessageReply{
-			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
-			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
-			Avatar:      m.ReferencedMessage.Author.AvatarURL(""),
-			UserName:    usernameR,
+		if mes.Text != "" || len(mes.Extra) > 0 {
+			err := restapi.SendBridgeApp(mes)
+			if err != nil {
+				d.log.ErrorErr(err)
+			}
 		}
-	}
-	if mes.Text != "" || len(mes.Extra) > 0 {
-		err := restapi.SendBridgeApp(mes)
-		if err != nil {
-			d.log.ErrorErr(err)
-		}
+
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Функция завершилась до истечения таймаута
+	case <-time.After(timeout):
+		// Функция зависла, логируем параметры
+		d.log.InfoStruct("Function filterNewBridge is hanging! %+v\n", mes)
+		d.log.InfoStruct("m %+v\n", m)
 	}
 }
 
