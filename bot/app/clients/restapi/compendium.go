@@ -58,7 +58,13 @@ func SendCompendiumApp(m models.IncomingMessage) error {
 
 		close(done)
 	}()
-
+	select {
+	case <-done:
+		// Запрос завершился до истечения таймаута
+	case <-time.After(5 * time.Second):
+		// Логируем, если запрос завис
+		return fmt.Errorf("SendCompendiumApp завис: %+v\n, %+v\n", returnErr, m)
+	}
 	if returnErr != nil {
 		return returnErr
 	}
