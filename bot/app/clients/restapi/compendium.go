@@ -34,21 +34,33 @@ func SendCompendiumApp(m models.IncomingMessage) error {
 	// Создаем клиент с тайм-аутом
 	client := &http.Client{}
 
-	// Выполняем запрос
-	resp, err := client.Do(req)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Println("Время ожидания запроса истекло")
-		} else {
-			fmt.Println("Ошибка при выполнении запроса:", err)
-		}
-		return err
-	}
-	defer resp.Body.Close()
+	// Канал для отслеживания завершения запроса
+	done := make(chan struct{})
+	var returnErr error
 
-	// Проверка кода ответа
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("неправильный статус код: %d", resp.StatusCode)
+	go func() {
+		// Выполняем запрос
+		resp, err := client.Do(req)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				returnErr = fmt.Errorf("время ожидания запроса истекло")
+			} else {
+				returnErr = fmt.Errorf("Ошибка при выполнении запроса: %+v\n", err)
+			}
+			return
+		}
+		defer resp.Body.Close()
+
+		// Проверка кода ответа
+		if resp.StatusCode != http.StatusOK {
+			returnErr = fmt.Errorf("неправильный статус код: %d", resp.StatusCode)
+		}
+
+		close(done)
+	}()
+
+	if returnErr != nil {
+		return returnErr
 	}
 
 	return nil

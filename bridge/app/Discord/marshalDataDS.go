@@ -30,7 +30,6 @@ func (d *Discord) MarshalDataSendBridgeAsync(message models.BridgeSendToMessenge
 	if err != nil {
 		d.log.Info(fmt.Sprintf("err resp.Body %+v\n", resp.Body))
 		d.log.ErrorErr(err)
-		return nil
 	}
 	return dataReply
 }

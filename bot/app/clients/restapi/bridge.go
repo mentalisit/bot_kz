@@ -22,7 +22,7 @@ func SendBridgeApp(m models.ToBridgeMessage) error {
 
 	// Создаем контекст с тайм-аутом 3 секунды
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel() // Освобождаем ресурсы контекста после завершения функции
+	defer cancel()
 
 	// Создаем новый запрос с контекстом
 	req, err := http.NewRequestWithContext(ctx, "POST", "http://bridge/bridge/inbox", bytes.NewBuffer(data))
@@ -31,24 +31,41 @@ func SendBridgeApp(m models.ToBridgeMessage) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Создаем клиент с тайм-аутом
+	// Создаем клиент
 	client := &http.Client{}
 
-	// Выполняем запрос
-	resp, err := client.Do(req)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Println("Время ожидания запроса истекло")
-		} else {
-			fmt.Println("Ошибка при выполнении запроса:", err)
-		}
-		return err
-	}
-	defer resp.Body.Close()
+	// Канал для отслеживания завершения запроса
+	done := make(chan struct{})
+	var returnErr error
 
-	// Проверка кода ответа
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("неправильный статус код: %d", resp.StatusCode)
+	// Горутина для выполнения запроса
+	go func() {
+		resp, err := client.Do(req)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				returnErr = fmt.Errorf("время ожидания запроса истекло")
+			} else {
+				returnErr = fmt.Errorf("Ошибка при выполнении запроса: %+v\n", err)
+			}
+		} else {
+			defer resp.Body.Close()
+
+			// Проверка кода ответа
+			if resp.StatusCode != http.StatusOK {
+				returnErr = fmt.Errorf("неправильный статус код: %d", resp.StatusCode)
+			}
+		}
+
+		// Закрываем канал, чтобы сигнализировать о завершении
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Запрос завершился до истечения таймаута
+	case <-time.After(5 * time.Second):
+		// Логируем, если запрос завис
+		return fmt.Errorf("SendBridgeApp завис: %+v\n, %+v\n", returnErr, m)
 	}
 
 	return nil
