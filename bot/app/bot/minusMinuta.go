@@ -3,12 +3,9 @@ package bot
 import (
 	"context"
 	"fmt"
-	"kz_bot/clients/restapi"
 	conf "kz_bot/config"
 	"kz_bot/models"
-	"sort"
 	"strconv"
-	"time"
 )
 
 //lang ok
@@ -21,7 +18,7 @@ func (b *Bot) MinusMin() {
 		return
 	}
 
-	go b.myQueue(tt)
+	go b.client.Ds.QueueSend(b.otherQueue.MyQueue())
 
 	if len(tt) > 0 {
 		for _, t := range tt {
@@ -112,50 +109,15 @@ func (b *Bot) CheckTimeQueue(in models.InMessage) {
 		b.RsMinus(in)
 	}
 }
-func (b *Bot) myQueue(my []models.Sborkz) {
-	time.Sleep(5 * time.Second)
-	var text string
-	if len(my) != 0 {
-		sort.Slice(my, func(i, j int) bool {
-			return my[i].Corpname < my[j].Corpname
-		})
-		var corpName string
-		var level string
-		var count int
-		for _, sborkz := range my {
-			if corpName != sborkz.Corpname {
-				text += fmt.Sprintf("⚠️ сбор в %s \n", sborkz.Corpname)
-				corpName = sborkz.Corpname
-				level = ""
-			}
-			if sborkz.Corpname == corpName {
-				if level != sborkz.Lvlkz {
-					text += fmt.Sprintf("🔥 на кз%s \n", sborkz.Lvlkz)
-					level = sborkz.Lvlkz
-					count = 1
-				}
-				if level == sborkz.Lvlkz {
-					text += fmt.Sprintf("%d. %s  %d\n", count, sborkz.Name, sborkz.Timedown)
-					count += 1
-				}
-			}
-		}
-	}
-	if text == "" {
-		text = "нет активных очередей"
-	}
 
-	b.client.Ds.QueueSend(text, "RsBot")
-
-	time.Sleep(5 * time.Second)
-
-	queue, err := restapi.RsbotQueue()
+func (b *Bot) ReadQueueLevel(in models.InMessage) {
+	text, err := b.otherQueue.ReadingQueueByLevel(in.Lvlkz)
 	if err != nil {
 		b.log.ErrorErr(err)
+		return
 	}
 
-	if queue == "" {
-		queue = "нет активных очередей"
+	if text != "" {
+		b.ifTipSendTextDelSecond(in, text, 30)
 	}
-	b.client.Ds.QueueSend(queue, "rssoyzbot")
 }

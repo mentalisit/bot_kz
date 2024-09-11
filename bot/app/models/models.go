@@ -95,3 +95,9 @@ type Top struct {
 	Name              string
 	Numkz, Id, Points int
 }
+
+type QueueStruct struct {
+	CorpName string
+	Level    string
+	Count    int
+}

@@ -100,6 +100,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 					b.wg.Done()
 				}()
 			}
+			go b.ReadQueueLevel(in)
 		}
 		u = b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
 
@@ -146,6 +147,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 					b.wg.Done()
 				}()
 			}
+			go b.ReadQueueLevel(in)
 		} else if countQueue == 2 {
 			dsmesid = u.User1.Dsmesid
 

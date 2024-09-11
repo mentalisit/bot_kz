@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/bot/helpers"
+	"kz_bot/bot/otherQueue"
 	"kz_bot/clients"
 	"kz_bot/config"
 	"kz_bot/models"
@@ -31,6 +32,7 @@ type Bot struct {
 	mu         sync.Mutex
 	configCorp map[string]models.CorporationConfig
 	helpers    *helpers.Helpers
+	otherQueue *otherQueue.OtherQ
 }
 
 func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logger, cfg *config.ConfigBot) *Bot {
@@ -42,6 +44,7 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 		inbox:      make(chan models.InMessage, 30),
 		configCorp: storage.CorpConfigRS,
 		helpers:    helpers.NewHelpers(log, storage),
+		otherQueue: otherQueue.NewOtherQ(log),
 	}
 	go func() {
 		for {
