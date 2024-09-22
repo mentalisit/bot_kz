@@ -44,6 +44,7 @@ func (s *Server) runServer() error {
 
 	router.GET("/queue", s.ReadAllQueue)
 	router.POST("/api/queue", s.QueueApi)
+	router.POST("/api/queue2", s.QueueApi2)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")

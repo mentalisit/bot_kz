@@ -11,11 +11,23 @@ func deleteChannelName(s models.Sborkz) string {
 	split := strings.Split(s.Corpname, ".")
 	if len(split) == 2 {
 		return split[0]
+	} else {
+		i := strings.Split(s.Corpname, "/")
+		if len(i) == 2 {
+			return i[0]
+		}
 	}
+
 	return s.Corpname
 }
 
 func Merging(queueSlice []QueueStruct) []QueueStruct {
+	sort.Slice(queueSlice, func(i, j int) bool {
+		if queueSlice[i].CorpName == queueSlice[j].CorpName {
+			return queueSlice[i].Level < queueSlice[j].Level
+		}
+		return queueSlice[i].CorpName < queueSlice[j].CorpName
+	})
 	var merged []QueueStruct
 	for i := 0; i < len(queueSlice); i++ {
 		if i == 0 || queueSlice[i].CorpName != queueSlice[i-1].CorpName || queueSlice[i].Level != queueSlice[i-1].Level {
@@ -40,9 +52,9 @@ func ConvertingTumchaToQueueStruct(rs map[string][]models.Tumcha) (q []QueueStru
 		r := QueueStruct{
 			CorpName: cName,
 		}
-		for i, tumcha := range tumchas {
+		for _, tumcha := range tumchas {
 			r.Level = lvl(tumcha)
-			r.Count = i + 1
+			r.Count = 1
 
 			q = append(q, r)
 		}
@@ -59,11 +71,5 @@ func ConvertingSborkzToQueueStruct(m []models.Sborkz) (q []QueueStruct) {
 			Count:    1,
 		})
 	}
-	sort.Slice(q, func(i, j int) bool {
-		if q[i].CorpName == q[j].CorpName {
-			return q[i].Level < q[j].Level
-		}
-		return q[i].CorpName < q[j].CorpName
-	})
 	return Merging(q)
 }

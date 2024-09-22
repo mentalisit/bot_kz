@@ -55,7 +55,10 @@ func (s *Server) QueueLevel(level string) map[string][]QueueStruct {
 			}
 			return Merging(qq)
 		}
-		m["Hades' Star RS Q"] = ll(level)
+		result := ll(level)
+		if len(result) > 0 {
+			m["Hades' Star RS Q"] = result
+		}
 	}
 
 	return m
