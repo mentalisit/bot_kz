@@ -18,6 +18,9 @@ func (d *Db) UpdatePoints(CorpName string, numberkz, points, event1 int) int {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+	if countEvent == 0 {
+		return 0
+	}
 	pointsq := points / countEvent
 	//вносим очки
 	upd := `update kzbot.sborkz set eventpoints=$1 WHERE numberevent = $2 AND corpname =$3 AND numberkz=$4 AND active=1`

@@ -86,6 +86,9 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 				message = b.getText(in, "rs_data_entered")
 			} else if pointsGood == 0 || admin {
 				countEvent := b.storage.Event.UpdatePoints(in.Config.CorpName, numKZ, points, event1) //if error
+				if countEvent == 0 {
+					b.ifTipSendTextDelSecond(in, "error Count User = 0", 20)
+				}
 				message = fmt.Sprintf("%s %d %s", in.Username, points, b.getText(in, "points_added_to_database"))
 				b.changeMessageEvent(in, points, countEvent, numKZ, event1)
 			}
