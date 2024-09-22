@@ -111,7 +111,7 @@ func (b *Bot) CheckTimeQueue(in models.InMessage) {
 }
 
 func (b *Bot) ReadQueueLevel(in models.InMessage) {
-	text, err := b.otherQueue.ReadingQueueByLevel(in.Lvlkz)
+	text, err := b.otherQueue.ReadingQueueByLevel(in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
 		return

@@ -58,9 +58,6 @@ func (d *Discord) Shutdown() {
 func (d *Discord) QueueSend(text string) {
 	chatid := "1232711859690406042"
 	mid := "1283266865535254660"
-	if text == "" {
-		text = "нет активных очередей"
-	}
 
 	ts := fmt.Sprintf("\n<t:%d:f>", time.Now().UTC().Unix())
 	d.EditMessage(chatid, mid, text+ts)

@@ -137,6 +137,14 @@ func (b *Bot) lQueue(in models.InMessage) (bb bool) {
 		go b.QueueAll(in)
 	}
 
+	//todo придумать другую команду
+	if in.Mtext == "Все очереди" {
+		bb = true
+		b.ifTipSendTextDelSecond(in, "Поиск.... ", 10)
+		b.iftipdelete(in)
+		b.ifTipSendTextDelSecond(in, b.otherQueue.MyQueue(), 30)
+	}
+
 	re4s := regexp.MustCompile(`^(Rs|rs)\s(Q|q)$`) // две переменные для чтения  очереди
 	arr4s := (re4s.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arr4s) > 0 {

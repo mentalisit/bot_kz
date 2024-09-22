@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/models"
+	"strings"
 	"time"
 )
 
@@ -26,13 +27,16 @@ func (o *OtherQ) MyQueue() string {
 	for s, structs := range queueAll {
 		text += fmt.Sprintf("⚠️ %s\n", s)
 		for _, queueStruct := range structs {
-			text += fmt.Sprintf("🔥 %s кз %s %d\n", queueStruct.CorpName, queueStruct.Level, queueStruct.Count)
+			text += fmt.Sprintf("	🔥 %s кз %s %d\n", queueStruct.CorpName, queueStruct.Level, queueStruct.Count)
 		}
+	}
+	if text == "" {
+		text = "нет активных очередей"
 	}
 	return text
 }
 
-func (o *OtherQ) ReadingQueueByLevel(level string) (text string, err error) {
+func (o *OtherQ) ReadingQueueByLevel(level, corp string) (text string, err error) {
 	queueLevel, err := GetQueueLevel(level)
 	if err != nil {
 		return "", err
@@ -42,7 +46,10 @@ func (o *OtherQ) ReadingQueueByLevel(level string) (text string, err error) {
 		//nameBot
 		for _, queues := range queueLevel {
 			for _, i := range queues {
-				q = append(q, i)
+				fmt.Printf("corp '%s' deleteChannel '%s'", deleteChannelName(corp), i.CorpName)
+				if i.CorpName != deleteChannelName(corp) {
+					q = append(q, i)
+				}
 			}
 		}
 		if len(q) > 0 {
@@ -54,4 +61,17 @@ func (o *OtherQ) ReadingQueueByLevel(level string) (text string, err error) {
 	}
 
 	return text, nil
+}
+func deleteChannelName(Corpname string) string {
+	split := strings.Split(Corpname, ".")
+	if len(split) == 2 {
+		return split[0]
+	} else {
+		i := strings.Split(Corpname, "/")
+		if len(i) == 2 {
+			return i[0]
+		}
+	}
+
+	return Corpname
 }
