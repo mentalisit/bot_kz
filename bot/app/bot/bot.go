@@ -71,17 +71,17 @@ func (b *Bot) loadInbox() {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
 		case in := <-b.client.Ds.ChanRsMessage:
-			b.LogicRs(in)
+			b.PrepareLogicRs(in)
 			if len(b.client.Ds.ChanRsMessage) > 5 {
 				b.log.Info(fmt.Sprintf("len(b.client.Ds.ChanRsMessage) = %d", len(b.client.Ds.ChanRsMessage)))
 			}
 		case in := <-b.client.Tg.ChanRsMessage:
-			b.LogicRs(in)
+			b.PrepareLogicRs(in)
 			if len(b.client.Tg.ChanRsMessage) > 5 {
 				b.log.Info(fmt.Sprintf("len(b.client.Tg.ChanRsMessage) = %d", len(b.client.Tg.ChanRsMessage)))
 			}
 		case in := <-b.inbox:
-			b.LogicRs(in)
+			b.PrepareLogicRs(in)
 			if len(b.inbox) > 15 {
 				b.log.Info(fmt.Sprintf("len(b.inbox) = %d\n %+v\n", len(b.inbox), in))
 			}
@@ -103,12 +103,53 @@ func (b *Bot) RemoveMessage() { //цикл для удаления сообще�
 	}
 }
 
+func (b *Bot) PrepareLogicRs(in models.InMessage) {
+	// Канал для отслеживания завершения запроса
+	done := make(chan struct{})
+
+	go func() {
+		b.LogicRs(in)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Запрос завершился до истечения таймаута
+	case <-time.After(10 * time.Second):
+		// Логируем, если запрос завис
+		b.log.InfoStruct("PrepareLogicRs", in)
+	}
+
+}
+
 // LogicRs логика игры
 func (b *Bot) LogicRs(in models.InMessage) {
 	if strings.HasPrefix(in.Mtext, ".") {
 		b.accessChat(in)
 		return
 	}
+
+	dm, conf := b.helpers.IfMessageDM(in)
+	if dm {
+		text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
+		if in.Config.DsChannel != "" {
+			b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
+			b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
+		} else if in.Config.TgChannel != "" {
+			b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+			b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
+		}
+
+		if conf.DsChannel != "" {
+			b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, conf.Guildid, in.Ds.Avatar)
+		}
+		if conf.TgChannel != "" {
+			b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
+		}
+
+		return
+	}
+
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
 		utils.PrintGoroutine(b.log)
 		fmt.Printf("LogicRs %s %s %s\n", in.Config.CorpName, in.Username, in.Mtext)

@@ -203,7 +203,8 @@ func (b *Bot) RsStart(in models.InMessage) {
 			go b.SendPercent(in.Config)
 
 			user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
-			b.elseChat(user)
+			go b.elseChat(user)
+			go b.helpers.SaveUsersIdQueue(user, in.Config)
 		}
 	}
 }

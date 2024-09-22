@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/clients/DiscordClient/slashCommand"
 	"kz_bot/config"
+	"kz_bot/models"
 	"time"
 )
 
@@ -17,18 +18,34 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		return
 	}
 	if m.GuildID == "" {
-		d.log.Info("DM " + m.Author.Username + ": " + m.Content)
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)
 		} else {
-			mid := d.Send(m.ChannelID, "эээ я же бот че ты мне пишешь тут, пиши в канале ")
-			d.DeleteMesageSecond(m.ChannelID, mid, 600)
-			d.DeleteMesageSecond(m.ChannelID, m.ID, 600)
+			in := models.InMessage{
+				Mtext:       m.Content,
+				Tip:         "dsDM",
+				Username:    m.Author.Username,
+				UserId:      m.Author.ID,
+				NameMention: m.Author.Mention(),
+				Ds: struct {
+					Mesid   string
+					Guildid string
+					Avatar  string
+				}{
+					Mesid:   m.ID,
+					Guildid: "",
+					Avatar:  m.Author.AvatarURL("128"),
+				},
+				Config: models.CorporationConfig{
+					DsChannel: m.ChannelID},
+			}
+
+			d.ChanRsMessage <- in
 		}
 		//DM message
 		return
 	}
-	d.logicMix(m)
+	go d.logicMix(m)
 
 }
 func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
@@ -110,9 +127,9 @@ func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageR
 	}
 
 	if message.Author.ID == s.State.User.ID {
-		d.readReactionQueue(r, message)
+		go d.readReactionQueue(r, message)
 	} else {
-		d.readReactionTranslate(r, message)
+		go d.readReactionTranslate(r, message)
 	}
 }
 
@@ -150,7 +167,7 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 	case discordgo.InteractionMessageComponent:
-		d.handleButtonPressed(i)
+		go d.handleButtonPressed(i)
 
 	default:
 		d.log.Info(fmt.Sprintf("slash %+v\n", i.Type))
@@ -184,6 +201,7 @@ func (d *Discord) ready() {
 				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, configrs.Guildid, v)
 				if err != nil {
 					d.log.ErrorErr(err)
+					break
 				}
 			}
 		}

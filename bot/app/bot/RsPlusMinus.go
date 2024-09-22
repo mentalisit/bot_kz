@@ -299,6 +299,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			//проверка есть ли игрок в других чатах
 			user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
 			go b.elseChat(user)
+			go b.helpers.SaveUsersIdQueue(user, in.Config)
 
 		}
 

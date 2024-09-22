@@ -14,12 +14,16 @@ const ds = "ds"
 const tg = "tg"
 
 type Helpers struct {
-	log     *logger.Logger
-	storage *storage.Storage
+	log       *logger.Logger
+	storage   *storage.Storage
+	saveArray []SaveDM
 }
 
 func NewHelpers(log *logger.Logger, storage *storage.Storage) *Helpers {
-	return &Helpers{log: log, storage: storage}
+	return &Helpers{
+		log:     log,
+		storage: storage,
+	}
 }
 func (h *Helpers) GetQueueDiscord(n map[string]string, u models.Users) map[string]string {
 	if u.User1.Name != "" {

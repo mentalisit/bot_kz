@@ -97,17 +97,26 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 			t.log.ErrorErr(err)
 			return
 		}
+	} else if m.Text == ".паника" {
+		t.log.Panic(".паника " + m.From.String())
 	} else {
-		//нужно решить что тут делать
-		text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
-		ThreadID := m.MessageThreadID
-		if !m.IsTopicMessage && ThreadID != 0 {
-			ThreadID = 0
+		in := models.InMessage{
+			Mtext:       m.Text,
+			Tip:         "tgDM",
+			Username:    m.From.String(),
+			UserId:      strconv.FormatInt(m.From.ID, 10),
+			NameMention: "@" + m.From.String(),
+			Tg: struct {
+				Mesid int
+			}{
+				Mesid: m.MessageID,
+			},
+			Config: models.CorporationConfig{
+				TgChannel: strconv.FormatInt(m.Chat.ID, 10),
+			},
 		}
-		ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
-		t.SendChannelDelSecond(ChatId, text, 600)
-		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
-		t.log.Info("DM " + m.From.String() + ": " + m.Text)
+
+		t.ChanRsMessage <- in
 	}
 
 }
