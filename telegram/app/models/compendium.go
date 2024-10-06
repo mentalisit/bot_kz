@@ -6,6 +6,7 @@ type IncomingMessage struct {
 	Name         string
 	MentionName  string
 	NameId       string
+	NickName     string
 	Avatar       string
 	AvatarF      string
 	ChannelId    string
@@ -14,7 +15,9 @@ type IncomingMessage struct {
 	GuildAvatar  string
 	GuildAvatarF string
 	Type         string
+	Language     string
 }
+
 type ActionStruct struct {
 	Action  string
 	Message interface{}

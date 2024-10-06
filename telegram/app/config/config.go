@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -13,6 +13,12 @@ type ConfigBot struct {
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
+	Postgress struct {
+		Host     string `yaml:"host" env-default:"127.0.0.1:3306"`
+		Name     string `yaml:"name" env-default:"rsbot"`
+		Username string `yaml:"username" env-default:"root"`
+		Password string `yaml:"password" env-default:"root"`
+	} `yaml:"postgress"`
 }
 
 var Instance *ConfigBot

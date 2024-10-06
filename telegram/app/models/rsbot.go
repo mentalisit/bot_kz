@@ -3,12 +3,13 @@ package models
 type InMessage struct {
 	Mtext         string
 	Tip           string
-	Name          string
+	NameNick      string
+	Username      string
+	UserId        string
 	NameMention   string
 	Lvlkz, Timekz string
 	Ds            struct {
 		Mesid   string
-		Nameid  string
 		Guildid string
 		Avatar  string
 	}

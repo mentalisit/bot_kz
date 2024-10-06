@@ -5,7 +5,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strconv"
 	"telegram/models"
-	"telegram/telegram/restapi"
 )
 
 func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
@@ -16,11 +15,13 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 	ChatId := strconv.FormatInt(cb.Message.Chat.ID, 10) + fmt.Sprintf("/%d", cb.Message.MessageThreadID)
 	ok, config := t.checkChannelConfigTG(ChatId)
 	if ok {
+		name := t.nickName(cb.From, ChatId)
 		in := models.InMessage{
 			Mtext:       cb.Data,
 			Tip:         "tg",
-			Name:        cb.From.String(),
-			NameMention: "@" + t.nickName(cb.From, ChatId),
+			Username:    name,
+			UserId:      strconv.FormatInt(cb.From.ID, 10),
+			NameMention: "@" + name,
 			Tg: struct {
 				Mesid int
 			}{
@@ -31,10 +32,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 				Reaction: true},
 		}
 
-		err := restapi.SendRsBotApp(in)
-		if err != nil {
-			t.log.ErrorErr(err)
-		}
+		t.api.SendRsBotAppRecover(in)
 	}
 }
 func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
@@ -46,9 +44,26 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 			t.log.ErrorErr(err)
 			return
 		}
+	} else if m.Text == ".паника" {
+		t.log.Panic(".паника " + m.From.String())
 	} else {
-		//нужно решить что тут делать
-		t.log.Info(m.From.String() + ": " + m.Text)
+		in := models.InMessage{
+			Mtext:       m.Text,
+			Tip:         "tgDM",
+			Username:    m.From.String(),
+			UserId:      strconv.FormatInt(m.From.ID, 10),
+			NameMention: "@" + m.From.String(),
+			Tg: struct {
+				Mesid int
+			}{
+				Mesid: m.MessageID,
+			},
+			Config: models.CorporationConfig{
+				TgChannel: strconv.FormatInt(m.Chat.ID, 10),
+			},
+		}
+
+		t.api.SendRsBotAppRecover(in)
 	}
 
 }

@@ -21,14 +21,3 @@ func (t *Telegram) checkChannelConfigTG(chatid string) (channelGood bool, config
 	}
 	return false, models.CorporationConfig{}
 }
-
-func (t *Telegram) addTgCorpConfig(chatName string, chatid, lang string) {
-	c := models.CorporationConfig{
-		CorpName:  chatName,
-		Country:   lang,
-		TgChannel: chatid,
-	}
-	t.storage.ConfigRs.InsertConfigRs(c)
-	t.corpConfigRS[c.CorpName] = c
-	t.log.Info(chatName + " Добавлена в конфиг корпораций ")
-}

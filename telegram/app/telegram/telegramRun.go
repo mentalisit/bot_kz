@@ -1,9 +1,11 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/mentalisit/logger"
 	"telegram/models"
+	"telegram/storage"
 	"telegram/telegram/restapi"
 )
 
@@ -12,9 +14,11 @@ type Telegram struct {
 	log          *logger.Logger
 	bridgeConfig map[string]models.BridgeConfig
 	corpConfigRS map[string]models.CorporationConfig
+	Storage      *storage.Storage
+	api          *restapi.Recover
 }
 
-func NewTelegram(log *logger.Logger, token string) *Telegram {
+func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegram {
 	botApi, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.ErrorErr(err)
@@ -25,21 +29,30 @@ func NewTelegram(log *logger.Logger, token string) *Telegram {
 		t:            botApi,
 		bridgeConfig: make(map[string]models.BridgeConfig),
 		corpConfigRS: make(map[string]models.CorporationConfig),
+		Storage:      st,
+		api:          restapi.NewRecover(log),
 	}
 
+	fmt.Println(t.t.Self.UserName)
+
+	t.loadConfig()
 	go t.update()
-	go t.LoadConfig()
 
 	return t
 }
 
-func (t *Telegram) LoadConfig() {
-	bc, _ := restapi.GetBridgeConfig()
-	for _, configBridge := range bc {
-		t.bridgeConfig[configBridge.NameRelay] = configBridge
+func (t *Telegram) loadConfig() {
+	bc := restapi.GetBridgeConfig()
+	if len(bc) > 0 {
+		t.bridgeConfig = bc
 	}
-	rs, _ := restapi.GetRsConfig()
-	for _, configRs := range rs {
-		t.corpConfigRS[configRs.CorpName] = configRs
+
+	rs := t.Storage.Db.ReadConfigRs()
+	if len(rs) > 0 {
+		fmt.Printf("rsLoad %d\n", len(rs))
+		for _, configRs := range rs {
+			t.corpConfigRS[configRs.CorpName] = configRs
+		}
 	}
+
 }

@@ -6,14 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"telegram/models"
-	"telegram/telegram/restapi"
+	"time"
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	//go t.imHere(m.Chat.ID, m.Chat)
-	if strings.HasPrefix(m.Text, ".") {
-		t.accesChatTg(m) //это была начальная функция при добавлени бота в группу
-	}
 
 	ThreadID := m.MessageThreadID
 	if !m.IsTopicMessage && ThreadID != 0 {
@@ -31,24 +28,34 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 		go t.sendToCompendiumFilter(m, ChatId)
 	}
 
-	// RsClient
+	if strings.HasPrefix(m.Text, ".") {
+		go t.ifPrefixPoint(m)
+		return
+	}
+
+	//RsClient
 	ok, config := t.checkChannelConfigTG(ChatId)
 	if ok {
 		go t.sendToRsFilter(m, config, ChatId)
 	}
 
+	//bridge
 	tg, bridgeConfig := t.bridgeCheckChannelConfigTg(ChatId)
 	if tg {
 		go t.sendToBridgeFilter(m, ChatId, bridgeConfig)
 	}
+
 }
 
 func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.CorporationConfig, ChatId string) {
+	name := t.nickName(m.From, config.TgChannel)
 	in := models.InMessage{
 		Mtext:       m.Text,
 		Tip:         "tg",
-		Name:        m.From.String(),
-		NameMention: "@" + t.nickName(m.From, config.TgChannel),
+		Username:    name,
+		UserId:      strconv.FormatInt(m.From.ID, 10),
+		NameNick:    "", //нет способа извлечь ник кроме member.CustomTitle
+		NameMention: "@" + name,
 		Tg: struct {
 			Mesid int
 		}{
@@ -62,25 +69,22 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 	if in.Mtext == "" && config.Forward {
 		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 180)
 	}
-	err := restapi.SendRsBotApp(in)
-	if err != nil {
-		t.log.ErrorErr(err)
-	}
+
+	t.api.SendRsBotAppRecover(in)
 }
 func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 	i := models.IncomingMessage{
-		Text:         m.Text,
-		DmChat:       strconv.FormatInt(m.From.ID, 10),
-		Name:         m.From.String(),
-		MentionName:  "@" + m.From.String(),
-		NameId:       strconv.FormatInt(m.From.ID, 10),
-		Avatar:       t.getAvatarIsExist(m.From.ID),
-		AvatarF:      "tg",
-		ChannelId:    ChatId,
-		GuildId:      strconv.FormatInt(m.Chat.ID, 10),
-		GuildName:    m.Chat.Title,
-		GuildAvatarF: "tg",
-		Type:         "tg",
+		Text:        m.Text,
+		DmChat:      strconv.FormatInt(m.From.ID, 10),
+		Name:        m.From.String(),
+		MentionName: "@" + m.From.String(),
+		NameId:      strconv.FormatInt(m.From.ID, 10),
+		NickName:    "", //нет способа извлечь ник кроме member.CustomTitle
+		Avatar:      t.loadAvatarIsExist(m.From.ID),
+		ChannelId:   ChatId,
+		GuildId:     strconv.FormatInt(m.Chat.ID, 10),
+		GuildName:   m.Chat.Title,
+		Type:        "tg",
 	}
 	chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: m.Chat.ChatConfig()})
 	if err != nil {
@@ -90,73 +94,134 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 		fileconfig := tgbotapi.FileConfig{FileID: chat.Photo.BigFileID}
 		file, _ := t.t.GetFile(fileconfig)
 		if file.FileID != "" {
-			i.GuildAvatar = "https://api.telegram.org/file/bot" + t.t.Token + "/" + file.FilePath
+			_, url := t.SaveAvatarLocalCache(strconv.FormatInt(m.Chat.ID, 10), "https://api.telegram.org/file/bot"+t.t.Token+"/"+file.FilePath)
+			i.GuildAvatar = url
 		}
-
+	}
+	member, _ := t.t.GetChatMember(tgbotapi.GetChatMemberConfig{ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
+		ChatConfig: tgbotapi.ChatConfig{
+			ChatID: m.Chat.ID,
+		},
+		UserID: m.From.ID,
+	}})
+	if member.CustomTitle != "" {
+		i.NickName = member.CustomTitle
 	}
 
 	if chat.Location != nil && chat.Location.Address != "" {
 		t.log.Info(chat.Location.Address)
 	}
-	err = restapi.SendCompendiumApp(i)
-	if err != nil {
-		t.log.InfoStruct("SendCompendiumApp", i)
-		t.log.ErrorErr(err)
-		return
+	if m.From != nil && m.From.LanguageCode != "" {
+		i.Language = m.From.LanguageCode
+	} else {
+		chatName := t.chatName(ChatId)
+		if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
+			chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
+		}
+		i.Language = DetectLanguage(chatName)
 	}
+
+	t.api.SendCompendiumAppRecover(i)
 }
 func (t *Telegram) sendToBridgeFilter(m *tgbotapi.Message, ChatId string, config models.BridgeConfig) {
+	if len(m.Text) < 3500 { //игнорируем сообщения большой длины
+		t.handlePoll(m)
+		if m.Text == "" {
+			if m.NewChatMembers != nil {
+				if len(m.NewChatMembers) != 1 {
+					t.log.Info(strconv.Itoa(len(m.NewChatMembers)))
+				}
+				member0 := m.NewChatMembers[0].String()
+				m.Text = member0 + " вступил(а) в группу"
+			}
+			if m.LeftChatMember != nil {
+				m.Text = m.LeftChatMember.String() + " покинул(а) группу"
+			}
+		}
+		mes := models.ToBridgeMessage{
+			ChatId:        ChatId,
+			Extra:         []models.FileInfo{},
+			Config:        &config,
+			Text:          m.Text,
+			Tip:           "tg",
+			MesId:         strconv.Itoa(m.MessageID),
+			GuildId:       strconv.FormatInt(m.Chat.ID, 10),
+			TimestampUnix: m.Time().Unix(),
+			Sender:        m.From.String(),
+			Avatar:        t.getAvatarIsExist(m.From.ID),
+		}
+
+		err := t.handleDownloadBridge(&mes, m)
+		if err != nil {
+			t.log.ErrorErr(err)
+		}
+
+		// handle forwarded messages
+		t.handleForwarded(&mes, m)
+
+		// quote the previous message
+		t.handleQuoting(&mes, m)
+
+		if mes.Text != "" || len(mes.Extra) > 0 {
+			t.api.SendBridgeAppRecover(mes)
+		}
+	}
+}
+
+func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
+	ThreadID := m.MessageThreadID
+	if !m.IsTopicMessage && m.MessageThreadID != 0 {
+		ThreadID = 0
+	}
+	ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
 	chatName := m.Chat.Title
 	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
 		chatName = fmt.Sprintf("%s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
 	}
-
-	if config.HostRelay != "" {
-		go func() {
-			if len(m.Text) < 3500 { //игнорируем сообщения большой длины
-				t.handlePoll(m)
-				if m.Text == "" {
-					if m.NewChatMembers != nil {
-						if len(m.NewChatMembers) != 1 {
-							t.log.Info(strconv.Itoa(len(m.NewChatMembers)))
-						}
-						member0 := m.NewChatMembers[0].String()
-						m.Text = member0 + " вступил(а) в группу"
-					}
-					if m.LeftChatMember != nil {
-						m.Text = m.LeftChatMember.String() + " покинул(а) группу"
-					}
-				}
-				mes := models.ToBridgeMessage{
-					ChatId:        ChatId,
-					Extra:         []models.FileInfo{},
-					Config:        &config,
-					Text:          m.Text,
-					Tip:           "tg",
-					MesId:         strconv.Itoa(m.MessageID),
-					GuildId:       strconv.FormatInt(m.Chat.ID, 10),
-					TimestampUnix: m.Time().Unix(),
-					Sender:        m.From.String(),
-					Avatar:        t.getAvatarIsExist(m.From.ID),
-				}
-				err := t.handleDownloadBridge(&mes, m)
-				if err != nil {
-					t.log.ErrorErr(err)
-				}
-
-				// handle forwarded messages
-				t.handleForwarded(&mes, m)
-
-				// quote the previous message
-				t.handleQuoting(&mes, m)
-
-				if mes.Text != "" || len(mes.Extra) > 0 {
-					err = restapi.SendBridgeApp(mes)
-					if err != nil {
-						t.log.ErrorErr(err)
-					}
-				}
-			}
-		}()
+	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
+		chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
 	}
+	good, config := t.checkChannelConfigTG(ChatId)
+	in := models.InMessage{
+		Mtext:       m.Text,
+		Tip:         "tg",
+		Username:    m.From.String(),
+		UserId:      strconv.FormatInt(m.From.ID, 10),
+		NameMention: "@" + m.From.String(),
+		Tg: struct {
+			Mesid int
+		}{
+			Mesid: m.MessageID,
+		},
+		Option: models.Option{
+			InClient: true,
+		},
+	}
+	if good {
+		in.Config = config
+	} else {
+		in.Config = models.CorporationConfig{
+			CorpName:  chatName,
+			TgChannel: ChatId,
+			Guildid:   "",
+		}
+	}
+	t.api.SendRsBotAppRecover(in)
+
+	mes := models.ToBridgeMessage{
+		Text:    m.Text,
+		Sender:  m.From.String(),
+		Tip:     "tg",
+		ChatId:  ChatId,
+		MesId:   strconv.Itoa(m.MessageID),
+		GuildId: chatName,
+		Config: &models.BridgeConfig{
+			HostRelay: chatName,
+		},
+	}
+
+	t.api.SendBridgeAppRecover(mes)
+
+	time.Sleep(5 * time.Second)
+	t.loadConfig()
 }
