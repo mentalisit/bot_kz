@@ -7,19 +7,18 @@ import (
 )
 
 type ConfigBot struct {
-	Logger struct {
+	TokenDiscord string `yaml:"token_discord"`
+	Logger       struct {
 		Token   string `yaml:"token"`
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
 	Postgress struct {
-		Host     string `yaml:"host" env-default:"storage:5432"`
+		Host     string `yaml:"host" env-default:"127.0.0.1:3306"`
 		Name     string `yaml:"name" env-default:"rsbot"`
 		Username string `yaml:"username" env-default:"root"`
 		Password string `yaml:"password" env-default:"root"`
 	} `yaml:"postgress"`
-	Mongo string `yaml:"mongo"`
-	MySQl string `yaml:"mysql"`
 }
 
 var Instance *ConfigBot
