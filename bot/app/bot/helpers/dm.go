@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"time"
 )
 
@@ -23,6 +24,8 @@ func (h *Helpers) IfMessageDM(in models.InMessage) (dm bool, conf models.Corpora
 	return
 }
 func (h *Helpers) SaveUsersIdQueue(users []string, config models.CorporationConfig) {
+	ch := utils.WaitForMessage("SendChannelDelSecond")
+	defer close(ch)
 	s := SaveDM{
 		usersId:   users,
 		config:    config,

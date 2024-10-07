@@ -108,7 +108,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	if countEvent == 1 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s \n%s", mes1, nd.Name1, mesOld)
-			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			b.client.Tg.EditText(in.Config.TgChannel, t.Tgmesid, fmt.Sprintf("%s %s \n%s", mes1, nt.Name1, mesOld))
@@ -116,7 +116,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 2 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nd.Name1, nd.Name2, mesOld)
-			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nt.Name1, nt.Name2, mesOld)
@@ -125,7 +125,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 3 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, mesOld)
-			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, mesOld)
@@ -134,7 +134,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 	} else if countEvent == 4 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, nd.Name4, mesOld)
-			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Guildid, in.Ds.Avatar)
+			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)

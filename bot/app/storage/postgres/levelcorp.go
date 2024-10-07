@@ -1,14 +1,14 @@
 package postgres
 
 import (
-	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"kz_bot/models"
 )
 
 func (d *Db) InsertUpdateCorpLevel(l models.LevelCorps) {
-	ctx := context.Background()
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	_, err := d.ReadCorpLevel(l.CorpName)
 	if err != nil {
 		switch {
@@ -34,8 +34,10 @@ func (d *Db) InsertUpdateCorpLevel(l models.LevelCorps) {
 }
 
 func (d *Db) ReadCorpLevel(CorpName string) (models.LevelCorps, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var n models.LevelCorps
-	err := d.db.QueryRow(context.Background(), "SELECT * FROM kzbot.corpslevel WHERE corpname = $1", CorpName).Scan(
+	err := d.db.QueryRow(ctx, "SELECT * FROM kzbot.corpslevel WHERE corpname = $1", CorpName).Scan(
 		&n.CorpName, &n.Level, &n.EndDate, &n.HCorp, &n.Percent, &n.LastUpdate, &n.Relic)
 	if err != nil {
 		return models.LevelCorps{}, err
@@ -44,9 +46,11 @@ func (d *Db) ReadCorpLevel(CorpName string) (models.LevelCorps, error) {
 }
 
 func (d *Db) ReadCorpLevelAll() ([]models.LevelCorps, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var n []models.LevelCorps
 	sel := "SELECT * FROM kzbot.corpslevel"
-	results, err := d.db.Query(context.Background(), sel)
+	results, err := d.db.Query(ctx, sel)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)

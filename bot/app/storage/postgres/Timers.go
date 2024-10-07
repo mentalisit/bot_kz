@@ -1,12 +1,13 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/models"
 )
 
-func (d *Db) UpdateMitutsQueue(ctx context.Context, userid, CorpName string) models.Sborkz {
+func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("UpdateMitutsQueue", userid, CorpName)
 	}
@@ -36,7 +37,9 @@ func (d *Db) UpdateMitutsQueue(ctx context.Context, userid, CorpName string) mod
 	return t
 }
 
-func (d *Db) MinusMin(ctx context.Context) []models.Sborkz {
+func (d *Db) MinusMin() []models.Sborkz {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	upd := `update kzbot.sborkz set timedown = timedown - 1 where active = 0`
 	_, err := d.db.Exec(ctx, upd)
 	if err != nil {
@@ -60,23 +63,27 @@ func (d *Db) MinusMin(ctx context.Context) []models.Sborkz {
 }
 
 func (d *Db) TimerInsert(c models.Timer) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	insert := `INSERT INTO kzbot.timer(dsmesid, dschatid, tgmesid, tgchatid, timed) 
 				VALUES ($1,$2,$3,$4,$5)`
-	_, err := d.db.Exec(context.Background(), insert, c.Dsmesid, c.Dschatid, c.Tgmesid, c.Tgchatid, c.Timed)
+	_, err := d.db.Exec(ctx, insert, c.Dsmesid, c.Dschatid, c.Tgmesid, c.Tgchatid, c.Timed)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
 func (d *Db) TimerDeleteMessage() []models.Timer {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	query := `UPDATE kzbot.timer SET timed = timed - 60 WHERE timed > 60`
 
-	_, _ = d.db.Exec(context.Background(), query)
+	_, _ = d.db.Exec(ctx, query)
 
 	query = `SELECT * FROM kzbot.timer WHERE timed <= 60`
 
 	// Выполнение запроса
-	rows, _ := d.db.Query(context.Background(), query)
+	rows, _ := d.db.Query(ctx, query)
 
 	defer rows.Close()
 	var tt []models.Timer
@@ -88,7 +95,7 @@ func (d *Db) TimerDeleteMessage() []models.Timer {
 	}
 	query = `DELETE FROM kzbot.timer WHERE dsmesid = $1 AND tgmesid = $2`
 	for _, t := range tt {
-		_, _ = d.db.Exec(context.Background(), query, t.Dsmesid, t.Tgmesid)
+		_, _ = d.db.Exec(ctx, query, t.Dsmesid, t.Tgmesid)
 	}
 	return tt
 }

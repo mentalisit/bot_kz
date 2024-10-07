@@ -1,12 +1,13 @@
 package postgres
 
 import (
-	"context"
 	"kz_bot/models"
 	"strings"
 )
 
-func (d *Db) SubscribePing(ctx context.Context, nameMention, lvlkz, CorpName string, tipPing int, TgChannel string) string {
+func (d *Db) SubscribePing(nameMention, lvlkz, CorpName string, tipPing int, TgChannel string) string {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var name1, names, men string
 	var u models.Users
 
@@ -30,7 +31,9 @@ func (d *Db) SubscribePing(ctx context.Context, nameMention, lvlkz, CorpName str
 	men = strings.TrimSuffix(men, ", ")
 	return men
 }
-func (d *Db) CheckSubscribe(ctx context.Context, name, lvlkz string, TgChannel string, tipPing int) int {
+func (d *Db) CheckSubscribe(name, lvlkz string, TgChannel string, tipPing int) int {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var counts int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.subscribe " +
 		"WHERE name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
@@ -41,14 +44,18 @@ func (d *Db) CheckSubscribe(ctx context.Context, name, lvlkz string, TgChannel s
 	}
 	return counts
 }
-func (d *Db) Subscribe(ctx context.Context, name, nameMention, lvlkz string, tipPing int, TgChannel string) {
+func (d *Db) Subscribe(name, nameMention, lvlkz string, tipPing int, TgChannel string) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	insertSubscribe := `INSERT INTO kzbot.subscribe (name, nameid, lvlkz, tip, chatid, timestart, timeend) VALUES ($1,$2,$3,$4,$5,$6,$7)`
 	_, err := d.db.Exec(ctx, insertSubscribe, name, nameMention, lvlkz, tipPing, TgChannel, "0", "0")
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
-func (d *Db) Unsubscribe(ctx context.Context, name, lvlkz string, TgChannel string, tipPing int) {
+func (d *Db) Unsubscribe(name, lvlkz string, TgChannel string, tipPing int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	del := "delete from kzbot.subscribe where name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
 	_, err := d.db.Exec(ctx, del, name, lvlkz, TgChannel, tipPing)
 	if err != nil {

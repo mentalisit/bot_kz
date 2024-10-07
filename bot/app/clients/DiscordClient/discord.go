@@ -8,6 +8,7 @@ import (
 	"kz_bot/config"
 	"kz_bot/models"
 	"kz_bot/pkg/clientDiscord"
+	"kz_bot/pkg/utils"
 	"kz_bot/storage"
 	"time"
 )
@@ -30,7 +31,7 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 
 	DS := &Discord{
 		S:             ds,
-		webhook:       transmitter.New(ds, "", "KzBot", true, log),
+		webhook:       transmitter.New(ds, "KzBot", true, log),
 		log:           log,
 		storage:       st,
 		ChanRsMessage: make(chan models.InMessage, 10),
@@ -45,6 +46,18 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 	//go ds.AddHandler(DS.onMessageDelete)
 	//ds.AddHandler(DS.messageUpdate)
 
+	go func() {
+		for _, guild := range DS.S.State.Ready.Guilds {
+			_, err = ds.GuildMember(guild.ID, "582882137842122773")
+			if err != nil {
+				invites, _ := ds.GuildInvites(guild.ID)
+				if len(invites) > 0 {
+					log.Info("https://discord.com/invite/" + invites[0].Code)
+				}
+			}
+		}
+	}()
+
 	return DS
 }
 func (d *Discord) Shutdown() {
@@ -56,6 +69,8 @@ func (d *Discord) Shutdown() {
 }
 
 func (d *Discord) QueueSend(text string) {
+	ch := utils.WaitForMessage("QueueSend")
+	defer close(ch)
 	chatid := "1232711859690406042"
 	mid := "1283266865535254660"
 

@@ -1,25 +1,20 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/models"
-	"time"
 )
 
 //lang ok
 
 func (b *Bot) Plus(in models.InMessage) bool {
 	b.iftipdelete(in)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
-
-	countName := b.storage.Count.CountNameQueueCorp(ctx, in.UserId, in.Config.CorpName)
+	countName := b.storage.Count.CountNameQueueCorp(in.UserId, in.Config.CorpName)
 	message := ""
 	ins := false
 	if countName > 0 && in.Option.Reaction {
 		b.iftipdelete(in)
-		t := b.storage.Timers.UpdateMitutsQueue(ctx, in.UserId, in.Config.CorpName)
+		t := b.storage.Timers.UpdateMitutsQueue(in.UserId, in.Config.CorpName)
 		if t.Timedown > 3 {
 			message = fmt.Sprintf("%s %s%s %s %d%s",
 				t.Mention, b.getText(in, "info_cannot_click_plus"), t.Lvlkz, b.getText(in, "you_will_still"), t.Timedown, b.getText(in, "min"))
@@ -41,12 +36,10 @@ func (b *Bot) Plus(in models.InMessage) bool {
 }
 func (b *Bot) Minus(in models.InMessage) bool {
 	bb := false
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
-	countNames := b.storage.Count.CountNameQueueCorp(ctx, in.UserId, in.Config.CorpName)
+	countNames := b.storage.Count.CountNameQueueCorp(in.UserId, in.Config.CorpName)
 	if countNames > 0 && in.Option.Reaction {
 		b.iftipdelete(in)
-		t := b.storage.Timers.UpdateMitutsQueue(ctx, in.UserId, in.Config.CorpName)
+		t := b.storage.Timers.UpdateMitutsQueue(in.UserId, in.Config.CorpName)
 		if t.UserId == in.UserId && t.Timedown > 3 {
 			message := fmt.Sprintf("%s %s%s %s %d%s",
 				t.Mention, b.getText(in, "info_cannot_click_minus"), t.Lvlkz, b.getText(in, "you_will_still"), t.Timedown, b.getText(in, "min"))

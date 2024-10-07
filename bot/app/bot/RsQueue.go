@@ -1,12 +1,10 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/config"
 	"kz_bot/models"
 	"kz_bot/pkg/utils"
-	"time"
 )
 
 //lang ok
@@ -16,17 +14,15 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		return
 	}
 	b.iftipdelete(in)
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
-	defer cancel()
 
-	count, err := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
+	count, err := b.storage.Count.CountQueue(in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
 		return
 	}
 	if count == 0 {
 		in.Lvlkz = "d" + in.Lvlkz
-		count, err = b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName)
+		count, err = b.storage.Count.CountQueue(in.Lvlkz, in.Config.CorpName)
 		if err != nil {
 			b.log.ErrorErr(err)
 			return
@@ -35,7 +31,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			in.Lvlkz = in.Lvlkz[1:]
 		}
 	}
-	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName)
+	numberLvl, err2 := b.storage.DbFunc.NumberQueueLvl(in.Lvlkz, in.Config.CorpName)
 	if err2 != nil {
 		b.log.ErrorErr(err)
 		return
@@ -51,10 +47,10 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		return
 	}
 
-	u := b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
-	var n map[string]string
-	n = make(map[string]string)
-	n["lang"] = in.Config.Country
+	u := b.storage.DbFunc.ReadAll(in.Lvlkz, in.Config.CorpName)
+
+	n := b.getMap(in, numberLvl)
+
 	n = b.helpers.GetQueueDiscord(n, u)
 
 	texttg := ""
@@ -78,9 +74,9 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 	}
 
 	fd := func() {
-		emb := b.client.Ds.EmbedDS(n, numberLvl, count, darkStar)
+		//emb := b.client.Ds.EmbedDS(n, numberLvl, count, darkStar)
 		if in.Option.Edit {
-			errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+			errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, n)
 			if errr != nil {
 				b.log.Info(fmt.Sprintf("QueueLevel %s %s", u.User1.Dsmesid, in.Config.DsChannel))
 				b.log.ErrorErr(errr)
@@ -89,11 +85,11 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		}
 		if !in.Option.Edit {
 			b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
-			dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+			dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, n)
 
-			err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
+			err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 			if err != nil {
-				err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
+				err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 				if err != nil {
 					b.log.ErrorErr(err)
 				}
@@ -104,10 +100,10 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		if in.Option.Edit {
 			b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
 		} else if !in.Option.Edit {
-			mesidTg := b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
-			err = b.storage.Update.MesidTgUpdate(ctx, mesidTg, in.Lvlkz, in.Config.CorpName)
+			mesidTg := b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
+			err = b.storage.Update.MesidTgUpdate(mesidTg, in.Lvlkz, in.Config.CorpName)
 			if err != nil {
-				err = b.storage.Update.MesidTgUpdate(context.Background(), mesidTg, in.Lvlkz, in.Config.CorpName)
+				err = b.storage.Update.MesidTgUpdate(mesidTg, in.Lvlkz, in.Config.CorpName)
 				if err != nil {
 					b.log.ErrorErr(err)
 				}
@@ -120,30 +116,38 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel123")
 				fd()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel132")
 				ft()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 	} else if count == 2 {
 		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel142")
 				fd()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel151")
 				ft()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 
@@ -152,24 +156,26 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel163")
 				fd()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
+				ch := utils.WaitForMessage("QueueLevel172")
 				ft()
 				b.wg.Done()
+				close(ch)
 			}()
 		}
 	}
 	b.wg.Wait()
 }
 func (b *Bot) QueueAll(in models.InMessage) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	lvl := b.storage.DbFunc.Queue(ctx, in.Config.CorpName)
+	lvl := b.storage.DbFunc.Queue(in.Config.CorpName)
 	lvlk := utils.RemoveDuplicates(lvl)
 	if len(lvlk) > 0 {
 		for _, corp := range lvlk {

@@ -1,18 +1,14 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/models"
-	"time"
 )
 
 //lang ok
 
 func (b *Bot) SubscribePing(in models.InMessage, tipPing int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
-	men := b.storage.Subscribe.SubscribePing(ctx, in.NameMention, in.Lvlkz, in.Config.CorpName, tipPing, in.Config.TgChannel)
+	men := b.storage.Subscribe.SubscribePing(in.NameMention, in.Lvlkz, in.Config.CorpName, tipPing, in.Config.TgChannel)
 	if len(men) > 0 {
 		men = fmt.Sprintf("%s%s\n%s", b.getText(in, "call_rs"), in.Lvlkz, men)
 		go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, men, 600)
@@ -21,8 +17,6 @@ func (b *Bot) SubscribePing(in models.InMessage, tipPing int) {
 
 func (b *Bot) Subscribe(in models.InMessage, tipPing int) {
 	b.iftipdelete(in)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
 	if in.Tip == ds {
 		//go b.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
 		d, result := containsSymbolD(in.Lvlkz)
@@ -47,14 +41,14 @@ func (b *Bot) Subscribe(in models.InMessage, tipPing int) {
 
 	} else if in.Tip == tg {
 		//проверка активной подписки
-		counts := b.storage.Subscribe.CheckSubscribe(ctx, in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
+		counts := b.storage.Subscribe.CheckSubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
 		if counts == 1 {
 			text := fmt.Sprintf("%s %s%s %d/4\n %s %s+",
 				in.NameMention, b.getText(in, "you_subscribed_to_rs"), in.Lvlkz, tipPing, b.getText(in, "to_add_to_queue_post"), in.Lvlkz)
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
 		} else {
 			//добавление в оочередь пинга
-			b.storage.Subscribe.Subscribe(ctx, in.Username, in.NameMention, in.Lvlkz, tipPing, in.Config.TgChannel)
+			b.storage.Subscribe.Subscribe(in.Username, in.NameMention, in.Lvlkz, tipPing, in.Config.TgChannel)
 			text := fmt.Sprintf("%s %s%s %d/4 \n %s %s+",
 				in.NameMention, b.getText(in, "you_subscribed_to_rs_ping"), in.Lvlkz, tipPing, b.getText(in, "to_add_to_queue_post"), in.Lvlkz)
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
@@ -63,9 +57,6 @@ func (b *Bot) Subscribe(in models.InMessage, tipPing int) {
 }
 func (b *Bot) Unsubscribe(in models.InMessage, tipPing int) {
 	b.iftipdelete(in)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-	defer cancel()
 
 	if in.Tip == ds {
 		d, result := containsSymbolD(in.Lvlkz)
@@ -93,13 +84,13 @@ func (b *Bot) Unsubscribe(in models.InMessage, tipPing int) {
 		//go b.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
 		//проверка активной подписки
 		var text string
-		counts := b.storage.Subscribe.CheckSubscribe(ctx, in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
+		counts := b.storage.Subscribe.CheckSubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
 		if counts == 0 {
 			text = fmt.Sprintf("%s %s%s %d/4", in.NameMention, b.getText(in, "you_not_subscribed_to_rs_ping"), in.Lvlkz, tipPing)
 		} else if counts == 1 {
 			//удаление с базы данных
 			text = fmt.Sprintf("%s %s%s %d/4", in.NameMention, b.getText(in, "you_unsubscribed_from_rs_ping"), in.Lvlkz, tipPing)
-			b.storage.Subscribe.Unsubscribe(ctx, in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
+			b.storage.Subscribe.Unsubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
 		}
 		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
 	}

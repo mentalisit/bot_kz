@@ -23,32 +23,32 @@ func (s *Server) runServer() {
 
 	// Регистрация обработчика
 	//discord
-	ds := r.Group("/discord")
-	{
-		ds.POST("/send/bridge", s.discordSendBridge)
-		ds.POST("/del", s.discordDel)
-		ds.POST("/SendDel", s.discordSendDelSecond)
-		ds.POST("/SendText", s.discordSendText)
-		ds.POST("/edit", s.discordEditMessage)
-		ds.POST("/GetRoles", s.discordGetRoles)
-		ds.POST("/CheckRole", s.discordCheckRole)
-		ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
-		ds.POST("/SendPic", s.discordSendPic)
-		ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
-	}
+	//ds := r.Group("/discord")
+	//{
+	//	ds.POST("/send/bridge", s.discordSendBridge)
+	//	ds.POST("/del", s.discordDel)
+	//	ds.POST("/SendDel", s.discordSendDelSecond)
+	//	ds.POST("/SendText", s.discordSendText)
+	//	ds.POST("/edit", s.discordEditMessage)
+	//	ds.POST("/GetRoles", s.discordGetRoles)
+	//	ds.POST("/CheckRole", s.discordCheckRole)
+	//	ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
+	//	ds.POST("/SendPic", s.discordSendPic)
+	//	ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
+	//}
 
 	//telegram
-	tg := r.Group("/telegram")
-	{
-		tg.POST("/send/bridge", s.telegramSendBridge)
-		tg.POST("/SendText", s.telegramSendText)
-		tg.POST("/edit", s.telegramEditMessage)
-		tg.POST("/SendPic", s.telegramSendPic)
-		tg.POST("/del", s.telegramDel)
-		tg.POST("/SendDel", s.telegramSendDelSecond)
-		tg.GET("/GetAvatarUrl", s.telegramGetAvatarUrl)
+	//tg := r.Group("/telegram")
+	//{
+	//tg.POST("/send/bridge", s.telegramSendBridge)
+	//tg.POST("/SendText", s.telegramSendText)
+	//tg.POST("/edit", s.telegramEditMessage)
+	//tg.POST("/SendPic", s.telegramSendPic)
+	//tg.POST("/del", s.telegramDel)
+	//tg.POST("/SendDel", s.telegramSendDelSecond)
+	//tg.GET("/GetAvatarUrl", s.telegramGetAvatarUrl)
 
-	}
+	//}
 
 	//rsbot
 	r.POST("/inbox", s.inboxRsBot)

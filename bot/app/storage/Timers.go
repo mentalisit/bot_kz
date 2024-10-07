@@ -1,13 +1,12 @@
 package storage
 
 import (
-	"context"
 	"kz_bot/models"
 )
 
 type Timers interface {
-	UpdateMitutsQueue(ctx context.Context, userid, CorpName string) models.Sborkz
-	MinusMin(ctx context.Context) []models.Sborkz
+	UpdateMitutsQueue(userid, CorpName string) models.Sborkz
+	MinusMin() []models.Sborkz
 }
 type TimeDeleteMessage interface {
 	TimerDeleteMessage() []models.Timer

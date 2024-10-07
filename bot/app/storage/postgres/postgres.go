@@ -6,6 +6,7 @@ import (
 	"github.com/mentalisit/logger"
 	"kz_bot/config"
 	"kz_bot/pkg/clientDB/postgresLocal"
+	"time"
 )
 
 type Db struct {
@@ -29,10 +30,15 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	go d.createTable()
 	return d
 }
+func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
+}
 func (d *Db) createTable() {
-	d.db.Exec(context.Background(), "CREATE SCHEMA IF NOT EXISTS kzbot")
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS kzbot")
 	// Создание таблиц
-	_, err := d.db.Exec(context.Background(),
+	_, err := d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.config (
             id             BIGSERIAL PRIMARY KEY,
             corpname       TEXT,
@@ -51,7 +57,7 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.sborkz(
 		id          bigserial        primary key,
 		corpname    text,
@@ -75,7 +81,7 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.numkz(
     	id       bigserial	primary key,
         lvlkz    text,
@@ -87,7 +93,7 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.rsevent(
     id          bigserial        primary key,
 	corpname    text,    
@@ -99,7 +105,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.subscribe(
     id        bigserial	primary key,
     name      text,
@@ -114,7 +120,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.timer(
     id       bigserial primary key,
     dsmesid  text,
@@ -127,7 +133,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(context.Background(),
+	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.users(
     id      bigserial primary key,
     tip     text,
@@ -145,7 +151,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(context.Background(), `
+	_, err = d.db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS kzbot.rsevent(
 		id          bigserial        primary key,
 		corpname    text,    numevent    bigint,
@@ -155,7 +161,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(context.Background(), `
+	_, err = d.db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS kzbot.temptopevent
 	(
 		id     bigserial        primary key,

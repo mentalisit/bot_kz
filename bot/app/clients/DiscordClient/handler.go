@@ -1,13 +1,12 @@
 package DiscordClient
 
 import (
-	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"kz_bot/clients/DiscordClient/slashCommand"
+	"kz_bot/clients/helper"
 	"kz_bot/config"
 	"kz_bot/models"
-	"time"
+	"path/filepath"
 )
 
 func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -48,66 +47,68 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 	go d.logicMix(m)
 
 }
-func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
-	if m.Message.WebhookID != "" {
-		return
-	}
 
-	if m.Message.EditedTimestamp != nil && m.Content != "" {
-		//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
-		//if good {
-		//	username := m.Author.Username
-		//	if m.Member != nil && m.Member.Nick != "" {
-		//		username = m.Member.Nick
-		//	}
-		//	mes := models.BridgeMessage{
-		//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
-		//		Sender:        username,
-		//		Tip:           "dse",
-		//		Avatar:        m.Author.AvatarURL("128"),
-		//		ChatId:        m.ChannelID,
-		//		MesId:         m.ID,
-		//		GuildId:       m.GuildID,
-		//		TimestampUnix: m.Timestamp.Unix(),
-		//		Config:        &config,
-		//	}
-		//
-		//	if len(m.Attachments) > 0 {
-		//		if len(m.Attachments) != 1 {
-		//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
-		//		}
-		//		for _, attachment := range m.Attachments {
-		//			mes.FileUrl = append(mes.FileUrl, attachment.URL)
-		//		}
-		//	}
-		//
-		//	if m.ReferencedMessage != nil {
-		//		usernameR := m.ReferencedMessage.Author.String() //.Username
-		//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
-		//			usernameR = m.ReferencedMessage.Member.Nick
-		//		}
-		//		mes.Reply = &models.BridgeMessageReply{
-		//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
-		//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
-		//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
-		//			UserName:    usernameR,
-		//		}
-		//	}
-		//
-		//	d.ChanBridgeMessage <- mes
-		//}
-	}
-}
-func (d *Discord) onMessageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
-	//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
-	//if good {
-	//	d.ChanBridgeMessage <- models.BridgeMessage{
-	//		Tip:    "delDs",
-	//		MesId:  m.ID,
-	//		Config: &config,
-	//	}
-	//}
-}
+//func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
+//	if m.Message.WebhookID != "" {
+//		return
+//	}
+//
+//	if m.Message.EditedTimestamp != nil && m.Content != "" {
+//		//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
+//		//if good {
+//		//	username := m.Author.Username
+//		//	if m.Member != nil && m.Member.Nick != "" {
+//		//		username = m.Member.Nick
+//		//	}
+//		//	mes := models.BridgeMessage{
+//		//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
+//		//		Sender:        username,
+//		//		Tip:           "dse",
+//		//		Avatar:        m.Author.AvatarURL("128"),
+//		//		ChatId:        m.ChannelID,
+//		//		MesId:         m.ID,
+//		//		GuildId:       m.GuildID,
+//		//		TimestampUnix: m.Timestamp.Unix(),
+//		//		Config:        &config,
+//		//	}
+//		//
+//		//	if len(m.Attachments) > 0 {
+//		//		if len(m.Attachments) != 1 {
+//		//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
+//		//		}
+//		//		for _, attachment := range m.Attachments {
+//		//			mes.FileUrl = append(mes.FileUrl, attachment.URL)
+//		//		}
+//		//	}
+//		//
+//		//	if m.ReferencedMessage != nil {
+//		//		usernameR := m.ReferencedMessage.Author.String() //.Username
+//		//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
+//		//			usernameR = m.ReferencedMessage.Member.Nick
+//		//		}
+//		//		mes.Reply = &models.BridgeMessageReply{
+//		//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
+//		//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+//		//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
+//		//			UserName:    usernameR,
+//		//		}
+//		//	}
+//		//
+//		//	d.ChanBridgeMessage <- mes
+//		//}
+//	}
+//}
+
+//func (d *Discord) onMessageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
+//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
+//if good {
+//	d.ChanBridgeMessage <- models.BridgeMessage{
+//		Tip:    "delDs",
+//		MesId:  m.ID,
+//		Config: &config,
+//	}
+//}
+//}
 
 func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	message, err := s.ChannelMessage(r.ChannelID, r.MessageID)
@@ -193,7 +194,7 @@ func (d *Discord) ready() {
 	for _, configrs := range d.corpConfigRS {
 		if configrs.DsChannel != "" && configrs.Guildid != "" {
 			//d.removeCommand(configrs.Guildid)
-			commandsModuleWeapon := slashCommand.AddSlashCommandModuleWeaponLocale()
+			commandsModuleWeapon := AddSlashCommandModuleWeaponLocale()
 			if len(commandsModuleWeapon) == 0 {
 				return
 			}
@@ -205,6 +206,327 @@ func (d *Discord) ready() {
 				}
 			}
 		}
+	}
+}
+func AddSlashCommandModuleWeaponLocale() []*discordgo.ApplicationCommand {
+	return []*discordgo.ApplicationCommand{
+		{
+			Name:        "module",
+			Description: "Select the desired module and level",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Russian:   "модули",
+				discordgo.Ukrainian: "модулі",
+				discordgo.EnglishUS: "module",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Russian:   "Выберите нужный модуль и уровень",
+				discordgo.Ukrainian: "Виберіть потрібний модуль та рівень",
+				discordgo.EnglishUS: "Select the desired module and level",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "module",
+					Description: "Select module",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "модули",
+						discordgo.Ukrainian: "модулі",
+						discordgo.EnglishUS: "module",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "Выберите модуль",
+						discordgo.Ukrainian: "Виберіть модуль",
+						discordgo.EnglishUS: "Select module",
+					},
+					Required: true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name: "RSE",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Ингибитор КЗ",
+								discordgo.Ukrainian: "Інгібітор ЧЗ",
+								discordgo.EnglishUS: "RSE",
+							},
+							Value: "RSE",
+						},
+						{
+							Name: "Genesis",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Генезис",
+								discordgo.Ukrainian: "Генезис",
+								discordgo.EnglishUS: "Genesis",
+							},
+							Value: "GENESIS",
+						},
+						{
+							Name: "Enrich",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Обогатить",
+								discordgo.Ukrainian: "Збагатити",
+								discordgo.EnglishUS: "Enrich",
+							},
+							Value: "ENRICH",
+						},
+						// Добавьте другие модули по мере необходимости
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "level",
+					Description: "Select level",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "уровень",
+						discordgo.Ukrainian: "рівень",
+						discordgo.EnglishUS: "level",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "Выберите уровень",
+						discordgo.Ukrainian: "Виберіть рівень",
+						discordgo.EnglishUS: "Select level",
+					},
+					Required: true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name: "Level 0",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 0",
+								discordgo.Ukrainian: "Рівень 0",
+								discordgo.EnglishUS: "Level 0",
+							},
+							Value: 0,
+						},
+						{
+							Name: "Level 1",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 1",
+								discordgo.Ukrainian: "Рівень 1",
+								discordgo.EnglishUS: "Level 1",
+							},
+							Value: 1,
+						}, {
+							Name: "Level 2",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 2",
+								discordgo.Ukrainian: "Рівень 2",
+								discordgo.EnglishUS: "Level 2",
+							},
+							Value: 2,
+						}, {
+							Name: "Level 3",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 3",
+								discordgo.Ukrainian: "Рівень 3",
+								discordgo.EnglishUS: "Level 3",
+							},
+							Value: 3,
+						}, {
+							Name: "Level 4",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 4",
+								discordgo.Ukrainian: "Рівень 4",
+								discordgo.EnglishUS: "Level 4",
+							},
+							Value: 4,
+						}, {
+							Name: "Level 5",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 5",
+								discordgo.Ukrainian: "Рівень 5",
+								discordgo.EnglishUS: "Level 5",
+							},
+							Value: 5,
+						}, {
+							Name: "Level 6",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 6",
+								discordgo.Ukrainian: "Рівень 6",
+								discordgo.EnglishUS: "Level 6",
+							},
+							Value: 6,
+						}, {
+							Name: "Level 7",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 7",
+								discordgo.Ukrainian: "Рівень 7",
+								discordgo.EnglishUS: "Level 7",
+							},
+							Value: 7,
+						}, {
+							Name: "Level 8",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 8",
+								discordgo.Ukrainian: "Рівень 8",
+								discordgo.EnglishUS: "Level 8",
+							},
+							Value: 8,
+						}, {
+							Name: "Level 9",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 9",
+								discordgo.Ukrainian: "Рівень 9",
+								discordgo.EnglishUS: "Level 9",
+							},
+							Value: 9,
+						}, {
+							Name: "Level 10",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 10",
+								discordgo.Ukrainian: "Рівень 10",
+								discordgo.EnglishUS: "Level 10",
+							},
+							Value: 10,
+						}, {
+							Name: "Level 11",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 11",
+								discordgo.Ukrainian: "Рівень 11",
+								discordgo.EnglishUS: "Level 11",
+							},
+							Value: 11,
+						}, {
+							Name: "Level 12",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 12",
+								discordgo.Ukrainian: "Рівень 12",
+								discordgo.EnglishUS: "Level 12",
+							},
+							Value: 12,
+						}, {
+							Name: "Level 13",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 13",
+								discordgo.Ukrainian: "Рівень 13",
+								discordgo.EnglishUS: "Level 13",
+							},
+							Value: 13,
+						}, {
+							Name: "Level 14",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 14",
+								discordgo.Ukrainian: "Рівень 14",
+								discordgo.EnglishUS: "Level 14",
+							},
+							Value: 14,
+						}, {
+							Name: "Level 15",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Уровень 15",
+								discordgo.Ukrainian: "Рівень 15",
+								discordgo.EnglishUS: "Level 15",
+							},
+							Value: 15,
+						},
+						// Добавьте другие уровни по мере необходимости
+					},
+				},
+			},
+		},
+		{
+			Name:        "weapon",
+			Description: "Select your main weapon",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Russian:   "оружие",
+				discordgo.Ukrainian: "зброя",
+				discordgo.EnglishUS: "weapon",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Russian:   "Выберите оружие",
+				discordgo.Ukrainian: "Виберіть основну зброю",
+				discordgo.EnglishUS: "Select your main weapon",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "weapon",
+					Description: "Select weapon",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "оружие",
+						discordgo.Ukrainian: "зброя",
+						discordgo.EnglishUS: "weapon",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Russian:   "Выберите оружие",
+						discordgo.Ukrainian: "Виберіть зброю",
+						discordgo.EnglishUS: "Select weapon",
+					},
+					Required: true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name: "Barrage",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Артобстрел",
+								discordgo.Ukrainian: "Артилерія",
+								discordgo.EnglishUS: "Barrage",
+							},
+							Value: "barrage",
+						},
+						{
+							Name: "Laser",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Лазер",
+								discordgo.Ukrainian: "Лазер",
+								discordgo.EnglishUS: "Laser",
+							},
+							Value: "laser",
+						},
+						{
+							Name: "Chain ray",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Цепной луч",
+								discordgo.Ukrainian: "Ланцюговий промінь",
+								discordgo.EnglishUS: "Chain ray",
+							},
+							Value: "chainray",
+						},
+						{
+							Name: "Battery",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Батарея",
+								discordgo.Ukrainian: "Батарея",
+								discordgo.EnglishUS: "Battery",
+							},
+							Value: "battery",
+						},
+						{
+							Name: "Mass battery",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Залповая батарея",
+								discordgo.Ukrainian: "Залпова батарея",
+								discordgo.EnglishUS: "Mass battery",
+							},
+							Value: "massbattery",
+						},
+						{
+							Name: "Dart launcher",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Пусковая установка",
+								discordgo.Ukrainian: "Пускова установка",
+								discordgo.EnglishUS: "Dart launcher",
+							},
+							Value: "dartlauncher",
+						},
+						{
+							Name: "Rocket launcher",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Ракетная установка",
+								discordgo.Ukrainian: "Ракетна установка",
+								discordgo.EnglishUS: "Rocket launcher",
+							},
+							Value: "rocketlauncher",
+						},
+						{
+							Name: "Remove weapon",
+							NameLocalizations: map[discordgo.Locale]string{
+								discordgo.Russian:   "Удалить оружие",
+								discordgo.Ukrainian: "Видалити зброю",
+								discordgo.EnglishUS: "Remove weapon",
+							},
+							Value: "Remove",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -228,462 +550,36 @@ func (d *Discord) removeCommand(guildId string) {
 	fmt.Println("удалены")
 }
 
-//func (d *Discord) addSlashHandler() map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//	var commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-//		"help": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//
-//					Content: models.Help,
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//		"helpqueue": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: models.HelpQueue,
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//		"helpnotification": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: "Уведомления:\n" +
-//						"	Подписаться на уведомления о начале очереди: +[4-11]\n" +
-//						"+10 -подписаться на уведомления о начале очереди на КЗ 10ур.\n\n" +
-//						"	Подписаться на уведомление, если в очереди 3 человека: ++[4-11]\n" +
-//						"++10 -подписаться на уведомления о наличии 3х человек в очереди на КЗ 10ур.\n\n" +
-//						"	Отключить уведомления о начале сбора: -[5-11]\n" +
-//						"-9 -отключить уведомления о начале сборе на КЗ 9ур.\n\n" +
-//						"	Отключить уведомления 3/4 в очереди: --[5-11]\n" +
-//						"--9 -отключить уведомления о наличии 3х человек в очереди на КЗ 9ур.",
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//		"helpevent": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: models.HelpEvent,
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//		"helptop": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: models.HelpTop,
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//		"helpicon": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-//			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-//				Type: discordgo.InteractionResponseChannelMessageWithSource,
-//				Data: &discordgo.InteractionResponseData{
-//					Content: models.HelpIcon,
-//				},
-//			})
-//			go func() {
-//				time.Sleep(1 * time.Minute)
-//				s.InteractionResponseDelete(i.Interaction)
-//			}()
-//		},
-//	}
-//
-//	return commandHandlers
-//}
-
-var (
-	integerOptionMinValue          = 1.0
-	dmPermission                   = false
-	defaultMemberPermissions int64 = discordgo.PermissionManageServer
-
-	commands = []*discordgo.ApplicationCommand{
-		{
-			Name:                     "permission-overview",
-			Description:              "Command for demonstration of default command permissions",
-			DefaultMemberPermissions: &defaultMemberPermissions,
-			DMPermission:             &dmPermission,
-		},
-		{
-			Name:        "options",
-			Description: "Command for demonstrating options",
-			Options: []*discordgo.ApplicationCommandOption{
-
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "string-option",
-					Description: "String option",
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "integer-option",
-					Description: "Integer option",
-					MinValue:    &integerOptionMinValue,
-					MaxValue:    10,
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionNumber,
-					Name:        "number-option",
-					Description: "Float option",
-					MaxValue:    10.1,
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionBoolean,
-					Name:        "bool-option",
-					Description: "Boolean option",
-					Required:    true,
-				},
-
-				// Required options must be listed first since optional parameters
-				// always come after when they're used.
-				// The same concept applies to Discord's Slash-commands API
-
-				{
-					Type:        discordgo.ApplicationCommandOptionChannel,
-					Name:        "channel-option",
-					Description: "Channel option",
-					// Channel type mask
-					ChannelTypes: []discordgo.ChannelType{
-						discordgo.ChannelTypeGuildText,
-						discordgo.ChannelTypeGuildVoice,
-					},
-					Required: false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionUser,
-					Name:        "user-option",
-					Description: "User option",
-					Required:    false,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionRole,
-					Name:        "role-option",
-					Description: "Role option",
-					Required:    false,
-				},
-			},
-		},
-		{
-			Name:        "subcommands",
-			Description: "Subcommands and command groups example",
-			Options: []*discordgo.ApplicationCommandOption{
-				// When a command has subcommands/subcommand groups
-				// It must not have top-level options, they aren't accesible in the UI
-				// in this case (at least not yet), so if a command has
-				// subcommands/subcommand any groups registering top-level options
-				// will cause the registration of the command to fail
-
-				{
-					Name:        "subcommand-group",
-					Description: "Subcommands group",
-					Options: []*discordgo.ApplicationCommandOption{
-						// Also, subcommand groups aren't capable of
-						// containing options, by the name of them, you can see
-						// they can only contain subcommands
-						{
-							Name:        "nested-subcommand",
-							Description: "Nested subcommand",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-						},
-					},
-					Type: discordgo.ApplicationCommandOptionSubCommandGroup,
-				},
-				// Also, you can create both subcommand groups and subcommands
-				// in the command at the same time. But, there's some limits to
-				// nesting, count of subcommands (top level and nested) and options.
-				// Read the intro of slash-commands docs on Discord dev portal
-				// to get more information
-				{
-					Name:        "subcommand",
-					Description: "Top-level subcommand",
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-				},
-			},
-		},
-		{
-			Name:        "followups",
-			Description: "Followup messages",
-		},
-	}
-
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"options": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			// Access options in the order provided by the user.
-			options := i.ApplicationCommandData().Options
-
-			// Or convert the slice into a map
-			optionMap := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(options))
-			for _, opt := range options {
-				optionMap[opt.Name] = opt
-			}
-
-			// This example stores the provided arguments in an []interface{}
-			// which will be used to format the bot's response
-			margs := make([]interface{}, 0, len(options))
-			msgformat := "You learned how to use command options! " +
-				"Take a look at the value(s) you entered:\n"
-
-			// Get the value from the option map.
-			// When the option exists, ok = true
-			if option, ok := optionMap["string-option"]; ok {
-				// Option values must be type asserted from interface{}.
-				// Discordgo provides utility functions to make this simple.
-				margs = append(margs, option.StringValue())
-				msgformat += "> string-option: %s\n"
-			}
-
-			if opt, ok := optionMap["integer-option"]; ok {
-				margs = append(margs, opt.IntValue())
-				msgformat += "> integer-option: %d\n"
-			}
-
-			if opt, ok := optionMap["number-option"]; ok {
-				margs = append(margs, opt.FloatValue())
-				msgformat += "> number-option: %f\n"
-			}
-
-			if opt, ok := optionMap["bool-option"]; ok {
-				margs = append(margs, opt.BoolValue())
-				msgformat += "> bool-option: %v\n"
-			}
-
-			if opt, ok := optionMap["channel-option"]; ok {
-				margs = append(margs, opt.ChannelValue(nil).ID)
-				msgformat += "> channel-option: <#%s>\n"
-			}
-
-			if opt, ok := optionMap["user-option"]; ok {
-				margs = append(margs, opt.UserValue(nil).ID)
-				msgformat += "> user-option: <@%s>\n"
-			}
-
-			if opt, ok := optionMap["role-option"]; ok {
-				margs = append(margs, opt.RoleValue(nil, "").ID)
-				msgformat += "> role-option: <@&%s>\n"
-			}
-
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				// Ignore type for now, they will be discussed in "responses"
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf(
-						msgformat,
-						margs...,
-					),
-				},
-			})
-		},
-		"permission-overview": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			perms, err := s.ApplicationCommandPermissions(s.State.User.ID, i.GuildID, i.ApplicationCommandData().ID)
-
-			var restError *discordgo.RESTError
-			if errors.As(err, &restError) && restError.Message != nil && restError.Message.Code == discordgo.ErrCodeUnknownApplicationCommandPermissions {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: ":x: No permission overwrites",
-					},
-				})
-				return
-			} else if err != nil {
-				panic(err)
-			}
-
-			if err != nil {
-				panic(err)
-			}
-			format := "- %s %s\n"
-
-			channels := ""
-			users := ""
-			roles := ""
-
-			for _, o := range perms.Permissions {
-				emoji := "❌"
-				if o.Permission {
-					emoji = "☑"
-				}
-
-				switch o.Type {
-				case discordgo.ApplicationCommandPermissionTypeUser:
-					users += fmt.Sprintf(format, emoji, "<@!"+o.ID+">")
-				case discordgo.ApplicationCommandPermissionTypeChannel:
-					allChannels, _ := discordgo.GuildAllChannelsID(i.GuildID)
-
-					if o.ID == allChannels {
-						channels += fmt.Sprintf(format, emoji, "All channels")
-					} else {
-						channels += fmt.Sprintf(format, emoji, "<#"+o.ID+">")
-					}
-				case discordgo.ApplicationCommandPermissionTypeRole:
-					if o.ID == i.GuildID {
-						roles += fmt.Sprintf(format, emoji, "@everyone")
-					} else {
-						roles += fmt.Sprintf(format, emoji, "<@&"+o.ID+">")
-					}
-				}
-			}
-
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Title:       "Permissions overview",
-							Description: "Overview of permissions for this command",
-							Fields: []*discordgo.MessageEmbedField{
-								{
-									Name:  "Users",
-									Value: users,
-								},
-								{
-									Name:  "Channels",
-									Value: channels,
-								},
-								{
-									Name:  "Roles",
-									Value: roles,
-								},
-							},
-						},
-					},
-					AllowedMentions: &discordgo.MessageAllowedMentions{},
-				},
-			})
-		},
-		"responses": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			// Responses to a command are very important.
-			// First of all, because you need to react to the interaction
-			// by sending the response in 3 seconds after receiving, otherwise
-			// interaction will be considered invalid and you can no longer
-			// use the interaction token and ID for responding to the user's request
-
-			content := ""
-			// As you can see, the response type names used here are pretty self-explanatory,
-			// but for those who want more information see the official documentation
-			switch i.ApplicationCommandData().Options[0].IntValue() {
-			case int64(discordgo.InteractionResponseChannelMessageWithSource):
-				content =
-					"You just responded to an interaction, sent a message and showed the original one. " +
-						"Congratulations!"
-				content +=
-					"\nAlso... you can edit your response, wait 5 seconds and this message will be changed"
-			default:
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseType(i.ApplicationCommandData().Options[0].IntValue()),
-				})
-				if err != nil {
-					s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-						Content: "Something went wrong",
-					})
-				}
-				return
-			}
-
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseType(i.ApplicationCommandData().Options[0].IntValue()),
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-				},
-			})
-			if err != nil {
-				s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-					Content: "Something went wrong",
-				})
-				return
-			}
-			time.AfterFunc(time.Second*5, func() {
-				content := content + "\n\nWell, now you know how to create and edit responses. " +
-					"But you still don't know how to delete them... so... wait 10 seconds and this " +
-					"message will be deleted."
-				_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: &content,
-				})
-				if err != nil {
-					s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-						Content: "Something went wrong",
-					})
-					return
-				}
-				time.Sleep(time.Second * 10)
-				s.InteractionResponseDelete(i.Interaction)
-			})
-		},
-		"followups": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			// Followup messages are basically regular messages (you can create as many of them as you wish)
-			// but work as they are created by webhooks and their functionality
-			// is for handling additional messages after sending a response.
-
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					// Note: this isn't documented, but you can use that if you want to.
-					// This flag just allows you to create messages visible only for the caller of the command
-					// (user who triggered the command)
-					Flags:   discordgo.MessageFlagsEphemeral,
-					Content: "Surprise!",
-				},
-			})
-			msg, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Content: "Followup message has been created, after 5 seconds it will be edited",
-			})
-			if err != nil {
-				s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-					Content: "Something went wrong",
-				})
-				return
-			}
-			time.Sleep(time.Second * 5)
-
-			content := "Now the original message is gone and after 10 seconds this message will ~~self-destruct~~ be deleted."
-			s.FollowupMessageEdit(i.Interaction, msg.ID, &discordgo.WebhookEdit{
-				Content: &content,
-			})
-
-			time.Sleep(time.Second * 10)
-
-			s.FollowupMessageDelete(i.Interaction, msg.ID)
-
-			s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-				Content: "For those, who didn't skip anything and followed tutorial along fairly, " +
-					"take a unicorn :unicorn: as reward!\n" +
-					"Also, as bonus... look at the original interaction response :D",
-			})
-		},
-	}
-)
-
 func (d *Discord) GetAvatarUrl(userId string) string {
 	user, err := d.S.User(userId)
 	if err != nil {
 		return ""
 	}
 	return user.AvatarURL("")
+}
+
+func (d *Discord) handleDownloadBridge(mes *models.ToBridgeMessage, m *discordgo.MessageCreate) {
+	if len(m.StickerItems) > 0 {
+		mes.Text = fmt.Sprintf("https://cdn.discordapp.com/stickers/%s.png", m.Message.StickerItems[0].ID)
+	}
+	if len(m.Attachments) > 0 {
+		for _, a := range m.Attachments {
+			f := models.FileInfo{
+				Name: a.Filename,
+				Data: nil,
+				URL:  a.URL,
+				Size: int64(a.Size),
+			}
+			if filepath.Ext(a.Filename) == ".apk" {
+				f.URL = ""
+				data, err := helper.DownloadFile(a.URL)
+				if err != nil {
+					d.log.ErrorErr(err)
+				}
+				f.Data = data
+			}
+
+			mes.Extra = append(mes.Extra, f)
+		}
+	}
 }

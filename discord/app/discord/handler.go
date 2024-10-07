@@ -1,7 +1,198 @@
-package slashCommand
+package DiscordClient
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"discord/discord/helpers"
+	"discord/models"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"path/filepath"
+)
 
+func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+	if m.Message.WebhookID != "" {
+		return
+	}
+	if m.GuildID == "" {
+		if m.Content == ".паника" {
+			d.log.Panic(".паника " + m.Author.Username)
+		} else {
+			in := models.InMessage{
+				Mtext:       m.Content,
+				Tip:         "dsDM",
+				Username:    m.Author.Username,
+				UserId:      m.Author.ID,
+				NameMention: m.Author.Mention(),
+				Ds: struct {
+					Mesid   string
+					Guildid string
+					Avatar  string
+				}{
+					Mesid:   m.ID,
+					Guildid: "",
+					Avatar:  m.Author.AvatarURL("128"),
+				},
+				Config: models.CorporationConfig{
+					DsChannel: m.ChannelID},
+			}
+
+			d.api.SendRsBotAppRecover(in)
+		}
+		//DM message
+		return
+	}
+	go d.logicMix(m)
+
+}
+
+//func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
+//	if m.Message.WebhookID != "" {
+//		return
+//	}
+//
+//	if m.Message.EditedTimestamp != nil && m.Content != "" {
+//		//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
+//		//if good {
+//		//	username := m.Author.Username
+//		//	if m.Member != nil && m.Member.Nick != "" {
+//		//		username = m.Member.Nick
+//		//	}
+//		//	mes := models.BridgeMessage{
+//		//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
+//		//		Sender:        username,
+//		//		Tip:           "dse",
+//		//		Avatar:        m.Author.AvatarURL("128"),
+//		//		ChatId:        m.ChannelID,
+//		//		MesId:         m.ID,
+//		//		GuildId:       m.GuildID,
+//		//		TimestampUnix: m.Timestamp.Unix(),
+//		//		Config:        &config,
+//		//	}
+//		//
+//		//	if len(m.Attachments) > 0 {
+//		//		if len(m.Attachments) != 1 {
+//		//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
+//		//		}
+//		//		for _, attachment := range m.Attachments {
+//		//			mes.FileUrl = append(mes.FileUrl, attachment.URL)
+//		//		}
+//		//	}
+//		//
+//		//	if m.ReferencedMessage != nil {
+//		//		usernameR := m.ReferencedMessage.Author.String() //.Username
+//		//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
+//		//			usernameR = m.ReferencedMessage.Member.Nick
+//		//		}
+//		//		mes.Reply = &models.BridgeMessageReply{
+//		//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
+//		//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+//		//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
+//		//			UserName:    usernameR,
+//		//		}
+//		//	}
+//		//
+//		//	d.ChanBridgeMessage <- mes
+//		//}
+//	}
+//}
+
+//func (d *Discord) onMessageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
+//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
+//if good {
+//	d.ChanBridgeMessage <- models.BridgeMessage{
+//		Tip:    "delDs",
+//		MesId:  m.ID,
+//		Config: &config,
+//	}
+//}
+//}
+
+func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	message, err := s.ChannelMessage(r.ChannelID, r.MessageID)
+	if err != nil {
+		channel, err1 := s.Channel(r.ChannelID)
+		if err1 != nil {
+			d.log.Error(err1.Error())
+			return
+		}
+		user, err2 := s.User(r.UserID)
+		if err2 != nil {
+			d.log.Error(err2.Error())
+			return
+		}
+		d.log.Info(fmt.Sprintln(channel.Name, r.Emoji.Name, user.Username, err.Error()))
+		return
+	}
+
+	if message.Author.ID == s.State.User.ID {
+		go d.readReactionQueue(r, message)
+	} else {
+		go d.readReactionTranslate(r, message)
+	}
+}
+
+func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	//if config.Instance.BotMode == "dev" {
+	//	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	//		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+	//			h(s, i)
+	//		}
+	//	})
+	//}
+	if i.Interaction != nil && i.Interaction.Member != nil && i.Interaction.Member.Nick != "" {
+		i.Interaction.Member.User.Username = i.Interaction.Member.Nick
+	}
+
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand:
+		{
+			locale := ""
+			switch i.Locale.String() {
+			case "Russian":
+				locale = "ru"
+			case "Ukrainian":
+				locale = "ua"
+			default:
+				locale = "en"
+			}
+			switch i.ApplicationCommandData().Name {
+			case "module":
+				d.handleModuleCommand(i, locale)
+			case "weapon":
+				d.handleWeaponCommand(i, locale)
+			default:
+				d.log.Info(fmt.Sprintf("slash InteractionApplicationCommand  %+v\n", i.ApplicationCommandData()))
+			}
+		}
+	case discordgo.InteractionMessageComponent:
+		go d.handleButtonPressed(i)
+
+	default:
+		d.log.Info(fmt.Sprintf("slash %+v\n", i.Type))
+	}
+
+}
+
+func (d *Discord) ready() {
+	for _, configrs := range d.corpConfigRS {
+		if configrs.DsChannel != "" && configrs.Guildid != "" {
+			//d.removeCommand(configrs.Guildid)
+			commandsModuleWeapon := AddSlashCommandModuleWeaponLocale()
+			if len(commandsModuleWeapon) == 0 {
+				return
+			}
+			for _, v := range commandsModuleWeapon {
+				_, err := d.S.ApplicationCommandCreate(d.S.State.User.ID, configrs.Guildid, v)
+				if err != nil {
+					d.log.ErrorErr(err)
+					break
+				}
+			}
+		}
+	}
+}
 func AddSlashCommandModuleWeaponLocale() []*discordgo.ApplicationCommand {
 	return []*discordgo.ApplicationCommand{
 		{
@@ -324,410 +515,56 @@ func AddSlashCommandModuleWeaponLocale() []*discordgo.ApplicationCommand {
 	}
 }
 
-func AddSlashCommandRu() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "модули",
-			Description: "Выберите нужный модуль и уровень",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "модуль",
-					Description: "Выберите модуль",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Ингибитор КЗ",
-							Value: "RSE",
-						},
-						{
-							Name:  "Генезис",
-							Value: "GENESIS",
-						},
-						{
-							Name:  "Обогатить",
-							Value: "ENRICH",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "уровень",
-					Description: "Выберите уровень",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Уровень 0",
-							Value: 0,
-						},
-						{
-							Name:  "Уровень 1",
-							Value: 1,
-						}, {
-							Name:  "Уровень 2",
-							Value: 2,
-						}, {
-							Name:  "Уровень 3",
-							Value: 3,
-						}, {
-							Name:  "Уровень 4",
-							Value: 4,
-						}, {
-							Name:  "Уровень 5",
-							Value: 5,
-						}, {
-							Name:  "Уровень 6",
-							Value: 6,
-						}, {
-							Name:  "Уровень 7",
-							Value: 7,
-						}, {
-							Name:  "Уровень 8",
-							Value: 8,
-						}, {
-							Name:  "Уровень 9",
-							Value: 9,
-						}, {
-							Name:  "Уровень 10",
-							Value: 10,
-						}, {
-							Name:  "Уровень 11",
-							Value: 11,
-						}, {
-							Name:  "Уровень 12",
-							Value: 12,
-						}, {
-							Name:  "Уровень 13",
-							Value: 13,
-						}, {
-							Name:  "Уровень 14",
-							Value: 14,
-						}, {
-							Name:  "Уровень 15",
-							Value: 15,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:        "оружие",
-			Description: "Выберите основное оружие",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "оружие",
-					Description: "Выберите оружие",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Артобстрел",
-							Value: "barrage",
-						},
-						{
-							Name:  "Лазер",
-							Value: "laser",
-						},
-						{
-							Name:  "Цепной луч",
-							Value: "chainray",
-						},
-						{
-							Name:  "Батарея",
-							Value: "battery",
-						},
-						{
-							Name:  "Залповая батарея",
-							Value: "massbattery",
-						},
-						{
-							Name:  "Пусковая установка",
-							Value: "dartlauncher",
-						},
-						{
-							Name:  "Ракетная установка",
-							Value: "rocketlauncher",
-						},
-						{
-							Name:  "Удалить оружие",
-							Value: "Remove",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-			},
-		},
+func (d *Discord) removeCommand(guildId string) {
+	registeredCommands, err := d.S.ApplicationCommands(d.S.State.User.ID, guildId)
+	if err != nil {
+		d.log.Fatal(err.Error())
 	}
-}
-func AddSlashCommandEn() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "module",
-			Description: "Select the desired module and level",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "module",
-					Description: "Select module",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "RSE",
-							Value: "RSE",
-						},
-						{
-							Name:  "Genesis",
-							Value: "GENESIS",
-						},
-						{
-							Name:  "Enrich",
-							Value: "ENRICH",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "level",
-					Description: "Select level",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Level 0",
-							Value: 0,
-						},
-						{
-							Name:  "Level 1",
-							Value: 1,
-						}, {
-							Name:  "Level 2",
-							Value: 2,
-						}, {
-							Name:  "Level 3",
-							Value: 3,
-						}, {
-							Name:  "Level 4",
-							Value: 4,
-						}, {
-							Name:  "Level 5",
-							Value: 5,
-						}, {
-							Name:  "Level 6",
-							Value: 6,
-						}, {
-							Name:  "Level 7",
-							Value: 7,
-						}, {
-							Name:  "Level 8",
-							Value: 8,
-						}, {
-							Name:  "Level 9",
-							Value: 9,
-						}, {
-							Name:  "Level 10",
-							Value: 10,
-						}, {
-							Name:  "Level 11",
-							Value: 11,
-						}, {
-							Name:  "Level 12",
-							Value: 12,
-						}, {
-							Name:  "Level 13",
-							Value: 13,
-						}, {
-							Name:  "Level 14",
-							Value: 14,
-						}, {
-							Name:  "Level 15",
-							Value: 15,
-						},
-						// Добавьте другие уровни по мере необходимости
-					},
-				},
-			},
-		},
-		{
-			Name:        "weapon",
-			Description: "Select your main weapon",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "weapon",
-					Description: "Select weapon",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Barrage",
-							Value: "barrage",
-						},
-						{
-							Name:  "Laser",
-							Value: "laser",
-						},
-						{
-							Name:  "Chain ray",
-							Value: "chainray",
-						},
-						{
-							Name:  "Battery",
-							Value: "battery",
-						},
-						{
-							Name:  "Mass battery",
-							Value: "massbattery",
-						},
-						{
-							Name:  "Dart launcher",
-							Value: "dartlauncher",
-						},
-						{
-							Name:  "Rocket launcher",
-							Value: "rocketlauncher",
-						},
-						{
-							Name:  "Remove weapon",
-							Value: "Remove",
-						},
-					},
-				},
-			},
-		},
+
+	fmt.Println(len(registeredCommands))
+	for _, v := range registeredCommands {
+		fmt.Printf("%+v\n", v)
 	}
+
+	for _, v := range registeredCommands {
+		err = d.S.ApplicationCommandDelete(d.S.State.User.ID, guildId, v.ID)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+	}
+	fmt.Println("удалены")
 }
-func AddSlashCommandUa() []*discordgo.ApplicationCommand {
-	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "модулі",
-			Description: "Виберіть потрібний модуль та рівень",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "модуль",
-					Description: "Виберіть модуль",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Інгібітор ЧЗ",
-							Value: "RSE",
-						},
-						{
-							Name:  "Генезис",
-							Value: "GENESIS",
-						},
-						{
-							Name:  "Збагатити",
-							Value: "ENRICH",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        "уровень",
-					Description: "Выберите уровень",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Рівень 0",
-							Value: 0,
-						}, {
-							Name:  "Рівень 1",
-							Value: 1,
-						}, {
-							Name:  "Рівень 2",
-							Value: 2,
-						}, {
-							Name:  "Рівень 3",
-							Value: 3,
-						}, {
-							Name:  "Рівень 4",
-							Value: 4,
-						}, {
-							Name:  "Рівень 5",
-							Value: 5,
-						}, {
-							Name:  "Рівень 6",
-							Value: 6,
-						}, {
-							Name:  "Рівень 7",
-							Value: 7,
-						}, {
-							Name:  "Рівень 8",
-							Value: 8,
-						}, {
-							Name:  "Рівень 9",
-							Value: 9,
-						}, {
-							Name:  "Рівень 10",
-							Value: 10,
-						}, {
-							Name:  "Рівень 11",
-							Value: 11,
-						}, {
-							Name:  "Рівень 12",
-							Value: 12,
-						}, {
-							Name:  "Рівень 13",
-							Value: 13,
-						}, {
-							Name:  "Рівень 14",
-							Value: 14,
-						}, {
-							Name:  "Рівень 15",
-							Value: 15,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:        "зброя",
-			Description: "Виберіть основну зброю",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "зброя",
-					Description: "Виберіть зброю",
-					Required:    true,
-					Choices: []*discordgo.ApplicationCommandOptionChoice{
-						{
-							Name:  "Артилерія",
-							Value: "barrage",
-						},
-						{
-							Name:  "Лазер",
-							Value: "laser",
-						},
-						{
-							Name:  "Ланцюговий промінь",
-							Value: "chainray",
-						},
-						{
-							Name:  "Батарея",
-							Value: "battery",
-						},
-						{
-							Name:  "Залпова батарея",
-							Value: "massbattery",
-						},
-						{
-							Name:  "Пускова установка",
-							Value: "dartlauncher",
-						},
-						{
-							Name:  "Ракетна установка",
-							Value: "rocketlauncher",
-						},
-						{
-							Name:  "Видалити зброю",
-							Value: "Remove",
-						},
-						// Добавьте другие модули по мере необходимости
-					},
-				},
-			},
-		},
+
+func (d *Discord) GetAvatarUrl(userId string) string {
+	user, err := d.S.User(userId)
+	if err != nil {
+		return ""
+	}
+	return user.AvatarURL("")
+}
+
+func (d *Discord) handleDownloadBridge(mes *models.ToBridgeMessage, m *discordgo.MessageCreate) {
+	if len(m.StickerItems) > 0 {
+		mes.Text = fmt.Sprintf("https://cdn.discordapp.com/stickers/%s.png", m.Message.StickerItems[0].ID)
+	}
+	if len(m.Attachments) > 0 {
+		for _, a := range m.Attachments {
+			f := models.FileInfo{
+				Name: a.Filename,
+				Data: nil,
+				URL:  a.URL,
+				Size: int64(a.Size),
+			}
+			if filepath.Ext(a.Filename) == ".apk" {
+				f.URL = ""
+				data, err := helpers.DownloadFile(a.URL)
+				if err != nil {
+					d.log.ErrorErr(err)
+				}
+				f.Data = data
+			}
+
+			mes.Extra = append(mes.Extra, f)
+		}
 	}
 }

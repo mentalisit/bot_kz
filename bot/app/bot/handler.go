@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	gt "github.com/bas24/googletranslatefree"
 	"kz_bot/models"
@@ -52,15 +51,17 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 }
 
 func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
+	ch := utils.WaitForMessage("SendChannelDelSecond")
+	defer close(ch)
 	user = utils.RemoveDuplicates(user)
 	for _, u := range user {
-		if b.storage.Count.CountNameQueue(context.Background(), u) > 0 {
+		if b.storage.Count.CountNameQueue(u) > 0 {
 			b.elsetrue(u)
 		}
 	}
 }
 func (b *Bot) elsetrue(userid string) { //удаляем игрока с очереди
-	tt := b.storage.DbFunc.ElseTrue(context.Background(), userid)
+	tt := b.storage.DbFunc.ElseTrue(userid)
 	for _, t := range tt {
 		ok, config := b.CheckCorpNameConfig(t.Corpname)
 		if ok {
@@ -91,15 +92,6 @@ func (b *Bot) elsetrue(userid string) { //удаляем игрока с оче�
 	}
 }
 
-func (b *Bot) hhelp(in models.InMessage) {
-	b.iftipdelete(in)
-	if in.Tip == ds {
-		go b.client.Ds.Help(in.Config.DsChannel, in.Config.Country)
-	} else if in.Tip == tg {
-		go b.client.Tg.Help(in.Config.TgChannel, in.Config.Country)
-	}
-}
-
 func (b *Bot) getText(in models.InMessage, key string) string {
 	return b.storage.Dictionary.GetText(in.Config.Country, key)
 }
@@ -127,8 +119,10 @@ func (b *Bot) Transtale(in models.InMessage) {
 		if in.Mtext != text2 {
 			if in.Tip == ds {
 				go func() {
-					m := b.client.Ds.SendWebhook(text2, in.Username, in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
+					ch := utils.WaitForMessage("Translate")
+					m := b.client.Ds.SendWebhook(text2, in.Username, in.Config.DsChannel, in.Ds.Avatar)
 					b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, m, 90)
+					close(ch)
 				}()
 			} else if in.Tip == tg {
 				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text2, 90)

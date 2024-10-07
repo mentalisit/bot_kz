@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"kz_bot/models"
@@ -10,7 +9,9 @@ import (
 	"time"
 )
 
-func (d *Db) ReadAll(ctx context.Context, lvlkz, CorpName string) (users models.Users) {
+func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("ReadAll lvlkz, CorpName", lvlkz, CorpName)
 	}
@@ -48,7 +49,9 @@ func (d *Db) ReadAll(ctx context.Context, lvlkz, CorpName string) (users models.
 	}
 	return u
 }
-func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
+func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now()
 	mdate := (tm.Format("2006-01-02"))
@@ -60,7 +63,6 @@ func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, 
 	if timekzz == 0 {
 		timekzz = 1
 	}
-	ctx = context.Background()
 
 	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
                    numkzn,numberkz,numberevent,eventpoints,active,timedown) 
@@ -72,7 +74,9 @@ func (d *Db) InsertQueue(ctx context.Context, dsmesid, wamesid, CorpName, name, 
 	}
 }
 
-func (d *Db) ElseTrue(ctx context.Context, userid string) []models.Sborkz {
+func (d *Db) ElseTrue(userid string) []models.Sborkz {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("ElseTrue", userid)
 	}
@@ -93,7 +97,9 @@ func (d *Db) ElseTrue(ctx context.Context, userid string) []models.Sborkz {
 	}
 	return tt
 }
-func (d *Db) DeleteQueue(ctx context.Context, userid, lvlkz, CorpName string) {
+func (d *Db) DeleteQueue(userid, lvlkz, CorpName string) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("DeleteQueue", userid, lvlkz, CorpName)
 	}
@@ -104,7 +110,9 @@ func (d *Db) DeleteQueue(ctx context.Context, userid, lvlkz, CorpName string) {
 	}
 }
 
-func (d *Db) ReadMesIdDS(ctx context.Context, mesid string) (string, error) {
+func (d *Db) ReadMesIdDS(mesid string) (string, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("ReadMesIdDS", mesid)
 	}
@@ -133,7 +141,9 @@ func (d *Db) ReadMesIdDS(ctx context.Context, mesid string) (string, error) {
 	}
 }
 
-func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, userid string) int {
+func (d *Db) P30Pl(lvlkz, CorpName, userid string) int {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("P30Pl", lvlkz, CorpName, userid)
 	}
@@ -152,7 +162,9 @@ func (d *Db) P30Pl(ctx context.Context, lvlkz, CorpName, userid string) int {
 	}
 	return timedown
 }
-func (d *Db) UpdateTimedown(ctx context.Context, lvlkz, CorpName, userid string) {
+func (d *Db) UpdateTimedown(lvlkz, CorpName, userid string) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("UpdateTimedown", lvlkz, CorpName, userid)
 	}
@@ -162,7 +174,9 @@ func (d *Db) UpdateTimedown(ctx context.Context, lvlkz, CorpName, userid string)
 		d.log.ErrorErr(err)
 	}
 }
-func (d *Db) Queue(ctx context.Context, corpname string) []string {
+func (d *Db) Queue(corpname string) []string {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("Queue corpname", corpname)
 	}
@@ -184,7 +198,9 @@ func (d *Db) Queue(ctx context.Context, corpname string) []string {
 	return lvl
 }
 
-func (d *Db) OneMinutsTimer(ctx context.Context) []string {
+func (d *Db) OneMinutsTimer() []string {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var count int //количество активных игроков
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE active = 0"
 	row := d.db.QueryRow(ctx, sel)
@@ -229,7 +245,9 @@ func (d *Db) OneMinutsTimer(ctx context.Context) []string {
 	}
 	return CorpActive0
 }
-func (d *Db) MessageUpdateMin(ctx context.Context, corpname string) ([]string, []int) {
+func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("MessageUpdateMin", corpname)
 	}
@@ -277,7 +295,9 @@ func (d *Db) MessageUpdateMin(ctx context.Context, corpname string) ([]string, [
 	}
 	return ds, tg
 }
-func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.CorporationConfig) models.InMessage {
+func (d *Db) MessageupdateDS(dsmesid string, config models.CorporationConfig) models.InMessage {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("MessageupdateDS", dsmesid, config.CorpName)
 	}
@@ -314,7 +334,9 @@ func (d *Db) MessageupdateDS(ctx context.Context, dsmesid string, config models.
 	return in
 
 }
-func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.CorporationConfig) models.InMessage {
+func (d *Db) MessageupdateTG(tgmesid int, config models.CorporationConfig) models.InMessage {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("MessageupdateTG", tgmesid, config.CorpName)
 	}
@@ -348,12 +370,9 @@ func (d *Db) MessageupdateTG(ctx context.Context, tgmesid int, config models.Cor
 	}
 	return in
 }
-func (d *Db) NumberQueueLvl(ctx context.Context, lvlkz, CorpName string) (int, error) {
-	//lvlkz, errc := strconv.Atoi(lvlkzs)
-	//if errc != nil {
-	//d.log.Println("ошибка преобразования в инт lkz lks", lvlkz, lvlkzs)
-	//return 0, errc
-	//}
+func (d *Db) NumberQueueLvl(lvlkz, CorpName string) (int, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("NumberQueueLvl", lvlkz, CorpName)
 	}

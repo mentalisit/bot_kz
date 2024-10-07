@@ -1,14 +1,15 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/models"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var tt []models.CorporationConfig
-	results, err := d.db.Query(context.Background(), "SELECT * FROM kzbot.config")
+	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -23,23 +24,29 @@ func (d *Db) ReadConfigRs() []models.CorporationConfig {
 	return tt
 }
 func (d *Db) InsertConfigRs(c models.CorporationConfig) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	insert := `INSERT INTO kzbot.config(corpname, dschannel, tgchannel, mesiddshelp, mesidtghelp, country, delmescomplite, guildid, forvard) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
-	_, err := d.db.Exec(context.Background(), insert, c.CorpName, c.DsChannel, c.TgChannel, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.DelMesComplite, c.Guildid, c.Forward)
+	_, err := d.db.Exec(ctx, insert, c.CorpName, c.DsChannel, c.TgChannel, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.DelMesComplite, c.Guildid, c.Forward)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 	fmt.Printf("insert %+v\n", c)
 }
 func (d *Db) DeleteConfigRs(c models.CorporationConfig) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	del := "delete from kzbot.config where corpname = $1"
-	_, err := d.db.Exec(context.Background(), del, c.CorpName)
+	_, err := d.db.Exec(ctx, del, c.CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) UpdateConfigRs(c models.CorporationConfig) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	upd := `update kzbot.config set mesiddshelp = $1,mesidtghelp = $2,country = $3 where corpname = $4`
-	_, err := d.db.Exec(context.Background(), upd, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.CorpName)
+	_, err := d.db.Exec(ctx, upd, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

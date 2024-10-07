@@ -1,16 +1,17 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/models"
 	"time"
 )
 
 func (d *Db) OptimizationSborkz() {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	// Подсчет активных записей и сортировка по имени
 	query := `SELECT mention,corpname,lvlkz, SUM(active) AS active_sum FROM kzbot.sborkz GROUP BY corpname, mention,lvlkz ORDER BY mention`
-	rows, err := d.db.Query(context.Background(), query)
+	rows, err := d.db.Query(ctx, query)
 	defer rows.Close()
 	if err != nil {
 		d.log.Info(err.Error())
@@ -27,7 +28,7 @@ func (d *Db) OptimizationSborkz() {
 		}
 		var countNames int
 		sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND lvlkz = $2 AND corpname = $3 AND active > 0"
-		row := d.db.QueryRow(context.Background(), sel, mention, level, corpname)
+		row := d.db.QueryRow(ctx, sel, mention, level, corpname)
 		err := row.Scan(&countNames)
 		if err != nil {
 			d.log.Info(err.Error())
@@ -35,7 +36,7 @@ func (d *Db) OptimizationSborkz() {
 		}
 		if countNames > 5 {
 			sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND mention = $3"
-			results, err := d.db.Query(context.Background(), sel, level, corpname, mention)
+			results, err := d.db.Query(ctx, sel, level, corpname, mention)
 			defer results.Close()
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -48,7 +49,7 @@ func (d *Db) OptimizationSborkz() {
 					&t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 			}
 			del := "delete from kzbot.sborkz where mention = $1 and corpname = $2 and lvlkz = $3"
-			_, err = d.db.Exec(context.Background(), del, mention, corpname, level)
+			_, err = d.db.Exec(ctx, del, mention, corpname, level)
 			if err != nil {
 				d.log.ErrorErr(err)
 			}
@@ -58,7 +59,7 @@ func (d *Db) OptimizationSborkz() {
 			insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
 		          numkzn,numberkz,numberevent,eventpoints,active,timedown)
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`
-			_, err = d.db.Exec(context.Background(), insertSborkztg1, t.Corpname, t.Name, t.Mention, t.Tip, t.Dsmesid, t.Tgmesid,
+			_, err = d.db.Exec(ctx, insertSborkztg1, t.Corpname, t.Name, t.Mention, t.Tip, t.Dsmesid, t.Tgmesid,
 				t.Wamesid, mtime, mdate, t.Lvlkz, t.Numkzn, t.Numberkz, t.Numberevent, t.Eventpoints, activeCount, t.Timedown)
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -72,7 +73,9 @@ func (d *Db) OptimizationSborkz() {
 		d.log.Info(err.Error())
 	}
 }
-func (d *Db) СountName(ctx context.Context, userid, lvlkz, corpName string) (int, error) {
+func (d *Db) СountName(userid, lvlkz, corpName string) (int, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("СountName userid, lvlkz, corpName", userid, lvlkz, corpName)
 	}
@@ -90,7 +93,9 @@ func (d *Db) СountName(ctx context.Context, userid, lvlkz, corpName string) (in
 	}
 	return countNames, nil
 }
-func (d *Db) CountQueue(ctx context.Context, lvlkz, CorpName string) (int, error) { //проверка сколько игровок в очереди
+func (d *Db) CountQueue(lvlkz, CorpName string) (int, error) { //проверка сколько игровок в очереди
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("CountQueue lvlkz, CorpName", lvlkz, CorpName)
 	}
@@ -107,7 +112,9 @@ func (d *Db) CountQueue(ctx context.Context, lvlkz, CorpName string) (int, error
 	}
 	return count, nil
 }
-func (d *Db) CountNumberNameActive1(ctx context.Context, lvlkz, CorpName, userid string) (int, error) { // выковыриваем из базы значение количества походов на кз
+func (d *Db) CountNumberNameActive1(lvlkz, CorpName, userid string) (int, error) { // выковыриваем из базы значение количества походов на кз
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	if d.debug {
 		fmt.Println("CountNumberNameActive1 lvlkz, CorpName, userid", lvlkz, CorpName, userid)
 	}
@@ -123,7 +130,9 @@ func (d *Db) CountNumberNameActive1(ctx context.Context, lvlkz, CorpName, userid
 	return countNumberNameActive1, nil
 }
 
-func (d *Db) CountNameQueue(ctx context.Context, userid string) (countNames int) { //проверяем есть ли игрок в других очередях
+func (d *Db) CountNameQueue(userid string) (countNames int) { //проверяем есть ли игрок в других очередях
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
 	row := d.db.QueryRow(ctx, sel, userid)
 	err := row.Scan(&countNames)
@@ -135,7 +144,9 @@ func (d *Db) CountNameQueue(ctx context.Context, userid string) (countNames int)
 	}
 	return countNames
 }
-func (d *Db) CountNameQueueCorp(ctx context.Context, userid, corp string) (countNames int) { //проверяем есть ли игрок в других очередях
+func (d *Db) CountNameQueueCorp(userid, corp string) (countNames int) { //проверяем есть ли игрок в других очередях
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
 	row := d.db.QueryRow(ctx, sel, userid, corp)
 	err := row.Scan(&countNames)
@@ -149,6 +160,8 @@ func (d *Db) CountNameQueueCorp(ctx context.Context, userid, corp string) (count
 	return countNames
 }
 func (d *Db) ReadTop5Level(corpname string) []string {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	query := `
         SELECT lvlkz, COUNT(*) AS lvlkz_count
         FROM kzbot.sborkz
@@ -160,7 +173,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
     `
 
 	// Выполнение запроса
-	rows, err := d.db.Query(context.Background(), query, corpname)
+	rows, err := d.db.Query(ctx, query, corpname)
 	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)

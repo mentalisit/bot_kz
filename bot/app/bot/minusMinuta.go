@@ -1,10 +1,10 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	conf "kz_bot/config"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"strconv"
 )
 
@@ -12,7 +12,7 @@ import (
 //wats lang not ok
 
 func (b *Bot) MinusMin() {
-	tt := b.storage.Timers.MinusMin(context.Background())
+	tt := b.storage.Timers.MinusMin()
 
 	if conf.Instance.BotMode == "dev" {
 		return
@@ -65,22 +65,22 @@ func (b *Bot) MinusMin() {
 	}
 }
 func (b *Bot) UpdateMessage() {
-	corpActive0 := b.storage.DbFunc.OneMinutsTimer(context.Background())
+	corpActive0 := b.storage.DbFunc.OneMinutsTimer()
 	for _, corp := range corpActive0 {
 
 		_, config := b.CheckCorpNameConfig(corp)
 
-		dss, tgs := b.storage.DbFunc.MessageUpdateMin(context.Background(), corp)
+		dss, tgs := b.storage.DbFunc.MessageUpdateMin(corp)
 
 		if config.DsChannel != "" {
 			for _, d := range dss {
-				a := b.storage.DbFunc.MessageupdateDS(context.Background(), d, config)
+				a := b.storage.DbFunc.MessageupdateDS(d, config)
 				b.inbox <- a
 			}
 		}
 		if config.TgChannel != "" {
 			for _, t := range tgs {
-				a := b.storage.DbFunc.MessageupdateTG(context.Background(), t, config)
+				a := b.storage.DbFunc.MessageupdateTG(t, config)
 				b.inbox <- a
 			}
 		}
@@ -111,6 +111,8 @@ func (b *Bot) CheckTimeQueue(in models.InMessage) {
 }
 
 func (b *Bot) ReadQueueLevel(in models.InMessage) {
+	ch := utils.WaitForMessage("ReadQueueLevel")
+	defer close(ch)
 	text, err := b.otherQueue.ReadingQueueByLevel(in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)

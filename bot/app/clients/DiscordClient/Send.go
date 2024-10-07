@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"kz_bot/clients/DiscordClient/transmitter"
 	"kz_bot/clients/helper"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"mime"
 	"path/filepath"
 	"time"
@@ -14,7 +14,7 @@ import (
 
 var mesContentNil string
 
-func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
+func (d *Discord) SendEmbedText(chatid, title, text string) string {
 	Emb := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{},
 		Color:       16711680,
@@ -24,11 +24,13 @@ func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
 	m, err := d.S.ChannelMessageSendEmbed(chatid, Emb)
 	if err != nil {
 		d.log.Error("chatid " + chatid + " " + err.Error())
-		return &discordgo.Message{}
+		return ""
 	}
-	return m
+	return m.ID
 }
 func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
+	ch := utils.WaitForMessage("SendChannelDelSecond")
+	defer close(ch)
 	if text != "" {
 		message, err := d.S.ChannelMessageSend(chatid, text)
 		if err != nil {
@@ -39,6 +41,8 @@ func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 		if second <= 60 {
 			go func() {
 				time.Sleep(time.Duration(second) * time.Second)
+				ch = utils.WaitForMessage("SendChannelDelSecond")
+				defer close(ch)
 				_ = d.S.ChannelMessageDelete(chatid, message.ID)
 			}()
 		} else {
@@ -66,11 +70,11 @@ func (d *Discord) SendComplexContent(chatid, text string) (mesId string) { //о�
 	}
 	return mesCompl.ID
 }
-func (d *Discord) SendComplex(chatid string, embeds discordgo.MessageEmbed, component []discordgo.MessageComponent) (mesId string) { //отправка текста комплексного сообщения
+func (d *Discord) SendComplex(chatid string, mapEmbeds map[string]string) (mesId string) { //отправка текста комплексного сообщения
 	mesCompl, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
 		Content:    mesContentNil,
-		Embed:      &embeds,
-		Components: component,
+		Embed:      d.embedDS(mapEmbeds),
+		Components: d.addButtonsQueue(mapEmbeds["buttonLevel"]),
 	})
 	if err != nil {
 		channel, _ := d.S.Channel(chatid)
@@ -78,7 +82,7 @@ func (d *Discord) SendComplex(chatid string, embeds discordgo.MessageEmbed, comp
 		d.log.ErrorErr(err)
 		mesCompl, err = d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
 			Content: mesContentNil,
-			Embed:   &embeds,
+			Embed:   d.embedDS(mapEmbeds),
 		})
 		if err == nil {
 			return mesCompl.ID
@@ -141,17 +145,16 @@ func (d *Discord) SendEmbedTime(chatid, text string) (mesId string) { //отпр
 	return message.ID
 }
 
-func (d *Discord) SendWebhook(text, username, chatid, guildId, Avatar string) (mesId string) {
+func (d *Discord) SendWebhook(text, username, chatid, Avatar string) (mesId string) {
 	if text == "" {
 		return ""
 	}
-	web := transmitter.New(d.S, guildId, "KzBot", true, d.log)
 	pp := discordgo.WebhookParams{
 		Content:   text,
 		Username:  username,
 		AvatarURL: Avatar,
 	}
-	mes, err := web.Send(chatid, &pp)
+	mes, err := d.webhook.Send(chatid, &pp)
 	if err != nil {
 		fmt.Println(err)
 		m := d.Send(chatid, text)
@@ -410,7 +413,6 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 	} else if len(in.Extra) > 0 {
 		for _, f := range in.Extra {
 			contentType := mime.TypeByExtension(filepath.Ext(f.Name))
-			fmt.Println("contentType", contentType)
 			file := discordgo.File{
 				Name:        f.Name,
 				ContentType: contentType,
@@ -433,8 +435,12 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 	for _, channelId := range in.ChannelId {
 		m, err := d.webhook.Send(channelId, params)
 		if err != nil {
+			d.log.ErrorErr(err)
 			restErr, _ := err.(*discordgo.RESTError)
-			if restErr.Message != nil && restErr.Message.Code == discordgo.ErrCodeUnknownChannel {
+			if restErr != nil {
+				d.log.ErrorErr(restErr)
+			}
+			if restErr != nil && restErr.Message != nil && restErr.Message.Code == discordgo.ErrCodeUnknownChannel {
 				d.log.Info("нужно сделать удаление этого канала : " + channelId)
 			} else {
 				d.log.ErrorErr(err)
