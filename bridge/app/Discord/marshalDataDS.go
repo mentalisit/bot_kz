@@ -4,7 +4,6 @@ import (
 	"bridge/models"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -28,7 +27,7 @@ func (d *Discord) MarshalDataSendBridgeAsync(message models.BridgeSendToMessenge
 	var dataReply []models.MessageIds
 	err = json.NewDecoder(resp.Body).Decode(&dataReply)
 	if err != nil {
-		d.log.Info(fmt.Sprintf("err resp.Body %+v\n", resp.Body))
+		d.log.InfoStruct("message ", message)
 		d.log.ErrorErr(err)
 	}
 	return dataReply

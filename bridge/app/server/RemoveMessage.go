@@ -18,7 +18,7 @@ func (b *Bridge) RemoveMessage() {
 					if err != nil {
 						return
 					}
-					go b.telegram.DeleteMessage(s.ChatId, mid)
+					go b.telegram.DeleteMessage(s.ChatId, strconv.Itoa(mid))
 				}
 			} else {
 				mem = append(mem, memory)

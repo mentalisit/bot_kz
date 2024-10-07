@@ -40,7 +40,7 @@ func (b *Bridge) logicMessage() {
 		if b.in.Reply != nil && b.in.Reply.Text != "" {
 			textTg = fmt.Sprintf("%s\n%s\nReply: %s", b.GetSenderName(), b.in.Text, b.in.Reply.Text)
 		}
-		go b.telegram.SendBridgeFunc(chatIdsTG, textTg, b.in.Extra, resultChannelTg, &wg)
+		go b.telegram.SendBridgeArrayMessage(chatIdsTG, textTg, b.in.Extra, resultChannelTg, &wg)
 	}
 
 	// DS

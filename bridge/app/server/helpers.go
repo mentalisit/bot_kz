@@ -20,7 +20,7 @@ func (b *Bridge) ifTipDelSend(text string) {
 		if err != nil {
 			return
 		}
-		go b.telegram.DeleteMessage(b.in.ChatId, mid)
+		go b.telegram.DeleteMessage(b.in.ChatId, strconv.Itoa(mid))
 	}
 }
 
@@ -65,6 +65,10 @@ func ExtractUppercase(input string) string {
 	if result == "" {
 		return input
 	}
+	if strings.HasPrefix(result, " ") {
+		split := strings.Split(result, " ")
+		return split[0]
+	}
 
 	return result
 }
@@ -101,7 +105,7 @@ func (b *Bridge) delIncomingMessage() {
 		if err != nil {
 			return
 		}
-		go b.telegram.DeleteMessage(b.in.ChatId, mid)
+		go b.telegram.DeleteMessage(b.in.ChatId, strconv.Itoa(mid))
 	}
 }
 
