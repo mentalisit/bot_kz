@@ -3,9 +3,8 @@ package DiscordClient
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	"kz_bot/clients/DiscordClient/transmitter"
 	"kz_bot/models"
-	"strconv"
+	"kz_bot/pkg/utils"
 	"time"
 )
 
@@ -30,7 +29,7 @@ import (
 //	}
 //}
 
-func (d *Discord) AddButtonsQueue(level string) []discordgo.MessageComponent {
+func (d *Discord) addButtonsQueue(level string) []discordgo.MessageComponent {
 	// Создание кнопки
 	buttonOk := discordgo.Button{
 		Style:    discordgo.SecondaryButton,
@@ -79,6 +78,8 @@ func (d *Discord) AddButtonsQueue(level string) []discordgo.MessageComponent {
 }
 
 func (d *Discord) DeleteMessage(chatid, mesid string) {
+	ch := utils.WaitForMessage("DelMessage")
+	defer close(ch)
 	_ = d.S.ChannelMessageDelete(chatid, mesid)
 }
 func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
@@ -112,7 +113,22 @@ func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
 //	return nil
 //}
 
-func (d *Discord) EditComplexButton(dsmesid, dschatid string, Embeds discordgo.MessageEmbed, component []discordgo.MessageComponent) error {
+func (d *Discord) EditComplexButton(dsmesid, dschatid string, mapEmbed map[string]string) error {
+	components := d.addButtonsQueue(mapEmbed["buttonLevel"])
+	embed := d.embedDS(mapEmbed)
+	_, err := d.S.ChannelMessageEditComplex(&discordgo.MessageEdit{
+		Content:    &mesContentNil,
+		Embed:      embed,
+		ID:         dsmesid,
+		Channel:    dschatid,
+		Components: &components,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (d *Discord) EditComplexButton2(dsmesid, dschatid string, Embeds discordgo.MessageEmbed, component []discordgo.MessageComponent) error {
 	_, err := d.S.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Content:    &mesContentNil,
 		Embed:      &Embeds,
@@ -210,24 +226,23 @@ func (d *Discord) EditMessage(chatID, messageID, content string) {
 	}
 }
 
-func (d *Discord) EditWebhook(text, username, chatID, mID string, guildID, avatarURL string) {
+func (d *Discord) EditWebhook(text, username, chatID, mID string, avatarURL string) {
 	if text == "" {
 		return
 	}
 
-	web := transmitter.New(d.S, guildID, "KzBot", true, d.log)
 	params := &discordgo.WebhookParams{
 		Content:   text,
 		Username:  username,
 		AvatarURL: avatarURL,
 	}
-	err := web.Edit(chatID, mID, params)
+	err := d.webhook.Edit(chatID, mID, params)
 	if err != nil {
 		return
 	}
 }
 
-func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark bool) discordgo.MessageEmbed {
+func (d *Discord) EmbedDS2(mapa map[string]string, numkz int, count int, dark bool) discordgo.MessageEmbed {
 	textcount := ""
 	if count == 1 {
 		textcount = fmt.Sprintf("\n1️⃣ %s \n\n",
@@ -265,8 +280,25 @@ func (d *Discord) EmbedDS(mapa map[string]string, numkz int, count int, dark boo
 		Title:     title,
 	}
 }
+func (d *Discord) embedDS(mapa map[string]string) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       16711680,
+		Description: mapa["description"] + mapa["textcount"],
+
+		Fields: []*discordgo.MessageEmbedField{{
+			Name:   mapa["EmbedFieldName"],
+			Value:  mapa["EmbedFieldValue"],
+			Inline: true,
+		}},
+		Timestamp: time.Now().Format(time.RFC3339), // ТЕКУЩЕЕ ВРЕМЯ ДИСКОРДА
+		Title:     mapa["title"],
+	}
+}
 
 func (d *Discord) ChannelTyping(ChannelID string) {
+	ch := utils.WaitForMessage("ChannelTyping")
+	defer close(ch)
 	err := d.S.ChannelTyping(ChannelID)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -275,6 +307,8 @@ func (d *Discord) ChannelTyping(ChannelID string) {
 }
 
 func (d *Discord) SendDmText(text, AuthorID string) {
+	ch := utils.WaitForMessage("SendDmText")
+	defer close(ch)
 	dm := d.dmChannel(AuthorID)
 	mes, err := d.S.ChannelMessageSend(dm, text)
 	if err != nil {
@@ -282,62 +316,4 @@ func (d *Discord) SendDmText(text, AuthorID string) {
 		return
 	}
 	d.DeleteMesageSecond(dm, mes.ID, 600)
-}
-
-func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageComponent {
-	var mc []discordgo.MessageComponent
-	var components []discordgo.MessageComponent
-	_, config := d.CheckChannelConfigDS(chatid)
-	levels := d.storage.Count.ReadTop5Level(config.CorpName)
-	if len(levels) > 0 {
-		for _, level := range levels {
-			button := discordgo.Button{}
-
-			if level[:1] == "d" {
-				button.Style = discordgo.DangerButton
-				button.Label = level[1:] + "*"
-				button.CustomID = level[1:] + "*"
-			} else {
-				button.Style = discordgo.SecondaryButton
-				button.Label = level + "+"
-				button.CustomID = level + "+"
-			}
-			components = append(components, button)
-		}
-	}
-
-	if len(components) == 0 {
-		for i := 7; i < 12; i++ {
-			l := strconv.Itoa(i)
-
-			button := discordgo.Button{
-				Label:    l + "+",
-				Style:    discordgo.SecondaryButton,
-				CustomID: l + "+",
-			}
-			components = append(components, button)
-
-		}
-	}
-	mc = append(mc, discordgo.ActionsRow{Components: components})
-
-	good, CC := d.CheckChannelConfigDS(chatid)
-	if good {
-		event := d.storage.Event.NumActiveEvent(CC.CorpName)
-		if event > 0 {
-			var componentsEvent []discordgo.MessageComponent
-			for i := 7; i < 12; i++ {
-				l := "s" + strconv.Itoa(i)
-				button := discordgo.Button{
-					Label:    l + "+",
-					Style:    discordgo.DangerButton,
-					CustomID: l + "+",
-				}
-				componentsEvent = append(componentsEvent, button)
-			}
-			mc = append(mc, discordgo.ActionsRow{Components: componentsEvent})
-		}
-	}
-
-	return mc
 }

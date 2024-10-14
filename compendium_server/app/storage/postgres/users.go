@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"compendium_s/models"
-	"context"
 	"github.com/lib/pq"
 )
 
@@ -34,10 +33,12 @@ import (
 //}
 
 func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var u models.User
 	var id int
 	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
-	err := d.db.QueryRow(context.Background(), selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
+	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
 		return nil, err
 	}

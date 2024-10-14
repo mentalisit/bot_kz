@@ -45,15 +45,16 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 	}
 	return false
 }
-func (t *Telegram) SendChannel(chatid string, text string) string {
+func (t *Telegram) SendChannel(chatid string, text string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
 	tMessage, err := t.t.Send(m)
 	if err != nil {
 		t.log.ErrorErr(err)
+		return "", err
 	}
-	return strconv.Itoa(tMessage.MessageID)
+	return strconv.Itoa(tMessage.MessageID), nil
 }
 func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) error {
 	chatid, threadID := t.chat(chatID)
@@ -212,8 +213,25 @@ func (t *Telegram) SendEmbedTime(chatid string, text string) int {
 	return message.MessageID
 }
 
-func (t *Telegram) SendHelp(chatid string, text string, levels []string) int {
+func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) string {
+	midHelpTg, err := strconv.Atoi(midHelpTgString)
+	if err != nil {
+		midHelpTg = 0
+	}
+
+	var levels []string
 	chatId, ThreadID := t.chat(chatid)
+	_, config := t.checkChannelConfigTG(chatid)
+
+	levels = t.Storage.Db.ReadTop5Level(config.CorpName)
+	last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
+
+	if last < midHelpTg {
+		return midHelpTgString
+	}
+
+	t.DelMessage(chatid, midHelpTg)
+
 	var btt []tgbotapi.InlineKeyboardButton
 	if len(levels) > 0 {
 		for _, level := range levels {
@@ -225,10 +243,15 @@ func (t *Telegram) SendHelp(chatid string, text string, levels []string) int {
 			}
 			btt = append(btt, bt)
 		}
+	} else {
+		for i := 7; i < 12; i++ {
+			var bt tgbotapi.InlineKeyboardButton
+			l := strconv.Itoa(i)
+			bt = tgbotapi.NewInlineKeyboardButtonData(l+"*", l+"*")
+			btt = append(btt, bt)
+		}
 	}
-	//fmt.Printf("original %s\n", text)
-	//textEscape := escapeMarkdownV2(text)
-	//fmt.Printf("escape %s\n", textEscape)
+
 	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2ForHelp(text))
 
 	msg.MessageThreadID = ThreadID
@@ -243,10 +266,11 @@ func (t *Telegram) SendHelp(chatid string, text string, levels []string) int {
 	if err != nil {
 		t.log.Info(fmt.Sprintf("ERR chatid %s\n", chatid))
 		t.log.ErrorErr(err)
-		return 0
+		return ""
 	}
+	mid := strconv.Itoa(message.MessageID)
 
-	return message.MessageID
+	return mid
 }
 func escapeMarkdownV2ForHelp(text string) string {
 	var builder strings.Builder

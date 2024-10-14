@@ -12,7 +12,7 @@ var (
 	roleMentionRE    = regexp.MustCompile("<@&(\\d+)>")
 )
 
-func (d *Discord) replaceTextMessage(text string, guildid string) (newtext string) {
+func (d *Discord) ReplaceTextMessage(text string, guildid string) (newtext string) {
 	newtext = d.replaceChannelMentions(text, guildid)
 	newtext = d.replaceUserMentions(newtext, guildid)
 	newtext = d.replaceRoleMentions(newtext, guildid)

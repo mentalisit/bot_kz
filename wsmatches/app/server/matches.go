@@ -95,13 +95,12 @@ func (s *Srv) getMatchesAll(limit, page, filter string) *models.Ws {
 	}
 
 	if filter != "" {
-		fmt.Println(filter)
 		var f models.FilterCorps
 		err = json.Unmarshal([]byte(filter), &f)
 		if err != nil {
+			fmt.Printf("Filter bad: %+v\n", filter)
 			s.log.ErrorErr(err)
 		} else if f.Corp[0].Id != "" {
-			fmt.Println(f)
 			cors = FilterCorporation(cors, f.Corp)
 		}
 	}
@@ -158,14 +157,32 @@ func FilterCorporation(cors []models.Match, f []models.Corporation) []models.Mat
 	}
 
 	var newCors []models.Match
+	var filterName []string
 
 	for _, cor := range cors {
 		if fmap[cor.Corporation1Id].Id == cor.Corporation1Id {
 			newCors = append(newCors, cor)
+			filterName = append(filterName, cor.Corporation1Name)
 		}
 		if fmap[cor.Corporation2Id].Id == cor.Corporation2Id {
 			newCors = append(newCors, cor)
+			filterName = append(filterName, cor.Corporation2Name)
 		}
 	}
+
+	fmt.Printf("FilterCorporation: %+v\n", RemoveDuplicates(filterName))
+
 	return newCors
+}
+
+func RemoveDuplicates[T comparable](a []T) []T {
+	result := make([]T, 0, len(a))
+	temp := map[T]struct{}{}
+	for _, item := range a {
+		if _, ok := temp[item]; !ok {
+			temp[item] = struct{}{}
+			result = append(result, item)
+		}
+	}
+	return result
 }

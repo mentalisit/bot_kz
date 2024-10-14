@@ -1,7 +1,6 @@
 package dbpostgres
 
 import (
-	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"ws/models"
@@ -34,7 +33,8 @@ import (
 //}
 
 func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
-	ctx := context.Background()
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	_, err := d.ReadCorpsLevel(l.HCorp)
 	if err != nil {
 		switch {

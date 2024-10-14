@@ -20,7 +20,7 @@ func (o *OtherQ) MyQueue() string {
 	time.Sleep(5 * time.Second)
 	queueAll, err := GetQueueAll()
 	if err != nil {
-		o.log.ErrorErr(err)
+		fmt.Println(err)
 		return ""
 	}
 	var text string

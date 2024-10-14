@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
+	"time"
 )
 
 type Db struct {
@@ -25,8 +26,9 @@ type Client interface {
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
-
-	pool, err := pgxpool.Connect(context.Background(), dns)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
+	pool, err := pgxpool.Connect(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
@@ -43,10 +45,12 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	return db
 }
 func (d *Db) createTable() {
-	d.db.Exec(context.Background(), "CREATE SCHEMA IF NOT EXISTS hs_compendium")
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS hs_compendium")
 
 	// Создание таблицы users
-	_, err := d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.users (
+	_, err := d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.users (
         id            bigserial primary key,
         userid        TEXT,
         username      TEXT,
@@ -62,7 +66,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы guilds
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.guilds (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guilds (
 	   id bigserial primary key,
 	   url   TEXT,
 	   guildid    TEXT,
@@ -75,7 +79,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы list_users
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.list_users (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.list_users (
 	   id bigserial primary key,
 	   token   TEXT,
 	   userid    TEXT,
@@ -87,7 +91,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы corpmember
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.corpmember (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.corpmember (
 	id           bigserial primary key,
 	username     TEXT,
 	userid       TEXT,
@@ -103,7 +107,7 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.tech (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.tech (
     id bigserial primary key,
     username text,
     userid text,
@@ -116,7 +120,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы userroles
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.userroles (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.userroles (
 	   id           bigserial primary key,
 	   guildid      TEXT,
 	   role         TEXT,
@@ -129,7 +133,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы guildroles
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.guildroles (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guildroles (
 	   id           bigserial primary key,
 	   guildid      TEXT,
 	   role         TEXT
@@ -140,7 +144,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы wskill
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.wskill (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.wskill (
 	id           bigserial primary key,
 	guildid 	 TEXT,
 	chatid 	     TEXT,
@@ -155,7 +159,7 @@ func (d *Db) createTable() {
 	}
 
 	// Создание таблицы code
-	_, err = d.db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
+	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
 	id           bigserial primary key,
 	code    	 TEXT,
 	time 	     bigint,
@@ -165,4 +169,8 @@ func (d *Db) createTable() {
 		fmt.Println("Ошибка при создании таблицы codes:", err)
 		return
 	}
+}
+
+func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
 }

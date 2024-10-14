@@ -1,7 +1,6 @@
 package DiscordClient
 
 import (
-	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/bot/helpers"
@@ -93,33 +92,33 @@ func (d *Discord) updateModuleOrWeapon(username, module, level string) {
 	massbattery := "<:massbattery:1199072493760151593>"
 	dartlauncher := "<:dartlauncher:1199072434674991145>"
 	rocketlauncher := "<:rocketlauncher:1199071677548605562>"
-	t := d.storage.Emoji.EmojiModuleReadUsers(context.Background(), username, "ds")
+	t := d.storage.Emoji.EmojiModuleReadUsers(username, "ds")
 	if len(t.Name) == 0 {
-		d.storage.Emoji.EmInsertEmpty(context.Background(), "ds", username)
+		d.storage.Emoji.EmInsertEmpty("ds", username)
 	}
 	switch module {
 	case "RSE":
-		d.storage.Emoji.ModuleUpdate(context.Background(), username, "ds", "1", rse)
+		d.storage.Emoji.ModuleUpdate(username, "ds", "1", rse)
 	case "GENESIS":
-		d.storage.Emoji.ModuleUpdate(context.Background(), username, "ds", "2", genesis)
+		d.storage.Emoji.ModuleUpdate(username, "ds", "2", genesis)
 	case "ENRICH":
-		d.storage.Emoji.ModuleUpdate(context.Background(), username, "ds", "3", enrich)
+		d.storage.Emoji.ModuleUpdate(username, "ds", "3", enrich)
 	case "barrage":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", barrage)
+		d.storage.Emoji.WeaponUpdate(username, "ds", barrage)
 	case "laser":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", laser)
+		d.storage.Emoji.WeaponUpdate(username, "ds", laser)
 	case "chainray":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", chainray)
+		d.storage.Emoji.WeaponUpdate(username, "ds", chainray)
 	case "battery":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", battery)
+		d.storage.Emoji.WeaponUpdate(username, "ds", battery)
 	case "massbattery":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", massbattery)
+		d.storage.Emoji.WeaponUpdate(username, "ds", massbattery)
 	case "dartlauncher":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", dartlauncher)
+		d.storage.Emoji.WeaponUpdate(username, "ds", dartlauncher)
 	case "rocketlauncher":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", rocketlauncher)
+		d.storage.Emoji.WeaponUpdate(username, "ds", rocketlauncher)
 	case "Remove":
-		d.storage.Emoji.WeaponUpdate(context.Background(), username, "ds", "")
+		d.storage.Emoji.WeaponUpdate(username, "ds", "")
 	}
 }
 

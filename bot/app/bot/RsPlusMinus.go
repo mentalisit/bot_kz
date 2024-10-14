@@ -217,7 +217,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 					if in.Tip == ds {
 						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
 					} else {
-						dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
 					}
 					err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {

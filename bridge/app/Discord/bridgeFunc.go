@@ -18,7 +18,11 @@ func (d *Discord) SendBridgeFunc(text, username string, channelID []string, extr
 		Reply:     reply,
 	}
 
-	mesarray := d.MarshalDataSendBridgeAsync(m)
+	mesarray, err := d.MarshalDataSendBridgeAsync(m)
+	if err != nil {
+		d.log.ErrorErr(err)
+		d.log.InfoStruct("SendBridgeFunc m: ", m)
+	}
 
 	for _, ds := range mesarray {
 		resultChannel <- ds

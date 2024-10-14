@@ -9,7 +9,6 @@ import (
 
 type Transmitter struct {
 	session         *discordgo.Session
-	guild           string
 	title           string
 	autoCreate      bool
 	channelWebhooks map[string]*discordgo.Webhook
@@ -19,10 +18,9 @@ type Transmitter struct {
 
 var ErrWebhookNotFound = errors.New("webhook for this channel and message does not exist")
 
-func New(session *discordgo.Session, guild string, title string, autoCreate bool, log *logger.Logger) *Transmitter {
+func New(session *discordgo.Session, title string, autoCreate bool, log *logger.Logger) *Transmitter {
 	return &Transmitter{
 		session:    session,
-		guild:      guild,
 		title:      title,
 		autoCreate: autoCreate,
 

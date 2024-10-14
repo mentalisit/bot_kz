@@ -62,6 +62,7 @@ func (r *Recover) trySend() {
 					r.rsBot = append(r.rsBot[:i], r.rsBot[i+1:]...)
 					i-- // Сдвигаем индекс назад, чтобы корректно обработать оставшиеся элементы
 				}
+				time.Sleep(1 * time.Second)
 			}
 		}
 
@@ -75,6 +76,7 @@ func (r *Recover) trySend() {
 					r.compendium = append(r.compendium[:i], r.compendium[i+1:]...)
 					i-- // Сдвигаем индекс назад
 				}
+				time.Sleep(1 * time.Second)
 			}
 		}
 
@@ -88,6 +90,7 @@ func (r *Recover) trySend() {
 					r.bridge = append(r.bridge[:i], r.bridge[i+1:]...)
 					i-- // Сдвигаем индекс назад
 				}
+				time.Sleep(1 * time.Second)
 			}
 		}
 

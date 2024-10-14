@@ -188,7 +188,6 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 		if err = rows.Scan(&lvlkz, &lvlkzCount); err != nil {
 			d.log.ErrorErr(err)
 		}
-		fmt.Printf("lvlkz: %s, lvlkz_count: %d\n", lvlkz, lvlkzCount)
 		levels = append(levels, lvlkz)
 	}
 	if err = rows.Err(); err != nil {

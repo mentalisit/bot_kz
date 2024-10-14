@@ -25,7 +25,7 @@ func (c *Hs) updateAvatars() {
 			return
 		}
 		for _, member := range membersRead {
-			url := fmt.Sprintf("http://kz_bot/telegram/GetAvatarUrl?userid=%s", member.UserId)
+			url := fmt.Sprintf("http://telegram/GetAvatarUrl?userid=%s", member.UserId)
 			if guild.Type == "ds" {
 				url = fmt.Sprintf("http://kz_bot/discord/GetAvatarUrl?userid=%s", member.UserId)
 			}

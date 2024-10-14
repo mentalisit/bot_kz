@@ -27,7 +27,9 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
-	pool, err := pgxpool.Connect(context.Background(), dns)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	pool, err := pgxpool.Connect(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		time.Sleep(5 * time.Second)

@@ -1,13 +1,15 @@
 package postgres
 
 import (
-	"context"
 	"telegram/models"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+
 	var tt []models.CorporationConfig
-	results, err := d.db.Query(context.Background(), "SELECT * FROM kzbot.config")
+	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)

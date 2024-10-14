@@ -2,26 +2,31 @@ package postgres
 
 import (
 	"compendium/models"
-	"context"
 	"errors"
 	"github.com/jackc/pgx/v4"
 	"sort"
 )
 
 func (d *Db) WsKillInsert(w models.WsKill) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	insert := `INSERT INTO hs_compendium.wskill(guildid, chatid, username, mention, shipname, timestampend,language) VALUES ($1,$2,$3,$4,$5,$6,$7)`
-	_, err := d.db.Exec(context.Background(), insert, w.GuildId, w.ChatId, w.UserName, w.Mention, w.ShipName, w.TimestampEnd, w.Language)
+	_, err := d.db.Exec(ctx, insert, w.GuildId, w.ChatId, w.UserName, w.Mention, w.ShipName, w.TimestampEnd, w.Language)
 	return err
 }
 func (d *Db) WsKillDelete(w models.WsKill) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	deleteRole := `DELETE FROM hs_compendium.wskill WHERE guildid = $1 AND username = $2 AND shipname = $3`
-	_, err := d.db.Exec(context.Background(), deleteRole, w.GuildId, w.UserName, w.ShipName)
+	_, err := d.db.Exec(ctx, deleteRole, w.GuildId, w.UserName, w.ShipName)
 	return err
 }
 func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	selectWsKill := `SELECT * FROM hs_compendium.wskill WHERE guildid = $1`
 	var wskill []models.WsKill
-	rows, err := d.db.Query(context.Background(), selectWsKill, guildid)
+	rows, err := d.db.Query(ctx, selectWsKill, guildid)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -42,9 +47,11 @@ func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
 }
 
 func (d *Db) WsKillReadAll() ([]models.WsKill, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	selectWsKill := `SELECT * FROM hs_compendium.wskill`
 	var wskill []models.WsKill
-	rows, err := d.db.Query(context.Background(), selectWsKill)
+	rows, err := d.db.Query(ctx, selectWsKill)
 	defer rows.Close()
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

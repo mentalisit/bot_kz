@@ -17,18 +17,16 @@ import (
 
 const nickname = "Для того что бы БОТ мог Вас индентифицировать, создайте уникальный НикНей в настройках. Вы можете использовать a-z, 0-9 и символы подчеркивания. Минимальная длина - 5 символов."
 
-var usernameMap map[string]int
-
 func (t *Telegram) nickName(u *tgbotapi.User, channel string) string {
 	if u.UserName == "" {
-		if usernameMap[u.String()] == 0 {
+		if t.usernameMap[u.String()] == 0 {
 			t.SendChannelDelSecond(channel, nickname, 60)
-			usernameMap[u.String()] = 1
-		} else if usernameMap[u.String()]%5 == 0 {
+			t.usernameMap[u.String()] = 1
+		} else if t.usernameMap[u.String()]%5 == 0 {
 			t.SendChannelDelSecond(channel, nickname, 60)
-			usernameMap[u.String()] += 1
+			t.usernameMap[u.String()] += 1
 		} else {
-			usernameMap[u.String()] += 1
+			t.usernameMap[u.String()] += 1
 		}
 	}
 	return u.String()

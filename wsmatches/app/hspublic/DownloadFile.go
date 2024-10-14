@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"time"
 	"ws/models"
 )
 
@@ -65,7 +66,7 @@ func (h *HS) SaveFile(fileName string, corpsdata any) {
 		h.log.ErrorErr(err)
 		return
 	}
-	fmt.Println("файл сохранен " + path)
+	fmt.Printf("%s файл сохранен %s\n", time.Now().Format(time.DateTime), path)
 }
 func (h *HS) SaveCorpList(corps []models.Match) {
 	corpMap := make(map[string]models.Corporation)
@@ -74,16 +75,16 @@ func (h *HS) SaveCorpList(corps []models.Match) {
 			Name: corp.Corporation1Name,
 			Id:   corp.Corporation1Id,
 		}
-		if corpMap[corp.Corporation1Name] != c {
-			corpMap[corp.Corporation1Name] = c
+		if corpMap[corp.Corporation1Id] != c {
+			corpMap[corp.Corporation1Id] = c
 		}
 
 		c = models.Corporation{
 			Name: corp.Corporation2Name,
 			Id:   corp.Corporation2Id,
 		}
-		if corpMap[corp.Corporation2Name] != c {
-			corpMap[corp.Corporation2Name] = c
+		if corpMap[corp.Corporation2Id] != c {
+			corpMap[corp.Corporation2Id] = c
 		}
 	}
 	h.SaveCorpListCount(corpMap, corps)

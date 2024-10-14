@@ -8,7 +8,9 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/fogleman/gg"
 	"github.com/nfnt/resize"
@@ -132,7 +134,7 @@ func addModulesLevel(dc *gg.Context) {
 	dc.DrawStringAnchored(GetLevel(103), x6, y, 0, 0.5)
 	dc.DrawStringAnchored(GetLevel(102), x7, y, 0, 0.5)
 }
-func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
+func addAvatarsOld(dc *gg.Context, avatarURL string, centerX, centerY int) {
 	// Загружаем изображение аватара
 	response, err := http.Get(avatarURL)
 	if err != nil {
@@ -179,6 +181,79 @@ func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
 	dc.DrawImageAnchored(img, centerX, centerY, 0.5, 0.5)
 
 	return
+}
+func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
+	var img image.Image
+	var imgType string
+	//var err error
+
+	// Если URL начинается с определенного префикса, открываем изображение локально
+	if strings.HasPrefix(avatarURL, "https://compendiumnew.mentalisit.myds.me/compendium/avatars") {
+		// Преобразуем URL в локальный путь
+		localPath := strings.Replace(avatarURL, "https://compendiumnew.mentalisit.myds.me/", "", 1)
+
+		// Открываем локальный файл
+		file, err := os.Open(localPath)
+		if err != nil {
+			fmt.Println("Error opening local avatar:", err)
+			return
+		}
+		defer file.Close()
+
+		// Определяем тип изображения
+		img, imgType, err = image.Decode(file)
+		if err != nil {
+			fmt.Println("Error decoding local avatar:", err)
+			return
+		}
+	} else {
+		// Загружаем изображение по URL
+		response, err := http.Get(avatarURL)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer response.Body.Close()
+
+		// Определяем тип изображения
+		img, imgType, err = image.Decode(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+	// Если это GIF, обрабатываем его иначе
+	if imgType == "gif" {
+		// Открываем изображение повторно для корректной обработки GIF
+		response, err := http.Get(avatarURL)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer response.Body.Close()
+
+		gifImg, err := gif.DecodeAll(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// Используем первый кадр GIF для наложения
+		img = gifImg.Image[0]
+	}
+
+	// Изменяем размер изображения аватара
+	img = resize.Resize(185, 185, img, resize.Lanczos3)
+
+	// Определяем радиус круга
+	radius := 270 / 3
+
+	// Рисуем круг с изображением
+	dc.ResetClip()
+	dc.DrawCircle(float64(centerX), float64(centerY), float64(radius))
+	dc.Clip()
+	dc.DrawImageAnchored(img, centerX, centerY, 0.5, 0.5)
 }
 func imageToBytes(img image.Image) ([]byte, error) {
 	var buf bytes.Buffer

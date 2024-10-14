@@ -2,16 +2,17 @@ package postgres
 
 import (
 	"compendium/models"
-	"context"
 	"encoding/json"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
 
 func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
-	err := d.db.QueryRow(context.Background(), sel, cm.GuildId, cm.UserId).Scan(&count)
+	err := d.db.QueryRow(ctx, sel, cm.GuildId, cm.UserId).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -22,7 +23,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	}
 	if count == 0 {
 		insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-		_, err = d.db.Exec(context.Background(), insert, cm.Name, cm.UserId, cm.GuildId, cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
+		_, err = d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.GuildId, cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
 		if err != nil {
 			return err
 		}
@@ -42,8 +43,10 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	return nil
 }
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(context.Background(), sel, guildid)
+	results, err := d.db.Query(ctx, sel, guildid)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -88,8 +91,10 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 }
 
 func (d *Db) CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
-	results, err := d.db.Query(context.Background(), sel, guildid, userid)
+	results, err := d.db.Query(ctx, sel, guildid, userid)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -127,8 +132,10 @@ func getTimeStrings(offset int) (string, string) {
 	return time12HourFormat, time24HourFormat
 }
 func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set zonaoffset = $1,timezona = $2 where userid = $3 AND guildid = $4`
-	row, err := d.db.Exec(context.Background(), sqlUpd, offset, timeZone, userid, guildid)
+	row, err := d.db.Exec(ctx, sqlUpd, offset, timeZone, userid, guildid)
 	if row.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -136,18 +143,22 @@ func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) er
 }
 
 func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var u models.CorpMember
 	var id int
 	selectUser := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1 "
-	err := d.db.QueryRow(context.Background(), selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &u.Avatar, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
+	err := d.db.QueryRow(ctx, selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &u.Avatar, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
 	if err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set avatarurl = $1 where userid = $2 AND guildid = $3`
-	row, err := d.db.Exec(context.Background(), sqlUpd, avatarurl, userid, guildid)
+	row, err := d.db.Exec(ctx, sqlUpd, avatarurl, userid, guildid)
 	if row.RowsAffected() == 0 {
 		return pgx.ErrNoRows
 	}
@@ -169,8 +180,10 @@ func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
 	return nil
 }
 func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2`
-	_, err := d.db.Exec(context.Background(), deleteMember, guildid, nameId)
+	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId)
 	if err != nil {
 		return err
 	}

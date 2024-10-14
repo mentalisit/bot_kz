@@ -18,7 +18,11 @@ func (d *Discord) DeleteMessageDs(ChatId, MesId string) {
 		MessageId: MesId,
 		Channel:   ChatId,
 	}
-	d.MarshalDataDiscordDel(s)
+	err := d.MarshalDataDiscordDel(s)
+	if err != nil {
+		d.log.ErrorErr(err)
+		d.log.InfoStruct("DeleteMessageDs s: ", s)
+	}
 }
 func (d *Discord) SendChannelDelSecondDs(chatId, text string, second int) {
 	s := models.SendTextDeleteSeconds{
@@ -26,5 +30,9 @@ func (d *Discord) SendChannelDelSecondDs(chatId, text string, second int) {
 		Channel: chatId,
 		Seconds: second,
 	}
-	d.MarshalDataDiscordSendDel(s)
+	err := d.MarshalDataDiscordSendDel(s)
+	if err != nil {
+		d.log.ErrorErr(err)
+		d.log.InfoStruct("SendChannelDelSecondDs s:", s)
+	}
 }

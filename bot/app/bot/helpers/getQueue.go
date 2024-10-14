@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"context"
 	"fmt"
 	"github.com/mentalisit/logger"
 	"kz_bot/models"
@@ -35,6 +34,18 @@ func (h *Helpers) GetQueueDiscord(n map[string]string, u models.Users) map[strin
 	if u.User3.Name != "" {
 		n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(u.User3, ds), u.User3.Timedown, u.User3.Numkzn)
 	}
+	textcount := ""
+	if u.User3.Name != "" {
+		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n3️⃣ %s \n\n",
+			n["name1"], n["name2"], n["name3"])
+	} else if u.User2.Name != "" {
+		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n\n",
+			n["name1"], n["name2"])
+	} else if u.User1.Name != "" {
+		textcount = fmt.Sprintf("\n1️⃣ %s \n\n",
+			n["name1"])
+	}
+	n["textcount"] = textcount
 	return n
 }
 func (h *Helpers) GetQueueTelegram(n map[string]string, u models.Users) (users string) {
@@ -64,7 +75,7 @@ func (h *Helpers) emReadName(s models.Sborkz, tip string) string { // склеи
 	if s.Wamesid != "" {
 		name = s.Wamesid
 	}
-	t := h.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, tip)
+	t := h.storage.Emoji.EmojiModuleReadUsers(name, tip)
 	newName := s.Name
 	if tip == ds {
 		newName = s.Mention
@@ -95,7 +106,7 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		if name == "" {
 			name = in.Username
 		}
-		t := h.storage.Emoji.EmojiModuleReadUsers(context.Background(), name, ds)
+		t := h.storage.Emoji.EmojiModuleReadUsers(name, ds)
 
 		genesis1, enrich1, rsextender1 := 0, 0, 0
 		if name == in.Username {
@@ -121,19 +132,19 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
 
 		if t.Name == "" {
-			h.storage.Emoji.EmInsertEmpty(context.Background(), "ds", name)
+			h.storage.Emoji.EmInsertEmpty("ds", name)
 		}
 		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
 		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
 		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
 		if rsextender != 0 && t.Module1 != one {
-			h.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "1", one)
+			h.storage.Emoji.ModuleUpdate(name, "ds", "1", one)
 		}
 		if genesis != 0 && t.Module2 != two {
-			h.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "2", two)
+			h.storage.Emoji.ModuleUpdate(name, "ds", "2", two)
 		}
 		if enrich != 0 && t.Module3 != three {
-			h.storage.Emoji.ModuleUpdate(context.Background(), name, "ds", "3", three)
+			h.storage.Emoji.ModuleUpdate(name, "ds", "3", three)
 		}
 	}
 }
@@ -150,13 +161,13 @@ func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
 	two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
 	three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
 	if rsextender != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "1", one)
+		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "1", one)
 	}
 	if genesis != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "2", two)
+		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "2", two)
 	}
 	if enrich != 0 {
-		h.storage.Emoji.ModuleUpdate(context.Background(), in.Username, "ds", "3", three)
+		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "3", three)
 	}
 	return " загружено из компендиум бота " + one + two + three
 }
@@ -187,9 +198,9 @@ func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string
 func (h *Helpers) emReadMention(u models.Sborkz, tip string) string { // склеиваем имя и эмоджи
 	t := models.EmodjiUser{}
 	if u.Wamesid != "" {
-		t = h.storage.Emoji.EmojiModuleReadUsers(context.Background(), u.Wamesid, tip)
+		t = h.storage.Emoji.EmojiModuleReadUsers(u.Wamesid, tip)
 	} else {
-		t = h.storage.Emoji.EmojiModuleReadUsers(context.Background(), u.Name, tip)
+		t = h.storage.Emoji.EmojiModuleReadUsers(u.Name, tip)
 	}
 
 	newName := u.Mention

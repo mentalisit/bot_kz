@@ -7,6 +7,7 @@ import (
 )
 
 func (t *TgApi) EditText(channel string, messageID int, text string) {
+	fmt.Printf("   EditText channel %s, messageID %d, text %s\n", channel, messageID, text)
 	ch := utils.WaitForMessage("EditText")
 	defer close(ch)
 	err := t.EditTextParse(channel, strconv.Itoa(messageID), text, "")

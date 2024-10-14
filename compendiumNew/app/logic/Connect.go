@@ -26,6 +26,8 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 		return
 	} else if err != nil {
 		c.log.ErrorErr(err)
+		c.log.InfoStruct("connect error ", err)
+		return
 	}
 	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
 

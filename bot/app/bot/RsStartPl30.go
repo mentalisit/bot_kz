@@ -55,9 +55,8 @@ func (b *Bot) RsStart(in models.InMessage) {
 
 						if in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
-
 						} else {
-							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
 						}
 
 						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
@@ -112,7 +111,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 								go b.client.Ds.SendDmText(text, u.User1.UserId)
 							}
 						} else {
-							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
 						}
 						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 						err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
@@ -162,7 +161,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 						if in.Tip == ds {
 							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
 						} else {
-							dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
 						}
 						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 						err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)

@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"strings"
 )
 
@@ -55,16 +54,20 @@ import (
 //}
 
 func (d *Db) ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	selectUser := "SELECT userid,guildid FROM hs_compendium.list_users WHERE token = $1"
-	err = d.db.QueryRow(context.Background(), selectUser, token).Scan(&userid, &guildid)
+	err = d.db.QueryRow(ctx, selectUser, token).Scan(&userid, &guildid)
 	if err != nil {
 		return "", "", err
 	}
 	return userid, guildid, nil
 }
 func (d *Db) ListUserGetByMatch(ttoken string) string {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	selectUser := "SELECT token FROM hs_compendium.list_users"
-	results, err := d.db.Query(context.Background(), selectUser)
+	results, err := d.db.Query(ctx, selectUser)
 	defer results.Close()
 	if err != nil {
 		return ""
@@ -87,8 +90,10 @@ func (d *Db) ListUserGetByMatch(ttoken string) string {
 	return ""
 }
 func (d *Db) ListUserUpdateToken(tokenOld, tokenNew string) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	upd := `update hs_compendium.list_users set token = $1 where token = $2`
-	_, err := d.db.Exec(context.Background(), upd, tokenNew, tokenOld)
+	_, err := d.db.Exec(ctx, upd, tokenNew, tokenOld)
 	if err != nil {
 		return err
 	}

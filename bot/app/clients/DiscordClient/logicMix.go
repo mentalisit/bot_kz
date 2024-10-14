@@ -1,7 +1,6 @@
 package DiscordClient
 
 import (
-	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/clients/helper"
@@ -62,9 +61,7 @@ func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *di
 			} else if r.Emoji.Name == emMinus {
 				in.Mtext = "-"
 			} else if r.Emoji.Name == emOK || r.Emoji.Name == emCancel || r.Emoji.Name == emRsStart || r.Emoji.Name == emPl30 {
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				defer cancel()
-				in.Lvlkz, err = d.storage.DbFunc.ReadMesIdDS(ctx, r.MessageID)
+				in.Lvlkz, err = d.storage.DbFunc.ReadMesIdDS(r.MessageID)
 				if err == nil && in.Lvlkz != "" {
 					if r.Emoji.Name == emOK {
 						in.Timekz = "30"
@@ -125,12 +122,7 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	//bridge
 	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(m.ChannelID)
 	if ds {
-		mes := models.ToBridgeMessage{
-			ChatId: m.ChannelID,
-			Extra:  []models.FileInfo{},
-			Config: &bridgeConfig,
-		}
-		d.filterNewBridge(m, mes)
+		d.SendToBridge(m, bridgeConfig)
 	}
 }
 
@@ -181,7 +173,6 @@ func (d *Discord) ifMentionBot(m *discordgo.MessageCreate) bool {
 	}
 	return found
 }
-
 func (d *Discord) readReactionTranslate(r *discordgo.MessageReactionAdd, m *discordgo.Message) {
 	user, err := d.S.User(r.UserID)
 	if err != nil {
@@ -207,7 +198,6 @@ func (d *Discord) readReactionTranslate(r *discordgo.MessageReactionAdd, m *disc
 		}
 	}
 }
-
 func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 	g, err := d.S.Guild(m.GuildID)
 	if err != nil {
@@ -253,4 +243,101 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		return
 	}
 
+}
+func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
+	good, config := d.CheckChannelConfigDS(m.ID)
+	in := models.InMessage{
+		Mtext:       m.Content,
+		Tip:         "ds",
+		Username:    m.Author.Username,
+		UserId:      m.Author.ID,
+		NameMention: m.Author.Mention(),
+		Ds: struct {
+			Mesid   string
+			Guildid string
+			Avatar  string
+		}{Mesid: m.ID, Guildid: m.GuildID, Avatar: m.Author.AvatarURL("")},
+
+		Option: models.Option{
+			InClient: true,
+		},
+	}
+	if m.Member != nil && m.Member.Nick != "" {
+		in.NameNick = m.Member.Nick
+	}
+	if good {
+		in.Config = config
+	} else {
+		in.Config = models.CorporationConfig{
+			CorpName:  d.GuildChatName(m.ChannelID, m.GuildID),
+			DsChannel: m.ChannelID,
+			Guildid:   m.GuildID,
+		}
+	}
+	d.ChanRsMessage <- in
+	go func() {
+		time.Sleep(5 * time.Second)
+		d.corpConfigRS = d.storage.CorpConfigRS
+	}()
+	go func() {
+		mes := models.ToBridgeMessage{
+			Text:          m.Content,
+			Sender:        m.Author.Username,
+			Tip:           "ds",
+			Avatar:        m.Author.AvatarURL("128"),
+			ChatId:        m.ChannelID,
+			MesId:         m.ID,
+			GuildId:       m.GuildID,
+			TimestampUnix: m.Timestamp.Unix(),
+			Config: &models.BridgeConfig{
+				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
+			},
+		}
+		err := restapi.SendBridgeApp(mes)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return
+		}
+		go func() {
+			time.Sleep(5 * time.Second)
+			d.storage.ReloadDbArray()
+		}()
+
+	}()
+
+}
+func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.BridgeConfig) {
+	mes := models.ToBridgeMessage{
+		ChatId:        m.ChannelID,
+		Extra:         []models.FileInfo{},
+		Config:        &bridgeConfig,
+		Text:          d.ReplaceTextMessage(m.Content, m.GuildID),
+		Sender:        d.getAuthorName(m),
+		Tip:           "ds",
+		MesId:         m.ID,
+		GuildId:       m.GuildID,
+		TimestampUnix: m.Timestamp.Unix(),
+		Avatar:        m.Author.AvatarURL(""),
+	}
+
+	d.handleDownloadBridge(&mes, m)
+
+	if m.ReferencedMessage != nil {
+		usernameR := m.ReferencedMessage.Author.String()
+		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
+			usernameR = m.ReferencedMessage.Member.Nick
+		}
+		mes.Reply = &models.BridgeMessageReply{
+			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
+			Text:        d.ReplaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+			Avatar:      m.ReferencedMessage.Author.AvatarURL(""),
+			UserName:    usernameR,
+		}
+	}
+	if mes.Text != "" || len(mes.Extra) > 0 {
+		err := restapi.SendBridgeApp(mes)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+	}
 }

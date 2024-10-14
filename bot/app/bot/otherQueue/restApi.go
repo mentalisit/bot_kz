@@ -71,7 +71,7 @@ func GetQueueAll() (t map[string][]models.QueueStruct, err error) {
 	select {
 	case <-done:
 		// Запрос завершился до истечения таймаута
-	case <-time.After(10 * time.Second):
+	case <-time.After(15 * time.Second):
 		// Логируем, если запрос завис
 		err = fmt.Errorf("GetQueueAll завис: %+v\n, %+v\n", err, t)
 	}

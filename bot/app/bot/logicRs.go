@@ -93,20 +93,17 @@ func (b *Bot) lSubs(in models.InMessage) (bb bool) {
 		}
 	}
 
-	readd := regexp.MustCompile(`^(подписать)\s([3-9]|[1][0-2])\s(@\w+)\s([1]|[3])$`)
+	readd := regexp.MustCompile(`^(подписать)\s([3-9]|[1][0-2]|d[7-9]|d1[0-2])\s(@\w+(\s@\w+)*)$`)
 	arradd := (readd.FindAllStringSubmatch(in.Mtext, -1))
 	if len(arradd) > 0 && b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username) {
 		bb = true
-		atoi, err := strconv.Atoi(arradd[0][4])
-		if err != nil {
-			return false
+		splitNames := strings.Split(arradd[0][3], " ")
+		for _, s := range splitNames {
+			in.NameMention = s
+			in.Username = s[1 : len(s)-1]
+			in.Lvlkz = arradd[0][2]
+			go b.Subscribe(in, 1)
 		}
-		a := arradd[0][3]
-		in.NameMention = a
-		in.Username = a[1 : len(a)-1]
-		in.Lvlkz = arradd[0][2]
-		go b.Subscribe(in, atoi)
-
 	}
 
 	switch subs {

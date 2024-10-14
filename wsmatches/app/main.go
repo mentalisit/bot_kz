@@ -24,7 +24,7 @@ func main() {
 	for {
 		now := time.Now()
 
-		if now.Second() == 0 && now.Minute() == 0 {
+		if now.Second() == 0 && (now.Minute() == 0 || now.Minute()%5 == 0) {
 			newContent = hs.GetContentSevenDays()
 			sort.Slice(newContent, func(i, j int) bool {
 				return newContent[i].LastModified < newContent[j].LastModified

@@ -1,10 +1,13 @@
 package server
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
 	"kz_bot/clients"
+	"net/http"
 	"net/http/pprof"
+	"time"
 )
 
 type Server struct {
@@ -21,21 +24,23 @@ func (s *Server) runServer() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
+	r.Use(TimeoutMiddleware(1 * time.Minute))
+
 	// Регистрация обработчика
 	//discord
-	//ds := r.Group("/discord")
-	//{
-	//	ds.POST("/send/bridge", s.discordSendBridge)
-	//	ds.POST("/del", s.discordDel)
-	//	ds.POST("/SendDel", s.discordSendDelSecond)
-	//	ds.POST("/SendText", s.discordSendText)
-	//	ds.POST("/edit", s.discordEditMessage)
-	//	ds.POST("/GetRoles", s.discordGetRoles)
-	//	ds.POST("/CheckRole", s.discordCheckRole)
-	//	ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
-	//	ds.POST("/SendPic", s.discordSendPic)
-	//	ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
-	//}
+	ds := r.Group("/discord")
+	{
+		ds.POST("/send/bridge", s.discordSendBridge)
+		ds.POST("/del", s.discordDel)
+		ds.POST("/SendDel", s.discordSendDelSecond)
+		ds.POST("/SendText", s.discordSendText)
+		ds.POST("/edit", s.discordEditMessage)
+		ds.POST("/GetRoles", s.discordGetRoles)
+		ds.POST("/CheckRole", s.discordCheckRole)
+		ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
+		ds.POST("/SendPic", s.discordSendPic)
+		ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
+	}
 
 	//telegram
 	//tg := r.Group("/telegram")
@@ -78,5 +83,33 @@ func pprofRoutes(router *gin.Engine) {
 		pprofGroup.GET("/heap", gin.WrapH(pprof.Handler("heap")))
 		pprofGroup.GET("/mutex", gin.WrapH(pprof.Handler("mutex")))
 		pprofGroup.GET("/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
+	}
+}
+func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Создаём контекст с тайм-аутом
+		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
+		defer cancel()
+
+		// Обновляем контекст запроса
+		c.Request = c.Request.WithContext(ctx)
+
+		// Канал завершения, который проверяет, завершён ли запрос
+		finished := make(chan struct{})
+		go func() {
+			// Продолжение обработки запроса
+			c.Next()
+			close(finished)
+		}()
+
+		// Проверяем, не истекло ли время
+		select {
+		case <-ctx.Done():
+			c.Writer.WriteHeader(http.StatusGatewayTimeout)
+			c.JSON(http.StatusGatewayTimeout, gin.H{"error": "Request timed out"})
+			c.Abort()
+		case <-finished:
+			// Если запрос завершился до тайм-аута, продолжаем
+		}
 	}
 }

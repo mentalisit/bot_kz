@@ -2,9 +2,20 @@ package bot
 
 import (
 	"fmt"
+	"kz_bot/models"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+)
+
+const (
+	emOK      = "✅"
+	emCancel  = "❎"
+	emRsStart = "🚀"
+	emPl30    = "⌛"
+	emPlus    = "➕"
+	emMinus   = "➖"
 )
 
 func percent(lvl int) int {
@@ -60,4 +71,23 @@ func sortByFirstTwoDigits(input []string) []string {
 
 	// Преобразование кастомного типа обратно в срез строк
 	return ss
+}
+func (b *Bot) getMap(in models.InMessage, numkzl int) map[string]string {
+	var n map[string]string
+	n = make(map[string]string)
+	n["lang"] = in.Config.Country
+	n["title"] = b.getText(in, "rs_queue")
+	if strings.HasPrefix(in.Lvlkz, "d") {
+		n["title"] = b.getText(in, "queue_drs")
+	}
+
+	n["description"] = fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",
+		b.getLanguageText(in.Config.Country, "wishing_to"), in.Lvlkz, numkzl)
+	n["EmbedFieldName"] = fmt.Sprintf(" %s %s\n%s %s\n%s %s",
+		emOK, b.getLanguageText(in.Config.Country, "to_add_to_queue"),
+		emCancel, b.getLanguageText(in.Config.Country, "to_exit_the_queue"),
+		emRsStart, b.getLanguageText(in.Config.Country, "forced_start"))
+	n["EmbedFieldValue"] = b.getLanguageText(in.Config.Country, "data_updated") + ": "
+	n["buttonLevel"] = in.Lvlkz
+	return n
 }

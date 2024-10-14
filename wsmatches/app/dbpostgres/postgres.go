@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
+	"time"
 )
 
 type Db struct {
@@ -15,7 +16,8 @@ type Db struct {
 
 func NewDb(log *logger.Logger) *Db {
 	dns := fmt.Sprintf("postgres://postgres:root@%s/postgres", "postgres:5432")
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	pool, err := pgxpool.Connect(ctx, dns)
 	if err != nil {
@@ -32,4 +34,7 @@ func NewDb(log *logger.Logger) *Db {
 	}
 
 	return d
+}
+func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
 }

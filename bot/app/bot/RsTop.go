@@ -67,7 +67,12 @@ func (b *Bot) Top(in models.InMessage) {
 		mid := b.client.Ds.SendEmbedText(in.Config.DsChannel, message, message2)
 		b.client.Ds.DeleteMesageSecond(in.Config.DsChannel, mid, 600)
 	} else if in.Tip == tg {
-		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, message+message2, 600)
+		text := message + message2
+		if in.Config.Guildid != "" {
+			text = b.client.DS.ReplaceTextMessage(text, in.Config.Guildid)
+		}
+		text = strings.ReplaceAll(text, "@", "")
+		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
 	}
 }
 

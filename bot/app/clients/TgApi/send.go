@@ -53,23 +53,23 @@ func (t *TgApi) ChatTyping(chatId string) {
 	}
 	//fmt.Printf("ChatTyping %+v\n", a)
 }
-func (t *TgApi) SendHelp(chatId, text string, levels []string) int {
+func (t *TgApi) SendHelp(chatId, text string, mIdOld string) string {
 	ch := utils.WaitForMessage("SendHelp")
 	defer close(ch)
 	m := apiRs{
-		FuncApi: funcSendHelp,
-		Text:    text,
-		Channel: chatId,
-		Levels:  levels,
+		FuncApi:   funcSendHelp,
+		Text:      text,
+		Channel:   chatId,
+		MessageId: mIdOld,
 	}
 
 	a, err := convertAndSend(m)
 	if err != nil {
 		t.log.ErrorErr(err)
-		return 0
+		return ""
 	}
 	fmt.Printf("SendHelp %+v\n", a)
-	return a.ArrInt
+	return a.ArrString
 }
 func (t *TgApi) SendEmbed(lvlkz string, chatid string, text string) int {
 	ch := utils.WaitForMessage("SendEmbed")

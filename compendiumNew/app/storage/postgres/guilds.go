@@ -2,10 +2,11 @@ package postgres
 
 import (
 	"compendium/models"
-	"context"
 )
 
 func (d *Db) GuildInsert(u models.Guild) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	count, err := d.GuildGetCountByGuildId(u.ID)
 	if err != nil {
 		return err
@@ -17,7 +18,7 @@ func (d *Db) GuildInsert(u models.Guild) error {
 		}
 	} else {
 		insert := `INSERT INTO hs_compendium.guilds(url,guildid,name,icon,type) VALUES ($1,$2,$3,$4,$5)`
-		_, err = d.db.Exec(context.Background(), insert, u.URL, u.ID, u.Name, u.Icon, u.Type)
+		_, err = d.db.Exec(ctx, insert, u.URL, u.ID, u.Name, u.Icon, u.Type)
 		if err != nil {
 			return err
 		}
@@ -25,35 +26,43 @@ func (d *Db) GuildInsert(u models.Guild) error {
 	return nil
 }
 func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var u models.Guild
 	var id int
 	selectGuild := "SELECT * FROM hs_compendium.guilds WHERE guildid = $1 "
-	err := d.db.QueryRow(context.Background(), selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
+	err := d.db.QueryRow(ctx, selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
 	if err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 func (d *Db) GuildGetCountByGuildId(guildid string) (int, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.guilds WHERE guildid = $1"
-	err := d.db.QueryRow(context.Background(), sel, guildid).Scan(&count)
+	err := d.db.QueryRow(ctx, sel, guildid).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 func (d *Db) GuildUpdate(u models.Guild) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	upd := `update hs_compendium.guilds set url = $1 where guildid = $2`
-	_, err := d.db.Exec(context.Background(), upd, u.URL, u.ID)
+	_, err := d.db.Exec(ctx, upd, u.URL, u.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (d *Db) GuildGetAll() ([]models.Guild, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT * FROM hs_compendium.guilds"
-	results, err := d.db.Query(context.Background(), sel)
+	results, err := d.db.Query(ctx, sel)
 	defer results.Close()
 	if err != nil {
 		return nil, err

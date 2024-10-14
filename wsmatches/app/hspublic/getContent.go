@@ -19,7 +19,7 @@ func (h *HS) GetContentSevenDays() []models.Content {
 		if marker != "" {
 			url = url + "/?&marker=" + marker
 		}
-		fmt.Println("get " + url)
+		//fmt.Println("get " + url)
 		resp, err := http.Get(url)
 		if err != nil {
 			h.log.ErrorErr(err)
@@ -79,7 +79,7 @@ func (h *HS) GetContentAll() []models.Content {
 		if marker != "" {
 			url = url + "/?&marker=" + marker
 		}
-		fmt.Println("get " + url)
+		//fmt.Println("get " + url)
 		resp, err := http.Get(url)
 		if err != nil {
 			h.log.Error(fmt.Sprintln("Ошибка при загрузке XML:", err))

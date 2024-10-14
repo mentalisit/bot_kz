@@ -16,6 +16,7 @@ type Telegram struct {
 	corpConfigRS map[string]models.CorporationConfig
 	Storage      *storage.Storage
 	api          *restapi.Recover
+	usernameMap  map[string]int
 }
 
 func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegram {
@@ -31,6 +32,7 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		corpConfigRS: make(map[string]models.CorporationConfig),
 		Storage:      st,
 		api:          restapi.NewRecover(log),
+		usernameMap:  make(map[string]int),
 	}
 
 	fmt.Println(t.t.Self.UserName)

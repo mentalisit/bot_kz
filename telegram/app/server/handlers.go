@@ -87,7 +87,11 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 	switch m.FuncApi {
 	case funcSend:
 		fmt.Printf("channel %s text %s\n", m.Channel, m.Text)
-		q.ArrString = s.tg.SendChannel(m.Channel, m.Text)
+		q.ArrString, q.ArrError = s.tg.SendChannel(m.Channel, m.Text)
+		q.ArrInt, _ = strconv.Atoi(q.ArrString)
+		if q.ArrError != nil {
+			return http.StatusForbidden, q
+		}
 		fmt.Printf("answer %+v\n", q)
 	case funcDeleteMessage:
 		fmt.Printf("channel %s mid %s\n", m.Channel, m.MessageId)
@@ -119,7 +123,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 		s.tg.ChatTyping(m.Channel)
 		q.ArrBool = true
 	case funcSendHelp:
-		q.ArrInt = s.tg.SendHelp(m.Channel, m.Text, m.Levels)
+		q.ArrString = s.tg.SendHelp(m.Channel, m.Text, m.MessageId)
 	case funcSendEmbed:
 		q.ArrInt = s.tg.SendEmbed(m.LevelRs, m.Channel, m.Text)
 		fmt.Printf("answer embed %+v\n", q)
@@ -162,4 +166,14 @@ func (s *Server) telegramSendBridge(c *gin.Context) {
 	}
 	messageTg := s.tg.SendBridgeFuncRest(m)
 	c.JSON(http.StatusOK, messageTg)
+}
+func (s *Server) telegramGetAvatarUrl(c *gin.Context) {
+	userid := c.Query("userid")
+	if userid == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})
+		return
+	}
+
+	urlAvatar := s.tg.GetAvatarUrl(userid)
+	c.JSON(http.StatusOK, urlAvatar)
 }

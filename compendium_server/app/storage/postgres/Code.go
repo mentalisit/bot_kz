@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"compendium_s/models"
-	"context"
 	"encoding/json"
 )
 
@@ -22,11 +21,13 @@ import (
 //}
 
 func (d *Db) CodeGet(code string) (*models.Code, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var u models.Code
 	var id int
 	var bytes []byte
 	selectCode := "SELECT * FROM hs_compendium.codes WHERE code = $1"
-	err := d.db.QueryRow(context.Background(), selectCode, code).Scan(&id, &u.Code, &u.Timestamp, &bytes)
+	err := d.db.QueryRow(ctx, selectCode, code).Scan(&id, &u.Code, &u.Timestamp, &bytes)
 	if err != nil {
 		return nil, err
 	}

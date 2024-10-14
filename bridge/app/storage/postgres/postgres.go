@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
+	"time"
 )
 
 type Db struct {
@@ -26,7 +27,9 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
-	pool, err := pgxpool.Connect(context.Background(), dns)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelFunc()
+	pool, err := pgxpool.Connect(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
@@ -43,7 +46,9 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	return db
 }
 func (d *Db) createTable() {
-	_, err := d.db.Exec(context.Background(),
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	_, err := d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.bridge_config (
         id SERIAL PRIMARY KEY,
 		name_relay TEXT,
@@ -57,4 +62,7 @@ func (d *Db) createTable() {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+}
+func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
 }

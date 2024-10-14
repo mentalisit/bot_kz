@@ -2,9 +2,11 @@ package restapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"telegram/models"
+	"time"
 )
 
 func SendRsBotApp(m models.InMessage) error {
@@ -13,13 +15,25 @@ func SendRsBotApp(m models.InMessage) error {
 		return err
 	}
 
-	_, err = http.Post("http://kz_bot/inbox", "application/json", bytes.NewBuffer(data))
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	url := "http://kz_bot/inbox"
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.131:802/inbox", "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			return err
-		}
+		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
 	return nil
 }
 

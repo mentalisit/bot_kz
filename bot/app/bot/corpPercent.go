@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"time"
 )
 
 func (b *Bot) SendPercent(Config models.CorporationConfig) {
+	ch := utils.WaitForMessage("SendChannelDelSecond")
+	defer close(ch)
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)

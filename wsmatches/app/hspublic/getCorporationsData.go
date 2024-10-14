@@ -26,6 +26,8 @@ func (h *HS) GetCorporationsData(key string) *models.CorporationsData {
 		return nil
 	}
 
+	fmt.Println(key + " " + string(jsonData))
+
 	// Создаем переменную для хранения данных о корпорациях
 	var data models.CorporationsData
 

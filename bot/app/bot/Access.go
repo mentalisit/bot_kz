@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kz_bot/models"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -51,11 +52,13 @@ func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "tranks_for_activation"), 60)
 
 		if c.DsChannel != "" {
-			c.MesidDsHelp = b.client.Ds.Hhelp1(c.DsChannel, lang)
+			c = b.sendHelpDs(c)
 		}
 		if c.TgChannel != "" {
-			c.TgChannel = b.client.Tg.Help1(c.TgChannel, lang)
+			c = b.sendHelpTg(c)
 		}
+		fmt.Printf("accessAddChannel in %+v \n", in)
+		fmt.Printf("accessAddChannel conf %+v \n", c)
 
 		b.storage.ConfigRs.InsertConfigRs(c)
 		b.configCorp[c.CorpName] = c
@@ -75,6 +78,13 @@ func (b *Bot) accessDelChannel(in models.InMessage, lang string) {
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "you_disabled_bot_functions"), 60)
 		if config.MesidDsHelp != "" {
 			go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
+		}
+		if config.MesidTgHelp != "" {
+			mid, _ := strconv.Atoi(config.MesidTgHelp)
+			if mid != 0 {
+				go b.client.Tg.DelMessage(config.TgChannel, mid)
+			}
+
 		}
 	}
 }
@@ -103,26 +113,17 @@ func (b *Bot) setLang(in models.InMessage) bool {
 	}
 	return false
 }
-func (b *Bot) checkConfig(in models.InMessage) (bool, models.CorporationConfig) {
-	for corpName, config := range b.configCorp {
-		if corpName != "" && corpName == in.Config.CorpName {
-			return true, config
-		} else if config.DsChannel != "" && config.DsChannel == in.Config.DsChannel {
-			return true, config
-		} else if config.TgChannel != "" && config.TgChannel == in.Config.TgChannel {
-			return true, config
-		}
-	}
-	return false, models.CorporationConfig{}
-}
 
 func (b *Bot) updateLanguage(in models.InMessage, langUpdate string, config models.CorporationConfig) {
 	go b.iftipdelete(in)
 	if config.MesidDsHelp != "" {
 		go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
+		//go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
 	}
 	config.Country = langUpdate
-	config.MesidDsHelp = b.client.Ds.Hhelp1(config.DsChannel, langUpdate)
+	//config.MesidDsHelp = b.client.Ds.Hhelp1(config.DsChannel, langUpdate)
+	text := fmt.Sprintf("%s \n\n%s", b.getLanguageText(langUpdate, "info_bot_delete_msg"), b.getLanguageText(langUpdate, "info_help_text"))
+	config.MesidDsHelp = b.client.DS.SendHelp(config.DsChannel, b.getLanguageText(langUpdate, "information"), text, "")
 
 	b.configCorp[config.CorpName] = config
 

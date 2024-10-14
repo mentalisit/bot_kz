@@ -70,10 +70,10 @@ func (b *Bot) loadInbox() {
 	for {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
-		case in := <-b.client.Ds.ChanRsMessage:
+		case in := <-b.client.DS.ChanRsMessage:
 			b.PrepareLogicRs(in)
-			if len(b.client.Ds.ChanRsMessage) > 5 {
-				b.log.Info(fmt.Sprintf("len(b.client.Ds.ChanRsMessage) = %d", len(b.client.Ds.ChanRsMessage)))
+			if len(b.client.DS.ChanRsMessage) > 5 {
+				b.log.Info(fmt.Sprintf("len(b.client.Ds.ChanRsMessage) = %d", len(b.client.DS.ChanRsMessage)))
 			}
 		case in := <-b.client.Tg.ChanRsMessage:
 			b.PrepareLogicRs(in)
@@ -108,8 +108,10 @@ func (b *Bot) PrepareLogicRs(in models.InMessage) {
 	done := make(chan struct{})
 
 	go func() {
+		ch := utils.WaitForMessage("PrepareLogicRs")
 		b.LogicRs(in)
 		close(done)
+		close(ch)
 	}()
 
 	select {
@@ -141,7 +143,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		}
 
 		if conf.DsChannel != "" {
-			b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, conf.Guildid, in.Ds.Avatar)
+			b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, in.Ds.Avatar)
 		}
 		if conf.TgChannel != "" {
 			b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
@@ -152,7 +154,9 @@ func (b *Bot) LogicRs(in models.InMessage) {
 
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
 		utils.PrintGoroutine(b.log)
-		fmt.Printf("LogicRs %s %s %s\n", in.Config.CorpName, in.Username, in.Mtext)
+		ch := utils.WaitForMessage("")
+		close(ch)
+		fmt.Printf("%+v LogicRs %s %s %s\n", time.Now().Format(time.DateTime), in.Config.CorpName, in.Username, in.Mtext)
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
 		} else if b.lSubs(in) {
@@ -178,6 +182,8 @@ func (b *Bot) LogicRs(in models.InMessage) {
 }
 
 func (b *Bot) cleanChat(in models.InMessage) {
+	ch := utils.WaitForMessage("cleanChat")
+	defer close(ch)
 	if in.Tip == ds && in.Config.DelMesComplite == 0 && !in.Option.Edit {
 		go b.client.Ds.CleanChat(in.Config.DsChannel, in.Ds.Mesid, in.Mtext)
 	}
@@ -230,62 +236,4 @@ func (b *Bot) bridge(in models.InMessage) bool {
 		}
 	}
 	return in.Config.Forward
-}
-func (b *Bot) Autohelp() {
-	tm := time.Now()
-	mtime := tm.Format("15:04")
-	EvenOrOdd, _ := strconv.Atoi((tm.Format("2006-01-02"))[8:])
-	if mtime == "12:00" {
-		a := b.storage.ConfigRs.ReadConfigRs()
-		for _, s := range a {
-			if s.DsChannel != "" {
-				s.MesidDsHelp = b.client.Ds.HelpChannelUpdate(s)
-			}
-			if s.Forward && s.TgChannel != "" && EvenOrOdd%2 == 0 {
-				text := fmt.Sprintf("%s \n%s", b.getLanguageText(s.Country, "info_bot_delete_msg"), b.getLanguageText(s.Country, "info_help_text"))
-				if s.MesidTgHelp != "" {
-					mID, _ := strconv.Atoi(s.MesidTgHelp)
-					if mID != 0 {
-						go b.client.Tg.DelMessage(s.TgChannel, mID)
-					}
-				}
-				mid := b.client.Tg.SendHelp(s.TgChannel, strings.Replace(text, "3", "10", 1))
-				s.MesidTgHelp = strconv.Itoa(mid)
-
-			} else if s.TgChannel != "" && !s.Forward {
-				split := strings.Split(s.TgChannel, "/")
-				if split[1] != "0" {
-					text := fmt.Sprintf("%s\n%s ", b.getLanguageText(s.Country, "information"), b.getLanguageText(s.Country, "info_help_text"))
-					if s.MesidTgHelp != "" {
-						mID, _ := strconv.Atoi(s.MesidTgHelp)
-						if mID != 0 {
-							go b.client.Tg.DelMessage(s.TgChannel, mID)
-						}
-					}
-					mid := b.client.Tg.SendHelp(s.TgChannel, text)
-					s.MesidTgHelp = strconv.Itoa(mid)
-				}
-			}
-			b.storage.ConfigRs.UpdateConfigRs(s)
-		}
-		time.Sleep(time.Minute)
-		go b.client.Ds.CleanRsBotOtherMessage()
-	} else if tm.Minute() == 0 {
-		go func() {
-			a := b.storage.ConfigRs.ReadConfigRs()
-			for _, s := range a {
-				if s.DsChannel != "" {
-					MesidDsHelp := b.client.Ds.HelpChannelUpdate(s)
-					if MesidDsHelp != s.MesidDsHelp {
-						s.MesidDsHelp = MesidDsHelp
-						b.storage.ConfigRs.UpdateConfigRs(s)
-					}
-					in := models.InMessage{Config: s}
-					b.QueueAll(in)
-				}
-			}
-		}()
-	}
-	utils.PrintGoroutine(b.log)
-	time.Sleep(time.Minute)
 }

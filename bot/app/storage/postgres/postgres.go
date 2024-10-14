@@ -17,7 +17,9 @@ type Db struct {
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	db, err := postgresLocal.NewClient(context.Background(), log, 5, cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	db, err := postgresLocal.NewClient(ctx, log, 5, cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

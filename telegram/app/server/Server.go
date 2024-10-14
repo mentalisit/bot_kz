@@ -22,6 +22,7 @@ func (s *Server) runServer() {
 	r.POST("/func", s.funcInbox)
 	r.POST("/sendPic", s.telegramSendPic)
 	r.POST("/bridge", s.telegramSendBridge)
+	r.GET("/GetAvatarUrl", s.telegramGetAvatarUrl)
 
 	err := r.Run(":80")
 	if err != nil {

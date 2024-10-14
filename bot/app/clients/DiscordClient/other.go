@@ -100,7 +100,6 @@ func (d *Discord) roleExists(g *discordgo.Guild, nameRoles string) (bool, *disco
 	}
 	return false, nil
 }
-
 func (d *Discord) GuildChatName(chatid, guildid string) string {
 	g, err := d.S.Guild(guildid)
 	if err != nil {
@@ -116,7 +115,6 @@ func (d *Discord) GuildChatName(chatid, guildid string) string {
 	}
 	return chatName
 }
-
 func (d *Discord) createRole(rolPing, guildid string) (*discordgo.Role, error) {
 	t := true
 	perm := int64(37080064)
@@ -232,14 +230,13 @@ func (d *Discord) latinOrNot(m *discordgo.MessageCreate) {
 				//возможно нужно доп условие
 				go func() {
 					text2, _ := gt.Translate(m.Content, "auto", "ru")
-					mes := d.SendWebhook(text2, m.Author.Username, m.ChannelID, m.GuildID, m.Author.AvatarURL("128"))
+					mes := d.SendWebhook(text2, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
 					d.DeleteMesageSecond(m.ChannelID, mes, 90)
 				}()
 			}
 		}
 	}
 }
-
 func (d *Discord) transtale(m *discordgo.Message, lang string, r *discordgo.MessageReactionAdd) {
 	text2, _ := gt.Translate(m.Content, "auto", lang)
 	go func() {
@@ -249,10 +246,9 @@ func (d *Discord) transtale(m *discordgo.Message, lang string, r *discordgo.Mess
 			fmt.Println("Ошибка удаления реакции", err)
 		}
 	}()
-	mes := d.SendWebhook(text2, m.Author.Username, m.ChannelID, m.GuildID, m.Author.AvatarURL("128"))
+	mes := d.SendWebhook(text2, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
 	d.DeleteMesageSecond(m.ChannelID, mes, 90)
 }
-
 func (d *Discord) dmChannel(AuthorID string) (chatidDM string) {
 	create, err := d.S.UserChannelCreate(AuthorID)
 	if err != nil {
@@ -261,7 +257,6 @@ func (d *Discord) dmChannel(AuthorID string) (chatidDM string) {
 	chatidDM = create.ID
 	return chatidDM
 }
-
 func (d *Discord) GetRoles(guildId string) []models.CorpRole {
 	roles, err := d.S.GuildRoles(guildId)
 	if err != nil {
@@ -282,7 +277,6 @@ func (d *Discord) GetRoles(guildId string) []models.CorpRole {
 	}
 	return guildRole
 }
-
 func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	if roleid == "" {
 		return true
@@ -324,7 +318,6 @@ func (d *Discord) GetMembersRoles(guildid string) (mm []models.DsMembersRoles) {
 
 	return mm
 }
-
 func (d *Discord) CleanRsBotOtherMessage() {
 	defer func() {
 		if r := recover(); r != nil {

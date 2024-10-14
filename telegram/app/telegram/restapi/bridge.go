@@ -2,26 +2,39 @@ package restapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"telegram/models"
+	"time"
 )
 
 func SendBridgeApp(m models.ToBridgeMessage) error {
-	fmt.Printf("Send to bridge: %s %s relay %s channel %s lenFile:%d\n", m.Sender, m.Text, m.Config.HostRelay, m.ChatId, len(m.Extra))
 	data, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	_, err = http.Post("http://bridge/bridge/inbox", "application/json", bytes.NewBuffer(data))
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	url := "http://bridge/bridge/inbox"
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		_, err = http.Post("http://192.168.100.131:808/bridge/inbox", "application/json", bytes.NewBuffer(data))
-		if err != nil {
-			return err
-		}
+		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
 	return nil
 }
 

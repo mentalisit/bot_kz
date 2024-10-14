@@ -53,5 +53,5 @@ type GuildRoles interface {
 	GuildRolesSubscribe(guildid, RoleName, userName, userid string) error
 	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
 	GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error
-	GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, error)
+	//GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, error)
 }

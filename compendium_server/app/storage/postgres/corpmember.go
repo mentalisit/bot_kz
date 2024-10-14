@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"compendium_s/models"
-	"context"
 	"time"
 )
 
@@ -40,8 +39,10 @@ import (
 //}
 
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(context.Background(), sel, guildid)
+	results, err := d.db.Query(ctx, sel, guildid)
 	defer results.Close()
 	if err != nil {
 		return nil, err

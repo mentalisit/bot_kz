@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"compendium_s/models"
-	"context"
 )
 
 //func (d *Db) GuildInsert(u models.Guild) error {
@@ -26,10 +25,12 @@ import (
 //}
 
 func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
 	var u models.Guild
 	var id int
 	selectGuild := "SELECT * FROM hs_compendium.guilds WHERE guildid = $1 "
-	err := d.db.QueryRow(context.Background(), selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
+	err := d.db.QueryRow(ctx, selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
 	if err != nil {
 		return nil, err
 	}

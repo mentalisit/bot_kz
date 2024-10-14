@@ -1,10 +1,10 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"kz_bot/bot/helpers"
 	"kz_bot/models"
+	"kz_bot/pkg/utils"
 	"regexp"
 	"strconv"
 	"time"
@@ -117,9 +117,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.iftipdelete(in)
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
-	defer cancel()
-	CountName, err := b.storage.Count.СountName(ctx, in.UserId, in.Lvlkz, in.Config.CorpName)
+	CountName, err := b.storage.Count.СountName(in.UserId, in.Lvlkz, in.Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
 		return
@@ -127,24 +125,24 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 	if CountName == 1 { //проверяем есть ли игрок в очереди
 		b.ifTipSendMentionText(in, b.getText(in, "you_in_queue"))
 	} else {
-		countQueue, err1 := b.storage.Count.CountQueue(ctx, in.Lvlkz, in.Config.CorpName) //проверяем, есть ли кто-то в очереди
+		countQueue, err1 := b.storage.Count.CountQueue(in.Lvlkz, in.Config.CorpName) //проверяем, есть ли кто-то в очереди
 		if err1 != nil {
 			return
 		}
-		numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+		numkzN, err2 := b.storage.Count.CountNumberNameActive1(in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 		if err2 != nil {
 			return
 		}
-		numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
+		numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(in.Lvlkz, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
 		if err3 != nil {
 			return
 		}
 
 		dsmesid := ""
 		tgmesid := 0
-		var n map[string]string
-		n = make(map[string]string)
-		n["lang"] = in.Config.Country
+
+		n := b.getMap(in, numkzL)
+
 		if in.Config.DsChannel != "" {
 			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+in.Lvlkz[1:], in.Config.Guildid)
 			if err != nil {
@@ -175,39 +173,34 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
+					ch := utils.WaitForMessage("RsDarkPlus179")
 					u.User1 = UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
-					//n["name1"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Username, in.NameMention, ds), in.Timekz, numkzN)
-					emb := b.client.Ds.EmbedDS(n, numkzL, 1, true)
 					dsmesid = b.client.Ds.SendComplexContent(in.Config.DsChannel,
 						fmt.Sprintf(b.getText(in, "temp_queue_started"), in.Username, n["lvlkz"]))
 					time.Sleep(1 * time.Second)
-					b.client.Ds.EditComplexButton(dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+					b.client.Ds.EditComplexButton(dsmesid, in.Config.DsChannel, n)
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					//text := fmt.Sprintf("%s%s (%d)\n"+
-					//	"1. %s - %s%s (%d) \n\n"+
-					//	"%s++ - %s",
-					//	b.getText(in, "queue_drs"), in.Lvlkz[1:], numkzL,
-					//	b.emReadName(in, in.Username, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN,
-					//	in.Lvlkz[1:], b.getText(in, "forced_start"))
-
+					ch := utils.WaitForMessage("RsDarkPlus195")
 					u.User1 = UserIn
 					texttg = b.helpers.GetQueueTelegram(ntg, u)
 
-					tgmesid = b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
+					tgmesid = b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
 					b.SubscribePing(in, 1)
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 			go b.ReadQueueLevel(in)
 		}
 
-		u = b.storage.DbFunc.ReadAll(ctx, in.Lvlkz, in.Config.CorpName)
+		u = b.storage.DbFunc.ReadAll(in.Lvlkz, in.Config.CorpName)
 
 		if countQueue == 1 {
 			dsmesid = u.User1.Dsmesid
@@ -215,48 +208,41 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
+					ch := utils.WaitForMessage("RsDarkPlus223")
 					u.User2 = UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
-					//n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", b.emReadName(in, u.User1.Name, u.User1.Mention, ds), u.User1.Timedown, u.User1.Numkzn)
-					//n["name2"] = fmt.Sprintf("%s  🕒  %s  (%d)", b.emReadName(in, in.Username, in.NameMention, ds), in.Timekz, numkzN)
-					emb := b.client.Ds.EmbedDS(n, numkzL, 2, true)
 					text := n["lvlkz"] + fmt.Sprintf(" 2/3 %s %s \n%s", in.Username, b.getText(in, "you_joined_queue"), u.User1.Mention)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
-					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, emb, b.client.Ds.AddButtonsQueue(in.Lvlkz))
+					b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, n)
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					//text1 := fmt.Sprintf("%s%s (%d)\n", b.getText(in, "queue_drs"), in.Lvlkz, numkzL)
-					//name1 := fmt.Sprintf("1. %s - %d%s (%d) \n",
-					//	b.emReadName(in, u.User1.Name, u.User1.Mention, tg), u.User1.Timedown, b.getText(in, "min"), u.User1.Numkzn)
-					//name2 := fmt.Sprintf("2. %s - %s%s (%d) \n",
-					//	b.emReadName(in, in.Username, in.NameMention, tg), in.Timekz, b.getText(in, "min"), numkzN)
-					//text2 := fmt.Sprintf("\n%s++ - %s", in.Lvlkz, b.getText(in, "forced_start"))
-					//text := fmt.Sprintf("%s %s %s %s", text1, name1, name2, text2)
-
+					ch := utils.WaitForMessage("RsDarkPlus239")
 					u.User2 = UserIn
 					texttg = b.helpers.GetQueueTelegram(ntg, u)
 
-					tgmesid = b.client.Tg.SendEmded(in.Lvlkz, in.Config.TgChannel, texttg)
+					tgmesid = b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
-					err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, in.Lvlkz, in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, in.Lvlkz, in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 			go b.ReadQueueLevel(in)
 		}
 		if countQueue < 2 {
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			b.storage.DbFunc.InsertQueue(dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 		}
 
 		if countQueue == 2 {
@@ -275,6 +261,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
+					ch := utils.WaitForMessage("RsDarkPlus287")
 					n1, n2, n3, _ := b.helpers.NameMention(u, ds)
 					go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
@@ -291,7 +278,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						b.getText(in, "go"), textEvent)
 
 					if in.Tip == ds {
-						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
+						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
 						if u.User1.Tip == ds {
 							//go b.sendDmDark(b.getText(in, "go"), u.User1.Mention)
 							go b.client.Ds.SendDmText(b.getText(in, "go"), u.User1.UserId)
@@ -301,21 +288,23 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 							go b.client.Ds.SendDmText(b.getText(in, "go"), u.User2.UserId)
 						}
 					} else {
-						dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
 					}
-					err = b.storage.Update.MesidDsUpdate(ctx, dsmesid, in.Lvlkz, in.Config.CorpName)
+					err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidDsUpdate(context.Background(), dsmesid, in.Lvlkz, in.Config.CorpName)
+						err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
+					ch := utils.WaitForMessage("RsDarkPlus330")
 					n1, n2, n3, _ := b.helpers.NameMention(u, tg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
@@ -330,22 +319,23 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						n1, n2, n3,
 						b.getText(in, "go"), textEvent)
 					tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
-					err = b.storage.Update.MesidTgUpdate(ctx, tgmesid, in.Lvlkz, in.Config.CorpName)
+					err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.MesidTgUpdate(context.Background(), tgmesid, in.Lvlkz, in.Config.CorpName)
+						err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
 					b.wg.Done()
+					close(ch)
 				}()
 			}
 
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(ctx, dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
-			err = b.storage.Update.UpdateCompliteRS(ctx, in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
+			b.storage.DbFunc.InsertQueue(dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+			err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
-				err = b.storage.Update.UpdateCompliteRS(context.Background(), in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
+				err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 				if err != nil {
 					b.log.ErrorErr(err)
 				}
@@ -400,12 +390,11 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 		fmt.Printf("\n\nin RsSoloPlus %+v\n", in)
 	}
 	b.iftipdelete(in)
-	ctx := context.Background()
-	numkzN, err2 := b.storage.Count.CountNumberNameActive1(ctx, in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+	numkzN, err2 := b.storage.Count.CountNumberNameActive1(in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
 	if err2 != nil {
 		return
 	}
-	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(ctx, in.Lvlkz, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
+	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(in.Lvlkz, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
 	if err3 != nil {
 		return
 	}
@@ -423,19 +412,23 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", in.Lvlkz, in.NameMention, b.getText(in, "go"), textEvent)
 	if in.Config.DsChannel != "" {
 		if in.Tip == ds {
-			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Config.Guildid, in.Ds.Avatar)
+			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
 		} else {
-			dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
+			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
+			// dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
 		}
 	}
 	if in.Config.TgChannel != "" {
+		if in.Tip == ds {
+			text = b.client.DS.ReplaceTextMessage(text, in.Config.Guildid)
+		}
 		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
 	}
 
-	b.storage.DbFunc.InsertQueue(ctx, dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
-	err := b.storage.Update.UpdateCompliteSolo(ctx, in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
+	b.storage.DbFunc.InsertQueue(dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
+	err := b.storage.Update.UpdateCompliteSolo(in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
 	if err != nil {
-		err = b.storage.Update.UpdateCompliteSolo(context.Background(), in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
+		err = b.storage.Update.UpdateCompliteSolo(in.Lvlkz, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
 		if err != nil {
 			b.log.ErrorErr(err)
 		}
