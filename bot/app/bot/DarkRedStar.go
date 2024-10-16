@@ -143,12 +143,6 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 		n := b.getMap(in, numkzL)
 
-		if in.Config.DsChannel != "" {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+in.Lvlkz[1:], in.Config.Guildid)
-			if err != nil {
-				b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", in.Config, in.Lvlkz[1:]))
-			}
-		}
 		u := models.Users{}
 		timekz, _ := strconv.Atoi(in.Timekz)
 		UserIn := models.Sborkz{
@@ -405,7 +399,6 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	if numberevent > 0 {
 		numkzL = numkzEvent
 	} else {
-		//todo send not event
 		b.ifTipSendTextDelSecond(in, "event not active ", 30)
 		return
 	}

@@ -39,12 +39,6 @@ func (b *Bot) RsPlus(in models.InMessage) {
 
 		n := b.getMap(in, numkzL)
 
-		if in.Config.DsChannel != "" {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz, in.Config.Guildid)
-			if err != nil {
-				b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", in.Config, in.Lvlkz[1:]))
-			}
-		}
 		var u models.Users
 		timekz, _ := strconv.Atoi(in.Timekz)
 		UserIn := models.Sborkz{
@@ -307,19 +301,25 @@ func (b *Bot) RsMinus(in models.InMessage) {
 			return
 		}
 
+		darkStar, lvlkz := containsSymbolD(in.Lvlkz)
+		var text string
+		if darkStar {
+			text = fmt.Sprintf("%s %s.", b.getText(in, "queue_drs")+lvlkz, b.getText(in, "was_deleted"))
+		} else {
+			text = fmt.Sprintf("%s %s.", b.getText(in, "rs_queue")+lvlkz, b.getText(in, "was_deleted"))
+		}
+
 		if in.Config.DsChannel != "" {
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, fmt.Sprintf("%s %s", in.Username, b.getText(in, "left_queue")), 10)
 			if countQueue == 0 {
-				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
-					fmt.Sprintf("%s%s %s.", b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "was_deleted")), 10)
+				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
 				go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 			}
 		}
 		if in.Config.TgChannel != "" {
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("%s %s", in.Username, b.getText(in, "left_queue")), 10)
 			if countQueue == 0 {
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
-					fmt.Sprintf("%s%s %s.", b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "was_deleted")), 10)
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
 				go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 			}
 		}

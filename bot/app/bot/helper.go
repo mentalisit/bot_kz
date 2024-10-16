@@ -75,6 +75,20 @@ func sortByFirstTwoDigits(input []string) []string {
 func (b *Bot) getMap(in models.InMessage, numkzl int) map[string]string {
 	var n map[string]string
 	n = make(map[string]string)
+
+	if in.Config.DsChannel != "" {
+		darkStar, lvlkz := containsSymbolD(in.Lvlkz)
+		var err error
+		if darkStar {
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+lvlkz, in.Config.Guildid)
+		} else {
+			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz, in.Config.Guildid)
+		}
+		if err != nil {
+			b.log.Info(fmt.Sprintf("RoleToIdPing lvl %s CorpName %s err: %+v", in.Lvlkz, in.Config.CorpName, err))
+		}
+	}
+
 	n["lang"] = in.Config.Country
 	n["title"] = b.getText(in, "rs_queue")
 	if strings.HasPrefix(in.Lvlkz, "d") {
@@ -82,7 +96,7 @@ func (b *Bot) getMap(in models.InMessage, numkzl int) map[string]string {
 	}
 
 	n["description"] = fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",
-		b.getLanguageText(in.Config.Country, "wishing_to"), in.Lvlkz, numkzl)
+		b.getLanguageText(in.Config.Country, "wishing_to"), n["lvlkz"], numkzl)
 	n["EmbedFieldName"] = fmt.Sprintf(" %s %s\n%s %s\n%s %s",
 		emOK, b.getLanguageText(in.Config.Country, "to_add_to_queue"),
 		emCancel, b.getLanguageText(in.Config.Country, "to_exit_the_queue"),

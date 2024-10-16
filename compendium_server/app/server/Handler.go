@@ -11,6 +11,7 @@ import (
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
+	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization")
@@ -43,6 +44,7 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
+	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
@@ -59,6 +61,7 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckCorpDataHandler(c *gin.Context) {
+	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization")
@@ -75,6 +78,7 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 
 }
 func (s *Server) CheckRefreshHandler(c *gin.Context) {
+	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
@@ -94,6 +98,7 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, i)
 }
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
+	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
@@ -162,6 +167,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 //fmt.Println("Requested headers:", requestedHeaders)
 
 func (s *Server) links(c *gin.Context) {
+	s.PrintGoroutine()
 	htmlContent := `
 <!DOCTYPE html>
 <html lang="en">
@@ -222,6 +228,7 @@ func (s *Server) links(c *gin.Context) {
 }
 
 func (s *Server) api(c *gin.Context) {
+	s.PrintGoroutine()
 	token := c.Query("token")
 	if token == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "empty token"})

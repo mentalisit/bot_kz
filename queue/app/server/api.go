@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Server) QueueApi(c *gin.Context) {
+	s.PrintGoroutine()
 	var rawData json.RawMessage
 
 	// Читаем тело запроса как необработанные JSON-данные
@@ -62,6 +63,7 @@ func (s *Server) QueueApi(c *gin.Context) {
 }
 
 func (s *Server) QueueApi2(c *gin.Context) {
+	s.PrintGoroutine()
 	var m interface{}
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)

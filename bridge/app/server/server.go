@@ -5,10 +5,13 @@ import (
 	tg "bridge/Telegram"
 	"bridge/models"
 	"bridge/storage"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 )
 
 type Bridge struct {
@@ -50,6 +53,7 @@ func (b *Bridge) ServerRun() {
 	}
 }
 func (b *Bridge) indoxBridge(c *gin.Context) {
+	b.PrintGoroutine()
 	var mes models.ToBridgeMessage
 
 	if err := c.ShouldBindJSON(&mes); err != nil {
@@ -63,6 +67,7 @@ func (b *Bridge) indoxBridge(c *gin.Context) {
 }
 
 func (b *Bridge) configBridge(c *gin.Context) {
+	b.PrintGoroutine()
 	config := b.storage.DBReadBridgeConfig()
 	c.JSON(http.StatusOK, config)
 }
@@ -72,4 +77,20 @@ type BridgeConfig interface {
 	UpdateBridgeChat(br models.BridgeConfig)
 	InsertBridgeChat(br models.BridgeConfig)
 	DeleteBridgeChat(br models.BridgeConfig)
+}
+
+func (b *Bridge) PrintGoroutine() {
+	goroutine := runtime.NumGoroutine()
+	tm := time.Now()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
+	if goroutine > 120 {
+		b.log.Info(text)
+		b.log.Panic(text)
+	} else if goroutine > 50 && goroutine%10 == 0 {
+		b.log.Info(text)
+	}
+
+	fmt.Println(text)
 }

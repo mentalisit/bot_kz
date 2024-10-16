@@ -38,6 +38,7 @@ type apiRs struct {
 }
 
 func (s *Server) funcInbox(c *gin.Context) {
+	s.PrintGoroutine()
 	var rawData json.RawMessage
 
 	// Читаем тело запроса как необработанные JSON-данные
@@ -139,6 +140,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 }
 
 func (s *Server) telegramSendBridge(c *gin.Context) {
+	s.PrintGoroutine()
 	var m models.BridgeSendToMessenger
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)

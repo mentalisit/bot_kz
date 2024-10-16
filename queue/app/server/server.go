@@ -7,6 +7,8 @@ import (
 	"queue/config"
 	"queue/kzbotdb"
 	"queue/rsbotbd"
+	"runtime"
+	"time"
 )
 
 type Server struct {
@@ -67,4 +69,19 @@ func (s *Server) runServerApi() error {
 		return err
 	}
 	return nil
+}
+func (s *Server) PrintGoroutine() {
+	goroutine := runtime.NumGoroutine()
+	tm := time.Now()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
+	if goroutine > 120 {
+		s.log.Info(text)
+		s.log.Panic(text)
+	} else if goroutine > 50 && goroutine%10 == 0 {
+		s.log.Info(text)
+	}
+
+	fmt.Println(text)
 }

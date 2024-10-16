@@ -61,17 +61,6 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		ntg["min"] = b.getText(in, "min")
 		texttg = b.helpers.GetQueueTelegram(ntg, u)
 	}
-	darkStar, lvlkz := containsSymbolD(in.Lvlkz)
-	if in.Config.DsChannel != "" {
-		if darkStar {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+lvlkz, in.Config.Guildid)
-		} else {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz, in.Config.Guildid)
-		}
-		if err != nil {
-			b.log.Info(fmt.Sprintf("RoleToIdPing %+v lvl %s", in.Config, in.Lvlkz))
-		}
-	}
 
 	fd := func() {
 		//emb := b.client.Ds.EmbedDS(n, numberLvl, count, darkStar)

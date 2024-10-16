@@ -38,6 +38,7 @@ type apiRs struct {
 }
 
 func (s *Server) funcInbox(c *gin.Context) {
+	s.PrintGoroutine()
 	var rawData json.RawMessage
 
 	// Читаем тело запроса как необработанные JSON-данные
@@ -141,6 +142,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 	return http.StatusOK, q
 }
 func (s *Server) telegramSendPic(c *gin.Context) {
+	s.PrintGoroutine()
 	var m models.SendPic
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)
@@ -157,6 +159,7 @@ func (s *Server) telegramSendPic(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Telegram successfully"})
 }
 func (s *Server) telegramSendBridge(c *gin.Context) {
+	s.PrintGoroutine()
 	var m models.BridgeSendToMessenger
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)
@@ -168,6 +171,7 @@ func (s *Server) telegramSendBridge(c *gin.Context) {
 	c.JSON(http.StatusOK, messageTg)
 }
 func (s *Server) telegramGetAvatarUrl(c *gin.Context) {
+	s.PrintGoroutine()
 	userid := c.Query("userid")
 	if userid == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userid must not be empty"})

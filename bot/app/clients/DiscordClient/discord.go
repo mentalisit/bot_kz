@@ -21,6 +21,7 @@ type Discord struct {
 	storage       *storage.Storage
 	bridgeConfig  *map[string]models.BridgeConfig
 	corpConfigRS  map[string]models.CorporationConfig
+	roles         map[string]map[string]string
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
@@ -35,9 +36,9 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		log:           log,
 		storage:       st,
 		ChanRsMessage: make(chan models.InMessage, 10),
-		//ChanBridgeMessage: make(chan models.BridgeMessage, 20),
-		bridgeConfig: &st.BridgeConfigs,
-		corpConfigRS: st.CorpConfigRS,
+		bridgeConfig:  &st.BridgeConfigs,
+		corpConfigRS:  st.CorpConfigRS,
+		roles:         make(map[string]map[string]string),
 	}
 	ds.AddHandler(DS.messageHandler)
 	ds.AddHandler(DS.messageReactionAdd)

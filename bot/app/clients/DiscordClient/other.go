@@ -25,29 +25,32 @@ func (d *Discord) CheckAdmin(nameid string, chatid string) bool {
 	}
 }
 func (d *Discord) RoleToIdPing(rolePing, guildid string) (string, error) {
-
 	if guildid == "" {
 		d.log.Panic("почему то нет гуилд ид")
 	}
+	if d.roles[guildid] == nil {
+		d.roles[guildid] = make(map[string]string)
+	}
+	if d.roles[guildid][rolePing] != "" {
+		return d.roles[guildid][rolePing], nil
+	}
+
 	g, err := d.S.Guild(guildid)
 	if err != nil {
-		ge, err1 := d.S.Guild(guildid)
-		if err1 != nil {
-			d.log.Error(err1.Error())
-			return rolePing, err1
-		}
-		g = ge
+		return rolePing, err
 	}
 	exist, role := d.roleExists(g, rolePing)
 	if !exist {
 		//создаем роль и возврашаем пинг
 		role, err = d.createRole(rolePing, guildid)
 		if err != nil {
-			d.log.ErrorErr(err)
+			d.roles[guildid][rolePing] = rolePing
 			return rolePing, err
 		}
+		d.roles[guildid][rolePing] = role.Mention()
 		return role.Mention(), nil
 	} else {
+		d.roles[guildid][rolePing] = role.Mention()
 		return role.Mention(), nil
 	}
 }

@@ -108,6 +108,8 @@ func containsSymbolD(s string) (dark bool, result string) {
 	}
 	if dark {
 		result = strings.Replace(s, "d", "", -1)
+	} else {
+		result = s
 	}
 
 	return dark, result
