@@ -37,6 +37,9 @@ func (b *Bot) accessChat(in models.InMessage) {
 				return
 			}
 		}
+
+		b.storage.ReloadDbArray()
+		b.configCorp = b.storage.CorpConfigRS
 	}
 }
 func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
@@ -111,6 +114,7 @@ func (b *Bot) setLang(in models.InMessage) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
