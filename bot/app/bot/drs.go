@@ -5,94 +5,12 @@ import (
 	"kz_bot/bot/helpers"
 	"kz_bot/models"
 	"kz_bot/pkg/utils"
-	"regexp"
 	"strconv"
 	"time"
 )
 
 const dark = "d"
 
-func (b *Bot) lDarkRsPlus(in models.InMessage) bool {
-	var kzb string
-	kz := false
-	re := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])(\+)?(\d|\d{2}|\d{3})$`) //три переменные
-	arr := re.FindAllStringSubmatch(in.Mtext, -1)
-	if len(arr) > 0 {
-		kz = true
-		in.Lvlkz = dark + arr[0][1]
-		kzb = arr[0][2]
-		timekzz, err := strconv.Atoi(arr[0][4])
-		if err != nil {
-			b.log.ErrorErr(err)
-			timekzz = 0
-		}
-		if timekzz > 180 {
-			timekzz = 180
-		}
-		if arr[0][3] == "+" {
-			in.NameMention = "$" + in.NameMention
-		}
-		in.Timekz = strconv.Itoa(timekzz)
-	}
-
-	re2 := regexp.MustCompile(`^([7-9]|[1][0-2])([\*]|[-])([\+]|[\?])?([1-5])?$`) // две переменные
-	arr2 := (re2.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr2) > 0 {
-		kz = true
-		in.Lvlkz = dark + arr2[0][1]
-		kzb = arr2[0][2]
-		in.Timekz = "30"
-		if arr2[0][3] == "+" {
-			in.NameMention = "$" + in.NameMention
-		}
-		if arr2[0][3] == "?" && arr2[0][4] != "" {
-			atoi, _ := strconv.Atoi(arr2[0][4])
-			b.darkAlt(in, atoi)
-			return true
-		} else if arr2[0][3] == "?" {
-			b.darkAlt(in, 1)
-			return true
-		}
-	}
-
-	re2d := regexp.MustCompile(`^(d)([7-9]|[1][0-2])([\+]|[-])$`) // две переменные
-	arr2d := (re2d.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr2d) > 0 {
-		kz = true
-		in.Lvlkz = dark + arr2d[0][2]
-		kzb = arr2d[0][3]
-		in.Timekz = "30"
-	}
-
-	//solo
-	re2s := regexp.MustCompile(`^([s]|[S])([7-9]|[1][0-2])(\+)$`) // две переменные
-	arr2s := (re2s.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr2s) > 0 {
-		kz = true
-		in.Lvlkz = "d" + arr2s[0][2]
-		kzbs := arr2s[0][3]
-		in.Timekz = "1"
-		if kzbs == "+" {
-			b.RsSoloPlus(in)
-			return kz
-		}
-	}
-
-	switch kzb {
-	case "*":
-		b.RsDarkPlus(in, "")
-	case "+":
-		b.RsDarkPlus(in, "")
-	case "-":
-		b.RsMinus(in)
-	case "*+":
-		b.RsDarkPlus(in, "")
-
-	default:
-		kz = false
-	}
-	return kz
-}
 func (b *Bot) darkAlt(in models.InMessage, i int) {
 	if in.Tip == ds {
 		alts := helpers.Get2AltsUserId(in.UserId)
@@ -346,37 +264,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 	}
 }
-func (b *Bot) lDarkSubs(in models.InMessage) (bb bool) {
-	bb = false
-	var subs string
-	re3 := regexp.MustCompile(`^([\+]|[-])(d)([7-9]|[1][0-2])$`) // две переменные для добавления или удаления подписок
-	arr3 := (re3.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr3) > 0 {
-		in.Lvlkz = "d" + arr3[0][3]
-		subs = arr3[0][1]
-		bb = true
-	}
 
-	re6 := regexp.MustCompile(`^([\+][\+]|[-][-])(d)([7-9]|[1][0-2])$`) // две переменные
-	arr6 := (re6.FindAllStringSubmatch(in.Mtext, -1))                   // для добавления или удаления подписок 2/3
-	if len(arr6) > 0 {
-		bb = true
-		in.Lvlkz = "d" + arr6[0][3]
-		subs = arr6[0][1]
-	}
-
-	switch subs {
-	case "+":
-		b.Subscribe(in, 1)
-	case "++":
-		b.Subscribe(in, 3)
-	case "-":
-		b.Unsubscribe(in, 1)
-	case "--":
-		b.Unsubscribe(in, 3)
-	}
-	return bb
-}
 func (b *Bot) RsSoloPlus(in models.InMessage) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -431,13 +319,3 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	go b.elseChat([]string{in.UserId})
 
 }
-
-//func (b *Bot) sendDmDark(text, userMention string) {
-//	mentionRegexDs := regexp.MustCompile(`<@(\d+)>`)
-//	match := mentionRegexDs.FindStringSubmatch(userMention)
-//	if len(match) > 1 {
-//		id := match[1]
-//		b.client.Ds.SendDmText(text, id)
-//	}
-//
-//}

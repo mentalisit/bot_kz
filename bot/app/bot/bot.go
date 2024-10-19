@@ -152,10 +152,9 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		return
 	}
 
+	ch := utils.WaitForMessage("LogicRs ")
 	if len(in.Mtext) > 0 && in.Mtext != " `edit`" {
 		utils.PrintGoroutine(b.log)
-		ch := utils.WaitForMessage("")
-		close(ch)
 		fmt.Printf("%+v LogicRs %s %s %s\n", time.Now().Format(time.DateTime), in.Config.CorpName, in.Username, in.Mtext)
 		if b.lRsPlus(in) {
 		} else if b.lDarkRsPlus(in) {
@@ -179,6 +178,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 	} else if in.Option.Update {
 		b.QueueLevel(in)
 	}
+	close(ch)
 }
 
 func (b *Bot) cleanChat(in models.InMessage) {
