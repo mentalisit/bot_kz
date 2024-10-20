@@ -46,10 +46,10 @@ func (t *Telegram) chat(chatid string) (chatId int64, threadID int) {
 	}
 	return chatId, threadID
 }
-func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second int) {
+func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second int) error {
 	id, err := strconv.Atoi(idSendMessage)
 	if err != nil {
-		return
+		return err
 	}
 	if second <= 60 {
 		go func() {
@@ -63,14 +63,12 @@ func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second 
 			Timed:    second,
 		})
 	}
+	return nil
 }
-func (t *Telegram) DelMessage(chatid string, idSendMessage int) bool {
+func (t *Telegram) DelMessage(chatid string, idSendMessage int) error {
 	chatId, _ := t.chat(chatid)
 	_, err := t.t.Request(tgbotapi.DeleteMessageConfig(tgbotapi.NewDeleteMessage(chatId, idSendMessage)))
-	if err != nil {
-		return false
-	}
-	return true
+	return err
 }
 
 func (t *Telegram) getAvatarIsExist(userid int64) string {

@@ -88,7 +88,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 	switch m.FuncApi {
 	case funcSend:
 		fmt.Printf("channel %s text %s\n", m.Channel, m.Text)
-		q.ArrString, q.ArrError = s.tg.SendChannel(m.Channel, m.Text)
+		q.ArrString, q.ArrError = s.tg.SendChannel(m.Channel, m.Text, "")
 		q.ArrInt, _ = strconv.Atoi(q.ArrString)
 		if q.ArrError != nil {
 			return http.StatusForbidden, q
@@ -97,39 +97,40 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 	case funcDeleteMessage:
 		fmt.Printf("channel %s mid %s\n", m.Channel, m.MessageId)
 		id, _ := strconv.Atoi(m.MessageId)
-		q.ArrBool = s.tg.DelMessage(m.Channel, id)
+		q.ArrError = s.tg.DelMessage(m.Channel, id)
+		q.ArrBool = true
 		fmt.Printf("answer %+v\n", q)
 	case funcEditMessage:
 		fmt.Printf("channel %s text %s mid %s parse %s\n", m.Channel, m.Text, m.MessageId, m.ParseMode)
 		mID, _ := strconv.Atoi(m.MessageId)
-		q.ArrError = s.tg.EditTextParseMode(m.Channel, mID, m.Text, m.ParseMode)
+		q.ArrError = s.tg.EditText(m.Channel, mID, m.Text, m.ParseMode)
 		fmt.Printf("answer %+v\n", q)
 	case funcSendDel:
 		fmt.Printf("channel %s text %s second %d\n", m.Channel, m.Text, m.Second)
-		q.ArrBool = s.tg.SendChannelDelSecond(m.Channel, m.Text, m.Second)
+		q.ArrBool, q.ArrError = s.tg.SendChannelDelSecond(m.Channel, m.Text, m.Second)
 		fmt.Printf("answer %+v\n", q)
 	case funcEditMessageTextKey:
 		fmt.Printf("channel %s text %s mid %s levelrs %s\n", m.Channel, m.Text, m.MessageId, m.LevelRs)
 		mID, _ := strconv.Atoi(m.MessageId)
-		s.tg.EditMessageTextKey(m.Channel, mID, m.Text, m.LevelRs)
+		q.ArrError = s.tg.EditMessageTextKey(m.Channel, mID, m.Text, m.LevelRs)
 		q.ArrBool = true
 	case funcDeleteMessageSecond:
 		fmt.Printf("channel %s mid %s second %d\n", m.Channel, m.MessageId, m.Second)
-		s.tg.DelMessageSecond(m.Channel, m.MessageId, m.Second)
+		q.ArrError = s.tg.DelMessageSecond(m.Channel, m.MessageId, m.Second)
 		q.ArrBool = true
 		fmt.Printf("answer %+v\n", q)
 	case funcCheckAdmin:
 		q.ArrBool = s.tg.CheckAdminTg(m.Channel, m.UserName)
 	case funcChatTyping:
-		s.tg.ChatTyping(m.Channel)
+		q.ArrError = s.tg.ChatTyping(m.Channel)
 		q.ArrBool = true
 	case funcSendHelp:
-		q.ArrString = s.tg.SendHelp(m.Channel, m.Text, m.MessageId)
+		q.ArrString, q.ArrError = s.tg.SendHelp(m.Channel, m.Text, m.MessageId)
 	case funcSendEmbed:
-		q.ArrInt = s.tg.SendEmbed(m.LevelRs, m.Channel, m.Text)
+		q.ArrInt, q.ArrError = s.tg.SendEmbed(m.LevelRs, m.Channel, m.Text)
 		fmt.Printf("answer embed %+v\n", q)
 	case funcSendEmbedTime:
-		q.ArrInt = s.tg.SendEmbedTime(m.Channel, m.Text)
+		q.ArrInt, q.ArrError = s.tg.SendEmbedTime(m.Channel, m.Text)
 	case funcGetAvatarUrl:
 		q.ArrString = s.tg.GetAvatarUrl(m.UserName)
 

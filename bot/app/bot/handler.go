@@ -40,10 +40,14 @@ func (b *Bot) updateCompendiumModules(in models.InMessage) {
 }
 func (b *Bot) checkAdmin(in models.InMessage) bool {
 	admin := false
+	var err error
 	if in.Tip == ds {
 		admin = b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel)
 	} else if in.Tip == tg {
-		admin = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+		admin, err = b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+		if err != nil {
+			b.log.ErrorErr(err)
+		}
 	} else if in.Username == "Mentalisit" || in.Username == "mentalisit" {
 		admin = true
 	}

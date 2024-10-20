@@ -19,7 +19,7 @@ type Discord struct {
 	webhook       *transmitter.Transmitter
 	log           *logger.Logger
 	storage       *storage.Storage
-	bridgeConfig  *map[string]models.BridgeConfig
+	bridgeConfig  map[string]models.BridgeConfig
 	corpConfigRS  map[string]models.CorporationConfig
 	roles         map[string]map[string]string
 }
@@ -36,7 +36,7 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		log:           log,
 		storage:       st,
 		ChanRsMessage: make(chan models.InMessage, 10),
-		bridgeConfig:  &st.BridgeConfigs,
+		bridgeConfig:  st.BridgeConfigs,
 		corpConfigRS:  st.CorpConfigRS,
 		roles:         make(map[string]map[string]string),
 	}

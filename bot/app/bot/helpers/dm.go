@@ -15,7 +15,7 @@ type SaveDM struct {
 
 func (h *Helpers) IfMessageDM(in models.InMessage) (dm bool, conf models.CorporationConfig) {
 	if in.Tip == "dsDM" || in.Tip == "tgDM" {
-		h.log.Info(fmt.Sprintf("%s %s: %s", in.Tip, in.Username, in.Mtext))
+		h.log.Info(fmt.Sprintf("%s @%s: %s", in.Tip, in.Username, in.Mtext))
 		dm = true
 	}
 

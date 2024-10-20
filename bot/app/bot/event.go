@@ -34,13 +34,19 @@ func (b *Bot) EventStart(in models.InMessage) {
 			} else {
 				b.client.Ds.Send(in.Config.DsChannel, text)
 			}
-		} else if in.Tip == tg && (in.Username == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)) {
-			b.storage.Event.EventStartInsert(in.Config.CorpName)
-			if in.Config.DsChannel != "" {
-				b.client.Ds.Send(in.Config.DsChannel, text)
-				b.client.Tg.SendChannel(in.Config.TgChannel, text)
-			} else {
-				b.client.Tg.SendChannel(in.Config.TgChannel, text)
+		} else if in.Tip == tg {
+			adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+			if err != nil {
+				b.log.ErrorErr(err)
+			}
+			if adminTg || in.Username == "Mentalisit" {
+				b.storage.Event.EventStartInsert(in.Config.CorpName)
+				if in.Config.DsChannel != "" {
+					b.client.Ds.Send(in.Config.DsChannel, text)
+					b.client.Tg.SendChannel(in.Config.TgChannel, text)
+				} else {
+					b.client.Tg.SendChannel(in.Config.TgChannel, text)
+				}
 			}
 		} else {
 			text = b.getText(in, "info_event_starting")
@@ -60,12 +66,18 @@ func (b *Bot) EventStop(in models.InMessage) {
 		} else {
 			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventNull, 10)
 		}
-	} else if in.Tip == tg && (in.Username == "Mentalisit" || b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)) {
-		if event1 > 0 {
-			b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
-			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventStop, 60)
-		} else {
-			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventNull, 10)
+	} else if in.Tip == tg {
+		adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+		if err != nil {
+			b.log.ErrorErr(err)
+		}
+		if in.Username == "Mentalisit" || adminTg {
+			if event1 > 0 {
+				b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventStop, 60)
+			} else {
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventNull, 10)
+			}
 		}
 	} else {
 		text := b.getText(in, "info_event_starting")

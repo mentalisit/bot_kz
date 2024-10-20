@@ -1,12 +1,11 @@
 package telegram
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strings"
 )
 
-func (t *Telegram) EditMessageTextKey(chatid string, editMesId int, textEdit string, lvlkz string) {
+func (t *Telegram) EditMessageTextKey(chatid string, editMesId int, textEdit string, lvlkz string) error {
 	chatId, _ := t.chat(chatid)
 	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -30,11 +29,9 @@ func (t *Telegram) EditMessageTextKey(chatid string, editMesId int, textEdit str
 	}
 
 	_, err := t.t.Send(mes)
-	if err != nil {
-		fmt.Println("EditMessageTextKey", mes, err)
-	}
+	return err
 }
-func (t *Telegram) EditTextParseMode(chatid string, editMesId int, textEdit, ParseMode string) error {
+func (t *Telegram) EditText(chatid string, editMesId int, textEdit, ParseMode string) error {
 	chatId, _ := t.chat(chatid)
 	msg := tgbotapi.NewEditMessageText(chatId, editMesId, textEdit)
 	if ParseMode != "" {
