@@ -11,13 +11,14 @@ import (
 	"time"
 )
 
-func (t *Telegram) ChatTyping(chatId string) {
+func (t *Telegram) ChatTyping(chatId string) error {
 	chatid, threadID := t.chat(chatId)
 	typingConfig := tgbotapi.NewChatAction(chatid, tgbotapi.ChatTyping)
 	typingConfig.MessageThreadID = threadID
-	_, _ = t.t.Send(typingConfig)
+	_, err := t.t.Send(typingConfig)
+	return err
 }
-func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) bool {
+func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) (bool, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
@@ -25,7 +26,7 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 	if err1 != nil {
 		t.log.ErrorErr(err1)
 		t.log.Info(fmt.Sprintf("chatid '%s', text %s, second %d", chatid, text, second))
-		return false
+		return false, err1
 	}
 	if second <= 60 {
 		go func() {
@@ -41,14 +42,15 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 	}
 
 	if tMessage.MessageID != 0 {
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }
-func (t *Telegram) SendChannel(chatid string, text string) (string, error) {
+func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
+	m.ParseMode = parseMode
 	tMessage, err := t.t.Send(m)
 	if err != nil {
 		t.log.ErrorErr(err)
@@ -179,7 +181,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 	}
 	return "", nil
 }
-func (t *Telegram) SendEmbed(lvlkz string, chatid string, text string) int {
+func (t *Telegram) SendEmbed(lvlkz string, chatid string, text string) (int, error) {
 	chatId, threadID := t.chat(chatid)
 	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -192,12 +194,12 @@ func (t *Telegram) SendEmbed(lvlkz string, chatid string, text string) int {
 	msg := tgbotapi.NewMessage(chatId, text)
 	msg.MessageThreadID = threadID
 	msg.ReplyMarkup = keyboardQueue
-	message, _ := t.t.Send(msg)
+	message, err := t.t.Send(msg)
 
-	return message.MessageID
+	return message.MessageID, err
 
 }
-func (t *Telegram) SendEmbedTime(chatid string, text string) int {
+func (t *Telegram) SendEmbedTime(chatid string, text string) (int, error) {
 	chatId, threadID := t.chat(chatid)
 	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -208,12 +210,12 @@ func (t *Telegram) SendEmbedTime(chatid string, text string) int {
 	msg := tgbotapi.NewMessage(chatId, text)
 	msg.MessageThreadID = threadID
 	msg.ReplyMarkup = keyboardQueue
-	message, _ := t.t.Send(msg)
+	message, err := t.t.Send(msg)
 
-	return message.MessageID
+	return message.MessageID, err
 }
 
-func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) string {
+func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) (string, error) {
 	midHelpTg, err := strconv.Atoi(midHelpTgString)
 	if err != nil {
 		midHelpTg = 0
@@ -227,7 +229,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) 
 	last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
 
 	if last < midHelpTg {
-		return midHelpTgString
+		return midHelpTgString, nil
 	}
 
 	t.DelMessage(chatid, midHelpTg)
@@ -266,11 +268,11 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) 
 	if err != nil {
 		t.log.Info(fmt.Sprintf("ERR chatid %s\n", chatid))
 		t.log.ErrorErr(err)
-		return ""
+		return "", err
 	}
 	mid := strconv.Itoa(message.MessageID)
 
-	return mid
+	return mid, nil
 }
 func escapeMarkdownV2ForHelp(text string) string {
 	var builder strings.Builder
@@ -304,3 +306,82 @@ func escapeMarkdownV2ForHelp(text string) string {
 
 	return builder.String()
 }
+
+func (t *Telegram) SendPoll(m models.Request) string {
+	chatid := m.Data["chatid"]
+	question := m.Data["question"]
+	url := m.Data["url"]
+	createTime := m.Data["createTime"]
+	description := ""
+	for i, option := range m.Options {
+		description += fmt.Sprintf("\n%d. %s", i+1, option)
+	}
+	title := fmt.Sprintf("Опрос от %s: \n\n  %s\n", m.Data["author"], question)
+
+	chatId, ThreadID := t.chat(chatid)
+	text := fmt.Sprintf("%s\n%s\n\n[результат](%s)", title, description, url)
+
+	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2(text))
+
+	msg.MessageThreadID = ThreadID
+	msg.ParseMode = tgbotapi.ModeMarkdownV2
+
+	btt := t.AddButtonPoll(createTime, m.Options)
+	if len(btt) > 0 {
+		var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(btt)
+		msg.ReplyMarkup = keyboardQueue
+	}
+
+	message, err := t.t.Send(msg)
+	if err != nil {
+		t.log.Info(fmt.Sprintf("ERR chatid %s\n", chatid))
+		t.log.ErrorErr(err)
+		return ""
+	}
+	pinConfig := tgbotapi.PinChatMessageConfig{
+		BaseChatMessage: tgbotapi.BaseChatMessage{
+			ChatConfig: tgbotapi.ChatConfig{
+				ChatID: chatId,
+			},
+			MessageID: message.MessageID,
+		},
+	}
+	_, _ = t.t.Send(pinConfig)
+
+	mid := strconv.Itoa(message.MessageID)
+	return mid
+}
+func (t *Telegram) AddButtonPoll(createTime string, option []string) []tgbotapi.InlineKeyboardButton {
+	var btt []tgbotapi.InlineKeyboardButton
+	if len(option) > 0 {
+		if len(option) > 0 && option[0] != "" {
+			bt := tgbotapi.NewInlineKeyboardButtonData(emOne, createTime+".1")
+			btt = append(btt, bt)
+		}
+		if len(option) > 1 && option[1] != "" {
+			bt := tgbotapi.NewInlineKeyboardButtonData(emTwo, createTime+".2")
+			btt = append(btt, bt)
+		}
+		if len(option) > 2 && option[2] != "" {
+			bt := tgbotapi.NewInlineKeyboardButtonData(emTree, createTime+".3")
+			btt = append(btt, bt)
+		}
+		if len(option) > 3 && option[3] != "" {
+			bt := tgbotapi.NewInlineKeyboardButtonData(emFour, createTime+".4")
+			btt = append(btt, bt)
+		}
+		if len(option) > 4 && option[4] != "" {
+			bt := tgbotapi.NewInlineKeyboardButtonData(emFive, createTime+".5")
+			btt = append(btt, bt)
+		}
+	}
+	return btt
+}
+
+const (
+	emOne  = "1️⃣"
+	emTwo  = "2️⃣"
+	emTree = "3️⃣"
+	emFour = "4️⃣"
+	emFive = "5️⃣"
+)

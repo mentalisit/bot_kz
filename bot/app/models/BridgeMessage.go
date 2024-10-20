@@ -14,3 +14,8 @@ type BridgeMessage struct {
 	Reply         *BridgeMessageReply
 	Config        *BridgeConfig
 }
+
+type Request struct {
+	Data    map[string]string `json:"data"`
+	Options []string          `json:"options"`
+}

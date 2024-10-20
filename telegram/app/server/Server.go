@@ -27,6 +27,23 @@ func (s *Server) runServer() {
 	r.POST("/bridge", s.telegramSendBridge)
 	r.GET("/GetAvatarUrl", s.telegramGetAvatarUrl)
 
+	r.POST("/send", s.Send)
+	r.POST("/send_del", s.SendDel)
+	r.POST("/send_help", s.SendHelp)
+	r.POST("/send_embed", s.SendEmbed)
+	r.POST("/send_embed_time", s.SendEmbedTime)
+	r.POST("/chat_typing", s.SendChatTyping)
+
+	r.POST("/edit_message", s.EditMessage)
+	r.POST("/edit_message_text_key", s.EditMessageTextKey)
+
+	r.POST("/delete_message", s.DeleteMessage)
+	r.POST("/delete_message_second", s.DeleteMessageSecond)
+
+	r.POST("/check_admin", s.CheckAdmin)
+	r.POST("/get_avatar_url", s.GetAvatarUrl)
+	r.POST("/send_poll", s.telegramSendPoll)
+
 	err := r.Run(":80")
 	if err != nil {
 		s.log.ErrorErr(err)

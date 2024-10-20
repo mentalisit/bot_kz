@@ -40,6 +40,7 @@ func (s *Server) runServer() {
 		ds.POST("/GetMembersRoles", s.discordGetMembersRoles)
 		ds.POST("/SendPic", s.discordSendPic)
 		ds.GET("/GetAvatarUrl", s.discordGetAvatarUrl)
+		ds.POST("/send_poll", s.discordSendPoll)
 	}
 
 	//telegram

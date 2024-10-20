@@ -455,3 +455,37 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 	}
 	return message
 }
+
+func (d *Discord) SendPoll(m models.Request) string {
+	chatid := m.Data["chatid"]
+	question := m.Data["question"]
+	url := m.Data["url"]
+	createTime := m.Data["createTime"]
+	description := ""
+	for i, option := range m.Options {
+		description += fmt.Sprintf("\n%d. %s", i+1, option)
+	}
+	title := fmt.Sprintf("Опрос от %s: \n  %s", m.Data["author"], question)
+	Emb := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{},
+		Color:  16711680,
+		Title:  title,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:  description,
+				Value: fmt.Sprintf("[результат](%s)", url),
+			},
+		},
+	}
+	fmt.Println("createTime ", createTime)
+	mes, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
+		Components: d.AddButtonPoll(createTime, m.Options),
+		Embed:      Emb,
+	})
+	if err != nil {
+		d.log.ErrorErr(err)
+		return ""
+	}
+
+	return mes.ID
+}

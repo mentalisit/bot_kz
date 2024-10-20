@@ -275,10 +275,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		}
 	}
 	d.ChanRsMessage <- in
-	go func() {
-		time.Sleep(5 * time.Second)
-		d.corpConfigRS = d.storage.CorpConfigRS
-	}()
+
 	go func() {
 		mes := models.ToBridgeMessage{
 			Text:          m.Content,
@@ -289,20 +286,28 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 			MesId:         m.ID,
 			GuildId:       m.GuildID,
 			TimestampUnix: m.Timestamp.Unix(),
-			Config: &models.BridgeConfig{
-				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
-			},
 		}
+		ds, bridgeConfig := d.BridgeCheckChannelConfigDS(m.ChannelID)
+		if ds {
+			mes.Config = &bridgeConfig
+		} else {
+			mes.Config = &models.BridgeConfig{
+				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
+			}
+		}
+
 		err := restapi.SendBridgeApp(mes)
 		if err != nil {
 			d.log.ErrorErr(err)
 			return
 		}
-		go func() {
-			time.Sleep(5 * time.Second)
-			d.storage.ReloadDbArray()
-		}()
+	}()
 
+	go func() {
+		time.Sleep(5 * time.Second)
+		d.storage.ReloadDbArray()
+		d.corpConfigRS = d.storage.CorpConfigRS
+		d.bridgeConfig = d.storage.BridgeConfigs
 	}()
 
 }

@@ -61,3 +61,8 @@ type MessageIds struct {
 	MessageId string
 	ChatId    string
 }
+
+type Request struct {
+	Data    map[string]string `json:"data"`
+	Options []string          `json:"options"`
+}

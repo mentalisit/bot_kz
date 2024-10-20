@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"kz_bot/bot/helpers"
+	"kz_bot/clients/restapi"
 	"kz_bot/models"
 	"strconv"
 	"time"
@@ -160,6 +161,36 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 		if err != nil {
 			d.log.ErrorErr(err)
 			return
+		}
+	}
+
+	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(i.ChannelID)
+	if ds {
+		user := i.Interaction.User
+		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
+			user = i.Interaction.Member.User
+		}
+		in := models.ToBridgeMessage{
+			Text:          ".poll " + i.MessageComponentData().CustomID,
+			Sender:        user.Username,
+			Tip:           "ds",
+			ChatId:        i.Interaction.ChannelID,
+			MesId:         i.Interaction.Message.ID,
+			GuildId:       i.Interaction.GuildID,
+			TimestampUnix: i.Interaction.Message.Timestamp.Unix(),
+			Config:        &bridgeConfig,
+		}
+
+		err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
+		})
+		if err != nil {
+			d.log.ErrorErr(err)
+			return
+		}
+		err = restapi.SendBridgeApp(in)
+		if err != nil {
+			d.log.ErrorErr(err)
 		}
 	}
 }

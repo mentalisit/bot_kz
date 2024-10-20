@@ -1,8 +1,14 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"html/template"
 	"net/http"
+	"os"
+	"strconv"
+	"ws/models"
 )
 
 func (s *Srv) getWsMatches(c *gin.Context) {
@@ -87,4 +93,123 @@ func (s *Srv) docs(c *gin.Context) {
 </html>
 `
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+}
+
+func (s *Srv) poll(c *gin.Context) {
+	const pollTemplate = `
+	<!DOCTYPE html>
+	<html lang="ru">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>{{.Question}}</title>
+		<style>
+			html, body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				font-family: Arial, sans-serif;
+				background-color: #f4f4f4;
+			}
+			.centered-content {
+				width: 100%;
+				max-width: 600px;
+				text-align: center;
+				box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+				background-color: white;
+				padding: 20px;
+				border-radius: 8px;
+			}
+			.question {
+				font-size: 24px;
+				font-weight: bold;
+				margin-bottom: 20px;
+			}
+			ul {
+				list-style-type: none;
+				padding: 0;
+			}
+			li {
+				margin: 10px 0;
+				font-size: 18px;
+			}
+			.votes {
+				color: gray;
+				font-size: 14px;
+			}
+			.user {
+				margin-top: 20px;
+				text-align: left;
+				font-size: 16px;
+			}
+			h3 {
+				font-size: 20px;
+				margin-bottom: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="centered-content">
+			<div class="question">{{.Question}}</div>
+
+			<ul>
+				{{range $index, $option := .Options}}
+				<li>
+					{{$option}} 
+					<span class="votes">Голосов: {{GetVotesCount $.Votes $index}}</span>
+				</li>
+				{{end}}
+			</ul>
+
+			<div class="stats">
+				<h3>Кто проголосовал:</h3>
+				{{range .Votes}}
+				<div class="user">
+					{{.UserName}} - Вариант {{.Answer}} 
+					({{if eq .Type "ds"}}Проголосовал в Discord{{else}}Проголосовал в Telegram{{end}})
+				</div>
+				{{end}}
+			</div>
+		</div>
+	</body>
+	</html>`
+
+	// Указываем функцию для подсчета голосов
+	tmpl := template.Must(template.New("poll").Funcs(template.FuncMap{
+		"GetVotesCount": func(votes []models.Votes, optionIndex int) int {
+			count := 0
+			optionStr := strconv.Itoa(optionIndex + 1) // Преобразуем индекс в строку для сравнения с ответом
+			for _, vote := range votes {
+				if vote.Answer == optionStr {
+					count++
+				}
+			}
+			return count
+		},
+	}).Parse(pollTemplate))
+
+	id := c.Param("id")
+	file, err := os.ReadFile("poll/" + id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, "NotFound "+id)
+		return
+	}
+
+	var p models.PollStruct
+	err = json.Unmarshal(file, &p)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "BadRequest Unmarshal "+id)
+		return
+	}
+	fmt.Printf("%s %s\n", p.Config.HostRelay, p.Question)
+
+	// Рендеринг страницы с данными о голосовании
+	c.Status(http.StatusOK)
+	if err := tmpl.Execute(c.Writer, p); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to render template: " + err.Error()})
+		return
+	}
 }

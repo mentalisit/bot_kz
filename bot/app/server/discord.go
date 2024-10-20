@@ -153,3 +153,15 @@ func (s *Server) discordGetAvatarUrl(c *gin.Context) {
 	urlAvatar := s.cl.DS.GetAvatarUrl(userid)
 	c.JSON(http.StatusOK, urlAvatar)
 }
+
+func (s *Server) discordSendPoll(c *gin.Context) {
+	var m models.Request
+	if err := c.ShouldBindJSON(&m); err != nil {
+		s.log.ErrorErr(err)
+		s.log.InfoStruct("discordSendPoll", c.Request.Body)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, s.cl.DS.SendPoll(m))
+}

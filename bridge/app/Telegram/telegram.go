@@ -169,3 +169,47 @@ type answer struct {
 	ArrError  error     `json:"arrError"`
 	Time      time.Time `json:"time"`
 }
+
+func (t *Telegram) SendPollChannel(m map[string]string, options []string) string {
+	s := models.Request{
+		Data:    m,
+		Options: options,
+	}
+
+	data, err := json.Marshal(s)
+	if err != nil {
+		t.log.ErrorErr(err)
+		return ""
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", "http://telegram/send_poll", bytes.NewBuffer(data))
+	if err != nil {
+		t.log.ErrorErr(err)
+		return ""
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.log.ErrorErr(err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	var a string
+	err = json.NewDecoder(resp.Body).Decode(&a)
+	if err != nil {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.log.ErrorErr(err)
+		t.log.Info(string(body))
+		return ""
+	}
+
+	fmt.Printf("SendPoll %+v\n", a)
+	return a
+}

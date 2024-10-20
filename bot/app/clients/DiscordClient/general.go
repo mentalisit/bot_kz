@@ -8,26 +8,81 @@ import (
 	"time"
 )
 
-//lang ok
+// lang ok
+const (
+	emOne  = "1️⃣"
+	emTwo  = "2️⃣"
+	emTree = "3️⃣"
+	emFour = "4️⃣"
+	emFive = "5️⃣"
+)
 
-//func (d *Discord) AddEnojiRsQueue1(chatid, mesid string) {
-//	err := d.S.MessageReactionAdd(chatid, mesid, emOK)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//	err = d.S.MessageReactionAdd(chatid, mesid, emCancel)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//	err = d.S.MessageReactionAdd(chatid, mesid, emRsStart)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//	err = d.S.MessageReactionAdd(chatid, mesid, emPl30)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//}
+func (d *Discord) AddButtonPoll(createTime string, option []string) []discordgo.MessageComponent {
+	var components []discordgo.MessageComponent
+	if len(option) > 0 {
+		if len(option) > 0 && option[0] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".1",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emOne,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 1 && option[1] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".2",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emTwo,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 2 && option[2] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".3",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emTree,
+				},
+			}
+			components = append(components, button)
+		}
+
+		if len(option) > 3 && option[3] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".4",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emFour,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 4 && option[4] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".5",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emFive,
+				},
+			}
+			components = append(components, button)
+		}
+	}
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: components,
+		},
+	}
+}
 
 func (d *Discord) addButtonsQueue(level string) []discordgo.MessageComponent {
 	// Создание кнопки

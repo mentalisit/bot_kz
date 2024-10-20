@@ -4,6 +4,7 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strconv"
+	"strings"
 	"telegram/models"
 )
 
@@ -34,7 +35,28 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 
 		t.api.SendRsBotAppRecover(in)
 	}
+	tg, bridgeConfig := t.bridgeCheckChannelConfigTg(ChatId)
+	if tg {
+		fmt.Println("cb.Data " + cb.Data)
+		if strings.HasPrefix(cb.Data, "17") {
+			mes := models.ToBridgeMessage{
+				ChatId:        ChatId,
+				Config:        &bridgeConfig,
+				Text:          ".poll " + cb.Data,
+				Tip:           "tg",
+				MesId:         strconv.Itoa(cb.Message.MessageID),
+				GuildId:       strconv.FormatInt(cb.GetInaccessibleMessage().Chat.ID, 10),
+				TimestampUnix: cb.Message.Time().Unix(),
+				Sender:        ReplaceCyrillicToLatin(cb.From.String()),
+			}
+
+			if mes.Text != "" {
+				t.api.SendBridgeAppRecover(mes)
+			}
+		}
+	}
 }
+
 func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 	if m.Text == "/start" {
 		_, err := t.t.Send(tgbotapi.NewMessage(m.From.ID,

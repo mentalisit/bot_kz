@@ -23,6 +23,13 @@ func (b *Bridge) ifTipDelSend(text string) {
 		go b.telegram.DeleteMessage(b.in.ChatId, strconv.Itoa(mid))
 	}
 }
+func (b *Bridge) ifTipSendDel(text string) {
+	if b.in.Tip == "ds" {
+		go b.discord.SendChannelDelSecondDs(b.in.ChatId, text, 10)
+	} else if b.in.Tip == "tg" {
+		go b.telegram.SendChannelDelSecond(b.in.ChatId, text, 10)
+	}
+}
 
 func (b *Bridge) ifChannelTip() {
 	if b.in.Tip == "ds" {
