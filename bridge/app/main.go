@@ -2,6 +2,7 @@ package main
 
 import (
 	"bridge/config"
+	grpc_server "bridge/grpc-server"
 	"bridge/server"
 	"bridge/storage"
 	"github.com/mentalisit/logger"
@@ -13,10 +14,11 @@ import (
 func main() {
 	cfg := config.InitConfig()
 
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "bridge")
 
 	st := storage.NewStorage(log, cfg)
-	server.NewBridge(log, st)
+	b := server.NewBridge(log, st)
+	grpc_server.GrpcMain(b, log)
 
 	log.Info("Service bridge load")
 	//ожидаем сигнала завершения

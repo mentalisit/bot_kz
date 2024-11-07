@@ -3,6 +3,7 @@ package main
 import (
 	"discord/config"
 	DiscordClient "discord/discord"
+	"discord/grpc_server"
 	"discord/server"
 	"discord/storage"
 	"github.com/mentalisit/logger"
@@ -19,6 +20,7 @@ func main() {
 	st := storage.NewStorage(log, cfg)
 
 	ds := DiscordClient.NewDiscord(log, st, cfg)
+	grpc_server.GrpcMain(ds, log)
 
 	server.NewServer(ds, log)
 

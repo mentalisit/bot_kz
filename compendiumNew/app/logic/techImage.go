@@ -4,6 +4,9 @@ import (
 	"compendium/logic/imageGenerator"
 	"compendium/models"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/jackc/pgx/v4"
 	"regexp"
 	"strings"
 )
@@ -13,7 +16,7 @@ func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLe
 	m = make(map[int]models.TechLevel)
 	err := json.Unmarshal(b, &m)
 	if err != nil {
-		c.log.ErrorErr(err)
+		fmt.Println(err)
 		m[701] = models.TechLevel{
 			Ts:    0,
 			Level: 0,
@@ -40,8 +43,10 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	}
 	user, err := c.users.UsersGetByUserId(m.NameId)
 	if err != nil {
-		c.log.ErrorErr(err)
-		c.log.InfoStruct("techImage", m)
+		if !errors.Is(err, pgx.ErrNoRows) {
+			c.log.ErrorErr(err)
+			c.log.InfoStruct("techImage", m)
+		}
 		c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 		return
 	}
@@ -79,7 +84,9 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 			user, err = c.users.UsersGetByUserName(name)
 		}
 		if err != nil {
-			c.log.Info(err.Error())
+			if !errors.Is(err, pgx.ErrNoRows) {
+				c.log.Info(err.Error())
+			}
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return true
 		}
@@ -124,8 +131,14 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 				techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.GuildId)
 			}
 			if userID == "" || techBytes == nil {
-				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-				return true
+				compatible, _ := c.listOfCompatible(&models.Guild{ID: m.GuildId})
+				if compatible != nil {
+					techBytes, userID, _ = c.tech.TechGetName(userName, compatible.ID)
+				}
+				if userID == "" || techBytes == nil {
+					c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
+					return true
+				}
 			}
 		}
 

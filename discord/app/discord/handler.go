@@ -176,7 +176,7 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func (d *Discord) ready() {
-	for _, configrs := range d.corpConfigRS {
+	for _, configrs := range d.storage.Db.ReadConfigRs() {
 		if configrs.DsChannel != "" && configrs.Guildid != "" {
 			//d.removeCommand(configrs.Guildid)
 			commandsModuleWeapon := AddSlashCommandModuleWeaponLocale()

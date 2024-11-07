@@ -5,6 +5,43 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+func (d *Db) ReadTop5Level(corpname string) []string {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	query := `
+        SELECT lvlkz, COUNT(*) AS lvlkz_count
+        FROM kzbot.sborkz
+        WHERE corpname=$1
+          AND date::timestamp >= CURRENT_DATE - INTERVAL '5 days'
+        GROUP BY lvlkz
+        ORDER BY lvlkz_count DESC
+        LIMIT 5;
+    `
+
+	// Выполнение запроса
+	rows, err := d.db.Query(ctx, query, corpname)
+	defer rows.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
+	var levels []string
+
+	// Итерация по результатам запроса
+	for rows.Next() {
+		var lvlkz string
+		var lvlkzCount int
+		if err = rows.Scan(&lvlkz, &lvlkzCount); err != nil {
+			d.log.ErrorErr(err)
+		}
+		levels = append(levels, lvlkz)
+	}
+	if err = rows.Err(); err != nil {
+		d.log.ErrorErr(err)
+	}
+	return levels
+}
+
 func (d *Db) ReadMesIdDS(mesid string) (string, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()

@@ -12,8 +12,6 @@ type ConfigBot struct {
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
-	Mongo     string `yaml:"mongo"`
-	Port      string `yaml:"port"`
 	Postgress struct {
 		Host     string `yaml:"host" env-default:"127.0.0.1:5432"`
 		Name     string `yaml:"name" env-default:"postgres"`
@@ -28,7 +26,7 @@ var once sync.Once
 func InitConfig() *ConfigBot {
 	once.Do(func() {
 		Instance = &ConfigBot{}
-		err := cleanenv.ReadConfig("config.yml", Instance)
+		err := cleanenv.ReadConfig("docker/config/config.yml", Instance)
 		if err != nil {
 			help, _ := cleanenv.GetDescription(Instance, nil)
 			fmt.Println(help)

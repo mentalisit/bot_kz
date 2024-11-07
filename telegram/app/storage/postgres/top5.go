@@ -1,5 +1,7 @@
 package postgres
 
+import "fmt"
+
 func (d *Db) ReadTop5Level(corpname string) []string {
 	ctx, cancel := d.GetContext()
 	defer cancel()
@@ -51,7 +53,7 @@ func (d *Db) ReadTelegramLastMessage(corpname string) int {
 	err := d.db.QueryRow(ctx, query, corpname).Scan(&mid)
 
 	if err != nil {
-		d.log.ErrorErr(err)
+		fmt.Printf("ReadTelegramLastMessage corp:%s err %+v\n", corpname, err)
 		return 0
 	}
 	return mid

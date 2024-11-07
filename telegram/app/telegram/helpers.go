@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -51,16 +50,17 @@ func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second 
 	if err != nil {
 		return err
 	}
-	if second <= 60 {
+	if second <= 30 {
 		go func() {
 			time.Sleep(time.Duration(second) * time.Second)
 			t.DelMessage(chatid, id)
 		}()
 	} else {
+		tu := int(time.Now().UTC().Unix())
 		t.Storage.Db.TimerInsert(models.Timer{
 			Tgmesid:  strconv.Itoa(id),
 			Tgchatid: chatid,
-			Timed:    second,
+			Timed:    tu + second,
 		})
 	}
 	return nil
@@ -117,7 +117,7 @@ func (t *Telegram) SaveAvatarLocalCache(userID, url string) (bool, string) {
 	if url == "" {
 		return false, ""
 	}
-	folder := "compendium/avatars"
+	folder := "docker/compendium/avatars"
 
 	// Создаем HTTP-запрос
 	resp, err := http.Get(url)
@@ -150,8 +150,8 @@ func (t *Telegram) SaveAvatarLocalCache(userID, url string) (bool, string) {
 	// Полный путь к файлу
 	filename := userID + fileExt
 	filePath := filepath.Join(folder, filename)
-	// Используем path.Join для формирования URL
-	newUrl := "https://compendiumnew.mentalisit.myds.me/" + path.Join(folder, filename)
+
+	newUrl := "https://compendiumnew.mentalisit.myds.me/compendium/avatars/" + filename
 
 	// Проверяем, существует ли файл
 	if fileInfo, err := os.Stat(filePath); err == nil {

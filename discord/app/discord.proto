@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+package ds;
+option go_package = "/grpc_server;ds";
+
+service BotService {
+  rpc CleanChat(CleanChatRequest) returns (Empty);
+  rpc CleanRsBotOtherMessage(Empty) returns (Empty);
+  rpc CleanOldMessageChannel(CleanOldMessageChannelRequest) returns (Empty);
+  rpc CheckAdmin(CheckAdminRequest) returns (FlagResponse);
+  rpc CheckRole(CheckRoleRequest) returns (FlagResponse);
+  rpc ChannelTyping(ChannelTypingRequest) returns (Empty);
+  rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
+  rpc DeleteMessageSecond(DeleteMessageSecondRequest) returns (Empty);
+  rpc EditComplexButton(EditComplexButtonRequest) returns (ErrorResponse);
+  rpc EditWebhook(EditWebhookRequest) returns (Empty);
+  rpc EditMessage(EditMessageRequest) returns (Empty);
+  rpc GetAvatarUrl(GetAvatarUrlRequest) returns (TextResponse);
+  rpc GetRoles(GuildRequest) returns (GetRolesResponse);
+  rpc GetMembersRoles(GuildRequest) returns (MembersRolesResponse);
+  rpc QueueSend(QueueSendRequest) returns (Empty);
+  rpc ReplaceTextMessage(ReplaceTextMessageRequest) returns (TextResponse);
+  rpc RoleToIdPing(RoleToIdPingRequest) returns (TextResponse);
+  rpc SendDmText(SendDmTextRequest) returns (Empty);
+  rpc Send(SendRequest) returns (TextResponse);
+  rpc SendBridgeArrayMessages(SendBridgeArrayMessagesRequest) returns (SendBridgeArrayMessagesResponse);
+  rpc SendChannelDelSecond(SendChannelDelSecondRequest) returns (Empty);
+  rpc SendEmbedTime(SendEmbedTimeRequest) returns (TextResponse);
+  rpc SendComplexContent(SendComplexContentRequest) returns (TextResponse);
+  rpc SendComplex(SendComplexRequest) returns (TextResponse);
+  rpc SendEmbedText(SendEmbedTextRequest) returns (TextResponse);
+  rpc SendHelp(SendHelpRequest) returns (TextResponse);
+  rpc SendPoll(SendPollRequest) returns (TextResponse);
+  rpc SendPic(SendPicRequest) returns (ErrorResponse);
+  rpc SendWebhook(SendWebhookRequest) returns (TextResponse);
+  rpc Subscribe(SubscrRequest) returns (IntResponse);
+  rpc Unsubscribe(SubscrRequest) returns (IntResponse);
+}
+
+
+message FileInfo {
+  string name = 1;
+  bytes data = 2;
+  string url = 3;
+  int64 size = 4;
+  string fileID = 5;
+}
+message CorpRole {
+  string id   = 1;
+  string name = 2;
+}
+message MembersRoles {
+  string userid = 1;
+  repeated string RolesId = 2;
+}
+
+
+message BridgeMessageReply {
+  int64 time_message = 1;
+  string text = 2;
+  string avatar = 3;
+  string userName = 4;
+}
+message MessageIds {
+  string message_id = 1;
+  string chat_id = 2;
+}
+message SendBridgeArrayMessagesRequest {
+  string text = 1;
+  string username = 2;
+  repeated string channelID = 3;
+  repeated FileInfo extra = 4;
+  string avatar = 5;
+  BridgeMessageReply reply = 6;
+}
+message SendBridgeArrayMessagesResponse {
+  repeated MessageIds message_ids = 1;
+}
+message MembersRolesResponse {
+  repeated MembersRoles memberroles = 1;
+}
+
+message SendPicRequest {
+  string chatid = 1;
+  string text = 2;
+  bytes imageBytes = 3;
+}
+message CleanChatRequest {
+  string chatid = 1;
+  string mesid = 2;
+  string text = 3;
+}
+
+message CleanOldMessageChannelRequest {
+  string chatId = 1;
+  string lim = 2;
+}
+
+message CheckAdminRequest {
+  string nameid = 1;
+  string chatid = 2;
+}
+message CheckRoleRequest {
+  string guild = 1;
+  string memberid = 2;
+  string roleid = 3;
+}
+message FlagResponse{
+  bool flag = 1;
+}
+
+message ChannelTypingRequest {
+  string ChannelID = 1;
+}
+
+message DeleteMessageRequest {
+  string chatid = 1;
+  string mesid = 2;
+}
+
+message GetAvatarUrlRequest {
+  string userid = 1;
+}
+
+message DeleteMessageSecondRequest {
+  string chatid = 1;
+  string mesid = 2;
+  int32 second = 3;
+}
+
+message EditComplexButtonRequest {
+  string dsmesid = 1;
+  string dschatid = 2;
+  map<string, string> mapEmbed = 3;
+}
+
+message EditWebhookRequest {
+  string text = 1;
+  string username = 2;
+  string chatID = 3;
+  string mID = 4;
+  string avatarURL = 5;
+}
+message EditMessageRequest{
+  string content = 1;
+  string chatID = 2;
+  string mID = 3;
+}
+message GuildRequest {
+  string guild = 1;
+}
+message GetRolesResponse {
+  repeated CorpRole roles = 1;
+}
+
+
+message QueueSendRequest {
+  string text = 1;
+}
+
+message ReplaceTextMessageRequest {
+  string text = 1;
+  string guildid = 2;
+}
+
+message RoleToIdPingRequest {
+  string rolePing = 1;
+  string guildid = 2;
+}
+
+message SendDmTextRequest {
+  string text = 1;
+  string AuthorID = 2;
+}
+
+message SendRequest {
+  string chatid = 1;
+  string text = 2;
+}
+
+message SendChannelDelSecondRequest {
+  string chatid = 1;
+  string text = 2;
+  int32 second = 3;
+}
+
+message SendEmbedTimeRequest {
+  string chatid = 1;
+  string text = 2;
+}
+
+message SendComplexContentRequest {
+  string chatid = 1;
+  string text = 2;
+}
+
+message SendComplexRequest {
+  string chatid = 1;
+  map<string, string> mapEmbeds = 2;
+}
+
+message SendEmbedTextRequest {
+  string chatid = 1;
+  string title = 2;
+  string text = 3;
+}
+
+message SendHelpRequest {
+  string chatid = 1;
+  string title = 2;
+  string description = 3;
+  string oldMidHelps = 4;
+  bool ifUser = 5;
+}
+
+message SendPollRequest {
+  map<string, string> data = 1;
+  repeated string options = 2;
+}
+
+message SendWebhookRequest {
+  string text = 1;
+  string username = 2;
+  string chatid = 3;
+  string Avatar = 4;
+}
+
+message SubscrRequest {
+  string nameid = 1;
+  string argRoles = 2;
+  string guildid = 3;
+}
+
+message ErrorResponse {
+  string error_message = 1;
+}
+
+message TextResponse {
+  string text = 1;
+}
+
+message IntResponse {
+  int32 result = 1;
+}
+
+message Empty {}

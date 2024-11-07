@@ -10,7 +10,7 @@ import (
 func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech map[int][2]int) []byte {
 	user = tech
 	// Открываем изображение
-	im, err := gg.LoadPNG("compendium/original2.png")
+	im, err := gg.LoadPNG("docker/compendium/original2.png")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -19,7 +19,7 @@ func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech ma
 	dc := gg.NewContextForImage(im)
 
 	// Устанавливаем параметры шрифта
-	err = dc.LoadFontFace("compendium/font.ttf", 32)
+	err = dc.LoadFontFace("docker/compendium/font.ttf", 32)
 	if err != nil {
 		fmt.Println(err)
 	}

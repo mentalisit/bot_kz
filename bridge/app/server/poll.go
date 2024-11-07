@@ -31,6 +31,7 @@ func (b *Bridge) ifPoll() {
 					p.Options = append(p.Options, s)
 				}
 			}
+			fmt.Printf("poll %+v\n %+v\n", p, p.Config)
 
 			// Генерация ссылки для результатов
 			p.UrlPoll = fmt.Sprintf("https://ws.mentalisit.myds.me/poll/%d", p.CreateTime)
@@ -62,7 +63,7 @@ func (b *Bridge) ifPoll() {
 				b.log.ErrorErr(err)
 				return
 			}
-			pathFile := fmt.Sprintf("poll/%d", p.CreateTime)
+			pathFile := fmt.Sprintf("docker/poll/%d", p.CreateTime)
 			err = os.WriteFile(pathFile, bytes, 0666)
 			if err != nil {
 				b.log.ErrorErr(err)
@@ -73,7 +74,7 @@ func (b *Bridge) ifPoll() {
 
 		// Обработка выбора ответа
 		split := strings.Split(after, ".")
-		pathFile := strings.Replace(split[0], " ", "poll/", 1)
+		pathFile := strings.Replace(split[0], " ", "docker/poll/", 1)
 		choice := split[1]
 		choiceint, _ := strconv.Atoi(choice)
 

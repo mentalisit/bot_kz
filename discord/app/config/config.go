@@ -7,8 +7,12 @@ import (
 )
 
 type ConfigBot struct {
-	TokenDiscord string `yaml:"token_discord"`
-	Logger       struct {
+	Token struct {
+		TokenDiscord   string `yaml:"token_discord"`
+		TokenTelegram  string `yaml:"token_telegram"`
+		NameDbWhatsapp string `yaml:"name_db_whatsapp"`
+	} `yaml:"token"`
+	Logger struct {
 		Token   string `yaml:"token"`
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
@@ -27,7 +31,7 @@ var once sync.Once
 func InitConfig() *ConfigBot {
 	once.Do(func() {
 		Instance = &ConfigBot{}
-		err := cleanenv.ReadConfig("config.yml", Instance)
+		err := cleanenv.ReadConfig("docker/config/config.yml", Instance)
 		if err != nil {
 			help, _ := cleanenv.GetDescription(Instance, nil)
 			fmt.Println(help)

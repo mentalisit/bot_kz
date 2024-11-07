@@ -1,5 +1,9 @@
 package models
 
+func InboxBridge(text, sender, tip, chatId, mesId, guildId, avatar string, timestamp int64, extra []FileInfo, reply BridgeMessageReply, conf BridgeConfig) {
+
+}
+
 type ToBridgeMessage struct {
 	Text          string              `json:"text"`
 	Sender        string              `json:"sender"`

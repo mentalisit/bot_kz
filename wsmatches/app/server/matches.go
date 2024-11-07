@@ -81,7 +81,7 @@ import (
 //}
 
 func (s *Srv) getMatchesAll(limit, page, filter string) *models.Ws {
-	file, err := os.ReadFile("ws/wsAll.json")
+	file, err := os.ReadFile("docker/ws/wsAll.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return nil

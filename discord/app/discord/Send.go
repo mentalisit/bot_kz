@@ -33,16 +33,17 @@ func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 			d.log.Info(chatid + " " + text)
 			return
 		}
-		if second <= 60 {
+		if second <= 30 {
 			go func() {
 				time.Sleep(time.Duration(second) * time.Second)
 				_ = d.S.ChannelMessageDelete(chatid, message.ID)
 			}()
 		} else {
+			tu := int(time.Now().UTC().Unix())
 			d.storage.Db.TimerInsert(models.Timer{
 				Dsmesid:  message.ID,
 				Dschatid: chatid,
-				Timed:    second,
+				Timed:    tu + second,
 			})
 		}
 	}
@@ -63,11 +64,11 @@ func (d *Discord) SendComplexContent(chatid, text string) (mesId string) { //о�
 	}
 	return mesCompl.ID
 }
-func (d *Discord) SendComplex(chatid string, embeds discordgo.MessageEmbed, component []discordgo.MessageComponent) (mesId string) { //отправка текста комплексного сообщения
+func (d *Discord) SendComplex(chatid string, mapEmbeds map[string]string) (mesId string) { //отправка текста комплексного сообщения
 	mesCompl, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
 		Content:    mesContentNil,
-		Embed:      &embeds,
-		Components: component,
+		Embed:      d.embedDS(mapEmbeds),
+		Components: d.addButtonsQueue(mapEmbeds["buttonLevel"]),
 	})
 	if err != nil {
 		channel, _ := d.S.Channel(chatid)
@@ -75,7 +76,7 @@ func (d *Discord) SendComplex(chatid string, embeds discordgo.MessageEmbed, comp
 		d.log.ErrorErr(err)
 		mesCompl, err = d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
 			Content: mesContentNil,
-			Embed:   &embeds,
+			Embed:   d.embedDS(mapEmbeds),
 		})
 		if err == nil {
 			return mesCompl.ID
@@ -410,6 +411,9 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 				Name:        f.Name,
 				ContentType: contentType,
 			}
+			if f.URL == "" && len(f.Data) == 0 {
+				continue
+			}
 			if len(f.Data) > 0 {
 				file.Reader = bytes.NewReader(f.Data)
 			} else if f.URL != "" {
@@ -447,4 +451,113 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 		}
 	}
 	return message
+}
+
+func (d *Discord) SendPoll(data map[string]string, options []string) string {
+	chatid := data["chatid"]
+	question := data["question"]
+	url := data["url"]
+	createTime := data["createTime"]
+	description := ""
+	for i, option := range options {
+		description += fmt.Sprintf("\n%d. %s", i+1, option)
+	}
+	title := fmt.Sprintf("Опрос от %s: \n  %s", data["author"], question)
+	Emb := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{},
+		Color:  16711680,
+		Title:  title,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:  description,
+				Value: fmt.Sprintf("[результат](%s)", url),
+			},
+		},
+	}
+	fmt.Println("createTime ", createTime)
+	mes, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
+		Components: d.AddButtonPoll(createTime, options),
+		Embed:      Emb,
+	})
+	if err != nil {
+		d.log.ErrorErr(err)
+		return ""
+	}
+
+	return mes.ID
+}
+
+const (
+	emOne  = "1️⃣"
+	emTwo  = "2️⃣"
+	emTree = "3️⃣"
+	emFour = "4️⃣"
+	emFive = "5️⃣"
+)
+
+func (d *Discord) AddButtonPoll(createTime string, option []string) []discordgo.MessageComponent {
+	var components []discordgo.MessageComponent
+	if len(option) > 0 {
+		if len(option) > 0 && option[0] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".1",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emOne,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 1 && option[1] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".2",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emTwo,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 2 && option[2] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".3",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emTree,
+				},
+			}
+			components = append(components, button)
+		}
+
+		if len(option) > 3 && option[3] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".4",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emFour,
+				},
+			}
+			components = append(components, button)
+		}
+		if len(option) > 4 && option[4] != "" {
+			button := discordgo.Button{
+				Style:    discordgo.SecondaryButton,
+				Label:    "",
+				CustomID: createTime + ".5",
+				Emoji: &discordgo.ComponentEmoji{
+					Name: emFive,
+				},
+			}
+			components = append(components, button)
+		}
+	}
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: components,
+		},
+	}
 }

@@ -99,15 +99,6 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		go d.log.Info(m.Member.User.Username + " " + m.Member.User.Locale)
 	}
 
-	if strings.HasPrefix(m.Content, "%") {
-		d.SendToCompendium(m)
-	}
-
-	if strings.HasPrefix(m.Content, ".") {
-		d.ifPrefixPoint(m)
-		return
-	}
-
 	//filter Rs
 	ok, config := d.CheckChannelConfigDS(m.ChannelID)
 	if ok {
@@ -120,6 +111,16 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	if ds {
 		d.SendToBridge(m, bridgeConfig)
 	}
+
+	if strings.HasPrefix(m.Content, "%") {
+		d.SendToCompendium(m)
+	}
+
+	if strings.HasPrefix(m.Content, ".") {
+		d.ifPrefixPoint(m)
+		return
+	}
+
 }
 func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.CorporationConfig) {
 	if len(m.Attachments) > 0 {
@@ -273,13 +274,16 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 			MesId:         m.ID,
 			GuildId:       m.GuildID,
 			TimestampUnix: m.Timestamp.Unix(),
-			Config: &models.BridgeConfig{
+		}
+		ds, bridgeConfig := d.BridgeCheckChannelConfigDS(m.ChannelID)
+		if ds {
+			mes.Config = &bridgeConfig
+		} else {
+			mes.Config = &models.BridgeConfig{
 				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
-			},
+			}
 		}
 		d.api.SendBridgeAppRecover(mes)
-		go d.loadConfig()
-
 	}()
 
 }
@@ -288,7 +292,7 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 		ChatId:        m.ChannelID,
 		Extra:         []models.FileInfo{},
 		Config:        &bridgeConfig,
-		Text:          d.replaceTextMessage(m.Content, m.GuildID),
+		Text:          d.ReplaceTextMessage(m.Content, m.GuildID),
 		Sender:        d.getAuthorName(m),
 		Tip:           "ds",
 		MesId:         m.ID,
@@ -306,7 +310,7 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 		}
 		mes.Reply = &models.BridgeMessageReply{
 			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
-			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+			Text:        d.ReplaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
 			Avatar:      m.ReferencedMessage.Author.AvatarURL(""),
 			UserName:    usernameR,
 		}

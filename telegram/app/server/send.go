@@ -62,10 +62,14 @@ func (s *Server) SendHelp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	ifUser := false
+	if m.Second == 1 {
+		ifUser = true
+	}
 
 	a := answer{Time: time.Now()}
 
-	a.ArrString, a.ArrError = s.tg.SendHelp(m.Channel, m.Text, m.MessageId)
+	a.ArrString, a.ArrError = s.tg.SendHelp(m.Channel, m.Text, m.MessageId, ifUser)
 	if a.ArrError != nil {
 		s.log.ErrorErr(a.ArrError)
 		s.log.InfoStruct("apiRs", m)

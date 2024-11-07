@@ -16,6 +16,6 @@ FROM alpine:3.20 AS runner
 
 RUN apk add --no-cache tzdata
 ENV TZ=America/Winnipeg
-COPY config.yml /config.yml
+#COPY config.yml /config.yml
 COPY --from=builder /usr/local/src/bin/app /
 CMD ["/app"]

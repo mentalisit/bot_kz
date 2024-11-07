@@ -11,7 +11,7 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "queue")
 
 	server.NewServer(log, cfg)
 

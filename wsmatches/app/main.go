@@ -13,10 +13,10 @@ var log *logger.Logger
 
 func main() {
 	cfg := config.InitConfig()
-	log = logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log = logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "WS")
 	hs := hspublic.NewHS(log)
 
-	go server.NewSrv(log, cfg.Port)
+	go server.NewSrv(log)
 
 	newContent := hs.GetContentAll()
 	hs.DownloadFile("wsAll", newContent)

@@ -12,10 +12,10 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "CompendiumS")
 	st := storage.NewStorage(log, cfg)
 
-	server.NewServer(log, cfg, st)
+	server.NewServer(log, st)
 
 	log.Info("Service compendium server load")
 	//ожидаем сигнала завершения

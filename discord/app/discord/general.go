@@ -80,11 +80,12 @@ func (d *Discord) DeleteMessage(chatid, mesid string) {
 	_ = d.S.ChannelMessageDelete(chatid, mesid)
 }
 func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
-	if second > 60 {
+	if second > 30 {
+		tu := int(time.Now().UTC().Unix())
 		d.storage.Db.TimerInsert(models.Timer{
 			Dsmesid:  mesid,
 			Dschatid: chatid,
-			Timed:    second,
+			Timed:    tu + second,
 		})
 	} else {
 		go func() {
@@ -111,19 +112,95 @@ func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
 //	}
 var mesContentNil string
 
-func (d *Discord) EditComplexButton(dsmesid, dschatid string, Embeds discordgo.MessageEmbed, component []discordgo.MessageComponent) error {
+func (d *Discord) EditComplexButton(dsmesid, dschatid string, mapEmbed map[string]string) error {
+	components := d.addButtonsQueue(mapEmbed["buttonLevel"])
+	embed := d.embedDS(mapEmbed)
 	_, err := d.S.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Content:    &mesContentNil,
-		Embed:      &Embeds,
+		Embed:      embed,
 		ID:         dsmesid,
 		Channel:    dschatid,
-		Components: &component,
+		Components: &components,
 	})
 	if err != nil {
+		messages, _ := d.S.ChannelMessages(dschatid, 20, "", "", "")
+		for i, message := range messages {
+			if message.Author.String() == "Rs_bot#9945" {
+				fmt.Printf("1test%d message.Author.Username==\"Rs_bot#9945\"  %+v\n", i, message)
+				if len(message.Embeds) > 0 && message.Embeds[0].Title == "Очередь ТКЗ" {
+					d.DeleteMessage(message.ChannelID, message.ID)
+				} else if len(message.Embeds) == 0 {
+					d.DeleteMessage(message.ChannelID, message.ID)
+				}
+			}
+		}
 		return err
 	}
 	return nil
 }
+func (d *Discord) addButtonsQueue(level string) []discordgo.MessageComponent {
+	// Создание кнопки
+	buttonOk := discordgo.Button{
+		Style:    discordgo.SecondaryButton,
+		Label:    level + "+",
+		CustomID: level + "+",
+		Emoji: &discordgo.ComponentEmoji{
+			Name: emOK,
+		},
+	}
+	buttonCancel := discordgo.Button{
+		Style:    discordgo.SecondaryButton,
+		Label:    level + "-",
+		CustomID: level + "-",
+		Emoji: &discordgo.ComponentEmoji{
+			Name: emCancel,
+		},
+	}
+	buttonRsStart := discordgo.Button{
+		Style:    discordgo.SecondaryButton,
+		Label:    level + "++",
+		CustomID: level + "++",
+		Emoji: &discordgo.ComponentEmoji{
+			Name: emRsStart,
+		},
+	}
+	buttonPl30 := discordgo.Button{
+		Style:    discordgo.SecondaryButton,
+		Label:    "+30",
+		CustomID: level + "+++",
+		Emoji: &discordgo.ComponentEmoji{
+			Name: emPl30,
+		},
+	}
+
+	// Создание компонентов с кнопкой
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				buttonOk,
+				buttonCancel,
+				buttonRsStart,
+				buttonPl30,
+			},
+		},
+	}
+}
+func (d *Discord) embedDS(mapa map[string]string) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       16711680,
+		Description: mapa["description"] + mapa["textcount"],
+
+		Fields: []*discordgo.MessageEmbedField{{
+			Name:   mapa["EmbedFieldName"],
+			Value:  mapa["EmbedFieldValue"],
+			Inline: true,
+		}},
+		Timestamp: time.Now().Format(time.RFC3339), // ТЕКУЩЕЕ ВРЕМЯ ДИСКОРДА
+		Title:     mapa["title"],
+	}
+}
+
 func (d *Discord) Subscribe(nameid, argRoles, guildid string) int {
 	g, err := d.S.State.Guild(guildid)
 	if err != nil {

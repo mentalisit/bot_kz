@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v4 v4.18.2
-	github.com/mentalisit/logger v0.0.0-20240221024243-6f28067f593e
+	github.com/mentalisit/logger v0.0.0-20241029021019-213e4e0eb688
 	github.com/redis/go-redis/v9 v9.6.1
 )
 

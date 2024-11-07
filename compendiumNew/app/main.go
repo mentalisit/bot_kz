@@ -13,7 +13,7 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "CompendiumLogic")
 	st := storage.NewStorage(log, cfg)
 
 	s := server.NewServer(log, st)

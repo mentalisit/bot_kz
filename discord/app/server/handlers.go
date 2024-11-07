@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -95,35 +94,25 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 		q.ArrBool = true
 		s.ds.DeleteMessage(m.Channel, m.MessageId)
 		fmt.Printf("answer %+v\n", q)
-	case funcEditMessage:
-		fmt.Printf("channel %s text %s mid %s parse %s\n", m.Channel, m.Text, m.MessageId, m.ParseMode)
-		mID, _ := strconv.Atoi(m.MessageId)
-		q.ArrError = s.ds.EditTextParseMode(m.Channel, mID, m.Text, m.ParseMode)
-		fmt.Printf("answer %+v\n", q)
 	case funcSendDel:
 		fmt.Printf("channel %s text %s second %d\n", m.Channel, m.Text, m.Second)
 		q.ArrBool = true
 		s.ds.SendChannelDelSecond(m.Channel, m.Text, m.Second)
 		fmt.Printf("answer %+v\n", q)
-	case funcEditMessageTextKey:
-		fmt.Printf("channel %s text %s mid %s levelrs %s\n", m.Channel, m.Text, m.MessageId, m.LevelRs)
-		mID, _ := strconv.Atoi(m.MessageId)
-		s.ds.EditMessageTextKey(m.Channel, mID, m.Text, m.LevelRs)
-		q.ArrBool = true
 	case funcDeleteMessageSecond:
 		fmt.Printf("channel %s mid %s second %d\n", m.Channel, m.MessageId, m.Second)
 		s.ds.DeleteMesageSecond(m.Channel, m.MessageId, m.Second)
 		q.ArrBool = true
 		fmt.Printf("answer %+v\n", q)
 	case funcCheckAdmin:
-		q.ArrBool = s.ds.CheckAdmin(m.UserId, m.Channel)
+		//q.ArrBool = s.ds.CheckAdmin(m.UserId, m.Channel)
 	case funcChatTyping:
 		s.ds.ChannelTyping(m.Channel)
 		q.ArrBool = true
 	case funcSendHelp:
-		q.ArrString = s.ds.SendHelp(m.Channel, m.ParseMode, m.Text, m.Levels)
+		//q.ArrString = s.ds.SendHelp(m.Channel, m.ParseMode, m.Text, m.Levels)
 	case funcSendEmbed:
-		q.ArrInt = s.ds.SendEmbed(m.LevelRs, m.Channel, m.Text)
+		//q.ArrInt = s.ds.SendEmbed(m.LevelRs, m.Channel, m.Text)
 		fmt.Printf("answer embed %+v\n", q)
 	case funcSendEmbedTime:
 		q.ArrString = s.ds.SendEmbedTime(m.Channel, m.Text)

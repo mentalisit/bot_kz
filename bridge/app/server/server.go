@@ -19,8 +19,8 @@ type Bridge struct {
 	in       models.ToBridgeMessage
 	messages []models.BridgeTempMemory
 	configs  map[string]models.BridgeConfig
-	discord  *ds.Discord
-	telegram *tg.Telegram
+	discord  *ds.Client
+	telegram *tg.Client
 	storage  BridgeConfig
 }
 
@@ -28,11 +28,12 @@ func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
 	bridge := &Bridge{
 		log:      log,
 		configs:  make(map[string]models.BridgeConfig),
-		discord:  ds.NewDiscord(log),
-		telegram: tg.NewTelegram(log),
+		discord:  ds.NewClient(log),
+		telegram: tg.NewClient(log),
 		storage:  st.DB,
 	}
 	bridge.LoadConfig()
+
 	go bridge.ServerRun()
 
 	return bridge
@@ -63,7 +64,7 @@ func (b *Bridge) indoxBridge(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Message received successfully"})
 
-	go b.logic(mes)
+	go b.Logic(mes)
 }
 
 func (b *Bridge) configBridge(c *gin.Context) {

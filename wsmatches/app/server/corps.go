@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Srv) getCorps(limit, page string) *models.Corp {
-	file, err := os.ReadFile("ws/corps.json")
+	file, err := os.ReadFile("docker/ws/corps.json")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return nil

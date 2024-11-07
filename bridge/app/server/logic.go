@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (b *Bridge) logic(m models.ToBridgeMessage) {
+func (b *Bridge) Logic(m models.ToBridgeMessage) {
 	b.in = m
 
 	fmt.Printf("in bridge: %s %s relay %s channel %s lenFile:%d\n", m.Sender, m.Text, m.Config.HostRelay, m.ChatId, len(m.Extra))

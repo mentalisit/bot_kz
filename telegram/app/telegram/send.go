@@ -28,16 +28,17 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 		t.log.Info(fmt.Sprintf("chatid '%s', text %s, second %d", chatid, text, second))
 		return false, err1
 	}
-	if second <= 60 {
+	if second <= 30 {
 		go func() {
 			time.Sleep(time.Duration(second) * time.Second)
 			_, _ = t.t.Request(tgbotapi.NewDeleteMessage(chatId, tMessage.MessageID))
 		}()
 	} else {
+		tu := int(time.Now().UTC().Unix())
 		t.Storage.Db.TimerInsert(models.Timer{
 			Tgmesid:  strconv.Itoa(tMessage.MessageID),
 			Tgchatid: chatid,
-			Timed:    second,
+			Timed:    tu + second,
 		})
 	}
 
@@ -53,7 +54,7 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	m.ParseMode = parseMode
 	tMessage, err := t.t.Send(m)
 	if err != nil {
-		t.log.ErrorErr(err)
+		fmt.Println(err)
 		return "", err
 	}
 	return strconv.Itoa(tMessage.MessageID), nil
@@ -78,12 +79,26 @@ func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) error {
 func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.MessageIds {
 	var messageIds []models.MessageIds
 	for _, chat := range in.ChannelId {
+
+		////бля текст для каждого канала нужен свой
+		//func (b *Bridge) replaceText(text string,conf models.BridgeConfig) string {
+		//	re := regexp.MustCompile("@&(\\w+)")
+		//	mentionRole := re.FindAllStringSubmatch(text, -1)
+		//	if len(mentionRole) > 0 {
+		//	textReplace := mentionRole[0][0]
+		//	roleName := mentionRole[0][1]
+		//	mention := (roleName)
+		//	text = strings.Replace(text, textReplace, mention, 1)
+		//}
+		//	return text
+		//}
+
 		chatId, threadID := t.chat(chat)
 
 		if len(in.Extra) > 0 {
 			mid, err := t.sendFileExtra(in.Extra, in.Text, chat)
 			if err != nil {
-				t.log.ErrorErr(err)
+				t.log.InfoStruct(fmt.Sprintf("err %+v\n", err), in)
 			} else {
 				messageData := models.MessageIds{
 					MessageId: mid,
@@ -97,7 +112,7 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 			m.MessageThreadID = threadID
 			tMessage, err := t.t.Send(m)
 			if err != nil {
-				t.log.ErrorErr(err)
+				t.log.InfoStruct(fmt.Sprintf("err %+v\n", err), in)
 			} else {
 				messageData := models.MessageIds{
 					MessageId: strconv.Itoa(tMessage.MessageID),
@@ -115,6 +130,9 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 			chatId, threadID := t.chat(chatID)
 			var media []interface{}
 			for _, f := range extra {
+				if f.URL == "" && len(f.Data) == 0 && f.FileID == "" {
+					continue
+				}
 				var fileRequestData tgbotapi.RequestFileData
 				if f.FileID != "" {
 					fileRequestData = tgbotapi.FileID(f.FileID)
@@ -215,7 +233,11 @@ func (t *Telegram) SendEmbedTime(chatid string, text string) (int, error) {
 	return message.MessageID, err
 }
 
-func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) (string, error) {
+func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, ifUser bool) (string, error) {
+	//go func() {
+	//	time.Sleep(5 * time.Second)
+	//	t.loadConfig()
+	//}()
 	midHelpTg, err := strconv.Atoi(midHelpTgString)
 	if err != nil {
 		midHelpTg = 0
@@ -228,11 +250,14 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string) 
 	levels = t.Storage.Db.ReadTop5Level(config.CorpName)
 	last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
 
-	if last < midHelpTg {
-		return midHelpTgString, nil
+	if !ifUser {
+		if last < midHelpTg {
+			return midHelpTgString, nil
+		}
+
 	}
 
-	t.DelMessage(chatid, midHelpTg)
+	go t.DelMessage(chatid, midHelpTg)
 
 	var btt []tgbotapi.InlineKeyboardButton
 	if len(levels) > 0 {

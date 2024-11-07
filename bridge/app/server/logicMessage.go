@@ -59,7 +59,7 @@ func (b *Bridge) logicMessage() {
 			b.in.Avatar = fmt.Sprintf("https://via.placeholder.com/128x128.png/%s/FFFFFF/?text=%s",
 				GetRandomColor(), ExtractUppercase(b.in.Sender))
 		}
-		b.discord.SendBridgeFunc(b.in.Text, b.GetSenderName(), chatIdsDS, b.in.Extra, b.in.Avatar, b.in.Reply, resultChannelDs, &wg)
+		b.discord.SendBridgeArrayMessage(b.in.Text, b.GetSenderName(), chatIdsDS, b.in.Extra, b.in.Avatar, b.in.Reply, resultChannelDs, &wg)
 	}
 
 	go func() {

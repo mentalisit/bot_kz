@@ -192,7 +192,7 @@ func (s *Srv) poll(c *gin.Context) {
 	}).Parse(pollTemplate))
 
 	id := c.Param("id")
-	file, err := os.ReadFile("poll/" + id)
+	file, err := os.ReadFile("docker/poll/" + id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, "NotFound "+id)
 		return

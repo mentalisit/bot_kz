@@ -10,13 +10,14 @@ type Srv struct {
 	log *logger.Logger
 }
 
-func NewSrv(log *logger.Logger, port string) *Srv {
+func NewSrv(log *logger.Logger) *Srv {
 	server := &Srv{log: log}
-	server.runServer(port)
+	server.runServer()
 	return server
 }
 
-func (s *Srv) runServer(port string) {
+func (s *Srv) runServer() {
+	port := "4443"
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -27,7 +28,7 @@ func (s *Srv) runServer(port string) {
 	router.GET("/poll/:id", s.poll)
 
 	fmt.Println("Running port:" + port)
-	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")
+	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
 	if err != nil {
 		s.log.ErrorErr(err)
 	}

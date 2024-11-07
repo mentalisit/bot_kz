@@ -74,6 +74,23 @@ func (b *Bridge) Command() {
 			}
 			return
 		}
+		if arg[0] == "role" && b.in.Tip == "tg" {
+			role := arg[1]
+			name := arg[2]
+			conf := b.in.Config
+			for i, tg := range conf.ChannelTg {
+				if tg.ChannelId == b.in.ChatId {
+					if conf.ChannelTg[i].MappingRoles == nil {
+						conf.ChannelTg[i].MappingRoles = make(map[string]string)
+					}
+					conf.ChannelTg[i].MappingRoles[role] += name + " "
+				}
+
+			}
+			b.storage.UpdateBridgeChat(*conf)
+			fmt.Printf("update config %+v\n", conf.ChannelTg)
+
+		}
 		//if arg[0] == "мапинг" {
 		//	mentionPatternTg := `@(\w+)`
 		//	mentionPatternDs := `<@(\w+)>`

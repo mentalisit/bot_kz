@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"telegram/models"
-	"time"
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
@@ -222,8 +221,8 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 
 	t.api.SendBridgeAppRecover(mes)
 
-	time.Sleep(5 * time.Second)
-	t.loadConfig()
+	//time.Sleep(5 * time.Second)
+	//t.loadConfig()
 }
 func ReplaceCyrillicToLatin(input string) string {
 	// Карта соответствия русских и украинских букв на латинские

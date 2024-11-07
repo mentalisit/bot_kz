@@ -60,7 +60,7 @@ func (h *HS) SaveFile(fileName string, corpsdata any) {
 		h.log.ErrorErr(err)
 		return
 	}
-	path := fmt.Sprintf("ws/%s.json", fileName)
+	path := fmt.Sprintf("docker/ws/%s.json", fileName)
 	err = os.WriteFile(path, marshal, 0644)
 	if err != nil {
 		h.log.ErrorErr(err)

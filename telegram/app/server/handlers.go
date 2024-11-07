@@ -125,7 +125,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 		q.ArrError = s.tg.ChatTyping(m.Channel)
 		q.ArrBool = true
 	case funcSendHelp:
-		q.ArrString, q.ArrError = s.tg.SendHelp(m.Channel, m.Text, m.MessageId)
+		q.ArrString, q.ArrError = s.tg.SendHelp(m.Channel, m.Text, m.MessageId, false)
 	case funcSendEmbed:
 		q.ArrInt, q.ArrError = s.tg.SendEmbed(m.LevelRs, m.Channel, m.Text)
 		fmt.Printf("answer embed %+v\n", q)

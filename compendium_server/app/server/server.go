@@ -1,7 +1,6 @@
 package server
 
 import (
-	"compendium_s/config"
 	"compendium_s/models"
 	"compendium_s/storage"
 	"fmt"
@@ -18,19 +17,19 @@ type Server struct {
 	//In  chan models.IncomingMessage
 }
 
-func NewServer(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage) *Server {
+func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 	s := &Server{
 		log:   log,
 		db:    st.DB,
 		roles: NewRoles(log),
-		//In:  make(chan models.IncomingMessage, 10),
 	}
 
-	go s.RunServer(cfg.Port)
+	go s.RunServer()
 	return s
 }
 
-func (s *Server) RunServer(port string) {
+func (s *Server) RunServer() {
+	port := "8443"
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -53,10 +52,11 @@ func (s *Server) RunServer(port string) {
 
 	router.GET("/compendium/api/tech", s.api)
 
-	router.Static("/compendium/avatars", "compendium/avatars")
+	router.Static("/compendium/avatars", "docker/compendium/avatars")
+	router.Static("/docker/compendium/avatars", "docker/compendium/avatars")
 
 	fmt.Println("Running port:" + port)
-	err := router.RunTLS(":"+port, "cert/RSA-cert.pem", "cert/RSA-privkey.pem")
+	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
 	if err != nil {
 		s.log.ErrorErr(err)
 		//os.Exit(1)

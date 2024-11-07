@@ -48,29 +48,41 @@ import (
 //	return m.ID
 //}
 
-func (d *Discord) SendHelp(chatid, Title, Description string, levels []string) string {
+func (d *Discord) SendHelp(chatid, title, description, oldMidHelps string, ifUser bool) string {
+	if oldMidHelps != "" {
+		if !ifUser {
+			messages, _ := d.S.ChannelMessages(chatid, 10, "", oldMidHelps, "")
+			if len(messages) < 3 {
+				return oldMidHelps
+			}
+		}
+		go d.DeleteMessage(chatid, oldMidHelps)
+	}
 	Emb := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{},
 		Color:       16711680,
-		Description: Description,
-		Title:       Title,
+		Description: description,
+		Title:       title,
+		//Description: fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")),
+		//Title:       d.getLanguage(lang, "information"),
 	}
 
 	m, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
-		Components: d.AddButtonsStartQueue(chatid, levels),
+		Components: d.AddButtonsStartQueue(chatid),
 		Embed:      Emb,
 	})
 	if err != nil {
 		d.log.ErrorErr(err)
+		return ""
 	}
 
 	return m.ID
 }
-func (d *Discord) AddButtonsStartQueue(chatid string, levels []string) []discordgo.MessageComponent {
+func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageComponent {
 	var mc []discordgo.MessageComponent
 	var components []discordgo.MessageComponent
-	//_, config := d.CheckChannelConfigDS(chatid)
-	//levels := d.storage.Count.ReadTop5Level(config.CorpName)
+	_, config := d.CheckChannelConfigDS(chatid)
+	levels := d.storage.Db.ReadTop5Level(config.CorpName)
 	if len(levels) > 0 {
 		for _, level := range levels {
 			button := discordgo.Button{}

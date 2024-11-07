@@ -325,7 +325,7 @@ func (d *Discord) CleanRsBotOtherMessage() {
 			d.log.Info(fmt.Sprintf("recover() %+v", r))
 		}
 	}()
-	for _, config := range d.corpConfigRS {
+	for _, config := range d.storage.Db.ReadConfigRs() {
 		if config.DsChannel != "" {
 			channelMessages, err := d.S.ChannelMessages(config.DsChannel, 100, "", "", "")
 			if err != nil {
@@ -348,6 +348,9 @@ func (d *Discord) CleanRsBotOtherMessage() {
 							}
 						} else if time.Now().Sub(message.Timestamp).Hours() < 96 && !strings.Contains(message.Content, "Черга") {
 							d.log.Info(fmt.Sprintf("message hours%.1f %+v\n", time.Now().Sub(message.Timestamp).Hours(), message))
+						} else if len(message.Attachments) > 0 {
+							fmt.Printf("удалено сообщение с вложением %+v\n", message.Attachments[0])
+							_ = d.S.ChannelMessageDelete(message.ChannelID, message.ID)
 						} else {
 							fmt.Printf("MESSAGE: %+v\n", message)
 						}

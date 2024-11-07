@@ -22,8 +22,13 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 	text := fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName)
 	mid1, err := c.sendDM(m, text)
 	if err != nil && err.Error() == "forbidden" {
-		c.sendChat(m, fmt.Sprintf(c.getText(m, "ERROR_SEND"), m.MentionName))
-		return
+		if c.checkMoron(m) {
+			c.log.InfoStruct("moron", m)
+		} else {
+			c.sendChat(m, fmt.Sprintf(c.getText(m, "ERROR_SEND"), m.MentionName))
+			return
+		}
+
 	} else if err != nil {
 		c.log.ErrorErr(err)
 		c.log.InfoStruct("connect error ", err)
@@ -112,7 +117,7 @@ func (c *Hs) generateCodeAndSave(Identity models.Identity) string {
 	return m.Code
 }
 func (c *Hs) timerEditMessage(m models.IncomingMessage, mid1, mid2, mid3 string) {
-	time.Sleep(10 * time.Minute)
+	time.Sleep(3 * time.Minute)
 
 	token, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
 	links := "https://mentalisit.github.io/HadesSpace/compendiumTech?secretToken=" + token
@@ -133,4 +138,14 @@ func (c *Hs) timerEditMessage(m models.IncomingMessage, mid1, mid2, mid3 string)
 		c.log.ErrorErr(err)
 		return
 	}
+}
+
+func (c *Hs) checkMoron(in models.IncomingMessage) bool {
+	if len(c.moron) > 0 {
+		if c.moron[in] != 0 {
+			return true
+		}
+	}
+	c.moron[in] += 1
+	return false
 }

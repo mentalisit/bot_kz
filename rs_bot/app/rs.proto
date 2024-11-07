@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package rs;
+option go_package = "server/pb;rs";
+
+message InMessage {
+  string mtext = 1;
+  string tip = 2;
+  string nameNick = 3;
+  string username = 4;
+  string userId = 5;
+  string nameMention = 6;
+  string lvlkz = 7;
+  string timekz = 8;
+  Ds ds = 9;
+  Tg tg = 10;
+  CorporationConfig config = 11;
+  Option option = 12;
+}
+
+// Вложенная структура Ds
+message Ds {
+  string mesid = 1;
+  string guildid = 2;
+  string avatar = 3;
+}
+
+// Вложенная структура Tg
+message Tg {
+  int32 mesid = 1;
+}
+
+// Вложенная структура CorporationConfig
+message CorporationConfig {
+  int32 type = 1;
+  string corpName = 2;
+  string dsChannel = 3;
+  string tgChannel = 4;
+  string waChannel = 5;
+  string country = 6;
+  int32 delMesComplite = 7;
+  string mesidDsHelp = 8;
+  string mesidTgHelp = 9;
+  bool forward = 10;
+  string guildid = 11;
+}
+
+// Вложенная структура Option
+message Option {
+  bool reaction = 1;
+  bool inClient = 2;
+  bool queue = 3;
+  bool pl30 = 4;
+  bool minusMin = 5;
+  bool edit = 6;
+  bool update = 7;
+  bool elsetrue = 8;
+}
+
+// Определение сервиса и функции LogicRs
+service LogicService {
+  rpc LogicRs(InMessage) returns (Empty);
+}
+
+
+// Пустое сообщение для ответов, не требующих данных
+message Empty {}
