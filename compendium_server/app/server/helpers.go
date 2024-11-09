@@ -211,25 +211,37 @@ func (s *Server) GetCorpDataIfTogether(i *models.Identity, roleId string) *model
 		var memberDs []models.CorpMember
 		var memberTg []models.CorpMember
 
-		rolesDs := s.getRoles(Ids)
-		for _, roles := range rolesDs {
-			if roles.Name == "@everyone" {
-				d.Roles = append(d.Roles, roles)
-				continue
-			}
-			d.Roles = append(d.Roles, models.CorpRole{
-				Id:   roles.Id,
-				Name: "(DS) " + roles.Name,
-			})
-		}
+		d.Roles = append(d.Roles, models.CorpRole{
+			Id:   "",
+			Name: "@everyone",
+		})
+
 		rolesTg := s.getRoles(Itg)
 		for _, roles := range rolesTg {
 			if roles.Name == "@everyone" {
+				d.Roles = append(d.Roles, models.CorpRole{
+					Id:   "tg",
+					Name: "(TG) " + roles.Name,
+				})
 				continue
 			}
 			d.Roles = append(d.Roles, models.CorpRole{
 				Id:   roles.Id,
 				Name: "(TG) " + roles.Name,
+			})
+		}
+		rolesDs := s.getRoles(Ids)
+		for _, roles := range rolesDs {
+			if roles.Name == "@everyone" {
+				d.Roles = append(d.Roles, models.CorpRole{
+					Id:   "ds",
+					Name: "(DS) " + roles.Name,
+				})
+				continue
+			}
+			d.Roles = append(d.Roles, models.CorpRole{
+				Id:   roles.Id,
+				Name: "(DS) " + roles.Name,
 			})
 		}
 
@@ -247,23 +259,10 @@ func (s *Server) GetCorpDataIfTogether(i *models.Identity, roleId string) *model
 		if roleId == "" {
 			d.Members = append(d.Members, memberDs...)
 			d.Members = append(d.Members, memberTg...)
-
-			sort.Slice(d.Members, func(i, j int) bool {
-				// Проверка, чтобы индекс не выходил за пределы строки
-				nameI := d.Members[i].Name
-				nameJ := d.Members[j].Name
-
-				// Игнорируем первые пять символов, если длина имени больше или равна пяти
-				if len(nameI) >= 5 {
-					nameI = nameI[5:]
-				}
-				if len(nameJ) >= 5 {
-					nameJ = nameJ[5:]
-				}
-
-				return nameI < nameJ
-			})
-			return &d
+		} else if roleId == "tg" {
+			d.Members = append(d.Members, memberTg...)
+		} else if roleId == "ds" {
+			d.Members = append(d.Members, memberDs...)
 		} else {
 			var role models.CorpRole
 			var tip string
@@ -298,8 +297,23 @@ func (s *Server) GetCorpDataIfTogether(i *models.Identity, roleId string) *model
 					}
 				}
 			}
-			return &d
 		}
+		sort.Slice(d.Members, func(i, j int) bool {
+			// Проверка, чтобы индекс не выходил за пределы строки
+			nameI := d.Members[i].Name
+			nameJ := d.Members[j].Name
+
+			// Игнорируем первые пять символов, если длина имени больше или равна пяти
+			if len(nameI) >= 5 {
+				nameI = nameI[5:]
+			}
+			if len(nameJ) >= 5 {
+				nameJ = nameJ[5:]
+			}
+
+			return nameI < nameJ
+		})
+		return &d
 	}
 	return nil
 }
@@ -309,7 +323,7 @@ func (s *Server) listOfCompatible(g *models.Guild) (*models.Guild, error) {
 			return s.db.GuildGet("1062696191575457892")
 		} else if g.Name == "HS СССР" && g.ID == "-1002467616555" {
 			return s.db.GuildGet("632245873769971732")
-		} else if g.Name == "Корпорация русь" && g.ID == "-1002470903810" {
+		} else if g.Name == "ТКЗ" && g.ID == "-1001697997137" { //Корпорация русь
 			return s.db.GuildGet("716771579278917702")
 		} else if g.Name == "IX Легион" && g.ID == "-1002298028181" {
 			return s.db.GuildGet("398761209022644224")
@@ -323,7 +337,7 @@ func (s *Server) listOfCompatible(g *models.Guild) (*models.Guild, error) {
 		} else if g.Name == "СССР  (HS)" && g.ID == "632245873769971732" {
 			return s.db.GuildGet("-1002467616555")
 		} else if g.Name == "Корпорация  \"РУСЬ\"" && g.ID == "716771579278917702" {
-			return s.db.GuildGet("-1002470903810")
+			return s.db.GuildGet("-1001697997137")
 		} else if g.Name == "IX Легион" && g.ID == "398761209022644224" {
 			return s.db.GuildGet("-1002298028181")
 		} else if g.Name == "ГОРИЗОНТ" && g.ID == "656495834195558402" {
