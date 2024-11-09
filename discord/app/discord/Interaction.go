@@ -160,6 +160,31 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			return
 		}
 	}
+	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(i.ChannelID)
+	if ds {
+		user := i.Interaction.User
+		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
+			user = i.Interaction.Member.User
+		}
+		in := models.ToBridgeMessage{
+			Text:          ".poll " + i.MessageComponentData().CustomID,
+			Sender:        user.Username,
+			Tip:           "ds",
+			ChatId:        i.Interaction.ChannelID,
+			MesId:         i.Interaction.Message.ID,
+			GuildId:       i.Interaction.GuildID,
+			TimestampUnix: i.Interaction.Message.Timestamp.Unix(),
+			Config:        &bridgeConfig,
+		}
+		err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
+		})
+		if err != nil {
+			d.log.ErrorErr(err)
+			return
+		}
+		d.api.SendBridgeAppRecover(in)
+	}
 }
 func existCompendiumData(name, userid, guildid string) bool {
 	genesis1, enrich1, rsextender1 := helpers.GetTechDataUserId(userid, guildid)
@@ -175,7 +200,10 @@ func existCompendiumData(name, userid, guildid string) bool {
 }
 func getText(lang, key string) string {
 	t := make(map[string]map[string]string)
-	t[lang] = make(map[string]string)
+	t["en"] = make(map[string]string)
+	t["ru"] = make(map[string]string)
+	t["ua"] = make(map[string]string)
+
 	t["ru"]["install_weapon"] = "Установлено оружие: %s"
 	t["ua"]["install_weapon"] = "Встановлено зброю: %s"
 	t["en"]["install_weapon"] = "Weapon installed: %s"

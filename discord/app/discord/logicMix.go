@@ -98,6 +98,15 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	if m.Member != nil && m.Member.User != nil && m.Member.User.Locale != "" {
 		go d.log.Info(m.Member.User.Username + " " + m.Member.User.Locale)
 	}
+	if strings.HasPrefix(m.Content, "%") {
+		d.SendToCompendium(m)
+		return
+	}
+
+	if strings.HasPrefix(m.Content, ".") {
+		d.ifPrefixPoint(m)
+		return
+	}
 
 	//filter Rs
 	ok, config := d.CheckChannelConfigDS(m.ChannelID)
@@ -111,16 +120,6 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	if ds {
 		d.SendToBridge(m, bridgeConfig)
 	}
-
-	if strings.HasPrefix(m.Content, "%") {
-		d.SendToCompendium(m)
-	}
-
-	if strings.HasPrefix(m.Content, ".") {
-		d.ifPrefixPoint(m)
-		return
-	}
-
 }
 func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.CorporationConfig) {
 	if len(m.Attachments) > 0 {
