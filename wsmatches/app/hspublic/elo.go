@@ -29,10 +29,14 @@ func EloLogic(match []models.Match, corps []models.Corporation) {
 		elo[c.Id] = elocurrent
 	}
 
-	mElo, _ := json.Marshal(eloa)
-	path := "ws/corps.json"
-	err := os.WriteFile(path, mElo, 0644)
+	mElo, err := json.Marshal(eloa)
 	if err != nil {
+		fmt.Println(err)
+	}
+	path := "docker/ws/corps.json"
+	err = os.WriteFile(path, mElo, 0644)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	fmt.Println("файл сохранен " + path)
