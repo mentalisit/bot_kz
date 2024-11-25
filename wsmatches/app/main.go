@@ -21,6 +21,8 @@ func main() {
 	newContent := hs.GetContentAll()
 	hs.DownloadFile("wsAll", newContent)
 
+	var count int
+
 	for {
 		now := time.Now()
 
@@ -33,7 +35,13 @@ func main() {
 			//hs.DownloadFile("ws", newContent)
 
 			newContent = hs.GetContentAll()
+
+			if count == len(newContent) {
+				continue
+			}
+
 			hs.DownloadFile("wsAll", newContent)
+			count = len(newContent)
 		}
 
 		time.Sleep(1 * time.Second)
