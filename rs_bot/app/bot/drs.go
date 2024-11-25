@@ -185,10 +185,12 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					b.getText(in, "go"), textEvent)
 
 				if u.User1.Tip == ds {
-					go b.client.Ds.SendDmText(b.getText(in, "go"), u.User1.UserId)
+					dmText := fmt.Sprintf("%s\n%s %s\n", b.getText(in, "go"), u.User2.Name, u.User3.Name)
+					go b.client.Ds.SendDmText(dmText, u.User1.UserId)
 				}
 				if u.User2.Tip == ds {
-					go b.client.Ds.SendDmText(b.getText(in, "go"), u.User2.UserId)
+					dmText := fmt.Sprintf("%s\n%s %s\n", b.getText(in, "go"), u.User1.Name, u.User3.Name)
+					go b.client.Ds.SendDmText(dmText, u.User2.UserId)
 				}
 
 				dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
