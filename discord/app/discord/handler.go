@@ -47,56 +47,92 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 
 }
 
-//func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
-//	if m.Message.WebhookID != "" {
-//		return
-//	}
-//
-//	if m.Message.EditedTimestamp != nil && m.Content != "" {
-//		//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
-//		//if good {
-//		//	username := m.Author.Username
-//		//	if m.Member != nil && m.Member.Nick != "" {
-//		//		username = m.Member.Nick
-//		//	}
-//		//	mes := models.BridgeMessage{
-//		//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
-//		//		Sender:        username,
-//		//		Tip:           "dse",
-//		//		Avatar:        m.Author.AvatarURL("128"),
-//		//		ChatId:        m.ChannelID,
-//		//		MesId:         m.ID,
-//		//		GuildId:       m.GuildID,
-//		//		TimestampUnix: m.Timestamp.Unix(),
-//		//		Config:        &config,
-//		//	}
-//		//
-//		//	if len(m.Attachments) > 0 {
-//		//		if len(m.Attachments) != 1 {
-//		//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
-//		//		}
-//		//		for _, attachment := range m.Attachments {
-//		//			mes.FileUrl = append(mes.FileUrl, attachment.URL)
-//		//		}
-//		//	}
-//		//
-//		//	if m.ReferencedMessage != nil {
-//		//		usernameR := m.ReferencedMessage.Author.String() //.Username
-//		//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
-//		//			usernameR = m.ReferencedMessage.Member.Nick
-//		//		}
-//		//		mes.Reply = &models.BridgeMessageReply{
-//		//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
-//		//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
-//		//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
-//		//			UserName:    usernameR,
-//		//		}
-//		//	}
-//		//
-//		//	d.ChanBridgeMessage <- mes
-//		//}
-//	}
-//}
+func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
+	if m.Message.WebhookID != "" {
+		return
+	}
+
+	if m.Message.EditedTimestamp != nil && m.Content != "" {
+		//filter Rs
+		ok, config := d.CheckChannelConfigDS(m.ChannelID)
+		if ok {
+			if len(m.Attachments) > 0 {
+				m.Content += m.Attachments[0].URL
+			}
+			if len(m.Message.Embeds) > 0 {
+				m.Content += "\u200B"
+			}
+			in := models.InMessage{
+				Mtext:       d.ReplaceTextMessage(m.Content, m.GuildID),
+				Tip:         "ds",
+				Username:    m.Author.Username,
+				UserId:      m.Author.ID,
+				NameNick:    "",
+				NameMention: m.Author.Mention(),
+				Ds: struct {
+					Mesid   string
+					Guildid string
+					Avatar  string
+				}{
+					Mesid:   m.ID,
+					Guildid: m.GuildID,
+					Avatar:  m.Author.AvatarURL("128"),
+				},
+				Config: config,
+				Option: models.Option{InClient: true},
+			}
+			if m.Member != nil && m.Member.Nick != "" {
+				in.NameNick = m.Member.Nick
+			}
+
+			d.api.SendRsBotAppRecover(in)
+			return
+		}
+
+		//good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)
+		//if good {
+		//	username := m.Author.Username
+		//	if m.Member != nil && m.Member.Nick != "" {
+		//		username = m.Member.Nick
+		//	}
+		//	mes := models.BridgeMessage{
+		//		Text:          d.replaceTextMessage(m.Content, m.GuildID),
+		//		Sender:        username,
+		//		Tip:           "dse",
+		//		Avatar:        m.Author.AvatarURL("128"),
+		//		ChatId:        m.ChannelID,
+		//		MesId:         m.ID,
+		//		GuildId:       m.GuildID,
+		//		TimestampUnix: m.Timestamp.Unix(),
+		//		Config:        &config,
+		//	}
+		//
+		//	if len(m.Attachments) > 0 {
+		//		if len(m.Attachments) != 1 {
+		//			d.log.Info(fmt.Sprintf("вложение %d", len(m.Attachments)))
+		//		}
+		//		for _, attachment := range m.Attachments {
+		//			mes.FileUrl = append(mes.FileUrl, attachment.URL)
+		//		}
+		//	}
+		//
+		//	if m.ReferencedMessage != nil {
+		//		usernameR := m.ReferencedMessage.Author.String() //.Username
+		//		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
+		//			usernameR = m.ReferencedMessage.Member.Nick
+		//		}
+		//		mes.Reply = &models.BridgeMessageReply{
+		//			TimeMessage: m.ReferencedMessage.Timestamp.Unix(),
+		//			Text:        d.replaceTextMessage(m.ReferencedMessage.Content, m.GuildID),
+		//			Avatar:      m.ReferencedMessage.Author.AvatarURL("128"),
+		//			UserName:    usernameR,
+		//		}
+		//	}
+		//
+		//	d.ChanBridgeMessage <- mes
+		//}
+	}
+}
 
 //func (d *Discord) onMessageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
 //good, config := d.BridgeCheckChannelConfigDS(m.ChannelID)

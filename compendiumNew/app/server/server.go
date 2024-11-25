@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium/models"
+	"compendium/server/pb"
 	"compendium/storage"
 	"github.com/mentalisit/logger"
 )
@@ -13,10 +14,11 @@ type Server struct {
 }
 
 func NewServer(log *logger.Logger, st *storage.Storage) *Server {
+	g := pb.GrpcMain(log, st)
 	s := &Server{
 		log: log,
 		db:  st.DB,
-		In:  make(chan models.IncomingMessage, 10),
+		In:  g.In,
 	}
 
 	go s.RunServerRestApi()

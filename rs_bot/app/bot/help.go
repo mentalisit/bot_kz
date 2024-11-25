@@ -9,10 +9,12 @@ import (
 )
 
 func (b *Bot) Autohelp() {
-	tm := time.Now()
+	tm := time.Now().UTC()
 	mtime := tm.Format("15:04")
 	if mtime == "12:00" {
 		go b.client.Ds.CleanRsBotOtherMessage()
+	} else if mtime == "00:00" {
+		go b.EventAutoStart()
 	} else if tm.Minute() == 0 {
 		for _, s := range b.storage.ConfigRs.ReadConfigRs() {
 			configTemp := s
@@ -70,6 +72,11 @@ func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.Corpora
 		b.getLanguageText(c.Country, "info_bot_delete_msg"),
 		b.getLanguageText(c.Country, "info_help_text"))
 
+	aEvent := b.storage.Event.NumActiveEvent(c.CorpName)
+	if aEvent > 0 {
+		text = "command for event \n" + text
+	}
+
 	c.MesidDsHelp = b.client.Ds.SendHelp(
 		c.DsChannel,
 		b.getLanguageText(c.Country, "information"),
@@ -98,6 +105,10 @@ func (b *Bot) sendHelpTg(c models.CorporationConfig, ifUser bool) models.Corpora
 			b.getLanguageText(c.Country, "information"),
 			b.getLanguageText(c.Country, "info_bot_delete_msg"),
 			b.getLanguageText(c.Country, "info_help_text2"))
+	}
+	aEvent := b.storage.Event.NumActiveEvent(c.CorpName)
+	if aEvent > 0 {
+		text = "command for event \n" + text
 	}
 
 	c.MesidTgHelp = b.client.Tg.SendHelp(c.TgChannel, text, c.MesidTgHelp, ifUser)

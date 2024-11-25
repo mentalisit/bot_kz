@@ -21,9 +21,7 @@ type Storage struct {
 	DbFunc            DbFunc
 	Event             Event
 	LevelCorp         LevelCorp
-	BridgeConfigs     ConfigBridge
-	//CorpConfigRS      map[string]models.CorporationConfig
-	postgres *postgres.Db
+	postgres          *postgres.Db
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
@@ -37,7 +35,6 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		log:               log,
 		TimeDeleteMessage: local,
 		ConfigRs:          local,
-		BridgeConfigs:     local,
 		Dictionary:        d,
 		Subscribe:         local,
 		Emoji:             local,
@@ -48,8 +45,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		DbFunc:            local,
 		Event:             local,
 		LevelCorp:         local,
-		//CorpConfigRS:      make(map[string]models.CorporationConfig),
-		postgres: local,
+		postgres:          local,
 	}
 
 	//go s.loadDbArray()

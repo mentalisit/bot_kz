@@ -80,22 +80,12 @@ func (d *Discord) DeleteMessage(chatid, mesid string) {
 	_ = d.S.ChannelMessageDelete(chatid, mesid)
 }
 func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
-	if second > 30 {
-		tu := int(time.Now().UTC().Unix())
-		d.storage.Db.TimerInsert(models.Timer{
-			Dsmesid:  mesid,
-			Dschatid: chatid,
-			Timed:    tu + second,
-		})
-	} else {
-		go func() {
-			time.Sleep(time.Duration(second) * time.Second)
-			err := d.S.ChannelMessageDelete(chatid, mesid)
-			if err != nil {
-				fmt.Println("Ошибка удаления сообщения дискорда ", chatid, mesid, second)
-			}
-		}()
-	}
+	tu := int(time.Now().UTC().Unix())
+	d.storage.Db.TimerInsert(models.Timer{
+		Dsmesid:  mesid,
+		Dschatid: chatid,
+		Timed:    tu + second,
+	})
 }
 
 //	func (d *Discord) EditComplex1(dsmesid, dschatid string, Embeds discordgo.MessageEmbed) error {
@@ -202,18 +192,10 @@ func (d *Discord) embedDS(mapa map[string]string) *discordgo.MessageEmbed {
 }
 
 func (d *Discord) Subscribe(nameid, argRoles, guildid string) int {
-	g, err := d.S.State.Guild(guildid)
-	if err != nil {
-		d.log.ErrorErr(err)
-		g, err = d.S.Guild(guildid)
-		if err != nil {
-			d.log.ErrorErr(err)
-		}
-	}
-
-	exist, role := d.roleExists(g, argRoles)
+	exist, role := d.roleExists(d.re.GetGuildRoles(guildid), argRoles)
 
 	if !exist { //если нет роли
+		var err error
 		role, err = d.createRole(argRoles, guildid)
 		if err != nil {
 			d.log.ErrorErr(err)
@@ -243,16 +225,8 @@ func (d *Discord) Subscribe(nameid, argRoles, guildid string) int {
 }
 func (d *Discord) Unsubscribe(nameid, argRoles, guildid string) int {
 	var unsubscribe int = 0
-	g, err := d.S.State.Guild(guildid)
-	if err != nil {
-		d.log.ErrorErr(err)
-		g, err = d.S.Guild(guildid)
-		if err != nil {
-			d.log.ErrorErr(err)
-		}
-	}
 
-	exist, role := d.roleExists(g, argRoles)
+	exist, role := d.roleExists(d.re.GetGuildRoles(guildid), argRoles)
 	if !exist { //если нет роли
 		unsubscribe = 1
 	}

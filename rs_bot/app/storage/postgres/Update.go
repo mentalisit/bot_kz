@@ -1,6 +1,11 @@
 package postgres
 
+import "errors"
+
 func (d *Db) MesidTgUpdate(mesidtg int, lvlkz string, corpname string) error {
+	if mesidtg == 0 {
+		return errors.New("mesId == null")
+	}
 	ctx, cancel := d.GetContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set tgmesid = $1 where lvlkz = $2 AND corpname = $3 AND active = 0`
@@ -11,6 +16,9 @@ func (d *Db) MesidTgUpdate(mesidtg int, lvlkz string, corpname string) error {
 	return nil
 }
 func (d *Db) MesidDsUpdate(mesidds, lvlkz, corpname string) error {
+	if mesidds == "" {
+		return errors.New("mesId == null")
+	}
 	ctx, cancel := d.GetContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set dsmesid = $1 where lvlkz = $2 AND corpname = $3 AND active = 0`

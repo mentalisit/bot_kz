@@ -19,6 +19,7 @@ type InMessage struct {
 	Config CorporationConfig
 	Option Option
 }
+
 type CorporationConfig struct {
 	Type           int
 	CorpName       string
@@ -32,6 +33,7 @@ type CorporationConfig struct {
 	Forward        bool
 	Guildid        string
 }
+
 type Option struct {
 	Reaction bool
 	InClient bool
@@ -49,6 +51,7 @@ type Users struct {
 	User3 Sborkz
 	User4 Sborkz
 }
+
 type Sborkz struct {
 	Id          int
 	Corpname    string
@@ -69,12 +72,14 @@ type Sborkz struct {
 	Active      int
 	Timedown    int
 }
+
 type Names struct {
 	Name1 string
 	Name2 string
 	Name3 string
 	Name4 string
 }
+
 type EmodjiUser struct {
 	Id                                int
 	Tip, Name, Em1, Em2, Em3, Em4     string
@@ -99,4 +104,12 @@ type QueueStruct struct {
 	CorpName string
 	Level    string
 	Count    int
+}
+
+type RsEvent struct {
+	Id          int
+	CorpName    string
+	NumEvent    int
+	ActiveEvent int
+	Number      int
 }

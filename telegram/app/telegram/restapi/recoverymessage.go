@@ -5,6 +5,7 @@ import (
 	"github.com/mentalisit/logger"
 	"telegram/models"
 	"telegram/telegram/restapi/bridge"
+	"telegram/telegram/restapi/compendium"
 	"telegram/telegram/restapi/rs_bot"
 	"time"
 )
@@ -16,20 +17,23 @@ type Recover struct {
 	rsBotMessage      []models.InMessage
 	bridge            *bridge.Client
 	rs                *rs_bot.Client
+	compendiumNew     *compendium.Client
 }
 
 func NewRecover(log *logger.Logger) *Recover {
 	r := &Recover{
-		log:    log,
-		bridge: bridge.NewClient(log),
-		rs:     rs_bot.NewClient(log),
+		log:           log,
+		bridge:        bridge.NewClient(log),
+		rs:            rs_bot.NewClient(log),
+		compendiumNew: compendium.NewClient(log),
 	}
 	go r.trySend()
 	return r
 }
 
 func (r *Recover) SendBridgeAppRecover(m models.ToBridgeMessage) {
-	fmt.Printf("%s SendBridgeApp :%+v\n", time.Now().Format(time.DateTime), m)
+	fmt.Printf("%s SendBridgeApp Text: %s Sender: %s  ExtraLen: %d chatId: %s \n",
+		time.Now().Format(time.DateTime), m.Text, m.Sender, len(m.Extra), m.ChatId)
 	err := r.bridge.SendToBridge(m)
 	if err != nil {
 		r.log.InfoStruct("SendBridgeApp", m)
@@ -40,7 +44,7 @@ func (r *Recover) SendBridgeAppRecover(m models.ToBridgeMessage) {
 
 func (r *Recover) SendCompendiumAppRecover(m models.IncomingMessage) {
 	fmt.Printf("%s SendCompendiumApp :%+v\n", time.Now().Format(time.DateTime), m)
-	err := SendCompendiumApp(m)
+	err := r.compendiumNew.SendToCompendium(m)
 	if err != nil {
 		r.log.InfoStruct("SendCompendiumApp", m)
 		r.log.ErrorErr(err)
@@ -76,7 +80,7 @@ func (r *Recover) trySend() {
 		if len(r.compendiumMessage) > 0 {
 			for i := 0; i < len(r.compendiumMessage); i++ {
 				message := r.compendiumMessage[i]
-				err := SendCompendiumApp(message)
+				err := r.compendiumNew.SendToCompendium(message)
 				if err == nil {
 					// Если отправка успешна, удаляем сообщение из слайса
 					r.compendiumMessage = append(r.compendiumMessage[:i], r.compendiumMessage[i+1:]...)
@@ -107,6 +111,13 @@ func (r *Recover) Close() {
 	err := r.bridge.Close()
 	if err != nil {
 		r.log.ErrorErr(err)
-		return
+	}
+	err = r.rs.Close()
+	if err != nil {
+		r.log.ErrorErr(err)
+	}
+	err = r.compendiumNew.Close()
+	if err != nil {
+		r.log.ErrorErr(err)
 	}
 }

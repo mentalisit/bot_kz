@@ -33,19 +33,12 @@ func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 			d.log.Info(chatid + " " + text)
 			return
 		}
-		if second <= 30 {
-			go func() {
-				time.Sleep(time.Duration(second) * time.Second)
-				_ = d.S.ChannelMessageDelete(chatid, message.ID)
-			}()
-		} else {
-			tu := int(time.Now().UTC().Unix())
-			d.storage.Db.TimerInsert(models.Timer{
-				Dsmesid:  message.ID,
-				Dschatid: chatid,
-				Timed:    tu + second,
-			})
-		}
+		tu := int(time.Now().UTC().Unix())
+		d.storage.Db.TimerInsert(models.Timer{
+			Dsmesid:  message.ID,
+			Dschatid: chatid,
+			Timed:    tu + second,
+		})
 	}
 }
 func (d *Discord) SendComplexContent(chatid, text string) (mesId string) { //отправка текста комплексного сообщения

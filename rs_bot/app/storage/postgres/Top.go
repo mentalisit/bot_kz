@@ -48,7 +48,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
-	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY mention LIMIT 50"
+	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY mention"
 	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
 	defer results.Close()
 	if err != nil {

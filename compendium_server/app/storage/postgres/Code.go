@@ -38,3 +38,39 @@ func (d *Db) CodeGet(code string) (*models.Code, error) {
 	}
 	return &u, nil
 }
+func (d *Db) CodeAllGet() []models.Code {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	selectCodes := "SELECT * FROM hs_compendium.codes"
+
+	results, err := d.db.Query(ctx, selectCodes)
+	defer results.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	var uu []models.Code
+
+	for results.Next() {
+		var u models.Code
+		var id int
+		var bytes []byte
+
+		_ = results.Scan(&id, &u.Code, &u.Timestamp, &bytes)
+
+		err = json.Unmarshal(bytes, &u.Identity)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+		uu = append(uu, u)
+	}
+	return uu
+}
+func (d *Db) CodeDelete(code string) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	del := "delete from hs_compendium.codes where code = $1"
+	_, err := d.db.Exec(ctx, del, code)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}

@@ -61,35 +61,37 @@ func (b *Bot) MinusMin() {
 				}
 			}
 		}
-		corpActive0 := b.storage.DbFunc.OneMinutsTimer()
-		for _, corp := range corpActive0 {
 
-			_, config := b.CheckCorpNameConfig(corp)
+		in := models.InMessage{
+			Mtext: "",
+			Option: models.Option{
+				MinusMin: true,
+				Edit:     true,
+			},
+		}
+		b.Inbox <- in
+	}
+}
+func (b *Bot) MinusMinMessageUpdate() {
+	corpActive0 := b.storage.DbFunc.OneMinutsTimer()
+	for _, corp := range corpActive0 {
 
-			dss, tgs := b.storage.DbFunc.MessageUpdateMin(corp)
+		_, config := b.CheckCorpNameConfig(corp)
 
-			if config.DsChannel != "" && config.TgChannel != "" {
-				for _, d := range dss {
-					in := b.storage.DbFunc.MessageupdateDS(d, config)
-					b.QueueLevel(in)
-				}
-				for _, t := range tgs {
-					in := b.storage.DbFunc.MessageupdateTG(t, config)
-					b.QueueLevel(in)
-				}
-			} else if config.DsChannel != "" && config.TgChannel == "" {
-				for _, d := range dss {
-					in := b.storage.DbFunc.MessageupdateDS(d, config)
-					go b.QueueLevel(in)
-				}
-			} else if config.TgChannel != "" && config.DsChannel == "" {
-				for _, t := range tgs {
-					in := b.storage.DbFunc.MessageupdateTG(t, config)
-					go b.QueueLevel(in)
-				}
+		dss, tgs := b.storage.DbFunc.MessageUpdateMin(corp)
+
+		if config.DsChannel != "" {
+			for _, d := range dss {
+				b.Inbox <- b.storage.DbFunc.MessageupdateDS(d, config)
+			}
+		}
+		if config.TgChannel != "" {
+			for _, t := range tgs {
+				b.Inbox <- b.storage.DbFunc.MessageupdateTG(t, config)
 			}
 		}
 	}
+
 }
 
 func (b *Bot) ReadQueueLevel(in models.InMessage) {

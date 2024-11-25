@@ -9,13 +9,12 @@ RUN go mod download
 
 # build
 COPY app ./
-RUN go build -o ./bin/app main.go
+RUN go build -o ./bin/compendiumnew main.go
 
 
 FROM alpine:3.20 AS runner
 
 RUN apk add --no-cache tzdata
 ENV TZ=America/Winnipeg
-#COPY config.yml /config.yml
-COPY --from=builder /usr/local/src/bin/app /
-CMD ["/app"]
+COPY --from=builder /usr/local/src/bin/compendiumnew /
+CMD ["/compendiumnew"]

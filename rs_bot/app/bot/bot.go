@@ -21,11 +21,10 @@ const (
 )
 
 type Bot struct {
-	storage *storage.Storage
-	client  *clients.Clients
-	Inbox   chan models.InMessage
-	log     *logger.Logger
-	//in         models.InMessage
+	storage    *storage.Storage
+	client     *clients.Clients
+	Inbox      chan models.InMessage
+	log        *logger.Logger
 	wg         sync.WaitGroup
 	mu         sync.Mutex
 	helpers    *helpers.Helpers
@@ -69,8 +68,8 @@ func (b *Bot) timerBot() { //цикл для удаления сообщений
 			if now.Minute() == 0 {
 				b.Autohelp() //автозапуск справки
 			}
-			time.Sleep(1 * time.Second)
 		}
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -88,7 +87,7 @@ func (b *Bot) PrepareLogicRs(in models.InMessage) {
 	select {
 	case <-done:
 		// Запрос завершился до истечения таймаута
-	case <-time.After(10 * time.Second):
+	case <-time.After(15 * time.Second):
 		// Логируем, если запрос завис
 		b.log.InfoStruct("PrepareLogicRs", in)
 	}
@@ -136,13 +135,14 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		} else if b.lEmoji(in) {
 		} else if b.logicIfText(in) {
 		} else if b.bridge(in) {
-			//} else if b.lIfCommand() {
 		} else {
 			b.cleanChat(in)
 			//go b.Transtale()//нужно решить проблему с ошибками
 		}
-		//} else if in.Option.Update {
-		//	b.QueueLevel(in)
+	} else if in.Option.MinusMin {
+		b.MinusMinMessageUpdate()
+	} else if in.Option.Update {
+		b.QueueLevel(in)
 	}
 	close(ch)
 }
@@ -164,7 +164,7 @@ func (b *Bot) logicIfText(in models.InMessage) bool {
 		go b.updateCompendiumModules(in)
 		iftext = true
 	case "OptimizationSborkz":
-		go b.storage.DbFunc.OptimizationSborkz()
+		go b.OptimizationSborkz()
 		b.iftipdelete(in)
 	case "cleanrs":
 		go b.client.Ds.CleanRsBotOtherMessage()

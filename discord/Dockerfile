@@ -9,12 +9,12 @@ COPY app ./
 RUN go mod download
 
 # build
-RUN go build -o ./bin/app main.go
+RUN go build -o ./bin/discord main.go
 
 
 FROM alpine:3.20 AS runner
 
 RUN apk add --no-cache tzdata
 ENV TZ=America/Winnipeg
-COPY --from=builder /usr/local/src/bin/app /
-CMD ["/app"]
+COPY --from=builder /usr/local/src/bin/discord /
+CMD ["/discord"]

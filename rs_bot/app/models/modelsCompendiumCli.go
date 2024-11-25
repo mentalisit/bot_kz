@@ -1,35 +1,5 @@
 package models
 
-type User struct {
-	ID            string `json:"id"`
-	Username      string `json:"username"`
-	Discriminator string `json:"discriminator"`
-	Avatar        string `json:"avatar"`
-	AvatarURL     string `json:"avatarUrl"`
-}
-
-type Guild struct {
-	URL  string `json:"url"`
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Icon string `json:"icon"`
-}
-type IdentityGET struct {
-	User  User    `json:"user"`
-	Guild []Guild `json:"guilds"`
-	Token string  `json:"token"`
-}
-type Identity struct {
-	User  User   `json:"user"`
-	Guild Guild  `json:"guild"`
-	Token string `json:"token"`
-}
-type SyncData struct {
-	Ver        int
-	InSync     int
-	TechLevels map[int]TechLevel
-}
-
 // TechLevel represents a tech level data structure
 type TechLevel struct {
 	Level int   `json:"level"`
@@ -63,11 +33,4 @@ type CorpMember struct {
 type CorpRole struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-}
-
-type StorageData struct {
-	Ident        *Identity `json:"ident"`
-	UserData     *SyncData `json:"userData"`
-	Refresh      int64     `json:"refresh"`
-	TokenRefresh int64     `json:"tokenRefresh"`
 }

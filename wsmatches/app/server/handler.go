@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"ws/models"
 )
@@ -205,6 +206,10 @@ func (s *Srv) poll(c *gin.Context) {
 		return
 	}
 	fmt.Printf("%s %s\n", p.Config.HostRelay, p.Question)
+
+	sort.Slice(p.Votes, func(i, j int) bool {
+		return p.Votes[i].Answer < p.Votes[j].Answer
+	})
 
 	// Рендеринг страницы с данными о голосовании
 	c.Status(http.StatusOK)

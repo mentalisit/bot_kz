@@ -2,6 +2,7 @@ package server
 
 import (
 	"compendium_s/models"
+	"compendium_s/server/getCountry"
 	"compendium_s/storage"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -11,17 +12,22 @@ import (
 )
 
 type Server struct {
-	log   *logger.Logger
-	db    db
-	roles *Roles
-	//In  chan models.IncomingMessage
+	log      *logger.Logger
+	db       db
+	roles    *Roles
+	cache    *getCountry.Cache
+	certFile string
+	keyFile  string
 }
 
 func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 	s := &Server{
-		log:   log,
-		db:    st.DB,
-		roles: NewRoles(log),
+		log:      log,
+		db:       st.DB,
+		roles:    NewRoles(log),
+		cache:    getCountry.NewCache(),
+		certFile: "docker/cert/RSA-cert.pem",
+		keyFile:  "docker/cert/RSA-privkey.pem",
 	}
 
 	go s.RunServer()
@@ -31,7 +37,9 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 func (s *Server) RunServer() {
 	port := "8443"
 	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
+	router := gin.New()
+
+	router.Use(gin.LoggerWithFormatter(s.CustomLogFormatter))
 
 	router.OPTIONS("/compendium/applink/identities", s.Check)
 	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
@@ -56,7 +64,7 @@ func (s *Server) RunServer() {
 	router.Static("/docker/compendium/avatars", "docker/compendium/avatars")
 
 	fmt.Println("Running port:" + port)
-	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
+	err := router.RunTLS(":"+port, s.certFile, s.keyFile)
 	if err != nil {
 		s.log.ErrorErr(err)
 		//os.Exit(1)
@@ -75,6 +83,8 @@ type db interface {
 	TechGet(username, userid, guildid string) ([]byte, error)
 	TechUpdate(username, userid, guildid string, tech []byte) error
 	CodeGet(code string) (*models.Code, error)
+	CodeAllGet() []models.Code
+	CodeDelete(code string)
 }
 
 func (s *Server) PrintGoroutine() {
@@ -91,4 +101,35 @@ func (s *Server) PrintGoroutine() {
 	}
 
 	fmt.Println(text)
+}
+func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
+	if param.Method == "OPTIONS" {
+		return fmt.Sprintf("")
+	}
+	var statusColor, methodColor, resetColor string
+	if param.IsOutputColor() {
+		statusColor = param.StatusCodeColor()
+		methodColor = param.MethodColor()
+		resetColor = param.ResetColor()
+	}
+
+	if param.Latency > time.Minute {
+		param.Latency = param.Latency.Truncate(time.Second)
+	}
+
+	country, err := s.cache.GetLocationInfo(param.ClientIP)
+	if err != nil {
+		fmt.Println(err)
+	}
+	addr := fmt.Sprintf("%s:%s", param.ClientIP, country)
+
+	return fmt.Sprintf("[GIN]%v|%s %3d %s|%13v|%15s|%s%-3s%s|%#v\n%s",
+		param.TimeStamp.Format("2006/01/02-15:04:05"),
+		statusColor, param.StatusCode, resetColor,
+		param.Latency,
+		addr,
+		methodColor, param.Method, resetColor,
+		param.Path,
+		param.ErrorMessage,
+	)
 }

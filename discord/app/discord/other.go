@@ -23,59 +23,19 @@ func (d *Discord) CheckAdmin(nameid string, chatid string) bool {
 	}
 }
 func (d *Discord) RoleToIdPing(rolePing, guildid string) (string, error) {
-
-	if guildid == "" {
-		d.log.Panic("почему то нет гуилд ид")
-	}
-	g, err := d.S.Guild(guildid)
-	if err != nil {
-		ge, err1 := d.S.Guild(guildid)
-		if err1 != nil {
-			d.log.Error(err1.Error())
-			return rolePing, err1
-		}
-		g = ge
-	}
-	exist, role := d.roleExists(g, rolePing)
+	exist, role := d.roleExists(d.re.GetGuildRoles(guildid), rolePing)
 	if !exist {
 		//создаем роль и возврашаем пинг
-		role, err = d.createRole(rolePing, guildid)
+		newRole, err := d.createRole(rolePing, guildid)
 		if err != nil {
 			d.log.ErrorErr(err)
 			return rolePing, err
 		}
-		return role.Mention(), nil
+		return newRole.Mention(), nil
 	} else {
 		return role.Mention(), nil
 	}
 }
-
-//func (d *Discord) TextToRoleRsPing(rolePing, guildid string) string {
-//
-//	if guildid == "" {
-//		d.log.Panic("почему то нет гуилд ид")
-//		panic("почему то нет гуилд ид")
-//	}
-//	g, err := d.S.Guild(guildid)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//	exist, role := d.roleExists(g, rolePing)
-//	if !exist {
-//		return fmt.Sprintf("`роль %s не найдена в %s`", rolePing, g.Name)
-//	} else {
-//		return role.Mention()
-//	}
-//}
-
-//func (d *Discord) DMchannel(AuthorID string) (chatidDM string) {
-//	create, err := d.S.UserChannelCreate(AuthorID)
-//	if err != nil {
-//		return ""
-//	}
-//	chatidDM = create.ID
-//	return chatidDM
-//}
 
 func (d *Discord) CleanChat(chatid, mesid, text string) {
 	res := strings.HasPrefix(text, ".")
@@ -84,11 +44,10 @@ func (d *Discord) CleanChat(chatid, mesid, text string) {
 	}
 }
 
-// получаем есть ли роль и саму роль
-func (d *Discord) roleExists(g *discordgo.Guild, nameRoles string) (bool, *discordgo.Role) {
+func (d *Discord) roleExists(Roles []*discordgo.Role, nameRoles string) (bool, *discordgo.Role) {
 	nameRoles = strings.ToLower(nameRoles)
 
-	for _, role := range g.Roles {
+	for _, role := range Roles {
 		if role.Name == "@everyone" {
 			continue
 		}
@@ -126,12 +85,9 @@ func (d *Discord) createRole(rolPing, guildid string) (*discordgo.Role, error) {
 	if err != nil {
 		return nil, err
 	}
+	d.re.guildsRoles[guildid], _ = d.S.GuildRoles(guildid)
 	return create, nil
 }
-
-//func (d *Discord) getLanguage(lang, key string) string {
-//	return d.storage.Dictionary.GetText(lang, key)
-//}
 
 func (d *Discord) CleanOldMessageChannel(chatId, lim string) {
 	limit, _ := strconv.Atoi(lim)
@@ -256,6 +212,7 @@ func (d *Discord) dmChannel(AuthorID string) (chatidDM string) {
 	return chatidDM
 }
 
+// for compendium
 func (d *Discord) GetRoles(guildId string) []models.CorpRole {
 	roles, err := d.S.GuildRoles(guildId)
 	if err != nil {
@@ -277,6 +234,7 @@ func (d *Discord) GetRoles(guildId string) []models.CorpRole {
 	return guildRole
 }
 
+// for compendium
 func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	if roleid == "" {
 		return true
@@ -303,6 +261,8 @@ func (d *Discord) CheckRole(guildId, memderId, roleid string) bool {
 	}
 	return false
 }
+
+// for compendium
 func (d *Discord) GetMembersRoles(guildid string) (mm []models.DsMembersRoles) {
 	members, err := d.S.GuildMembers(guildid, "", 1000)
 	if err != nil {

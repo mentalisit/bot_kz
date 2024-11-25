@@ -49,7 +49,7 @@ func (c *Client) EditTextParse(channel, messageID string, text, parse string) er
 	}
 	return nil
 }
-func (c *Client) EditMessageTextKey(channel string, messageID int, text string, lvlkz string) {
+func (c *Client) EditMessageTextKey(channel string, messageID int, text string, lvlkz string) error {
 	errorResponse, err := c.client.EditMessageTextKey(context.Background(), &EditMessageTextKeyRequest{
 		ChatId:    channel,
 		EditMesId: int32(messageID),
@@ -57,13 +57,14 @@ func (c *Client) EditMessageTextKey(channel string, messageID int, text string, 
 		Lvlkz:     lvlkz,
 	})
 	if err != nil {
-		return
+		return err
 	}
 	if errorResponse.ErrorMessage != "" {
-		return
+		return errors.New(errorResponse.ErrorMessage)
 	}
-
+	return nil
 }
+
 func (c *Client) CheckAdminTg(ChatId string, userName string) (bool, error) {
 	flagResponse, err := c.client.CheckAdmin(context.Background(), &CheckAdminRequest{
 		Name:   userName,

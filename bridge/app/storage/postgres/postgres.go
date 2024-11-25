@@ -2,53 +2,45 @@ package postgres
 
 import (
 	"bridge/config"
-	"context"
+	"database/sql"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
-	"time"
 )
 
 type Db struct {
-	db  Client
+	db  *sql.DB
 	log *logger.Logger
-}
-type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelFunc()
-	pool, err := pgxpool.Connect(ctx, dns)
+	// Открытие соединения
+	conn, err := sql.Open("postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
-		//return err
 	}
-	if err != nil {
-		log.Fatal(err.Error())
+
+	// Проверка подключения
+	if err = conn.Ping(); err != nil {
+		log.ErrorErr(err)
+		os.Exit(1)
 	}
+
 	db := &Db{
-		db:  pool,
+		db:  conn,
 		log: log,
 	}
+
 	go db.createTable()
 	return db
 }
+
 func (d *Db) createTable() {
-	ctx, cancel := d.GetContext()
-	defer cancel()
-	_, err := d.db.Exec(ctx,
+	_, err := d.db.Exec(
 		`CREATE TABLE IF NOT EXISTS kzbot.bridge_config (
         id SERIAL PRIMARY KEY,
 		name_relay TEXT,
@@ -62,7 +54,4 @@ func (d *Db) createTable() {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
-}
-func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 10*time.Second)
 }

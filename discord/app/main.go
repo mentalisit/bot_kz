@@ -4,7 +4,6 @@ import (
 	"discord/config"
 	DiscordClient "discord/discord"
 	"discord/grpc_server"
-	"discord/server"
 	"discord/storage"
 	"github.com/mentalisit/logger"
 	"os"
@@ -15,14 +14,14 @@ import (
 func main() {
 	cfg := config.InitConfig()
 
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook)
+	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "DS")
 
 	st := storage.NewStorage(log, cfg)
 
 	ds := DiscordClient.NewDiscord(log, st, cfg)
 	grpc_server.GrpcMain(ds, log)
 
-	server.NewServer(ds, log)
+	//server.NewServer(ds, log)
 
 	log.Info("Service discord load")
 
@@ -30,5 +29,7 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
+
+	ds.Shutdown()
 
 }

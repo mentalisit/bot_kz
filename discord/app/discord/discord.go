@@ -20,6 +20,7 @@ type Discord struct {
 	bridgeConfig           []models.BridgeConfig
 	bridgeConfigUpdateTime int64
 	api                    *restapi.Recover
+	re                     *replace
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
@@ -40,8 +41,10 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		log:     log,
 		storage: st,
 		api:     restapi.NewRecover(log),
+		re:      newReplace(ds),
 	}
 	ds.AddHandler(DS.messageHandler)
+	ds.AddHandler(DS.messageUpdate)
 	ds.AddHandler(DS.messageReactionAdd)
 	ds.AddHandler(DS.slash)
 	go DS.loadSlashCommand()
@@ -68,6 +71,7 @@ func (d *Discord) Shutdown() {
 		d.log.ErrorErr(err)
 		return
 	}
+	d.api.Close()
 }
 
 func (d *Discord) QueueSend(text string) {
@@ -78,7 +82,7 @@ func (d *Discord) QueueSend(text string) {
 	d.EditMessage(chatid, mid, text+ts)
 }
 func (d *Discord) DeleteMessageTimer() {
-	ticker := time.NewTicker(20 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {

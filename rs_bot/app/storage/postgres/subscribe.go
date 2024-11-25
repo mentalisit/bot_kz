@@ -47,8 +47,7 @@ func (d *Db) CheckSubscribe(name, lvlkz string, TgChannel string, tipPing int) i
 	ctx, cancel := d.GetContext()
 	defer cancel()
 	var counts int
-	sel := "SELECT  COUNT(*) as count FROM kzbot.subscribe " +
-		"WHERE name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
+	sel := "SELECT  COUNT(*) as count FROM kzbot.subscribe WHERE name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
 	row := d.db.QueryRow(ctx, sel, name, lvlkz, TgChannel, tipPing)
 	err := row.Scan(&counts)
 	if err != nil {
@@ -57,6 +56,9 @@ func (d *Db) CheckSubscribe(name, lvlkz string, TgChannel string, tipPing int) i
 	return counts
 }
 func (d *Db) Subscribe(name, nameMention, lvlkz string, tipPing int, TgChannel string) {
+	if d.CheckSubscribe(name, lvlkz, TgChannel, tipPing) > 0 {
+		return
+	}
 	ctx, cancel := d.GetContext()
 	defer cancel()
 	insertSubscribe := `INSERT INTO kzbot.subscribe (name, nameid, lvlkz, tip, chatid, timestart, timeend) VALUES ($1,$2,$3,$4,$5,$6,$7)`

@@ -87,13 +87,18 @@ func (b *Bot) lRsPlus(in models.InMessage) bool {
 	}
 
 	//solo
-	re6 := regexp.MustCompile(`^([s]|[S])([7-9]|[1][0-2])(\+)$`) // две переменные
-	arr6 := (re6.FindAllStringSubmatch(in.Mtext, -1))
+	re6 := regexp.MustCompile(`^([sSсС])([7-9]|1[0-2])(\+)?(\d*)$`)
+	arr6 := re6.FindAllStringSubmatch(in.Mtext, -1)
 	if len(arr6) > 0 {
 		kz = true
 		in.Lvlkz = "d" + arr6[0][2]
 		kzbs := arr6[0][3]
 		in.Timekz = "1"
+		points := arr6[0][4]
+		if points != "" {
+			b.RsSoloPlusComplete(in, points)
+			return kz
+		}
 		if kzbs == "+" {
 			b.RsSoloPlus(in)
 			return kz
@@ -240,13 +245,13 @@ func (b *Bot) lQueue(in models.InMessage) (bb bool) {
 			in.Lvlkz = "d" + in.Lvlkz
 		}
 		bb = true
-		go b.QueueLevel(in)
+		b.QueueLevel(in)
 	}
 	//rus
 	if in.Mtext == "Очередь" || in.Mtext == "очередь" || in.Mtext == "Черга" || in.Mtext == "черга" || in.Mtext == "Queue" || in.Mtext == "queue" {
 		bb = true
 		b.iftipdelete(in)
-		go b.QueueAll(in)
+		b.QueueAll(in)
 	}
 
 	//todo придумать другую команду
@@ -357,6 +362,13 @@ func (b *Bot) lEvent(in models.InMessage) (bb bool) {
 	case "Ивент старт":
 		go b.EventStart(in)
 		bb = true
+	case "Ивент старт new":
+		bb = true
+
+	case "event add corp":
+		go b.EventPreStart(in)
+		bb = true
+
 	case "Ивент стоп":
 		go b.EventStop(in)
 		bb = true

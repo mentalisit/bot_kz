@@ -47,3 +47,7 @@ func (s *Server) GetMembersRoles(ctx context.Context, req *GuildRequest) (*Membe
 	}
 	return &MembersRolesResponse{Memberroles: roles2}, nil
 }
+func (s *Server) EditMessage(ctx context.Context, req *EditMessageRequest) (*Empty, error) {
+	s.ds.EditMessage(req.ChatID, req.MID, req.Content)
+	return &Empty{}, nil
+}

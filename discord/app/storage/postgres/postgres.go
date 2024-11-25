@@ -41,8 +41,28 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		log: log,
 	}
 
+	go db.createTable()
+
 	return db
 }
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 5*time.Second)
+}
+func (d *Db) createTable() {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS kzbot")
+	// Создание таблиц
+	_, err := d.db.Exec(ctx,
+		`CREATE TABLE IF NOT EXISTS kzbot.event (
+            id             BIGSERIAL PRIMARY KEY,
+            dateStart      TEXT,
+            dateStop       TEXT,
+            message        TEXT
+        );
+    `)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 }

@@ -9,7 +9,7 @@ require (
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.2
 	github.com/lib/pq v1.10.9
-	github.com/mentalisit/logger v0.0.0-20241029021019-213e4e0eb688
+	github.com/mentalisit/logger v0.0.0-20241124044103-809f5c57cbdd
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.67.1

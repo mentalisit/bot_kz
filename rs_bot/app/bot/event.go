@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"rs/models"
 	"strconv"
+	"strings"
+	"time"
 )
 
 // lang ok
@@ -92,6 +94,9 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 	message := ""
 	if event1 > 0 {
 		CountEventNames := b.storage.Event.CountEventNames(in.Config.CorpName, in.NameMention, numKZ, event1)
+		if CountEventNames == 0 {
+			CountEventNames = b.storage.Event.CountEventNames(in.Config.CorpName, "$"+in.NameMention, numKZ, event1)
+		}
 		admin := b.checkAdmin(in)
 		if CountEventNames > 0 || admin {
 			pointsGood := b.storage.Event.CountEventsPoints(in.Config.CorpName, numKZ, event1)
@@ -153,5 +158,120 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)
 			b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
+	}
+}
+
+// new
+
+func (b *Bot) EventPreStart(in models.InMessage) {
+	b.storage.Event.EventInsertPreStart(in.Config.CorpName, -1)
+}
+
+func (b *Bot) EventAutoStart() {
+	date := time.Now().UTC().Format(time.DateOnly)
+	nextDateEventStart, nextDateEventStop := b.storage.Event.ReadEventSchedule()
+
+	send := func(config models.CorporationConfig, text string) {
+		if config.TgChannel != "" {
+			b.client.Tg.SendChannel(config.TgChannel, text)
+		}
+		if config.DsChannel != "" {
+			b.client.Ds.Send(config.DsChannel, text)
+		}
+	}
+	sendHelp := func(config models.CorporationConfig) {
+		if config.DsChannel != "" {
+			config = b.sendHelpDs(config, true)
+		}
+		if config.TgChannel != "" {
+			config = b.sendHelpTg(config, true)
+		}
+		b.storage.ConfigRs.UpdateConfigRs(config)
+	}
+
+	if date == nextDateEventStart {
+		b.log.Info("Event Starting all")
+		corps := b.storage.Event.ReadRsEvent(-1)
+		for _, event := range corps {
+			ok, config := b.CheckCorpNameConfig(event.CorpName)
+			if ok {
+				text := b.getLanguageText(config.Country, "info_event_started")
+				//Устанавливаем 1 как активный ивент
+				b.storage.Event.UpdateActiveEvent(1, event.CorpName, event.NumEvent)
+
+				send(config, text)
+				sendHelp(config)
+
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}
+	if date == nextDateEventStop {
+		b.log.Info("Event Stopping all")
+		top := func(conf models.CorporationConfig) {
+			number := 1
+			message := ""
+			message2 := ""
+			var allpoints int
+			var resultsTop []models.Top
+			format := func(top models.Top) string {
+				if top.Points == 0 {
+					return fmt.Sprintf("%d. %s - %d \n", number, top.Name, top.Numkz)
+				}
+				allpoints += top.Points
+				return fmt.Sprintf("%d. %s - %d (%d)\n", number, top.Name, top.Numkz, top.Points)
+			}
+
+			numEvent := b.storage.Event.NumActiveEvent(conf.CorpName)
+
+			message = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s:\n",
+				b.getLanguageText(conf.Country, "top_participants"),
+				b.getLanguageText(conf.Country, "event"),
+			)
+			resultsTop = b.storage.Top.TopAllEventNew(conf.CorpName, numEvent)
+			resultsTop = mergeAndSumTops(resultsTop)
+
+			if len(resultsTop) > 0 {
+				for _, top := range resultsTop {
+					message2 = message2 + format(top)
+					number++
+				}
+			} else {
+				return
+			}
+			if allpoints != 0 {
+				message2 = fmt.Sprintf("%s\nTotal: %d", message2, allpoints)
+
+			}
+
+			if conf.DsChannel != "" {
+				b.client.Ds.SendEmbedText(conf.DsChannel, message, message2)
+			}
+			if conf.TgChannel != "" {
+				text := message + message2
+				if conf.Guildid != "" {
+					text = b.client.Ds.ReplaceTextMessage(text, conf.Guildid)
+				}
+				text = strings.ReplaceAll(text, "@", "")
+				b.client.Tg.SendChannel(conf.TgChannel, text)
+			}
+		}
+
+		corps := b.storage.Event.ReadRsEvent(1)
+		for _, event := range corps {
+			ok, config := b.CheckCorpNameConfig(event.CorpName)
+			if ok {
+				//отправляем топ если он не пуст
+				top(config)
+
+				//Устанавливаем 0 как закрытый ивент
+				b.storage.Event.UpdateActiveEvent(0, event.CorpName, event.NumEvent)
+
+				text := b.getLanguageText(config.Country, "event_stopped")
+				send(config, text)
+				sendHelp(config)
+			}
+		}
+		b.OptimizationSborkz()
 	}
 }

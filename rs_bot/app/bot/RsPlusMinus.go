@@ -168,98 +168,106 @@ func (b *Bot) RsPlus(in models.InMessage) {
 		}
 
 		if countQueue == 3 {
-			u.User4 = UserIn
-			dsmesid = u.User1.Dsmesid
+			darkStar, _ := containsSymbolD(in.Lvlkz)
+			if !darkStar {
 
-			textEvent, numkzEvent := b.EventText(in)
-			if textEvent == "" {
-				textEvent = b.GetTextPercent(in.Config, false)
-			}
-			numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
-			if numberevent > 0 {
-				numkzL = numkzEvent
-			}
+				u.User4 = UserIn
+				dsmesid = u.User1.Dsmesid
 
-			if in.Config.DsChannel != "" {
-				b.wg.Add(1)
-				go func() {
-					ch := utils.WaitForMessage("RsPlus235")
-					n1, n2, n3, n4 := b.helpers.NameMention(u, ds)
-					go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
-					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
-						fmt.Sprintf(" 4/4 %s %s", in.Username, b.getText(in, "you_joined_queue")), 10)
-					//" 4/4 "+in.Name+" "+b.getText(in, "you_joined_queue"), 10)
-					text := fmt.Sprintf("4/4 %s%s %s\n"+
-						" %s\n"+
-						" %s\n"+
-						" %s\n"+
-						" %s\n"+
-						"%s %s",
-						b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "queue_completed"),
-						n1,
-						n2,
-						n3,
-						n4,
-						b.getText(in, "go"), textEvent)
+				textEvent, numkzEvent := b.EventText(in)
+				if textEvent == "" {
+					textEvent = b.GetTextPercent(in.Config, false)
+				}
+				numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
+				if numberevent > 0 {
+					numkzL = numkzEvent
+				}
 
-					if in.Tip == ds {
-						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
-					} else {
-						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
-					}
-					err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
-					if err != nil {
-						b.log.ErrorErr(err)
-					}
-					b.wg.Done()
-					close(ch)
-				}()
-			}
-			if in.Config.TgChannel != "" {
-				b.wg.Add(1)
-				go func() {
-					ch := utils.WaitForMessage("RsPlus273")
-					n1, n2, n3, n4 := b.helpers.NameMention(u, tg)
-					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
-					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
-						in.Username+b.getText(in, "rs_queue_closed")+in.Lvlkz, 10)
-					text := fmt.Sprintf("%s%s %s\n"+
-						"%s\n"+
-						"%s\n"+
-						"%s\n"+
-						"%s\n"+
-						" %s \n"+
-						"%s",
-						b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "queue_completed"),
-						n1, n2, n3, n4,
-						b.getText(in, "go"), textEvent)
-					tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
-					err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
-					if err != nil {
-						b.log.ErrorErr(err)
-					}
-					b.wg.Done()
-					close(ch)
-				}()
-			}
+				if in.Config.DsChannel != "" {
+					b.wg.Add(1)
+					go func() {
+						ch := utils.WaitForMessage("RsPlus235")
+						n1, n2, n3, n4 := b.helpers.NameMention(u, ds)
+						go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
+						go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
+							fmt.Sprintf(" 4/4 %s %s", in.Username, b.getText(in, "you_joined_queue")), 10)
+						//" 4/4 "+in.Name+" "+b.getText(in, "you_joined_queue"), 10)
+						text := fmt.Sprintf("4/4 %s%s %s\n"+
+							" %s\n"+
+							" %s\n"+
+							" %s\n"+
+							" %s\n"+
+							"%s %s",
+							b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "queue_completed"),
+							n1,
+							n2,
+							n3,
+							n4,
+							b.getText(in, "go"), textEvent)
 
-			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
-			err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
-			if err != nil {
+						if in.Tip == ds {
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
+						} else {
+							dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
+						}
+						err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+						b.wg.Done()
+						close(ch)
+					}()
+				}
+				if in.Config.TgChannel != "" {
+					b.wg.Add(1)
+					go func() {
+						ch := utils.WaitForMessage("RsPlus273")
+						n1, n2, n3, n4 := b.helpers.NameMention(u, tg)
+						go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
+						go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel,
+							in.Username+b.getText(in, "rs_queue_closed")+in.Lvlkz, 10)
+						text := fmt.Sprintf("%s%s %s\n"+
+							"%s\n"+
+							"%s\n"+
+							"%s\n"+
+							"%s\n"+
+							" %s \n"+
+							"%s",
+							b.getText(in, "rs_queue"), in.Lvlkz, b.getText(in, "queue_completed"),
+							n1, n2, n3, n4,
+							b.getText(in, "go"), textEvent)
+						tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+						err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+						b.wg.Done()
+						close(ch)
+					}()
+				}
+
+				b.wg.Wait()
+				b.storage.DbFunc.InsertQueue(dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 				err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
 				if err != nil {
-					b.log.ErrorErr(err)
+					err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, "", numkzL, numberevent, in.Config.CorpName)
+					if err != nil {
+						b.log.ErrorErr(err)
+					}
 				}
+
+				if numberevent == 0 {
+					//отправляем сообщение о корпорациях с %
+					go b.SendPercent(in.Config)
+				}
+
+				//проверка есть ли игрок в других чатах
+				user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
+				go b.elseChat(user)
+				go b.helpers.SaveUsersIdQueue(user, in.Config)
+			} else {
+				b.log.Warn("Kakogo hera")
 			}
-
-			//отправляем сообщение о корпорациях с %
-			go b.SendPercent(in.Config)
-
-			//проверка есть ли игрок в других чатах
-			user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
-			go b.elseChat(user)
-			go b.helpers.SaveUsersIdQueue(user, in.Config)
 
 		}
 

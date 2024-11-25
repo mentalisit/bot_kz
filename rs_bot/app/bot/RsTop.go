@@ -69,6 +69,7 @@ func (b *Bot) Top(in models.InMessage) {
 	} else if in.Tip == tg {
 		text := message + message2
 		if in.Config.Guildid != "" {
+			b.ifTipSendTextDelSecond(in, b.getText(in, "form_list"), 10)
 			text = b.client.Ds.ReplaceTextMessage(text, in.Config.Guildid)
 		}
 		text = strings.ReplaceAll(text, "@", "")

@@ -104,11 +104,9 @@ func (c *Client) EditComplexButton(dsmesid, dschatid string, mapEmbed map[string
 	}
 	er, err := c.client.EditComplexButton(context.Background(), req)
 	if err != nil {
-		c.log.ErrorErr(err)
 		return err
 	}
 	if er.ErrorMessage != "" {
-		c.log.ErrorErr(errors.New(er.ErrorMessage))
 		return errors.New(er.ErrorMessage)
 	}
 	return nil

@@ -167,7 +167,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
-				dsmesid = u.User1.Dsmesid
+				//dsmesid = u.User1.Dsmesid
 				ch := utils.WaitForMessage("RsDarkPlus287")
 				n1, n2, n3, _ := b.helpers.NameMention(u, ds)
 				go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
@@ -185,11 +185,9 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					b.getText(in, "go"), textEvent)
 
 				if u.User1.Tip == ds {
-					//go b.sendDmDark(b.getText(in, "go"), u.User1.Mention)
 					go b.client.Ds.SendDmText(b.getText(in, "go"), u.User1.UserId)
 				}
 				if u.User2.Tip == ds {
-					//go b.sendDmDark(b.getText(in, "go"), u.User2.Mention)
 					go b.client.Ds.SendDmText(b.getText(in, "go"), u.User2.UserId)
 				}
 
@@ -197,7 +195,12 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 				err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
 				if err != nil {
-					b.log.ErrorErr(err)
+					err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
+					if err != nil {
+						b.log.ErrorErr(err)
+						b.log.Warn("this problem")
+					}
+
 				}
 				b.wg.Done()
 				close(ch)
@@ -219,11 +222,15 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					b.getText(in, "queue_drs"), in.Lvlkz[1:], b.getText(in, "queue_completed"),
 					n1, n2, n3,
 					b.getText(in, "go"), textEvent)
+				fmt.Printf("MesidTgUpdate tgmesid %d, in.Lvlkz %s, in.Config.CorpName %s\n", tgmesid, in.Lvlkz, in.Config.CorpName)
 				tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
 				err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
-				fmt.Printf("MesidTgUpdate tgmesid %d, in.Lvlkz %s, in.Config.CorpName %s\n", tgmesid, in.Lvlkz, in.Config.CorpName)
 				if err != nil {
-					b.log.ErrorErr(err)
+					err = b.storage.Update.MesidTgUpdate(tgmesid, in.Lvlkz, in.Config.CorpName)
+					if err != nil {
+						b.log.ErrorErr(err)
+						b.log.Warn("this problem")
+					}
 				}
 				b.wg.Done()
 				close(ch)
@@ -233,12 +240,16 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			b.storage.DbFunc.InsertQueue(dsmesid, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.Lvlkz, in.Timekz, tgmesid, numkzN)
 			err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
 			if err != nil {
-				b.log.ErrorErr(err)
+				err = b.storage.Update.UpdateCompliteRS(in.Lvlkz, dsmesid, tgmesid, alt, numkzL, numberevent, in.Config.CorpName)
+				if err != nil {
+					b.log.ErrorErr(err)
+				}
 			}
 
-			//отправляем сообщение о корпорациях с %
-			go b.SendPercent(in.Config)
-
+			if numkzEvent == 0 {
+				//отправляем сообщение о корпорациях с %
+				go b.SendPercent(in.Config)
+			}
 			//проверка есть ли игрок в других чатах
 			user := []string{u.User1.UserId, u.User2.UserId, in.UserId}
 			go b.elseChat(user)
@@ -272,15 +283,10 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", in.Lvlkz, in.NameMention, b.getText(in, "go"), textEvent)
 	if in.Config.DsChannel != "" {
-		if in.Tip == ds {
-			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
-		} else {
-			dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, "")
-			// dsmesid = b.client.Ds.Send(in.Config.DsChannel, text)
-		}
+		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
 	}
 	if in.Config.TgChannel != "" {
-		if in.Tip == ds {
+		if in.Config.DsChannel != "" {
 			text = b.client.Ds.ReplaceTextMessage(text, in.Config.Guildid)
 		}
 		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
@@ -298,4 +304,38 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	//проверка есть ли игрок в других чатах
 	go b.elseChat([]string{in.UserId})
 
+}
+
+func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.iftipdelete(in)
+	numkzN, _ := b.storage.Count.CountNumberNameActive1(in.Lvlkz, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)                            //получаем номер ивета если он активен
+	if numberevent == 0 {
+		b.ifTipSendTextDelSecond(in, "event not active ", 30)
+		return
+	}
+	_, numkzEvent := b.EventText(in)
+	points, err := strconv.Atoi(pointsStr)
+	if err != nil {
+		b.ifTipSendTextDelSecond(in, "не распознал очки  ", 30)
+		return
+	}
+
+	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.getText(in, "event_game"), numkzEvent, in.Lvlkz)
+	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText(in, "contributed"), in.Username, points)
+
+	dsmesid := ""
+	tgmesid := 0
+	text := fmt.Sprintf("%s %s \n%s", mes1, in.NameMention, mesOld)
+	if in.Config.DsChannel != "" {
+		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
+	}
+	if in.Config.TgChannel != "" {
+		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+	}
+
+	b.storage.DbFunc.InsertQueueSolo(dsmesid, "", in.Config.CorpName, in.Username, in.UserId,
+		in.NameMention, in.Tip, in.Lvlkz, tgmesid, numberevent, numkzEvent, numkzN, points)
 }

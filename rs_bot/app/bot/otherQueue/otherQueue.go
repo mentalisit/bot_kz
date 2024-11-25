@@ -46,7 +46,7 @@ func (o *OtherQ) ReadingQueueByLevel(level, corp string) (text string, err error
 		//nameBot
 		for _, queues := range queueLevel {
 			for _, i := range queues {
-				fmt.Printf("corp '%s' deleteChannel '%s'", deleteChannelName(corp), i.CorpName)
+				//fmt.Printf("corp '%s' deleteChannel '%s'", deleteChannelName(corp), i.CorpName)
 				if i.CorpName != deleteChannelName(corp) {
 					q = append(q, i)
 				}

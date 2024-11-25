@@ -128,25 +128,31 @@ func (s *Server) CheckCode(code string) models.Identity {
 	if coder != nil && coder.Code == code {
 		if time.Now().Unix() < coder.Timestamp+600 {
 			i = coder.Identity
+		} else {
+			go s.CleanOldCodes()
 		}
 	}
-	if code == "test-test-test" {
-		i = models.Identity{
-			User: models.User{
-				ID:       "111111111",
-				Username: "TestUser",
-				Alts:     []string{"alt1", "alt2"},
-			},
-			Guild: models.Guild{
-				ID:   "22222222222",
-				Name: "TestGuild",
-				Type: "tg",
-			},
-			Token: "gGUBIlUAU1uTKWd8HssP27ojG0DugoAaPslwFGTDSAbEM6UM",
-		}
 
-	}
 	return i
+}
+func (s *Server) CleanOldCodes() {
+	all := s.db.CodeAllGet()
+	names := make(map[string]models.Code)
+	for _, m := range all {
+		value, exists := names[m.Identity.User.Username]
+		if !exists {
+			names[m.Identity.User.Username] = m
+		} else {
+			if value.Timestamp < m.Timestamp {
+				names[m.Identity.User.Username] = m
+				s.db.CodeDelete(value.Code)
+				fmt.Printf("Delete Code %+v\n", value)
+			} else {
+				s.db.CodeDelete(m.Code)
+				fmt.Printf("Delete Code %+v\n", m)
+			}
+		}
+	}
 }
 func (s *Server) refreshToken(token string) string {
 	if len(token) < 60 {

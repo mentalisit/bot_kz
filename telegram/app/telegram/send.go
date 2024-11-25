@@ -28,19 +28,12 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 		t.log.Info(fmt.Sprintf("chatid '%s', text %s, second %d", chatid, text, second))
 		return false, err1
 	}
-	if second <= 30 {
-		go func() {
-			time.Sleep(time.Duration(second) * time.Second)
-			_, _ = t.t.Request(tgbotapi.NewDeleteMessage(chatId, tMessage.MessageID))
-		}()
-	} else {
-		tu := int(time.Now().UTC().Unix())
-		t.Storage.Db.TimerInsert(models.Timer{
-			Tgmesid:  strconv.Itoa(tMessage.MessageID),
-			Tgchatid: chatid,
-			Timed:    tu + second,
-		})
-	}
+	tu := int(time.Now().UTC().Unix())
+	t.Storage.Db.TimerInsert(models.Timer{
+		Tgmesid:  strconv.Itoa(tMessage.MessageID),
+		Tgchatid: chatid,
+		Timed:    tu + second,
+	})
 
 	if tMessage.MessageID != 0 {
 		return true, nil

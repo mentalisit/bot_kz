@@ -59,13 +59,11 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		texttg = b.helpers.GetQueueTelegram(ntg, u)
 	}
 
-	fd := func() {
-		//emb := b.client.Ds.EmbedDS(n, numberLvl, count, darkStar)
+	fd := func(in models.InMessage) {
 		if in.Option.Edit {
 			errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, n)
 			if errr != nil {
-				b.log.Info(fmt.Sprintf("QueueLevel %s %s %s", u.User1.Dsmesid, in.Config.DsChannel, in.Config.CorpName))
-				b.log.ErrorErr(errr)
+				b.log.Info(fmt.Sprintf("QueueLevel %s %s %s\n%+v\n", u.User1.Dsmesid, in.Config.DsChannel, in.Config.CorpName, errr))
 				in.Option.Edit = false
 				go func() {
 					time.Sleep(5 * time.Second)
@@ -83,9 +81,12 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			}
 		}
 	}
-	ft := func() {
+	ft := func(in models.InMessage) {
 		if in.Option.Edit {
-			b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
+			err = b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
+			if err != nil {
+				fmt.Println(err)
+			}
 		} else if !in.Option.Edit {
 			mesidTg := b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
 			err = b.storage.Update.MesidTgUpdate(mesidTg, in.Lvlkz, in.Config.CorpName)
@@ -101,7 +102,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel123")
-				fd()
+				fd(in)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -110,7 +111,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel132")
-				ft()
+				ft(in)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -120,7 +121,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel142")
-				fd()
+				fd(in)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -129,7 +130,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel151")
-				ft()
+				ft(in)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -138,11 +139,12 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 	} else if count == 3 {
 		darkStar, _ := containsSymbolD(in.Lvlkz)
 		if !darkStar {
+			b.log.InfoStruct("QUEUE LEVEL 141 ", u)
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("QueueLevel163")
-					fd()
+					fd(in)
 					b.wg.Done()
 					close(ch)
 				}()
@@ -151,13 +153,13 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("QueueLevel172")
-					ft()
+					ft(in)
 					b.wg.Done()
 					close(ch)
 				}()
 			}
 		} else {
-			b.log.InfoStruct("queue level 160 ", u)
+			b.log.InfoStruct("QUEUE LEVEL 161 ", u)
 		}
 
 	}

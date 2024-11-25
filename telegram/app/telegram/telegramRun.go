@@ -28,10 +28,8 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		return nil
 	}
 	t := &Telegram{
-		log: log,
-		t:   botApi,
-		//bridgeConfig: make(map[string]models.BridgeConfig),
-		//corpConfigRS: make(map[string]models.CorporationConfig),
+		log:         log,
+		t:           botApi,
 		Storage:     st,
 		api:         restapi.NewRecover(log),
 		usernameMap: make(map[string]int),
@@ -46,10 +44,11 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 }
 
 func (t *Telegram) Close() {
+	t.t.StopReceivingUpdates()
 	t.api.Close()
 }
 func (t *Telegram) DeleteMessageTimer() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {

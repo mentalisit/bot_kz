@@ -91,7 +91,8 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		return
 	}
 	go d.latinOrNot(m) //пытаемся переводить гостевой чат
-	//d.AccesChatDS(m)
+	go d.redStarEventMessage(m)
+
 	if m.Author != nil && m.Author.Locale != "" {
 		go d.log.Info(m.Author.Username + " " + m.Author.Locale)
 	}
@@ -129,7 +130,7 @@ func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.Corpo
 		m.Content += "\u200B"
 	}
 	in := models.InMessage{
-		Mtext:       m.Content,
+		Mtext:       d.ReplaceTextMessage(m.Content, m.GuildID),
 		Tip:         "ds",
 		Username:    m.Author.Username,
 		UserId:      m.Author.ID,
@@ -316,5 +317,19 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 	}
 	if mes.Text != "" || len(mes.Extra) > 0 {
 		d.api.SendBridgeAppRecover(mes)
+	}
+}
+func (d *Discord) redStarEventMessage(m *discordgo.MessageCreate) {
+	if m.Content == "event run" {
+		d.storage.Db.SaveEventDate(m.Content)
+		d.log.Info(m.Content)
+	}
+	if m.ChannelID == "1305333971269324851" {
+		if m.Author.String() == "Hades' Star Official #announcements#0000" {
+			if strings.Contains(m.Content, "Red Star event starts") {
+				d.log.Info(m.Content)
+				d.storage.Db.SaveEventDate(m.Content)
+			}
+		}
 	}
 }

@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package compendiumLogic;
+option go_package = "server/pb;compendiumLogic";
+
+message IncomingMessage {
+  string text = 1;
+  string dmChat = 2;
+  string name = 3;
+  string mentionName = 4;
+  string nameId = 5;
+  string nickName = 6;
+  string avatar = 7;
+  string channelId = 8;
+  string guildId = 9;
+  string guildName = 10;
+  string guildAvatar = 11;
+  string type = 12;
+  string language = 13;
+}
+
+message reqCorpMembersApiRead {
+  string userid = 1;
+  string guildId = 2;
+}
+message reqApiGetUserAlts {
+   string userid = 1;
+}
+message resApiGetUserAlts {
+  repeated string alts = 1;
+}
+
+message resCorpMembersApiRead {
+  repeated CorpMember array = 1;
+}
+message CorpMember {
+  string name = 1;
+  string userId = 2;
+  string guildId = 3;
+  string avatar = 4;
+  map<int32, TechLevels> tech = 5;
+  string avatarUrl = 6;
+  string localTime = 7;
+  string localTime24 = 8;
+  string timeZone = 9;
+  int32 zoneOffset = 10;
+  string afkFor = 11;
+  int32 afkWhen = 12;
+}
+message TechLevels {
+  repeated TechLevel tech = 1;
+}
+message TechLevel {
+  int64 ts = 1;
+  int32 level = 2;
+}
+
+// Определение сервиса и функции LogicRs
+service LogicService {
+  rpc InboxMessage(IncomingMessage) returns (Empty);
+  rpc CorpMembersApiRead(reqCorpMembersApiRead) returns (resCorpMembersApiRead);
+  rpc apiGetUserAlts(reqApiGetUserAlts) returns (resApiGetUserAlts);
+
+}
+
+
+// Пустое сообщение для ответов, не требующих данных
+message Empty {}

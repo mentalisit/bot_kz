@@ -36,7 +36,7 @@ func GrpcMain(b *bot.Bot, log *logger.Logger) *Server {
 			log.ErrorErr(err)
 		}
 	}()
-
+	//go servprof.NewServer(log)
 	return serv
 }
 func (s *Server) LogicRs(ctx context.Context, i *InMessage) (*Empty, error) {

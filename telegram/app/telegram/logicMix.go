@@ -66,7 +66,7 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 		},
 	}
 	if in.Mtext == "" && config.Forward {
-		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 180)
+		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
 	}
 
 	t.api.SendRsBotAppRecover(in)

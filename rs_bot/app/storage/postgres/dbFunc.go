@@ -1,7 +1,9 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx/v4"
+	"context"
+	"fmt"
+	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"rs/pkg/utils"
 	"strconv"
@@ -44,6 +46,57 @@ func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
 
 	return u
 }
+func (d *Db) ReadAllActive() (sb []models.Sborkz) {
+	//sel := "SELECT * FROM kzbot.sborkz" //" WHERE active > 0"
+	sel := "SELECT id, corpname, name, COALESCE(date, '') AS date, COALESCE(lvlkz, '') AS lvlkz, " +
+		"numberevent, eventpoints FROM kzbot.sborkz WHERE active > 0"
+
+	results, err := d.db.Query(context.Background(), sel)
+	defer results.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	for results.Next() {
+		var t models.Sborkz
+		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Date, &t.Lvlkz,
+			&t.Numberevent, &t.Eventpoints)
+		if err != nil {
+			fmt.Println(err)
+		}
+		sb = append(sb, t)
+	}
+
+	return sb
+}
+func (d *Db) DeleteSborkzId(id int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+
+	del := "delete from kzbot.sborkz where id = $1"
+	_, err := d.db.Exec(ctx, del, id)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
+func (d *Db) UpdateSborkz(active string, id int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	upd := `update kzbot.sborkz set active = $1 where id = $2`
+	_, err := d.db.Exec(ctx, upd, active, id)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
+func (d *Db) UpdateSborkzPoints(active string, id int, points int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	upd := `update kzbot.sborkz set active = $1, eventpoints = $2 where id = $3`
+	_, err := d.db.Exec(ctx, upd, active, points, id)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
+
 func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
@@ -64,6 +117,37 @@ func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, 
 		wamesid, mtime, mdate, lvlkz, numkzN, 0, numevent, 0, 0, timekzz)
 	if err != nil {
 		d.log.ErrorErr(err)
+	}
+}
+func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, tgmesid, numevent, numberkz, numkzN, points int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	tm := time.Now()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+
+	timekzz := 1
+
+	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
+                   numkzn,numberkz,numberevent,eventpoints,active,timedown) 
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
+	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
+		wamesid, mtime, mdate, lvlkz, numkzN, numberkz, numevent, points, 1, timekzz)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
+	updN := `update kzbot.numkz set number=number+1 where lvlkz = $1 AND corpname = $2`
+	_, err = d.db.Exec(ctx, updN, lvlkz, CorpName)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	if numevent > 0 {
+		updE := `update kzbot.rsevent set number = number+1  where corpname = $1 AND activeevent = 1`
+		_, err = d.db.Exec(ctx, updE, CorpName)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
 	}
 }
 

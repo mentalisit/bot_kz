@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"rs/config"
 	"rs/pkg/clientDB/postgresLocal"
@@ -16,9 +16,7 @@ type Db struct {
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	db, err := postgresLocal.NewClient(ctx, log, 5, cfg)
+	db, err := postgresLocal.NewClient(log, 5, cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

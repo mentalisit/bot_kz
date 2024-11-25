@@ -1,7 +1,9 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx/v4"
+	"database/sql"
+	"errors"
+	"github.com/jackc/pgx/v5"
 	"rs/models"
 )
 
@@ -104,7 +106,7 @@ func (d *Db) NumActiveEvent(CorpName string) (event1 int) { //запрос но�
 	row := d.db.QueryRow(ctx, sel, CorpName)
 	err := row.Scan(&event1)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			event1 = 0
 		} else {
 			d.log.ErrorErr(err)
@@ -119,7 +121,9 @@ func (d *Db) NumDeactivEvent(CorpName string) (event0 int) { //запрос но
 	row := d.db.QueryRow(ctx, sel, CorpName)
 	err := row.Scan(&event0)
 	if err != nil {
-		d.log.ErrorErr(err)
+		if !errors.Is(err, sql.ErrNoRows) {
+			d.log.ErrorErr(err)
+		}
 	}
 	return event0
 }
@@ -161,4 +165,89 @@ func (d *Db) NumberQueueEvents(CorpName string) int {
 		d.log.ErrorErr(err)
 	}
 	return number
+}
+
+// new
+
+// activeevent int -1 prepare, 0 stop , 1 run
+func (d *Db) EventInsertPreStart(CorpName string, activeevent int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	event0 := d.NumDeactivEvent(CorpName)
+	insertEvent := `INSERT INTO kzbot.rsevent (corpname,numevent,activeevent,number) VALUES ($1,$2,$3,$4)`
+	if event0 > 0 {
+		numberevent := event0 + 1
+		_, err := d.db.Exec(ctx, insertEvent, CorpName, numberevent, activeevent, 1)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+	} else {
+		_, err := d.db.Exec(ctx, insertEvent, CorpName, 1, activeevent, 1)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+	}
+}
+
+func (d *Db) ReadEventSchedule() (start string, stop string) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	var nextDateStart string
+	var nextDateStop string
+
+	sel := "SELECT datestart,datestop FROM kzbot.event ORDER BY id DESC LIMIT 1"
+	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return "", ""
+	}
+	return nextDateStart, nextDateStop
+}
+
+// ReadRsEvent activeEvent int -1 prepare, 0 stop , 1 run
+func (d *Db) ReadRsEvent(activeEvent int) []models.RsEvent {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+
+	sel := "SELECT * FROM kzbot.rsevent WHERE activeevent=$1"
+	results, err := d.db.Query(ctx, sel, activeEvent)
+	defer results.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	var eventsCorps []models.RsEvent
+
+	for results.Next() {
+		var c models.RsEvent
+		err = results.Scan(&c.Id, &c.CorpName, &c.NumEvent, &c.ActiveEvent, &c.Number)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+		eventsCorps = append(eventsCorps, c)
+	}
+	removeDuplicates := func(r []models.RsEvent) []models.RsEvent {
+		newRsEvent := map[string]models.RsEvent{}
+		for _, event := range r {
+			value, exists := newRsEvent[event.CorpName]
+			if (exists && value.NumEvent > event.NumEvent) || !exists {
+				newRsEvent[event.CorpName] = event
+			}
+		}
+		var corps []models.RsEvent
+		for _, event := range newRsEvent {
+			corps = append(corps, event)
+		}
+		return corps
+	}
+
+	return removeDuplicates(eventsCorps)
+}
+func (d *Db) UpdateActiveEvent(activeEvent int, CorpName string, numEvent int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	upd := "UPDATE kzbot.rsevent SET activeevent=$1 WHERE corpname=$2 AND numevent=$3"
+	_, err := d.db.Exec(ctx, upd, activeEvent, CorpName, numEvent)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
 }

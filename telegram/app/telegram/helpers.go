@@ -50,19 +50,12 @@ func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second 
 	if err != nil {
 		return err
 	}
-	if second <= 30 {
-		go func() {
-			time.Sleep(time.Duration(second) * time.Second)
-			t.DelMessage(chatid, id)
-		}()
-	} else {
-		tu := int(time.Now().UTC().Unix())
-		t.Storage.Db.TimerInsert(models.Timer{
-			Tgmesid:  strconv.Itoa(id),
-			Tgchatid: chatid,
-			Timed:    tu + second,
-		})
-	}
+	tu := int(time.Now().UTC().Unix())
+	t.Storage.Db.TimerInsert(models.Timer{
+		Tgmesid:  strconv.Itoa(id),
+		Tgchatid: chatid,
+		Timed:    tu + second,
+	})
 	return nil
 }
 func (t *Telegram) DelMessage(chatid string, idSendMessage int) error {

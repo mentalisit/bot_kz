@@ -38,7 +38,7 @@ func RunNew(ctx context.Context) error {
 	st := storage.NewStorage(log, cfg)
 
 	//clients Discord, Telegram
-	cl := clients.NewClients(log, st, cfg)
+	cl := clients.NewClients(log, st)
 
 	b := bot.NewBot(st, cl, log)
 

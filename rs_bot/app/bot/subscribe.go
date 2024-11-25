@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"rs/models"
+	"strings"
 )
 
 //lang ok
@@ -97,6 +98,8 @@ func (b *Bot) Unsubscribe(in models.InMessage, tipPing int) {
 			//удаление с базы данных
 			text = fmt.Sprintf("%s %s%s %d/4", in.NameMention, b.getText(in, "you_unsubscribed_from_rs_ping"), in.Lvlkz, tipPing)
 			b.storage.Subscribe.Unsubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, tipPing)
+			//внесение информации об отказе от авто подписки tipPing 0
+			b.storage.Subscribe.Subscribe(in.Username, in.NameMention, in.Lvlkz, 0, in.Config.TgChannel)
 		}
 		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 10)
 	}
@@ -105,28 +108,28 @@ func (b *Bot) CheckSubscribe(in models.InMessage) {
 	if in.Tip == "ds" { // Prime
 		return
 	}
+	if in.NameMention == "@jlemonka" {
+		return
+	}
+	if strings.HasPrefix(in.Username, "$") {
+		in.Username, _ = strings.CutPrefix(in.Username, "$")
+	}
 	drs, result := containsSymbolD(in.Lvlkz)
 	if !drs {
 		return
 	}
 	argRoles := b.getText(in, "drs") + result
-	if in.Tip == ds {
-		subscribeCode := b.client.Ds.Subscribe(in.UserId, argRoles, in.Config.Guildid)
-		var text string
-		if subscribeCode == 0 {
-			text = fmt.Sprintf(b.getText(in, "you_subscribed_automated"), in.NameMention, argRoles)
-		} else if subscribeCode == 1 {
+	if in.Tip == tg {
+		//проверка отписки после авто подписки
+		counts2 := b.storage.Subscribe.CheckSubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, 0)
+		if counts2 != 0 {
 			return
-		} else if subscribeCode == 2 {
-			text = b.getText(in, "error_rights_assign") + argRoles
-			b.log.Info(fmt.Sprintf("%+v %+v", in, in.Config))
 		}
-		b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
 
-	} else if in.Tip == tg {
 		//проверка активной подписки
 		counts := b.storage.Subscribe.CheckSubscribe(in.Username, in.Lvlkz, in.Config.TgChannel, 1)
-		if counts == 1 {
+
+		if counts > 0 {
 			return
 		} else {
 			//добавление в оочередь пинга
