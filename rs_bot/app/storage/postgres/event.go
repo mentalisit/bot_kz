@@ -225,22 +225,8 @@ func (d *Db) ReadRsEvent(activeEvent int) []models.RsEvent {
 		}
 		eventsCorps = append(eventsCorps, c)
 	}
-	removeDuplicates := func(r []models.RsEvent) []models.RsEvent {
-		newRsEvent := map[string]models.RsEvent{}
-		for _, event := range r {
-			value, exists := newRsEvent[event.CorpName]
-			if (exists && value.NumEvent > event.NumEvent) || !exists {
-				newRsEvent[event.CorpName] = event
-			}
-		}
-		var corps []models.RsEvent
-		for _, event := range newRsEvent {
-			corps = append(corps, event)
-		}
-		return corps
-	}
 
-	return removeDuplicates(eventsCorps)
+	return eventsCorps
 }
 func (d *Db) UpdateActiveEvent(activeEvent int, CorpName string, numEvent int) {
 	ctx, cancel := d.GetContext()

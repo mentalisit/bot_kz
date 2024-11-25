@@ -129,7 +129,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
-			b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), fmt.Sprintf("%s %s \n%s", mes1, nt.Name1, mesOld), "")
+			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), fmt.Sprintf("%s %s \n%s", mes1, nt.Name1, mesOld), "")
 		}
 	} else if countEvent == 2 {
 		if in.Config.DsChannel != "" {
@@ -138,7 +138,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nt.Name1, nt.Name2, mesOld)
-			b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
+			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	} else if countEvent == 3 {
 		if in.Config.DsChannel != "" {
@@ -147,7 +147,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, mesOld)
-			b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
+			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	} else if countEvent == 4 {
 		if in.Config.DsChannel != "" {
@@ -156,7 +156,7 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 		}
 		if in.Config.TgChannel != "" {
 			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)
-			b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
+			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	}
 }
@@ -188,10 +188,27 @@ func (b *Bot) EventAutoStart() {
 		}
 		b.storage.ConfigRs.UpdateConfigRs(config)
 	}
+	removeDuplicates := func(r []models.RsEvent) []models.RsEvent {
+		newRsEvent := map[string]models.RsEvent{}
+		for _, event := range r {
+			value, exists := newRsEvent[event.CorpName]
+			if (exists && value.NumEvent > event.NumEvent) || !exists {
+				newRsEvent[event.CorpName] = event
+			}
+		}
+		var corps []models.RsEvent
+		for _, event := range newRsEvent {
+			corps = append(corps, event)
+		}
+		return corps
+	}
 
 	if date == nextDateEventStart {
 		b.log.Info("Event Starting all")
 		corps := b.storage.Event.ReadRsEvent(-1)
+		corpsOldEvent := b.storage.Event.ReadRsEvent(0)
+		corps = append(corps, corpsOldEvent...)
+		corps = removeDuplicates(corps)
 		for _, event := range corps {
 			ok, config := b.CheckCorpNameConfig(event.CorpName)
 			if ok {
