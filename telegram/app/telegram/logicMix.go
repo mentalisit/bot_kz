@@ -54,7 +54,7 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 		Username:    name,
 		UserId:      strconv.FormatInt(m.From.ID, 10),
 		NameNick:    "", //нет способа извлечь ник кроме member.CustomTitle
-		NameMention: "@" + name,
+		NameMention: "@" + m.From.UserName,
 		Tg: struct {
 			Mesid int
 		}{
@@ -67,6 +67,9 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 	}
 	if in.Mtext == "" && config.Forward {
 		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
+	}
+	if in.NameMention == "@" {
+		in.NameMention = "@@" + name
 	}
 
 	t.api.SendRsBotAppRecover(in)

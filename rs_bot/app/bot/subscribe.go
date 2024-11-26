@@ -105,10 +105,10 @@ func (b *Bot) Unsubscribe(in models.InMessage, tipPing int) {
 	}
 }
 func (b *Bot) CheckSubscribe(in models.InMessage) {
-	if in.Tip == "ds" { // Prime
+	if in.Tip == "ds" {
 		return
 	}
-	if in.NameMention == "@jlemonka" {
+	if strings.HasPrefix(in.NameMention, "@@") {
 		return
 	}
 	if strings.HasPrefix(in.Username, "$") {
