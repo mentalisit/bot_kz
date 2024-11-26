@@ -57,9 +57,11 @@ func (c *Client) EditMessageTextKey(channel string, messageID int, text string, 
 		Lvlkz:     lvlkz,
 	})
 	if err != nil {
-		return err
+		if err.Error() != "rpc error: code = Unknown desc = Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message" {
+			return err
+		}
 	}
-	if errorResponse.ErrorMessage != "" {
+	if errorResponse != nil && errorResponse.ErrorMessage != "" {
 		return errors.New(errorResponse.ErrorMessage)
 	}
 	return nil

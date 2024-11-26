@@ -85,7 +85,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		if in.Option.Edit {
 			err = b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
 			if err != nil {
-				fmt.Println(err)
+				b.log.ErrorErr(err)
 			}
 		} else if !in.Option.Edit {
 			mesidTg := b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
