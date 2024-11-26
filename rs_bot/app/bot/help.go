@@ -77,13 +77,15 @@ func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.Corpora
 		text = "command for event \n" + text
 	}
 
-	c.MesidDsHelp = b.client.Ds.SendHelp(
+	mId := b.client.Ds.SendHelp(
 		c.DsChannel,
 		b.getLanguageText(c.Country, "information"),
 		text, c.MesidDsHelp, ifUser)
 
-	if c.MesidDsHelp == "" {
+	if mId == "" {
 		b.log.InfoStruct("sendHelpDs", c)
+	} else {
+		c.MesidDsHelp = mId
 	}
 
 	return c
@@ -106,12 +108,20 @@ func (b *Bot) sendHelpTg(c models.CorporationConfig, ifUser bool) models.Corpora
 			b.getLanguageText(c.Country, "info_bot_delete_msg"),
 			b.getLanguageText(c.Country, "info_help_text2"))
 	}
+
 	aEvent := b.storage.Event.NumActiveEvent(c.CorpName)
 	if aEvent > 0 {
 		text = "command for event \n" + text
 	}
 
-	c.MesidTgHelp = b.client.Tg.SendHelp(c.TgChannel, text, c.MesidTgHelp, ifUser)
+	mId := b.client.Tg.SendHelp(c.TgChannel, text, c.MesidTgHelp, ifUser)
+
+	if mId == "" {
+		b.log.InfoStruct("sendHelpTg", c)
+	} else {
+		c.MesidTgHelp = mId
+	}
+
 	return c
 }
 
