@@ -42,7 +42,7 @@ func (b *Bot) MinusMin() {
 						Config: config,
 						Option: models.Option{
 							MinusMin: true,
-							Edit:     true},
+							Edit:     false},
 					}
 
 					if t.Timedown == 3 {

@@ -44,7 +44,7 @@ func (d *Db) ReadTelegramLastMessage(corpname string) int {
 	defer cancel()
 	query := `
         SELECT MAX(tgmesid) FROM kzbot.sborkz
-        WHERE corpname=$1;
+        WHERE corpname=$1 AND active > 0;
     `
 
 	var mid int

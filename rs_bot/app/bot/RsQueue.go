@@ -33,7 +33,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		b.log.ErrorErr(err)
 		return
 	}
-	// совподения количество  условие
+	// совподения количество условие
 	if count == 0 {
 		if !in.Option.Queue {
 			text := b.getText(in, "rs_queue") + in.Lvlkz + b.getText(in, "empty")
@@ -59,41 +59,52 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		texttg = b.helpers.GetQueueTelegram(ntg, u)
 	}
 
-	fd := func(in models.InMessage) {
+	fd := func(in models.InMessage, str int) {
 		if in.Option.Edit {
 			errr := b.client.Ds.EditComplexButton(u.User1.Dsmesid, in.Config.DsChannel, n)
 			if errr != nil {
-				b.log.Info(fmt.Sprintf("QueueLevel %s %s %s\n%+v\n", u.User1.Dsmesid, in.Config.DsChannel, in.Config.CorpName, errr))
+				b.log.Info(fmt.Sprintf("QueueLevel_ds%d %s %s %s\n%+v\n", str, u.User1.Dsmesid, in.Config.DsChannel, in.Config.CorpName, errr))
+				b.log.Info(fmt.Sprintf("%+v\n", u))
 				in.Option.Edit = false
-				go func() {
-					time.Sleep(5 * time.Second)
-					b.QueueAll(in)
-				}()
+				//go func() {
+				//	time.Sleep(5 * time.Second)
+				//	b.QueueAll(in)
+				//}()
 			}
 		}
 		if !in.Option.Edit {
-			b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 			dsmesid := b.client.Ds.SendComplex(in.Config.DsChannel, n)
-
-			err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
-			if err != nil {
-				b.log.ErrorErr(err)
+			if dsmesid != "" {
+				err = b.storage.Update.MesidDsUpdate(dsmesid, in.Lvlkz, in.Config.CorpName)
+				if err != nil {
+					b.log.ErrorErr(err)
+				}
 			}
+			go b.client.Ds.DeleteMessage(in.Config.DsChannel, u.User1.Dsmesid)
 		}
 	}
-	ft := func(in models.InMessage) {
+	ft := func(in models.InMessage, str int) {
 		if in.Option.Edit {
 			err = b.client.Tg.EditMessageTextKey(in.Config.TgChannel, u.User1.Tgmesid, texttg, in.Lvlkz)
 			if err != nil {
-				b.log.ErrorErr(err)
+				b.log.Info(fmt.Sprintf("QueueLevel_tg%d %d %s %s\n%+v\n", str, u.User1.Tgmesid, in.Config.TgChannel, in.Config.CorpName, err))
+				b.log.Info(fmt.Sprintf("%+v\n", u))
+				in.Option.Edit = false
+				//go func() {
+				//	time.Sleep(5 * time.Second)
+				//	b.QueueAll(in)
+				//}()
 			}
-		} else if !in.Option.Edit {
+		}
+		if !in.Option.Edit {
 			mesidTg := b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
-			err = b.storage.Update.MesidTgUpdate(mesidTg, in.Lvlkz, in.Config.CorpName)
-			if err != nil {
-				b.log.ErrorErr(err)
+			if mesidTg != 0 {
+				err = b.storage.Update.MesidTgUpdate(mesidTg, in.Lvlkz, in.Config.CorpName)
+				if err != nil {
+					b.log.ErrorErr(err)
+				}
+				go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 			}
-			b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
 		}
 	}
 	if count == 1 {
@@ -102,7 +113,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel123")
-				fd(in)
+				fd(in, 114)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -111,7 +122,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel132")
-				ft(in)
+				ft(in, 123)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -121,7 +132,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel142")
-				fd(in)
+				fd(in, 133)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -130,7 +141,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			b.wg.Add(1)
 			go func() {
 				ch := utils.WaitForMessage("QueueLevel151")
-				ft(in)
+				ft(in, 142)
 				b.wg.Done()
 				close(ch)
 			}()
@@ -144,7 +155,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("QueueLevel163")
-					fd(in)
+					fd(in, 156)
 					b.wg.Done()
 					close(ch)
 				}()
@@ -153,7 +164,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("QueueLevel172")
-					ft(in)
+					ft(in, 165)
 					b.wg.Done()
 					close(ch)
 				}()
@@ -165,6 +176,7 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 	}
 	b.wg.Wait()
 }
+
 func (b *Bot) QueueAll(in models.InMessage) {
 	lvl := b.storage.DbFunc.Queue(in.Config.CorpName)
 	lvlk := utils.RemoveDuplicates(lvl)

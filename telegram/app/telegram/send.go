@@ -227,12 +227,9 @@ func (t *Telegram) SendEmbedTime(chatid string, text string) (int, error) {
 }
 
 func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, ifUser bool) (string, error) {
-	//go func() {
-	//	time.Sleep(5 * time.Second)
-	//	t.loadConfig()
-	//}()
 	midHelpTg, err := strconv.Atoi(midHelpTgString)
 	if err != nil {
+		t.log.Info(fmt.Sprintf("%s %s %d\n", chatid, midHelpTgString, midHelpTg))
 		midHelpTg = 0
 	}
 
@@ -244,10 +241,11 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 	last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
 
 	if !ifUser {
-		if last < midHelpTg {
+		if last-5 < midHelpTg {
 			return midHelpTgString, nil
+		} else {
+			fmt.Printf("!ifUser if last-5 < midHelpTg last: %d midHelpTg: %d\n", last-5, midHelpTg)
 		}
-
 	}
 
 	go t.DelMessage(chatid, midHelpTg)
@@ -284,8 +282,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 
 	message, err := t.t.Send(msg)
 	if err != nil {
-		t.log.Info(fmt.Sprintf("ERR chatid %s\n", chatid))
-		t.log.ErrorErr(err)
+		t.log.Info(fmt.Sprintf("ERR chatid: %s\n err:%+v", chatid, err))
 		return "", err
 	}
 	mid := strconv.Itoa(message.MessageID)

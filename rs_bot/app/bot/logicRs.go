@@ -449,11 +449,14 @@ func (b *Bot) lEmoji(in models.InMessage) (bb bool) {
 	}
 	if in.Tip == "tg" {
 		ok, n := b.instalNick(in, in.Mtext)
-		if ok && n == "удалено" {
-			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Удалено дополнительное имя "), 20)
-		} else if ok {
-			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Установлено дополнительное имя %s", n), 20)
-			//bb = true
+		if ok {
+			go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 20)
+			bb = true
+			if n == "удалено" {
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Удалено дополнительное имя "), 20)
+			} else {
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Установлено дополнительное имя %s", n), 20)
+			}
 		}
 	}
 
