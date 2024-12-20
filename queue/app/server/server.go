@@ -49,7 +49,6 @@ func (s *Server) runServer() error {
 	router.GET("/queue", s.ReadAllQueue)
 	router.POST("/api/queue", s.QueueApi)
 	router.POST("/api/queue2", s.QueueApi2)
-	router.POST("/ai", s.GeminiAI)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
@@ -65,6 +64,7 @@ func (s *Server) runServerApi() error {
 	router := gin.Default()
 
 	router.GET("/queue", s.ReadAllQueue)
+	router.POST("/ai", s.GeminiAI)
 
 	fmt.Println("Running port:" + port)
 	err := router.Run(":" + port)

@@ -8,6 +8,7 @@ import (
 	"github.com/mentalisit/logger"
 	"google.golang.org/api/option"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -57,7 +58,7 @@ func (g *Gemini) GetAnswerGemini(question, name string) []string {
 func (g *Gemini) getAnswerGemini(question, name string) (text string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := genai.NewClient(ctx, option.WithAPIKey("AIzaSyAhZ6vmmalmtKWuTOk62Bld9MR87aZYKy0"))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("API_KEY")))
 	if err != nil {
 		g.log.ErrorErr(err)
 	}
