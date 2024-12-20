@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (b *Bot) Autohelp() {
+func (b *Bot) AutoHelp() {
 	tm := time.Now().UTC()
 	mtime := tm.Format("15:04")
 	if mtime == "12:00" {
@@ -26,8 +26,15 @@ func (b *Bot) Autohelp() {
 			}
 			if s != configTemp {
 				b.storage.ConfigRs.UpdateConfigRs(configTemp)
-				in := models.InMessage{Config: configTemp}
-				b.QueueAll(in)
+				in := models.InMessage{
+					Config: configTemp,
+					//Option: models.Option{
+					//	Queue:    true,
+					//	MinusMin: true,
+					//},
+					Opt: []string{models.OptionUpdateAutoHelp},
+				}
+				b.Inbox <- in
 				time.Sleep(1 * time.Second)
 			}
 		}
@@ -53,19 +60,29 @@ func (b *Bot) hhelp(in models.InMessage) {
 
 }
 
-//func (b *Bot) hhelp2(in models.InMessage) {
-//	b.iftipdelete(in)
-//	if in.Tip == ds {
-//		go b.client.Ds.Help(in.Config.DsChannel, in.Config.Country)
-//	} else if in.Tip == tg {
-//		go func() {
-//			text := fmt.Sprintf("%s\n%s ", b.getLanguageText(in.Config.Country, "information"), b.getLanguageText(in.Config.Country, "info_help_text"))
-//			mid := b.client.Tg.SendHelp(in.Config.TgChannel, text, []string{})
-//			b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(mid), 180)
-//		}()
-//		//go b.client.Tg.Help(in.Config.TgChannel, in.Config.Country)
+//	func (b *Bot) hhelp2(in models.InMessage) {
+//		b.iftipdelete(in)
+//		if in.Tip == ds {
+//			go b.client.Ds.Help(in.Config.DsChannel, in.Config.Country)
+//		} else if in.Tip == tg {
+//			go func() {
+//				text := fmt.Sprintf("%s\n%s ", b.getLanguageText(in.Config.Country, "information"), b.getLanguageText(in.Config.Country, "info_help_text"))
+//				mid := b.client.Tg.SendHelp(in.Config.TgChannel, text, []string{})
+//				b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(mid), 180)
+//			}()
+//			//go b.client.Tg.Help(in.Config.TgChannel, in.Config.Country)
+//		}
 //	}
-//}
+var helpEvent = "(Для примера ТКЗ ур. 9)\n" +
+	" Начать очередь для сбора игроков как обычно: 9+\n" +
+	" Одиночный бой: S9+\n" +
+	" После каждого запущенного боя ему будет присвоен индивидуальный номер. Для внесения очков за ваш бой делаем так:\n" +
+	" К \"номер боя\" \"количество очков\"\n" +
+	" К 76 9982\n" +
+	" Так же можно внести очки не начиная бой заранее. После сыгранного боя пишем:\n" +
+	" S9+\"кол-во очков \"\n" +
+	" S9+36374\n" +
+	" Для просмотра топа участников ивента просто пишем \"Топ\"."
 
 func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.CorporationConfig {
 	text := fmt.Sprintf("%s \n\n%s",
@@ -74,7 +91,9 @@ func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.Corpora
 
 	aEvent := b.storage.Event.NumActiveEvent(c.CorpName)
 	if aEvent > 0 {
-		text = "command for event \n" + text
+		text = fmt.Sprintf("%s \n\n%s",
+			b.getLanguageText(c.Country, "info_bot_delete_msg"),
+			helpEvent)
 	}
 
 	mId := b.client.Ds.SendHelp(
@@ -111,7 +130,16 @@ func (b *Bot) sendHelpTg(c models.CorporationConfig, ifUser bool) models.Corpora
 
 	aEvent := b.storage.Event.NumActiveEvent(c.CorpName)
 	if aEvent > 0 {
-		text = "command for event \n" + text
+		text = fmt.Sprintf("%s\n%s ",
+			b.getLanguageText(c.Country, "information"),
+			helpEvent)
+
+		if IsThisTopicTG(c.TgChannel) {
+			text = fmt.Sprintf("%s\n%s\n%s",
+				b.getLanguageText(c.Country, "information"),
+				b.getLanguageText(c.Country, "info_bot_delete_msg"),
+				helpEvent)
+		}
 	}
 
 	mId := b.client.Tg.SendHelp(c.TgChannel, text, c.MesidTgHelp, ifUser)

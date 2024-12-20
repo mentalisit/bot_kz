@@ -10,12 +10,17 @@ import (
 
 // lang
 func (b *Bot) iftipdelete(in models.InMessage) {
-	if in.Tip == ds && !in.Option.Reaction && !in.Option.Update && !in.Option.Edit {
-		go b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
-		go b.client.Ds.ChannelTyping(in.Config.DsChannel)
-	} else if in.Tip == tg && !in.Option.Reaction && !in.Option.Update {
-		go b.client.Tg.ChatTyping(in.Config.TgChannel)
-		go b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
+	if !in.Opt.Contains(models.OptionReaction) &&
+		!in.Opt.Contains(models.OptionUpdate) &&
+		!in.Opt.Contains(models.OptionEdit) {
+
+		if in.Tip == ds {
+			go b.client.Ds.DeleteMessage(in.Config.DsChannel, in.Ds.Mesid)
+			go b.client.Ds.ChannelTyping(in.Config.DsChannel)
+		} else if in.Tip == tg {
+			go b.client.Tg.ChatTyping(in.Config.TgChannel)
+			go b.client.Tg.DelMessage(in.Config.TgChannel, in.Tg.Mesid)
+		}
 	}
 }
 func (b *Bot) ifTipSendMentionText(in models.InMessage, text string) {
@@ -60,11 +65,11 @@ func (b *Bot) elseChat(user []string) { //проверяем всех игрок
 	user = utils.RemoveDuplicates(user)
 	for _, u := range user {
 		if b.storage.Count.CountNameQueue(u) > 0 {
-			b.elsetrue(u)
+			b.elseTrue(u)
 		}
 	}
 }
-func (b *Bot) elsetrue(userid string) { //удаляем игрока с очереди
+func (b *Bot) elseTrue(userid string) { //удаляем игрока с очереди
 	tt := b.storage.DbFunc.ElseTrue(userid)
 	for _, t := range tt {
 		ok, config := b.CheckCorpNameConfig(t.Corpname)
@@ -89,7 +94,8 @@ func (b *Bot) elsetrue(userid string) { //удаляем игрока с оче�
 					Mesid: t.Tgmesid,
 				},
 				Config: config,
-				Option: models.Option{Elsetrue: true},
+				//Option: models.Option{Elsetrue: true},
+				Opt: []string{models.OptionElseTrue},
 			}
 			b.Inbox <- in
 		}

@@ -42,12 +42,13 @@ func RunNew(ctx context.Context) error {
 
 	b := bot.NewBot(st, cl, log)
 
-	server.GrpcMain(b, log)
+	g, _ := server.GrpcMain(b, log)
 
 	//ожидаем сигнала завершения
 	<-ctx.Done()
 	cl.Shutdown()
 	st.Shutdown()
+	g.S.GracefulStop()
 
 	//need write code save session and stop all services
 	log.Info("shutdown")

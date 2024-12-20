@@ -73,7 +73,8 @@ func (d *Db) createTable() {
 		numberevent bigint,
 		eventpoints bigint,    
 		active      bigint,
-		timedown    bigint);`)
+		timedown    bigint,
+		userid      text);`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
@@ -159,12 +160,14 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+
 	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS kzbot.temptopevent
+		CREATE TABLE IF NOT EXISTS kzbot.event
 	(
 		id     bigserial        primary key,
-		name   text,    numkz  bigint,
-		points bigint
+		datestart   text,
+		datestop  text,
+		message text
 	);`)
 	if err != nil {
 		d.log.ErrorErr(err)

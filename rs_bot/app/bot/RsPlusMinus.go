@@ -95,7 +95,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("RsPlus118")
-					u.User2 = UserIn
+					u.User2 = &UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
 					text := fmt.Sprintf("%s 2/4 %s %s", n["lvlkz"], in.Username, b.getText(in, "you_joined_queue"))
 					//text := n["lvlkz"] + " 2/4 " + in.Username + b.getText(in, "you_joined_queue")
@@ -109,7 +109,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("RsPlus133")
-					u.User2 = UserIn
+					u.User2 = &UserIn
 					texttg = b.helpers.GetQueueTelegram(ntg, u)
 
 					tgmesid = b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
@@ -130,7 +130,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("RsPlus164")
-					u.User3 = UserIn
+					u.User3 = &UserIn
 					n = b.helpers.GetQueueDiscord(n, u)
 					lvlk3, err4 := b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz+"+", in.Config.Guildid)
 					if err4 != nil {
@@ -148,7 +148,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("RsPlus186")
-					u.User3 = UserIn
+					u.User3 = &UserIn
 					texttg = b.helpers.GetQueueTelegram(ntg, u)
 					tgmesid = b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
 					go b.client.Tg.DelMessage(in.Config.TgChannel, u.User1.Tgmesid)
@@ -171,7 +171,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 			darkStar, _ := containsSymbolD(in.Lvlkz)
 			if !darkStar {
 
-				u.User4 = UserIn
+				u.User4 = &UserIn
 				dsmesid = u.User1.Dsmesid
 
 				textEvent, numkzEvent := b.EventText(in)
@@ -262,7 +262,7 @@ func (b *Bot) RsPlus(in models.InMessage) {
 				}
 
 				//проверка есть ли игрок в других чатах
-				user := []string{u.User1.UserId, u.User2.UserId, u.User3.UserId, in.UserId}
+				user := u.GetAllUserId()
 				go b.elseChat(user)
 				go b.helpers.SaveUsersIdQueue(user, in.Config)
 			} else {

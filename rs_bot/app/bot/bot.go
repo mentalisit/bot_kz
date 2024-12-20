@@ -66,7 +66,7 @@ func (b *Bot) timerBot() { //цикл для удаления сообщений
 			b.MinusMin()
 
 			if now.Minute() == 0 {
-				b.Autohelp() //автозапуск справки
+				go b.AutoHelp() //автозапуск справки
 			}
 		}
 		time.Sleep(1 * time.Second)
@@ -103,20 +103,38 @@ func (b *Bot) LogicRs(in models.InMessage) {
 
 	dm, conf := b.helpers.IfMessageDM(in)
 	if dm {
-		text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
-		if in.Config.DsChannel != "" {
-			b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
-			b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
-		} else if in.Config.TgChannel != "" {
-			b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
-			b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
-		}
+		utils.PrintGoroutine(b.log)
+		if conf.CorpName != "" {
+			text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
+			if in.Config.DsChannel != "" {
+				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
+				go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
+			} else if in.Config.TgChannel != "" {
+				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+				go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
+			}
 
-		if conf.DsChannel != "" {
-			b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, in.Ds.Avatar)
-		}
-		if conf.TgChannel != "" {
-			b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
+			if conf.DsChannel != "" {
+				go b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, in.Ds.Avatar)
+			}
+			if conf.TgChannel != "" {
+				go b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
+			}
+		} else {
+			answer := b.helpers.GeminiSay(in.Mtext, in.Username)
+			for _, text := range answer {
+				fmt.Printf("answer gemini %s\n", text)
+				if text == "" {
+					return
+				}
+				if in.Config.DsChannel != "" {
+					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
+					go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
+				} else if in.Config.TgChannel != "" {
+					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+					go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
+				}
+			}
 		}
 
 		return
@@ -139,9 +157,17 @@ func (b *Bot) LogicRs(in models.InMessage) {
 			b.cleanChat(in)
 			//go b.Transtale()//нужно решить проблему с ошибками
 		}
-	} else if in.Option.MinusMin {
+	} else if in.Opt.Contains(models.OptionMinusMinNext) {
 		b.MinusMinMessageUpdate()
-	} else if in.Option.Update {
+	} else if in.Opt.Contains(models.OptionMessageUpdateDS) {
+		b.QueueLevel(in)
+	} else if in.Opt.Contains(models.OptionMessageUpdateTG) {
+		b.QueueLevel(in)
+	} else if in.Opt.Contains(models.OptionUpdateAutoHelp) {
+		b.QueueAll(in)
+	} else if in.Opt.Contains(models.OptionQueueAll) {
+		b.QueueLevel(in)
+	} else if in.Opt.Contains(models.OptionPlus) {
 		b.QueueLevel(in)
 	}
 	close(ch)
@@ -177,7 +203,7 @@ func (b *Bot) logicIfText(in models.InMessage) bool {
 func (b *Bot) cleanChat(in models.InMessage) {
 	ch := utils.WaitForMessage("cleanChat")
 	defer close(ch)
-	if !strings.HasPrefix(in.Mtext, ".") && !in.Option.Edit {
+	if !strings.HasPrefix(in.Mtext, ".") && !in.Opt.Contains(models.OptionEdit) {
 		if in.Tip == ds && in.Config.DelMesComplite == 0 {
 			go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
 		}

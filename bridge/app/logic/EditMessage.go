@@ -1,4 +1,4 @@
-package server
+package logic
 
 // TODO
 func (b *Bridge) EditMessageDS() {

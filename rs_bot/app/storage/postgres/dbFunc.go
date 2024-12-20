@@ -16,9 +16,6 @@ func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
 
 	u := models.Users{
 		User1: models.Sborkz{},
-		User2: models.Sborkz{},
-		User3: models.Sborkz{},
-		User4: models.Sborkz{},
 	}
 	user := 1
 	sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
@@ -35,11 +32,11 @@ func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
 		if user == 1 {
 			u.User1 = t
 		} else if user == 2 {
-			u.User2 = t
+			u.User2 = &t
 		} else if user == 3 {
-			u.User3 = t
+			u.User3 = &t
 		} else if user == 4 {
-			u.User4 = t
+			u.User4 = &t
 		}
 		user = user + 1
 	}
@@ -341,7 +338,7 @@ func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
 
 	return ds, tg
 }
-func (d *Db) MessageupdateDS(dsmesid string, config models.CorporationConfig) models.InMessage {
+func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) models.InMessage {
 	ctx, cancel := d.GetContext()
 	defer cancel()
 
@@ -371,14 +368,15 @@ func (d *Db) MessageupdateDS(dsmesid string, config models.CorporationConfig) mo
 			Guildid: config.Guildid,
 		},
 		Config: config,
-		Option: models.Option{
-			Edit:   true,
-			Update: true},
+		//Option: models.Option{
+		//	Edit:   true,
+		//	Update: true},
+		Opt: []string{models.OptionMessageUpdateDS, models.OptionEdit},
 	}
 	return in
 
 }
-func (d *Db) MessageupdateTG(tgmesid int, config models.CorporationConfig) models.InMessage {
+func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) models.InMessage {
 	ctx, cancel := d.GetContext()
 	defer cancel()
 
@@ -406,9 +404,10 @@ func (d *Db) MessageupdateTG(tgmesid int, config models.CorporationConfig) model
 			//Nameid: 0
 		},
 		Config: config,
-		Option: models.Option{
-			Edit:   true,
-			Update: true},
+		//Option: models.Option{
+		//	Edit:   true,
+		//	Update: true,},
+		Opt: []string{models.OptionMessageUpdateTG, models.OptionEdit},
 	}
 	return in
 }

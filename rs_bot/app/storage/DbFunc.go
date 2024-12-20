@@ -16,8 +16,8 @@ type DbFunc interface {
 	Queue(corpname string) []string
 	OneMinutsTimer() []string
 	MessageUpdateMin(corpname string) ([]string, []int)
-	MessageupdateDS(dsmesid string, config models.CorporationConfig) models.InMessage
-	MessageupdateTG(tgmesid int, config models.CorporationConfig) models.InMessage
+	MessageUpdateDS(dsmesid string, config models.CorporationConfig) models.InMessage
+	MessageUpdateTG(tgmesid int, config models.CorporationConfig) models.InMessage
 	NumberQueueLvl(lvlkzs, CorpName string) (int, error)
 	OptimizationSborkz()
 	ReadAllActive() (sb []models.Sborkz)

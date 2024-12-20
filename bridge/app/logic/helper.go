@@ -1,4 +1,4 @@
-package server
+package logic
 
 func (b *Bridge) Channels() (chatIdsTG, chatIdsDS []string) {
 	for _, c := range b.in.Config.ChannelTg {

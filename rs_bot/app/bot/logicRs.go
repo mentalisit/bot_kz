@@ -362,9 +362,6 @@ func (b *Bot) lEvent(in models.InMessage) (bb bool) {
 	case "Ивент старт":
 		go b.EventStart(in)
 		bb = true
-	case "Ивент старт new":
-		bb = true
-
 	case "event add corp":
 		go b.EventPreStart(in)
 		bb = true

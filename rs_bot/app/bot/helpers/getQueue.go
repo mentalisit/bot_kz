@@ -16,29 +16,31 @@ type Helpers struct {
 	log       *logger.Logger
 	storage   *storage.Storage
 	saveArray []SaveDM
+	//Gemini    *Gemini
 }
 
 func NewHelpers(log *logger.Logger, storage *storage.Storage) *Helpers {
 	return &Helpers{
 		log:     log,
 		storage: storage,
+		//Gemini:  NewGemini(log),
 	}
 }
 func (h *Helpers) GetQueueDiscord(n map[string]string, u models.Users) map[string]string {
 	if u.User1.Name != "" {
 		n["name1"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(u.User1, ds), u.User1.Timedown, u.User1.Numkzn)
 	}
-	if u.User2.Name != "" {
-		n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(u.User2, ds), u.User2.Timedown, u.User2.Numkzn)
+	if u.User2 != nil && u.User2.Name != "" {
+		n["name2"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(*u.User2, ds), u.User2.Timedown, u.User2.Numkzn)
 	}
-	if u.User3.Name != "" {
-		n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(u.User3, ds), u.User3.Timedown, u.User3.Numkzn)
+	if u.User3 != nil && u.User3.Name != "" {
+		n["name3"] = fmt.Sprintf("%s  🕒  %d  (%d)", h.emReadName(*u.User3, ds), u.User3.Timedown, u.User3.Numkzn)
 	}
 	textcount := ""
-	if u.User3.Name != "" {
+	if u.User3 != nil && u.User3.Name != "" {
 		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n3️⃣ %s \n\n",
 			n["name1"], n["name2"], n["name3"])
-	} else if u.User2.Name != "" {
+	} else if u.User2 != nil && u.User2.Name != "" {
 		textcount = fmt.Sprintf("\n1️⃣ %s \n2️⃣ %s \n\n",
 			n["name1"], n["name2"])
 	} else if u.User1.Name != "" {
@@ -56,13 +58,13 @@ func (h *Helpers) GetQueueTelegram(n map[string]string, u models.Users) (users s
 		users += fmt.Sprintf("1️⃣ %s - %d%s (%d) \n",
 			h.emReadName(u.User1, tg), u.User1.Timedown, n["min"], u.User1.Numkzn)
 	}
-	if u.User2.Name != "" {
+	if u.User2 != nil && u.User2.Name != "" {
 		users += fmt.Sprintf("2️⃣ %s - %d%s (%d) \n",
-			h.emReadName(u.User2, tg), u.User2.Timedown, n["min"], u.User2.Numkzn)
+			h.emReadName(*u.User2, tg), u.User2.Timedown, n["min"], u.User2.Numkzn)
 	}
-	if u.User3.Name != "" {
+	if u.User3 != nil && u.User3.Name != "" {
 		users += fmt.Sprintf("3️⃣ %s - %d%s (%d) \n",
-			h.emReadName(u.User3, tg), u.User3.Timedown, n["min"], u.User3.Numkzn)
+			h.emReadName(*u.User3, tg), u.User3.Timedown, n["min"], u.User3.Numkzn)
 	}
 
 	if n["text2"] != "" {
@@ -178,21 +180,28 @@ func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string
 	} else {
 		n1 = u.User1.Name
 	}
-	if u.User2.Tip == tip {
-		n2 = h.emReadMention(u.User2, tip)
-	} else {
-		n2 = u.User2.Name
+	if u.User2 != nil {
+		if u.User2.Tip == tip {
+			n2 = h.emReadMention(*u.User2, tip)
+		} else {
+			n2 = u.User2.Name
+		}
 	}
-	if u.User3.Tip == tip {
-		n3 = h.emReadMention(u.User3, tip)
-	} else {
-		n3 = u.User3.Name
+	if u.User3 != nil {
+		if u.User3.Tip == tip {
+			n3 = h.emReadMention(*u.User3, tip)
+		} else {
+			n3 = u.User3.Name
+		}
 	}
-	if u.User4.Tip == tip {
-		n4 = h.emReadMention(u.User4, tip)
-	} else {
-		n4 = u.User4.Name
+	if u.User4 != nil {
+		if u.User4.Tip == tip {
+			n4 = h.emReadMention(*u.User4, tip)
+		} else {
+			n4 = u.User4.Name
+		}
 	}
+
 	return
 }
 func (h *Helpers) emReadMention(u models.Sborkz, tip string) string { // склеиваем имя и эмоджи

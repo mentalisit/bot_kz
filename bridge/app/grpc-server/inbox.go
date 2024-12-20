@@ -1,8 +1,8 @@
 package grpc_server
 
 import (
+	"bridge/logic"
 	"bridge/models"
-	"bridge/server"
 	"context"
 	"fmt"
 	"github.com/mentalisit/logger"
@@ -12,11 +12,11 @@ import (
 
 type Server struct {
 	UnimplementedBridgeServiceServer
-	b   *server.Bridge
+	b   *logic.Bridge
 	log *logger.Logger
 }
 
-func GrpcMain(b *server.Bridge, log *logger.Logger) *Server {
+func GrpcMain(b *logic.Bridge, log *logger.Logger) *Server {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.ErrorErr(err)

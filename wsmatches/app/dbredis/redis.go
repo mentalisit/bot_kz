@@ -17,9 +17,9 @@ type Db struct {
 func NewDb(myLogger *logger.Logger) *Db {
 	log = myLogger
 	client := redis.NewClient(&redis.Options{
-		Addr:     "192.168.100.131:6379", // Replace with your Redis server address
-		Password: "",                     // No password for local development
-		DB:       0,                      // Default DB
+		Addr:     "redis:6379", // Replace with your Redis server address
+		Password: "",           // No password for local development
+		DB:       0,            // Default DB
 	})
 
 	// Ping the Redis server to check the connection

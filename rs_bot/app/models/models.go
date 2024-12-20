@@ -1,5 +1,10 @@
 package models
 
+import (
+	"fmt"
+	"slices"
+)
+
 type InMessage struct {
 	Mtext         string
 	Tip           string
@@ -17,7 +22,27 @@ type InMessage struct {
 		Mesid int
 	}
 	Config CorporationConfig
-	Option Option
+	//Option //Option
+	Opt Options
+}
+type Options []string
+
+func (o *Options) Contains(s string) bool {
+	return slices.Contains(*o, s)
+}
+func (o *Options) Remove(s string) {
+	for i, item := range *o {
+		if item == s {
+			*o = append((*o)[:i], (*o)[i+1:]...)
+			return
+		}
+	}
+}
+func (o *Options) Add(s string) {
+	if o.Contains(s) {
+		panic(fmt.Sprintf("option %s already add to opt %+v\n", s, *o))
+	}
+	*o = append(*o, s)
 }
 
 type CorporationConfig struct {
@@ -34,22 +59,54 @@ type CorporationConfig struct {
 	Guildid        string
 }
 
-type Option struct {
-	Reaction bool
-	InClient bool
-	Queue    bool
-	Pl30     bool
-	MinusMin bool
-	Edit     bool
-	Update   bool
-	Elsetrue bool
-}
+//type Option struct {
+//	Reaction bool
+//	InClient bool
+//	Queue    bool
+//	Pl30     bool
+//	MinusMin bool
+//	Edit     bool
+//	Update   bool
+//	Elsetrue bool
+//}
+
+const (
+	OptionReaction        = "Reaction"
+	OptionInClient        = "InClient"
+	OptionQueue           = "Queue"
+	OptionPl30            = "Pl30"
+	OptionMinusMin        = "MinusMin"
+	OptionMinusMinNext    = "MinusMinNext"
+	OptionEdit            = "Edit"
+	OptionUpdate          = "Update"
+	OptionUpdateAutoHelp  = "UpdateAutoHelp"
+	OptionMessageUpdateDS = "MessageUpdateDS"
+	OptionMessageUpdateTG = "MessageUpdateTG"
+	OptionElseTrue        = "ElseTrue"
+	OptionQueueAll        = "QueueAll"
+	OptionPlus            = "Plus"
+)
 
 type Users struct {
 	User1 Sborkz
-	User2 Sborkz
-	User3 Sborkz
-	User4 Sborkz
+	User2 *Sborkz
+	User3 *Sborkz
+	User4 *Sborkz
+}
+
+func (u Users) GetAllUserId() []string {
+	var all []string
+	all = append(all, u.User1.UserId)
+	if u.User2 != nil {
+		all = append(all, u.User2.UserId)
+	}
+	if u.User3 != nil {
+		all = append(all, u.User3.UserId)
+	}
+	if u.User4 != nil {
+		all = append(all, u.User4.UserId)
+	}
+	return all
 }
 
 type Sborkz struct {

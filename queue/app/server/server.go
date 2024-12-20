@@ -15,6 +15,7 @@ type Server struct {
 	log   *logger.Logger
 	queue *rsbotbd.Queue
 	kzbot *kzbotdb.Db
+	ai    *Gemini
 }
 
 func NewServer(log *logger.Logger, cfg *config.ConfigBot) *Server {
@@ -22,6 +23,7 @@ func NewServer(log *logger.Logger, cfg *config.ConfigBot) *Server {
 		log:   log,
 		queue: rsbotbd.NewQueue(log),
 		kzbot: kzbotdb.NewDb(log, cfg),
+		ai:    NewGemini(log),
 	}
 	go func() {
 		err := s.runServer()
@@ -47,6 +49,7 @@ func (s *Server) runServer() error {
 	router.GET("/queue", s.ReadAllQueue)
 	router.POST("/api/queue", s.QueueApi)
 	router.POST("/api/queue2", s.QueueApi2)
+	router.POST("/ai", s.GeminiAI)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")

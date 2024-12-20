@@ -131,7 +131,7 @@ func (b *Bot) RsDarkPlusOld(in models.InMessage, alt string) {
 					b.wg.Add(1)
 					go func() {
 						ch := utils.WaitForMessage("RsDarkPlus223")
-						u.User2 = UserIn
+						u.User2 = &UserIn
 						n = b.helpers.GetQueueDiscord(n, u)
 						text := n["lvlkz"] + fmt.Sprintf(" 2/3 %s %s \n%s", in.Username, b.getText(in, "you_joined_queue"), u.User1.Mention)
 						go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
@@ -147,7 +147,7 @@ func (b *Bot) RsDarkPlusOld(in models.InMessage, alt string) {
 					b.wg.Add(1)
 					go func() {
 						ch := utils.WaitForMessage("RsDarkPlus239")
-						u.User2 = UserIn
+						u.User2 = &UserIn
 						texttg = b.helpers.GetQueueTelegram(ntg, u)
 
 						tgmesid = b.client.Tg.SendEmbed(in.Lvlkz, in.Config.TgChannel, texttg)
@@ -175,7 +175,7 @@ func (b *Bot) RsDarkPlusOld(in models.InMessage, alt string) {
 				if numberevent > 0 {
 					numkzL = numkzEvent
 				}
-				u.User3 = UserIn
+				u.User3 = &UserIn
 
 				if in.Config.DsChannel != "" {
 					b.wg.Add(1)
@@ -251,7 +251,7 @@ func (b *Bot) RsDarkPlusOld(in models.InMessage, alt string) {
 					go b.SendPercent(in.Config)
 				}
 				//проверка есть ли игрок в других чатах
-				user := []string{u.User1.UserId, u.User2.UserId, in.UserId}
+				user := u.GetAllUserId()
 				go b.elseChat(user)
 				go b.helpers.SaveUsersIdQueue(user, in.Config)
 			}
@@ -310,6 +310,8 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			ntg["min"] = b.getText(in, "min")
 		}
 
+		_, level := containsSymbolD(in.Lvlkz)
+
 		if countQueue == 0 {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
@@ -325,10 +327,9 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				b.wg.Add(1)
 				go func() {
 					ch := utils.WaitForMessage("RsDarkPlus195")
-					_, lvldkz := containsSymbolD(in.Lvlkz)
 					tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel,
 						fmt.Sprintf(b.getText(in, "temp_queue_started"),
-							in.Username, b.getText(in, "drs")+lvldkz))
+							in.Username, b.getText(in, "drs")+level))
 
 					b.SubscribePing(in, 1)
 					b.wg.Done()
@@ -348,7 +349,6 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			if u.User1.Tgmesid != 0 {
 				tgmesid = u.User1.Tgmesid
 			}
-			_, level := containsSymbolD(in.Lvlkz)
 
 			if countQueue == 1 {
 
@@ -406,7 +406,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				if numberevent > 0 {
 					numkzL = numkzEvent
 				}
-				u.User3 = UserIn
+				u.User3 = &UserIn
 
 				if in.Config.DsChannel != "" {
 					b.wg.Add(1)
@@ -417,7 +417,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel,
 							fmt.Sprintf("🚀 3/3 %s %s", in.Username, b.getText(in, "you_joined_queue")), 10)
 						text := fmt.Sprintf("3/3 %s%s %s\n %s\n %s\n %s\n%s %s",
-							b.getText(in, "queue_drs"), in.Lvlkz[1:], b.getText(in, "queue_completed"),
+							b.getText(in, "queue_drs"), level, b.getText(in, "queue_completed"),
 							n1, n2, n3, b.getText(in, "go"), textEvent)
 
 						dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
@@ -482,7 +482,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					go b.SendPercent(in.Config)
 				}
 				//проверка есть ли игрок в других чатах
-				user := []string{u.User1.UserId, u.User2.UserId, in.UserId}
+				user := u.GetAllUserId()
 				go b.elseChat(user)
 				go b.helpers.SaveUsersIdQueue(user, in.Config)
 			}

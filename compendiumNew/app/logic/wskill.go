@@ -74,6 +74,19 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			TimestampEnd: timestamp,
 			Language:     m.Language,
 		}
+		count, _ := c.guilds.GuildGetCountByGuildId(m.GuildId)
+		if count == 0 {
+			err := c.guilds.GuildInsert(models.Guild{
+				URL:  m.GuildAvatar,
+				ID:   m.GuildId,
+				Name: m.GuildName,
+				Type: m.Type,
+			})
+			if err != nil {
+				c.log.ErrorErr(err)
+			}
+		}
+
 		err := c.db.DB.WsKillInsert(wskill)
 		if err != nil {
 			c.log.ErrorErr(err)

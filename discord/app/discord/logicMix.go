@@ -4,6 +4,7 @@ import (
 	"discord/discord/helpers"
 	"discord/models"
 	"fmt"
+	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
@@ -330,6 +331,13 @@ func (d *Discord) redStarEventMessage(m *discordgo.MessageCreate) {
 				d.log.Info(m.Content)
 				d.storage.Db.SaveEventDate(m.Content)
 			}
+
+			textTr, _ := gt.Translate(m.Content, "auto", "ru")
+			d.SendWebhook(textTr, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
+
+			textTr, _ = gt.Translate(m.Content, "auto", "uk")
+			d.SendWebhook(textTr, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
+
 		}
 	}
 }

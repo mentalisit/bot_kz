@@ -1,4 +1,4 @@
-package server
+package logic
 
 import (
 	ds "bridge/Discord"
@@ -6,10 +6,7 @@ import (
 	"bridge/models"
 	"bridge/storage"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
-	"net/http"
-	"os"
 	"runtime"
 	"time"
 )
@@ -34,44 +31,44 @@ func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
 	}
 	bridge.LoadConfig()
 
-	go bridge.ServerRun()
+	//	go bridge.ServerRun()
 
 	return bridge
 }
 
-func (b *Bridge) ServerRun() {
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.Default()
-	// Обработчик для принятия сообщений от DiscordService
-	router.POST("/bridge/inbox", b.indoxBridge)
-	//
-	router.GET("/bridge/config", b.configBridge)
-
-	err := router.Run(":80")
-	if err != nil {
-		b.log.ErrorErr(err)
-		os.Exit(1)
-	}
-}
-func (b *Bridge) indoxBridge(c *gin.Context) {
-	b.PrintGoroutine()
-	var mes models.ToBridgeMessage
-
-	if err := c.ShouldBindJSON(&mes); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Message received successfully"})
-
-	go b.Logic(mes)
-}
-
-func (b *Bridge) configBridge(c *gin.Context) {
-	b.PrintGoroutine()
-	config := b.storage.DBReadBridgeConfig()
-	c.JSON(http.StatusOK, config)
-}
+//func (b *Bridge) ServerRun() {
+//	gin.SetMode(gin.ReleaseMode)
+//	router := gin.Default()
+//	// Обработчик для принятия сообщений от DiscordService
+//	router.POST("/bridge/inbox", b.indoxBridge)
+//	//
+//	router.GET("/bridge/config", b.configBridge)
+//
+//	err := router.Run(":80")
+//	if err != nil {
+//		b.log.ErrorErr(err)
+//		os.Exit(1)
+//	}
+//}
+//func (b *Bridge) indoxBridge(c *gin.Context) {
+//	b.PrintGoroutine()
+//	var mes models.ToBridgeMessage
+//
+//	if err := c.ShouldBindJSON(&mes); err != nil {
+//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	c.JSON(http.StatusOK, gin.H{"message": "Message received successfully"})
+//
+//	go b.Logic(mes)
+//}
+//
+//func (b *Bridge) configBridge(c *gin.Context) {
+//	b.PrintGoroutine()
+//	config := b.storage.DBReadBridgeConfig()
+//	c.JSON(http.StatusOK, config)
+//}
 
 type BridgeConfig interface {
 	DBReadBridgeConfig() []models.BridgeConfig

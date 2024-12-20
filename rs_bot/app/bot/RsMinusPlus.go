@@ -11,7 +11,7 @@ func (b *Bot) Plus(in models.InMessage) bool {
 	countName := b.storage.Count.CountNameQueueCorp(in.UserId, in.Config.CorpName)
 	message := ""
 	ins := false
-	if countName > 0 && in.Option.Reaction {
+	if countName > 0 && in.Opt.Contains(models.OptionReaction) {
 		b.iftipdelete(in)
 		t := b.storage.Timers.UpdateMitutsQueue(in.UserId, in.Config.CorpName)
 		if t.Timedown > 3 {
@@ -21,8 +21,12 @@ func (b *Bot) Plus(in models.InMessage) bool {
 			ins = true
 			message = t.Mention + b.getText(in, "timer_updated")
 			in.Lvlkz = t.Lvlkz
-			in.Option.Reaction = false
-			go b.QueueLevel(in)
+			in.Opt.Remove(models.OptionReaction)
+			in.Opt.Add(models.OptionPlus)
+			//in.Option.Reaction = false
+			//go b.QueueLevel(in)
+			b.Inbox <- in
+
 		}
 		b.ifTipSendTextDelSecond(in, message, 10)
 	}
@@ -32,7 +36,7 @@ func (b *Bot) Plus(in models.InMessage) bool {
 func (b *Bot) Minus(in models.InMessage) bool {
 	bb := false
 	countNames := b.storage.Count.CountNameQueueCorp(in.UserId, in.Config.CorpName)
-	if countNames > 0 && in.Option.Reaction {
+	if countNames > 0 && in.Opt.Contains(models.OptionReaction) {
 		t := b.storage.Timers.UpdateMitutsQueue(in.UserId, in.Config.CorpName)
 		if t.UserId == in.UserId && t.Timedown > 3 {
 			message := fmt.Sprintf("%s %s%s %s %d%s",
@@ -41,9 +45,11 @@ func (b *Bot) Minus(in models.InMessage) bool {
 		} else if t.UserId == in.UserId && t.Timedown <= 3 {
 			in.Lvlkz = t.Lvlkz
 			bb = true
-			in.Option.Reaction = false
-			in.Option.Update = true
-			go b.RsMinus(in)
+			//in.Option.Reaction = false
+			//in.Option.Update = true
+			in.Opt.Remove(models.OptionReaction)
+			in.Opt.Add(models.OptionUpdate)
+			b.RsMinus(in)
 		}
 	}
 	return bb

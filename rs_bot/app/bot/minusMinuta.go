@@ -40,9 +40,10 @@ func (b *Bot) MinusMin() {
 							Mesid: t.Tgmesid,
 						},
 						Config: config,
-						Option: models.Option{
-							MinusMin: true,
-							Edit:     false},
+						//Option: models.Option{
+						//	MinusMin: true,
+						//	Edit:     false},
+						Opt: []string{models.OptionMinusMin},
 					}
 
 					if t.Timedown == 3 {
@@ -64,10 +65,10 @@ func (b *Bot) MinusMin() {
 
 		in := models.InMessage{
 			Mtext: "",
-			Option: models.Option{
-				MinusMin: true,
-				Edit:     true,
-			},
+			//Option: models.Option{
+			//	MinusMin: true,
+			//	Edit:     true,},
+			Opt: []string{models.OptionMinusMinNext, models.OptionEdit},
 		}
 		b.Inbox <- in
 	}
@@ -82,12 +83,12 @@ func (b *Bot) MinusMinMessageUpdate() {
 
 		if config.DsChannel != "" {
 			for _, d := range dss {
-				b.Inbox <- b.storage.DbFunc.MessageupdateDS(d, config)
+				b.Inbox <- b.storage.DbFunc.MessageUpdateDS(d, config)
 			}
 		}
 		if config.TgChannel != "" {
 			for _, t := range tgs {
-				b.Inbox <- b.storage.DbFunc.MessageupdateTG(t, config)
+				b.Inbox <- b.storage.DbFunc.MessageUpdateTG(t, config)
 			}
 		}
 	}

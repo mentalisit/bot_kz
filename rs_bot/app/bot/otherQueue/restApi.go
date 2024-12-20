@@ -14,10 +14,7 @@ func GetQueueLevel(level string) (t map[string][]models.QueueStruct, err error) 
 	go func() {
 		resp, err := http.Get("http://queue/queue?level=" + level)
 		if err != nil {
-			resp, err = http.Get("http://192.168.100.131:888/queue?level=" + level)
-			if err != nil {
-				return
-			}
+			return
 		}
 		defer resp.Body.Close()
 
@@ -48,10 +45,7 @@ func GetQueueAll() (t map[string][]models.QueueStruct, err error) {
 	go func() {
 		resp, err := http.Get("http://queue/queue")
 		if err != nil {
-			resp, err = http.Get("http://192.168.100.131:888/queue")
-			if err != nil {
-				return
-			}
+			return
 		}
 		defer resp.Body.Close()
 

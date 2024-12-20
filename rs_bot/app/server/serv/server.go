@@ -1,48 +1,53 @@
 package servprof
 
-//import (
-//	"github.com/gin-gonic/gin"
-//	"github.com/mentalisit/logger"
-//	"net/http/pprof"
-//)
-//
-//type Server struct {
-//	log *logger.Logger
-//}
-//
-//func NewServer(log *logger.Logger) *Server {
-//	s := &Server{log: log}
-//	go s.runServer()
-//	return s
-//}
-//func (s *Server) runServer() {
-//	gin.SetMode(gin.ReleaseMode)
-//	r := gin.New()
-//
-//	pprofRoutes(r)
-//
-//	err := r.Run(":80")
-//	if err != nil {
-//		s.log.ErrorErr(err)
-//		return
-//	}
-//}
-//
-//// pprofRoutes регистрирует обработчики pprof на маршрутизаторе Gin
-//func pprofRoutes(router *gin.Engine) {
-//	pprofGroup := router.Group("/debug/pprof")
-//	{
-//		pprofGroup.GET("/", gin.WrapF(pprof.Index))
-//		pprofGroup.GET("/cmdline", gin.WrapF(pprof.Cmdline))
-//		pprofGroup.GET("/profile", gin.WrapF(pprof.Profile))
-//		pprofGroup.POST("/symbol", gin.WrapF(pprof.Symbol))
-//		pprofGroup.GET("/symbol", gin.WrapF(pprof.Symbol))
-//		pprofGroup.GET("/trace", gin.WrapF(pprof.Trace))
-//		pprofGroup.GET("/allocs", gin.WrapH(pprof.Handler("allocs")))
-//		pprofGroup.GET("/block", gin.WrapH(pprof.Handler("block")))
-//		pprofGroup.GET("/goroutine", gin.WrapH(pprof.Handler("goroutine")))
-//		pprofGroup.GET("/heap", gin.WrapH(pprof.Handler("heap")))
-//		pprofGroup.GET("/mutex", gin.WrapH(pprof.Handler("mutex")))
-//		pprofGroup.GET("/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
-//	}
-//}
+import (
+	"log"
+	"net/http"
+	"net/http/pprof"
+	"os"
+)
+
+// Server представляет HTTP-сервер.
+type Server struct {
+	logger *log.Logger
+}
+
+// NewServer создает и запускает новый сервер.
+func NewServer() *Server {
+	s := &Server{logger: log.New(os.Stdout, "", 0)}
+	go s.runServer()
+	return s
+}
+
+func (s *Server) runServer() {
+	// Создаем маршрутизатор
+	mux := http.NewServeMux()
+
+	// Регистрируем маршруты pprof
+	registerPprofRoutes(mux)
+
+	// Запускаем сервер
+	addr := ":80"
+	s.logger.Printf("Starting server on %s", addr)
+	err := http.ListenAndServe(addr, mux)
+	if err != nil {
+		s.logger.Printf("Server failed: %v", err)
+	}
+}
+
+// registerPprofRoutes регистрирует обработчики pprof на маршрутизаторе.
+func registerPprofRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	// Регистрируем дополнительные обработчики pprof
+	mux.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
+	mux.Handle("/debug/pprof/block", pprof.Handler("block"))
+	mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
+	mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+}
