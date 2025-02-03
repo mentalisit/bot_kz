@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/mentalisit/logger"
 	"rs/config"
+	"rs/models"
 	"rs/storage/dictionary"
 	"rs/storage/postgres"
 )
@@ -21,6 +22,8 @@ type Storage struct {
 	DbFunc            DbFunc
 	Event             Event
 	LevelCorp         LevelCorp
+	UserAccount       UserAccount
+	EventNumber       EventNumber
 	postgres          *postgres.Db
 }
 
@@ -46,6 +49,8 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		Event:             local,
 		LevelCorp:         local,
 		postgres:          local,
+		EventNumber:       local,
+		UserAccount:       local,
 	}
 
 	//go s.loadDbArray()
@@ -79,4 +84,10 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 
 func (s *Storage) Shutdown() {
 	s.postgres.Shutdown()
+}
+
+type EventNumber interface {
+	InsertEventNumber(number, event int, status bool) error
+	GetEventNumber() (events []models.Events, err error)
+	UpdateEventStatus(id int64, newStatus bool) error
 }

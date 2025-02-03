@@ -2,9 +2,12 @@ package bot
 
 import (
 	"fmt"
+	"regexp"
 	"rs/models"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // lang ok
@@ -27,20 +30,21 @@ func (b *Bot) Top(in models.InMessage) {
 	numEvent := b.storage.Event.NumActiveEvent(in.Config.CorpName)
 	b.ifTipSendTextDelSecond(in, b.getText(in, "scan_db"), 5)
 
+	_, level := in.TypeRedStar()
 	if numEvent == 0 {
-		if in.Lvlkz != "" {
+		if in.RsTypeLevel != "" {
 			message = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s%s:\n",
-				b.getText(in, "top_participants"), b.getText(in, "rs"), in.Lvlkz)
-			resultsTop = b.storage.Top.TopLevelPerMonthNew(in.Config.CorpName, in.Lvlkz)
+				b.getText(in, "top_participants"), b.getText(in, "rs"), level)
+			resultsTop = b.storage.Top.TopLevelPerMonthNew(in.Config.CorpName, in.RsTypeLevel)
 		} else {
 			message = fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText(in, "top_participants"))
 			resultsTop = b.storage.Top.TopAllPerMonthNew(in.Config.CorpName)
 		}
 	} else {
-		if in.Lvlkz != "" {
+		if in.RsTypeLevel != "" {
 			message = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s %s%s\n     ",
-				b.getText(in, "top_participants"), b.getText(in, "event"), b.getText(in, "rs"), in.Lvlkz)
-			resultsTop = b.storage.Top.TopEventLevelNew(in.Config.CorpName, in.Lvlkz, numEvent)
+				b.getText(in, "top_participants"), b.getText(in, "event"), b.getText(in, "rs"), level)
+			resultsTop = b.storage.Top.TopEventLevelNew(in.Config.CorpName, in.RsTypeLevel, numEvent)
 		} else {
 			message = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s:\n",
 				b.getText(in, "top_participants"), b.getText(in, "event"))
@@ -109,4 +113,62 @@ func mergeAndSumTops(tops []models.Top) []models.Top {
 	})
 
 	return result
+}
+
+func (b *Bot) UpdateTopEvent() {
+	nextDateStart, nextDateStop, messagee := b.storage.Event.ReadEventScheduleAndMessage()
+	date1 := time.Now().UTC().Format(time.DateOnly)
+	date2 := time.Now().UTC().Add(24 * time.Hour).Format(time.DateOnly)
+	if date1 == nextDateStart || date2 == nextDateStop {
+		title := fmt.Sprintf("Сезон №%d %s - %s", getSeasonNumber(messagee), nextDateStart, nextDateStop)
+		fmt.Println(title)
+		CorpName := "Корпорация  \"РУСЬ\".сбор-на-кз"
+		number := 1
+		message2 := ""
+		var allPoints int
+		var resultsTop []models.Top
+		format := func(top models.Top) string {
+			if top.Points == 0 {
+				return fmt.Sprintf("%d. %s - %d \n", number, top.Name, top.Numkz)
+			}
+			allPoints += top.Points
+			return fmt.Sprintf("%d. %s - %d (%d)\n", number, top.Name, top.Numkz, top.Points)
+		}
+
+		numEvent := b.storage.Event.NumActiveEvent(CorpName)
+
+		if numEvent == 0 {
+			resultsTop = b.storage.Top.TopAllPerMonthNew(CorpName)
+		} else {
+			resultsTop = b.storage.Top.TopAllEventNew(CorpName, numEvent)
+		}
+
+		resultsTop = mergeAndSumTops(resultsTop)
+
+		if len(resultsTop) == 0 {
+			return
+		} else if len(resultsTop) > 0 {
+			for _, top := range resultsTop {
+				message2 = message2 + format(top)
+				number++
+			}
+		}
+		if allPoints != 0 {
+			message2 = fmt.Sprintf("%s\nВсего: %d\nОбновлено: <t:%d:R>",
+				message2, allPoints, time.Now().UTC().Unix())
+		}
+
+		b.client.Ds.SendEmbedText("1198012575615561979", title, message2)
+	}
+}
+
+func getSeasonNumber(text string) int {
+	re := regexp.MustCompile(`Season (\d+)`)
+	matches := re.FindStringSubmatch(text)
+
+	if len(matches) < 2 {
+		return 0
+	}
+	seasonNumber, _ := strconv.Atoi(matches[1])
+	return seasonNumber
 }

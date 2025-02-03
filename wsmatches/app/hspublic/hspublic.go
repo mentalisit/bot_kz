@@ -12,10 +12,10 @@ type HS struct {
 	p   *dbpostgres.Db
 }
 
-func NewHS(log *logger.Logger) *HS {
+func NewHS(log *logger.Logger, passDb string) *HS {
 	return &HS{
 		log: log,
 		r:   dbredis.NewDb(log),
-		p:   dbpostgres.NewDb(log),
+		p:   dbpostgres.NewDb(log, passDb),
 	}
 }

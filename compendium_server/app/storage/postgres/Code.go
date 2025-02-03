@@ -27,7 +27,7 @@ func (d *Db) CodeGet(code string) (*models.Code, error) {
 	var id int
 	var bytes []byte
 	selectCode := "SELECT * FROM hs_compendium.codes WHERE code = $1"
-	err := d.db.QueryRow(ctx, selectCode, code).Scan(&id, &u.Code, &u.Timestamp, &bytes)
+	err := d.db.QueryRow(ctx, selectCode, code).Scan(&id, &u.Code, &bytes, &u.Timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (d *Db) CodeAllGet() []models.Code {
 		var id int
 		var bytes []byte
 
-		_ = results.Scan(&id, &u.Code, &u.Timestamp, &bytes)
+		_ = results.Scan(&id, &u.Code, &bytes, &u.Timestamp)
 
 		err = json.Unmarshal(bytes, &u.Identity)
 		if err != nil {

@@ -3,17 +3,22 @@ package models
 import (
 	"fmt"
 	"slices"
+	"strconv"
+	"strings"
 )
 
 type InMessage struct {
-	Mtext         string
-	Tip           string
-	NameNick      string
-	Username      string
-	UserId        string
-	NameMention   string
-	Lvlkz, Timekz string
-	Ds            struct {
+	Mtext       string
+	Tip         string
+	NameNick    string
+	Username    string
+	UserId      string
+	NameMention string
+	RsTypeLevel string
+	//Lvlkz       string
+	//Timekz      string
+	TimeRs int
+	Ds     struct {
 		Mesid   string
 		Guildid string
 		Avatar  string
@@ -25,6 +30,71 @@ type InMessage struct {
 	//Option //Option
 	Opt Options
 }
+
+// TypeRedStar rs or drs or solo and level
+func (i *InMessage) TypeRedStar() (DarkOrRed bool, level string) {
+	after, found := strings.CutPrefix(i.RsTypeLevel, "rs")
+	if found {
+		return false, after
+	}
+	after, found = strings.CutPrefix(i.RsTypeLevel, "drs")
+	if found {
+		return true, after
+	}
+	after, found = strings.CutPrefix(i.RsTypeLevel, "d")
+	if found {
+		return true, after
+	}
+	after, found = strings.CutPrefix(i.RsTypeLevel, "solo")
+	if found {
+		return true, after
+	}
+
+	return false, i.RsTypeLevel
+}
+func (i *InMessage) IsDRS() bool {
+	dark, _ := i.TypeRedStar()
+	return dark
+}
+func (i *InMessage) SetLevelRsOrDrs(s string) {
+	if strings.HasPrefix(s, "solo") {
+		i.RsTypeLevel = s
+		//i.Lvlkz = s
+		return
+	}
+
+	lvl, _ := strconv.Atoi(s)
+	if lvl == 0 {
+		i.RsTypeLevel = s
+	} else {
+		if lvl >= 7 {
+			i.RsTypeLevel = "drs" + s
+		} else {
+			i.RsTypeLevel = "rs" + s
+		}
+	}
+
+	//i.Lvlkz = s
+}
+func (i *InMessage) SetTimeRs(s string) {
+	timeRs, _ := strconv.Atoi(s)
+	if timeRs == 0 {
+		timeRs = 30 //default time
+	}
+
+	if timeRs > 180 {
+		timeRs = 180
+	}
+	i.TimeRs = timeRs
+	//i.Timekz = strconv.Itoa(timeRs)
+}
+func (i *InMessage) IfDiscord() bool {
+	return i.Config.DsChannel != ""
+}
+func (i *InMessage) IfTelegram() bool {
+	return i.Config.TgChannel != ""
+}
+
 type Options []string
 
 func (o *Options) Contains(s string) bool {
@@ -94,19 +164,30 @@ type Users struct {
 	User4 *Sborkz
 }
 
-func (u Users) GetAllUserId() []string {
-	var all []string
+func (u Users) GetAllUserId() (all []string, tg []string) {
+	if u.User1.Tip == "tg" {
+		tg = append(tg, u.User1.UserId)
+	}
 	all = append(all, u.User1.UserId)
 	if u.User2 != nil {
 		all = append(all, u.User2.UserId)
+		if u.User2.Tip == "tg" {
+			tg = append(tg, u.User2.UserId)
+		}
 	}
 	if u.User3 != nil {
 		all = append(all, u.User3.UserId)
+		if u.User3.Tip == "tg" {
+			tg = append(tg, u.User3.UserId)
+		}
 	}
 	if u.User4 != nil {
 		all = append(all, u.User4.UserId)
+		if u.User4.Tip == "tg" {
+			tg = append(tg, u.User4.UserId)
+		}
 	}
-	return all
+	return all, tg
 }
 
 type Sborkz struct {
@@ -169,4 +250,11 @@ type RsEvent struct {
 	NumEvent    int
 	ActiveEvent int
 	Number      int
+}
+
+type Events struct {
+	ID     int64
+	Number int
+	Event  int
+	Status bool
 }

@@ -173,6 +173,37 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+
+	_, _ = d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS rs_bot")
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.user_account
+	(
+		internal_user_id     bigserial        primary key,
+		general_name text NOT NULL DEFAULT '',
+		user_id_tg   text NOT NULL DEFAULT '',
+		user_id_ds  text NOT NULL DEFAULT '',
+		user_id_game text[] DEFAULT '{}',
+		user_name_active text NOT NULL DEFAULT '',
+		user_accounts text[] DEFAULT '{}'
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.eventnumber
+	(
+		id     bigserial        primary key,
+		number   integer NOT NULL DEFAULT 0,
+		event  integer NOT NULL DEFAULT 0,
+		status bool NOT NULL DEFAULT false
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 }
 func (d *Db) Shutdown() {
 	d.client.Close()

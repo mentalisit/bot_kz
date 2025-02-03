@@ -3,7 +3,7 @@ package postgres
 import (
 	"compendium/models"
 	"errors"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"sort"
 )
 

@@ -157,11 +157,6 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	}
 }
 
-//requestedMethod := c.GetHeader("Access-Control-Request-Method")
-//requestedHeaders := c.GetHeader("Access-Control-Request-Headers")
-//fmt.Println("Requested method:", requestedMethod)
-//fmt.Println("Requested headers:", requestedHeaders)
-
 func (s *Server) links(c *gin.Context) {
 	htmlContent := `
 <!DOCTYPE html>

@@ -37,9 +37,6 @@ func (b *Bot) accessChat(in models.InMessage) {
 				return
 			}
 		}
-
-		//b.storage.ReloadDbArray()
-		//b.configCorp = b.storage.CorpConfigRS
 	}
 }
 func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
@@ -55,16 +52,15 @@ func (b *Bot) accessAddChannel(in models.InMessage, lang string) {
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "tranks_for_activation"), 60)
 
 		if c.DsChannel != "" {
-			c = b.sendHelpDs(c, false)
+			c = b.sendHelpDs(c, true)
 		}
 		if c.TgChannel != "" {
-			c = b.sendHelpTg(c, false)
+			c = b.sendHelpTg(c, true)
 		}
 		fmt.Printf("accessAddChannel in %+v \n", in)
 		fmt.Printf("accessAddChannel conf %+v \n", c)
 
 		b.storage.ConfigRs.InsertConfigRs(c)
-		//b.configCorp[c.CorpName] = c
 
 	}
 }
@@ -75,8 +71,6 @@ func (b *Bot) accessDelChannel(in models.InMessage, lang string) {
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "channel_not_connected"), 60)
 	} else {
 		b.storage.ConfigRs.DeleteConfigRs(config)
-		//b.storage.ReloadDbArray()
-		//b.configCorp = b.storage.CorpConfigRS
 		b.log.Info("отключение корпорации " + config.CorpName)
 		go b.ifTipSendTextDelSecond(in, b.getLanguageText(lang, "you_disabled_bot_functions"), 60)
 		if config.MesidDsHelp != "" {
@@ -122,17 +116,13 @@ func (b *Bot) updateLanguage(in models.InMessage, langUpdate string, config mode
 	go b.iftipdelete(in)
 	if config.MesidDsHelp != "" {
 		go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
-		//go b.client.Ds.DeleteMessage(config.DsChannel, config.MesidDsHelp)
 	}
 	config.Country = langUpdate
-	//config.MesidDsHelp = b.client.Ds.Hhelp1(config.DsChannel, langUpdate)
+
 	text := fmt.Sprintf("%s \n\n%s", b.getLanguageText(langUpdate, "info_bot_delete_msg"), b.getLanguageText(langUpdate, "info_help_text"))
 	config.MesidDsHelp = b.client.Ds.SendHelp(config.DsChannel, b.getLanguageText(langUpdate, "information"), text, "", false)
 
-	//b.configCorp[config.CorpName] = config
-
 	b.storage.ConfigRs.UpdateConfigRs(config)
-	//b.storage.ReloadDbArray()
 
 	go b.ifTipSendTextDelSecond(in, b.getLanguageText(config.Country, "language_switched_to"), 20)
 	b.log.Info(fmt.Sprintf("замена языка в %s на %s", config.CorpName, config.Country))

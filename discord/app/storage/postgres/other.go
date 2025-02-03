@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"discord/models"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) ReadTop5Level(corpname string) []string {

@@ -4,6 +4,7 @@ import (
 	"rs/models"
 	"rs/pkg/utils"
 	"strconv"
+	"time"
 )
 
 //lang ok
@@ -12,6 +13,33 @@ import (
 func (b *Bot) MinusMin() {
 	tt := b.storage.Timers.MinusMin()
 	go b.client.Ds.QueueSend(b.otherQueue.MyQueue())
+	if time.Now().Minute()%5 == 0 {
+		go func() {
+			en, ru, ua := b.client.Ds.ReadNews()
+			if en != "" && ru != "" && ua != "" {
+				sendChannel := func(config models.CorporationConfig, text string) {
+					if config.TgChannel != "" {
+						b.client.Tg.SendChannelDelSecond(config.TgChannel, text, 172800)
+					}
+					if config.DsChannel != "" {
+						b.client.Ds.SendChannelDelSecond(config.DsChannel, text, 172800)
+					}
+				}
+
+				for _, config := range b.storage.ConfigRs.ReadConfigRs() {
+					if config.Country == "en" {
+						sendChannel(config, en)
+					}
+					if config.Country == "ru" {
+						sendChannel(config, ru)
+					}
+					if config.Country == "ua" {
+						sendChannel(config, ua)
+					}
+				}
+			}
+		}()
+	}
 
 	if len(tt) > 0 {
 		for _, t := range tt {
@@ -24,8 +52,8 @@ func (b *Bot) MinusMin() {
 						Username:    t.Name,
 						UserId:      t.UserId,
 						NameMention: t.Mention,
-						Lvlkz:       t.Lvlkz,
-						Timekz:      strconv.Itoa(t.Timedown),
+						RsTypeLevel: t.Lvlkz,
+						TimeRs:      t.Timedown,
 						Ds: struct {
 							Mesid   string
 							Guildid string
@@ -40,10 +68,7 @@ func (b *Bot) MinusMin() {
 							Mesid: t.Tgmesid,
 						},
 						Config: config,
-						//Option: models.Option{
-						//	MinusMin: true,
-						//	Edit:     false},
-						Opt: []string{models.OptionMinusMin},
+						Opt:    []string{models.OptionMinusMin},
 					}
 
 					if t.Timedown == 3 {
@@ -65,10 +90,7 @@ func (b *Bot) MinusMin() {
 
 		in := models.InMessage{
 			Mtext: "",
-			//Option: models.Option{
-			//	MinusMin: true,
-			//	Edit:     true,},
-			Opt: []string{models.OptionMinusMinNext, models.OptionEdit},
+			Opt:   []string{models.OptionMinusMinNext, models.OptionEdit},
 		}
 		b.Inbox <- in
 	}
@@ -98,7 +120,7 @@ func (b *Bot) MinusMinMessageUpdate() {
 func (b *Bot) ReadQueueLevel(in models.InMessage) {
 	ch := utils.WaitForMessage("ReadQueueLevel")
 	defer close(ch)
-	text, err := b.otherQueue.ReadingQueueByLevel(in.Lvlkz, in.Config.CorpName)
+	text, err := b.otherQueue.ReadingQueueByLevel(in.RsTypeLevel, in.Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
 		return

@@ -4,7 +4,7 @@ import (
 	"compendium/models"
 	"encoding/json"
 	"errors"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {

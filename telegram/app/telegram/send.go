@@ -229,43 +229,63 @@ func (t *Telegram) SendEmbedTime(chatid string, text string) (int, error) {
 func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, ifUser bool) (string, error) {
 	midHelpTg, err := strconv.Atoi(midHelpTgString)
 	if err != nil {
-		t.log.Info(fmt.Sprintf("%s %s %d\n", chatid, midHelpTgString, midHelpTg))
+		if !ifUser {
+			t.log.Info(fmt.Sprintf("%s %s %d\n", chatid, midHelpTgString, midHelpTg))
+		}
 		midHelpTg = 0
 	}
 
 	var levels []string
 	chatId, ThreadID := t.chat(chatid)
-	_, config := t.checkChannelConfigTG(chatid)
+	ok, config := t.checkChannelConfigTG(chatid)
 
-	levels = t.Storage.Db.ReadTop5Level(config.CorpName)
-	last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
+	if ok {
+		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
+	}
 
 	if !ifUser {
+		last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
+		//
 		if last-5 < midHelpTg {
 			return midHelpTgString, nil
 		} else {
 			fmt.Printf("!ifUser if last-5 < midHelpTg last: %d midHelpTg: %d\n", last-5, midHelpTg)
 		}
 	}
+	getButton := func(level string) string {
+		after, found := strings.CutPrefix(level, "rs")
+		if found {
+			return after + "+"
+		}
+		after, found = strings.CutPrefix(level, "drs")
+		if found {
+			return after + "+"
+		}
+		after, found = strings.CutPrefix(level, "solo")
+		if found {
+			return after + "+"
+		}
+		return level
+	}
 
-	go t.DelMessage(chatid, midHelpTg)
+	if midHelpTg != 0 {
+		go t.DelMessage(chatid, midHelpTg)
+
+	}
 
 	var btt []tgbotapi.InlineKeyboardButton
-	if len(levels) > 0 {
+	if len(levels) > 2 {
 		for _, level := range levels {
-			var bt tgbotapi.InlineKeyboardButton
-			if level[:1] == "d" {
-				bt = tgbotapi.NewInlineKeyboardButtonData(level[1:]+"*", level[1:]+"*")
-			} else {
-				bt = tgbotapi.NewInlineKeyboardButtonData(level+"+", level+"+")
-			}
+			key := getButton(level)
+
+			bt := tgbotapi.NewInlineKeyboardButtonData(key, key)
+
 			btt = append(btt, bt)
 		}
 	} else {
 		for i := 7; i < 12; i++ {
-			var bt tgbotapi.InlineKeyboardButton
 			l := strconv.Itoa(i)
-			bt = tgbotapi.NewInlineKeyboardButtonData(l+"*", l+"*")
+			bt := tgbotapi.NewInlineKeyboardButtonData(l+"+", l+"+")
 			btt = append(btt, bt)
 		}
 	}

@@ -65,6 +65,11 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 					c.log.ErrorErr(err)
 					return false
 				}
+				err = c.corpMember.CorpMemberDeleteAlt(m.GuildId, m.NameId, split[2])
+				if err != nil {
+					c.log.ErrorErr(err)
+					return false
+				}
 			} else {
 				c.sendChat(m, fmt.Sprintf(c.getText(m, "NO_ALTOS_FOUND")))
 			}

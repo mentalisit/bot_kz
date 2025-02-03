@@ -28,12 +28,12 @@ func (h *HS) SavePercent(newContent []models.Content) {
 				h.p.InsertUpdateCorpsLevel(c)
 			}
 		}
-		h.Relic(listHCorps, corpData)
+		h.Relic(listHCorps, f)
 	}
 
 	h.recalculateCorpLevel()
 }
-func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.CorporationsData) {
+func (h *HS) RelicOld(list map[string]models.LevelCorps, corpData *models.CorporationsData) {
 	if list[corpData.Corporation1Name].HCorp != "" {
 		c, _ := h.p.ReadCorpsLevel(corpData.Corporation1Name)
 		if c.LastUpdate.Before(corpData.DateEnded) {
@@ -115,6 +115,30 @@ func (h *HS) recalculateCorpLevel() {
 			corps.Percent = corps.Level - 1
 			h.p.InsertUpdateCorpsLevel(corps)
 			h.log.InfoStruct("recalculateCorpLevel", corps)
+		}
+	}
+}
+func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.CorporationsData) {
+	if list[corpData.Corporation1Name].HCorp != "" {
+		c, _ := h.p.ReadCorpsLevel(corpData.Corporation1Name)
+		if c.LastUpdate.Before(corpData.DateEnded) {
+			c.LastUpdate = corpData.DateEnded
+			c.Relic = c.Relic + 100
+
+			h.p.InsertUpdateCorpsLevel(c)
+			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
+			time.Sleep(1 * time.Second)
+		}
+	}
+	if list[corpData.Corporation2Name].HCorp != "" {
+		c, _ := h.p.ReadCorpsLevel(corpData.Corporation2Name)
+		if c.LastUpdate.Before(corpData.DateEnded) {
+			c.LastUpdate = corpData.DateEnded
+			c.Relic = c.Relic + 40
+
+			h.p.InsertUpdateCorpsLevel(c)
+			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }

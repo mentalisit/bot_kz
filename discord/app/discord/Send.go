@@ -12,6 +12,10 @@ import (
 )
 
 func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
+	if chatid == "1198012575615561979" {
+		d.SendOrEditTopEmbedText(chatid, title, text)
+		return &discordgo.Message{}
+	}
 	Emb := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{},
 		Color:       16711680,
@@ -25,6 +29,41 @@ func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
 	}
 	return m
 }
+
+func (d *Discord) SendOrEditTopEmbedText(chatid, title, text string) {
+	messages, err := d.S.ChannelMessages(chatid, 10, "", "", "")
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	if len(messages) == 0 {
+		return
+	}
+	var mId string
+	for _, message := range messages {
+		if len(message.Embeds) > 0 {
+			if message.Embeds[0].Title == title {
+				mId = message.ID
+			}
+		}
+	}
+
+	Emb := &discordgo.MessageEmbed{
+		Author:      &discordgo.MessageEmbedAuthor{},
+		Color:       16711680,
+		Description: text,
+		Title:       title,
+	}
+
+	if mId == "" {
+		_, _ = d.S.ChannelMessageSendEmbed(chatid, Emb)
+		return
+	} else {
+		_, _ = d.S.ChannelMessageEditEmbed(chatid, mId, Emb)
+	}
+
+}
+
 func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 	if text != "" {
 		message, err := d.S.ChannelMessageSend(chatid, text)

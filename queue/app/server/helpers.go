@@ -43,7 +43,9 @@ func Merging(queueSlice []QueueStruct) []QueueStruct {
 func ConvertingTumchaToQueueStruct(rs map[string][]models.Tumcha) (q []QueueStruct) {
 	lvl := func(t models.Tumcha) (s string) {
 		if t.Vid == "black" {
-			s = "d"
+			s = "drs"
+		} else {
+			s = "rs"
 		}
 		s += strconv.Itoa(t.Level)
 		return s

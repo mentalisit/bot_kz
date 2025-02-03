@@ -127,12 +127,12 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 				matches = re.FindStringSubmatch(textAfterMatch)
 
 				hour := 0
-				if matches[1] != "" {
+				if len(matches) > 1 && matches[1] != "" {
 					hour, _ = strconv.Atoi(matches[1])
 				}
 
 				minute := 0
-				if matches[2] != "" {
+				if len(matches) > 1 && matches[2] != "" {
 					minute, _ = strconv.Atoi(matches[2])
 				}
 

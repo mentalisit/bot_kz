@@ -7,9 +7,10 @@ import (
 )
 
 type Client struct {
-	conn   *grpc.ClientConn
-	client BotServiceClient
-	log    *logger.Logger
+	conn     *grpc.ClientConn
+	client   BotServiceClient
+	log      *logger.Logger
+	rolePing map[string]map[string]string
 }
 
 func NewClient(log *logger.Logger) *Client {
@@ -21,9 +22,10 @@ func NewClient(log *logger.Logger) *Client {
 	}
 	fmt.Printf("connect to grpc %s ok\n", target)
 	return &Client{
-		conn:   conn,
-		client: NewBotServiceClient(conn),
-		log:    log,
+		conn:     conn,
+		client:   NewBotServiceClient(conn),
+		log:      log,
+		rolePing: make(map[string]map[string]string),
 	}
 }
 

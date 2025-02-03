@@ -3,50 +3,8 @@ package DiscordClient
 import (
 	"github.com/bwmarrin/discordgo"
 	"strconv"
+	"strings"
 )
-
-//func (d *Discord) Help(Channel, lang string) {
-//	mId := d.HelpEmbed(Channel,"","", []string{})
-//	d.DeleteMesageSecond(Channel, mId, 184)
-//}
-//
-//func (d *Discord) HelpChannelUpdate(c models.CorporationConfig) string {
-//	if c.MesidDsHelp == "" {
-//		c.MesidDsHelp = d.Hhelp1(c.DsChannel, c.Country)
-//		return c.MesidDsHelp
-//	} else {
-//		messages, err := d.S.ChannelMessages(c.DsChannel, 10, "", c.MesidDsHelp, "")
-//		if err != nil {
-//			go d.DeleteMessage(c.DsChannel, c.MesidDsHelp)
-//			c.MesidDsHelp = d.Hhelp1(c.DsChannel, c.Country)
-//			return c.MesidDsHelp
-//		}
-//		if len(messages) > 3 {
-//			go d.DeleteMessage(c.DsChannel, c.MesidDsHelp)
-//			c.MesidDsHelp = d.Hhelp1(c.DsChannel, c.Country)
-//		}
-//	}
-//	return c.MesidDsHelp
-//}
-//func (d *Discord) HelpEmbed(chatid, Title, Description string, levels []string) string {
-//	Emb := &discordgo.MessageEmbed{
-//		Author:      &discordgo.MessageEmbedAuthor{},
-//		Color:       16711680,
-//		Description: fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")),
-//		Title:       d.getLanguage(lang, "information"),
-//	}
-//
-//	m, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
-//		//Content:    "for RS",
-//		Components: d.AddButtonsStartQueue(chatid, levels),
-//		Embed:      Emb,
-//	})
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//
-//	return m.ID
-//}
 
 func (d *Discord) SendHelp(chatid, title, description, oldMidHelps string, ifUser bool) string {
 	if oldMidHelps != "" {
@@ -63,8 +21,6 @@ func (d *Discord) SendHelp(chatid, title, description, oldMidHelps string, ifUse
 		Color:       16711680,
 		Description: description,
 		Title:       title,
-		//Description: fmt.Sprintf("%s \n\n%s", d.getLanguage(lang, "info_bot_delete_msg"), d.getLanguage(lang, "info_help_text")),
-		//Title:       d.getLanguage(lang, "information"),
 	}
 
 	m, err := d.S.ChannelMessageSendComplex(chatid, &discordgo.MessageSend{
@@ -83,18 +39,28 @@ func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageCompone
 	var components []discordgo.MessageComponent
 	_, config := d.CheckChannelConfigDS(chatid)
 	levels := d.storage.Db.ReadTop5Level(config.CorpName)
-	if len(levels) > 0 {
-		for _, level := range levels {
-			button := discordgo.Button{}
+	getButton := func(level string) string {
+		after, found := strings.CutPrefix(level, "rs")
+		if found {
+			return after + "+"
+		}
+		after, found = strings.CutPrefix(level, "drs")
+		if found {
+			return after + "+"
+		}
+		after, found = strings.CutPrefix(level, "solo")
+		if found {
+			return after + "+"
+		}
+		return level
+	}
 
-			if level[:1] == "d" {
-				button.Style = discordgo.DangerButton
-				button.Label = level[1:] + "*"
-				button.CustomID = level[1:] + "*"
-			} else {
-				button.Style = discordgo.SecondaryButton
-				button.Label = level + "+"
-				button.CustomID = level + "+"
+	if len(levels) > 2 {
+		for _, level := range levels {
+			button := discordgo.Button{
+				Style:    discordgo.DangerButton,
+				Label:    getButton(level),
+				CustomID: getButton(level),
 			}
 			components = append(components, button)
 		}
@@ -113,25 +79,17 @@ func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageCompone
 
 		}
 	}
-	mc = append(mc, discordgo.ActionsRow{Components: components})
-
-	good, CC := d.CheckChannelConfigDS(chatid)
-	if good {
-		event := d.storage.Db.NumActiveEvent(CC.CorpName)
-		if event > 0 {
-			var componentsEvent []discordgo.MessageComponent
-			for i := 7; i < 12; i++ {
-				l := "s" + strconv.Itoa(i)
-				button := discordgo.Button{
-					Label:    l + "+",
-					Style:    discordgo.DangerButton,
-					CustomID: l + "+",
-				}
-				componentsEvent = append(componentsEvent, button)
-			}
-			mc = append(mc, discordgo.ActionsRow{Components: componentsEvent})
+	mc = append(mc, discordgo.ActionsRow{Components: RemoveDuplicates(components)})
+	return mc
+}
+func RemoveDuplicates[T comparable](a []T) []T {
+	result := make([]T, 0, len(a))
+	temp := map[T]struct{}{}
+	for _, item := range a {
+		if _, ok := temp[item]; !ok {
+			temp[item] = struct{}{}
+			result = append(result, item)
 		}
 	}
-
-	return mc
+	return result
 }

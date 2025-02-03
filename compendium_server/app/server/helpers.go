@@ -68,7 +68,7 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 
 		for _, member := range cm {
 			if i.Guild.Type == "tg" {
-				if roleId == "" {
+				if roleId == "" || roleId == "tg" {
 					c.Members = append(c.Members, member)
 				} else {
 					for _, role := range roles {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mentalisit/logger"
 	"rs/models"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -74,4 +75,20 @@ func deleteChannelName(Corpname string) string {
 	}
 
 	return Corpname
+}
+func (o *OtherQ) NeedRemoveOtherQueue(ss []string) {
+	uId, err := GetUseridTumcha()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if len(ss) > 0 {
+		for _, s := range ss {
+			for _, i := range uId {
+				if strconv.FormatInt(i, 10) == s {
+					o.log.InfoStruct("NeedRemoveOtherQueue", s)
+				}
+			}
+		}
+	}
 }

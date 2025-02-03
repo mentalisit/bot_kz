@@ -104,7 +104,22 @@ func (b *Bot) LogicRs(in models.InMessage) {
 	dm, conf := b.helpers.IfMessageDM(in)
 	if dm {
 		utils.PrintGoroutine(b.log)
-		if conf.CorpName != "" {
+		if strings.HasPrefix(in.Mtext, "!") {
+			answer := b.helpers.GeminiSay(in.Mtext, in.Username)
+			for _, text := range answer {
+				fmt.Printf("answer gemini %s\n", text)
+				if text == "" {
+					return
+				}
+				if in.Config.DsChannel != "" {
+					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
+					go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
+				} else if in.Config.TgChannel != "" {
+					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+					go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
+				}
+			}
+		} else {
 			text := "эээ я же бот че ты мне пишешь тут, пиши в канале "
 			if in.Config.DsChannel != "" {
 				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
@@ -120,24 +135,13 @@ func (b *Bot) LogicRs(in models.InMessage) {
 			if conf.TgChannel != "" {
 				go b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
 			}
-		} else {
-			answer := b.helpers.GeminiSay(in.Mtext, in.Username)
-			for _, text := range answer {
-				fmt.Printf("answer gemini %s\n", text)
-				if text == "" {
-					return
-				}
-				if in.Config.DsChannel != "" {
-					go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 600)
-					go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, in.Ds.Mesid, 600)
-				} else if in.Config.TgChannel != "" {
-					go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
-					go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
-				}
-			}
 		}
 
 		return
+	}
+
+	if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
+		b.insertUserAccount(in)
 	}
 
 	ch := utils.WaitForMessage("LogicRs ")
@@ -155,7 +159,6 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		} else if b.bridge(in) {
 		} else {
 			b.cleanChat(in)
-			//go b.Transtale()//нужно решить проблему с ошибками
 		}
 	} else if in.Opt.Contains(models.OptionMinusMinNext) {
 		b.MinusMinMessageUpdate()
@@ -186,9 +189,6 @@ func (b *Bot) logicIfText(in models.InMessage) bool {
 		}
 	case "Справка", "Help", "help":
 		b.hhelp(in)
-	case "update modules", "обновить модули":
-		go b.updateCompendiumModules(in)
-		iftext = true
 	case "OptimizationSborkz":
 		go b.OptimizationSborkz()
 		b.iftipdelete(in)
@@ -216,7 +216,8 @@ func (b *Bot) cleanChat(in models.InMessage) {
 func (b *Bot) bridge(in models.InMessage) bool {
 	if in.Config.Forward {
 		if in.Tip == ds {
-			text := fmt.Sprintf("(DS)%s \n%s", in.Username, in.Mtext)
+			mText := b.client.Ds.ReplaceTextMessage(in.Mtext, in.Config.Guildid)
+			text := fmt.Sprintf("(DS)%s \n%s", in.Username, mText)
 			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
 			go b.cleanChat(in)
 		} else if in.Tip == tg {

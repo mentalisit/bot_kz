@@ -28,7 +28,7 @@ func (b *Bot) emodjis(in models.InMessage) {
 	if in.Tip == ds {
 		text += fmt.Sprintf("\n %s %s %s %s", e.Module1, e.Module2, e.Module3, e.Weapon)
 	}
-	b.ifTipSendTextDelSecond(in, b.getText(in, "your_emoji")+text, 20)
+	b.ifTipSendTextDelSecond(in, b.getText(in, "your_emoji")+text, 60)
 }
 func (b *Bot) instalNick(in models.InMessage, input string) (ok bool, nick string) {
 	words := strings.Fields(input)

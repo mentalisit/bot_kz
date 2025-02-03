@@ -100,6 +100,9 @@ func (b *Bot) EventStop(in models.InMessage) {
 	}
 }
 func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
+	if points > 99999 {
+		return
+	}
 	b.iftipdelete(in)
 	// проверяем активен ли ивент
 	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
@@ -181,7 +184,7 @@ func (b *Bot) EventPreStart(in models.InMessage) {
 
 func (b *Bot) EventAutoStart() {
 	date := time.Now().UTC().Format(time.DateOnly)
-	nextDateEventStart, nextDateEventStop := b.storage.Event.ReadEventSchedule()
+	nextDateEventStart, nextDateEventStop, _ := b.storage.Event.ReadEventScheduleAndMessage()
 
 	send := func(config models.CorporationConfig, text string) {
 		if config.TgChannel != "" {

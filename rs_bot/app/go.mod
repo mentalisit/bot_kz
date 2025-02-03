@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	github.com/bas24/googletranslatefree v0.0.0-20231117033553-f5859fe54d30
 	github.com/ilyakaznacheev/cleanenv v1.5.0
-	github.com/jackc/pgx/v5 v5.7.1
+	github.com/jackc/pgx/v5 v5.7.2
 	github.com/mentalisit/logger v0.0.0-20241208232400-90177fa09c6f
 	golang.org/x/image v0.23.0
 	google.golang.org/grpc v1.69.2

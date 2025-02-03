@@ -4,7 +4,7 @@ import (
 	"compendium/models"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"regexp"
 	"strconv"
 	"strings"

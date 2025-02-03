@@ -38,6 +38,7 @@ type apiRs struct {
 }
 
 func (s *Server) funcInbox(c *gin.Context) {
+	s.log.Info("using server http")
 	s.PrintGoroutine()
 	var rawData json.RawMessage
 
@@ -83,6 +84,7 @@ type answer struct {
 }
 
 func (s *Server) selectFunc(m apiRs) (code int, q answer) {
+	s.log.Info("using server http")
 	fmt.Printf("selectFunc %+v\n", m)
 	q.Time = time.Now()
 	switch m.FuncApi {
@@ -143,6 +145,7 @@ func (s *Server) selectFunc(m apiRs) (code int, q answer) {
 	return http.StatusOK, q
 }
 func (s *Server) telegramSendPic(c *gin.Context) {
+	s.log.Info("using server http")
 	s.PrintGoroutine()
 	var m models.SendPic
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -160,6 +163,7 @@ func (s *Server) telegramSendPic(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Message sent to Telegram successfully"})
 }
 func (s *Server) telegramSendBridge(c *gin.Context) {
+	s.log.Info("using server http")
 	s.PrintGoroutine()
 	var m models.BridgeSendToMessenger
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -172,6 +176,7 @@ func (s *Server) telegramSendBridge(c *gin.Context) {
 	c.JSON(http.StatusOK, messageTg)
 }
 func (s *Server) telegramGetAvatarUrl(c *gin.Context) {
+	s.log.Info("using server http")
 	s.PrintGoroutine()
 	userid := c.Query("userid")
 	if userid == "" {

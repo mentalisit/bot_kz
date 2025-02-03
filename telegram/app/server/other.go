@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Server) CheckAdmin(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -25,6 +26,7 @@ func (s *Server) CheckAdmin(c *gin.Context) {
 }
 
 func (s *Server) GetAvatarUrl(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -42,6 +44,7 @@ func (s *Server) GetAvatarUrl(c *gin.Context) {
 }
 
 func (s *Server) telegramSendPoll(c *gin.Context) {
+	s.log.Info("using server http")
 	var m models.Request
 	if err := c.ShouldBindJSON(&m); err != nil {
 		s.log.ErrorErr(err)

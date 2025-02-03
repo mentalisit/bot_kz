@@ -59,12 +59,12 @@ func sortData(data []DataCaprican) []QueueStruct {
 				if err == nil {
 					if afterDot == 5 {
 						// Заменяем Level на символ до точки + "d"
-						merged[i].Level = "d" + parts[0]
+						merged[i].Level = "drs" + parts[0]
 					} else if afterDot == 6 {
 						// Заменяем Level на символ до точки + "i"
-						merged[i].Level = "i" + parts[0]
+						merged[i].Level = "iDRS" + parts[0]
 					} else if afterDot == 0 {
-						merged[i].Level = parts[0]
+						merged[i].Level = "rs" + parts[0]
 					}
 				}
 			}

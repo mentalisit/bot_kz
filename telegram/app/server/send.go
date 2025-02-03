@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Server) Send(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -31,6 +32,7 @@ func (s *Server) Send(c *gin.Context) {
 }
 
 func (s *Server) SendDel(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -54,6 +56,7 @@ func (s *Server) SendDel(c *gin.Context) {
 }
 
 func (s *Server) SendHelp(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -81,6 +84,7 @@ func (s *Server) SendHelp(c *gin.Context) {
 }
 
 func (s *Server) SendEmbed(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -105,6 +109,7 @@ func (s *Server) SendEmbed(c *gin.Context) {
 }
 
 func (s *Server) SendEmbedTime(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -129,6 +134,7 @@ func (s *Server) SendEmbedTime(c *gin.Context) {
 }
 
 func (s *Server) SendChatTyping(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {

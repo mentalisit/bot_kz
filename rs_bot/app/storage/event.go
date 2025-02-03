@@ -12,7 +12,8 @@ type Event interface {
 	UpdatePoints(CorpName string, numberkz, points, event1 int) int
 	ReadNamesMessage(CorpName string, numberkz, numberEvent int) (nd, nt models.Names, t models.Sborkz)
 	NumberQueueEvents(CorpName string) int
-	ReadEventSchedule() (start string, stop string)
+	//ReadEventSchedule() (start string, stop string)
+	ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string)
 	EventInsertPreStart(CorpName string, activeevent int)
 	ReadRsEvent(activeEvent int) []models.RsEvent
 	UpdateActiveEvent(activeEvent int, CorpName string, numEvent int)

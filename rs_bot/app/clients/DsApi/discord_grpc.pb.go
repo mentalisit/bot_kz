@@ -35,6 +35,7 @@ const (
 	BotService_GetMembersRoles_FullMethodName         = "/ds.BotService/GetMembersRoles"
 	BotService_QueueSend_FullMethodName               = "/ds.BotService/QueueSend"
 	BotService_ReplaceTextMessage_FullMethodName      = "/ds.BotService/ReplaceTextMessage"
+	BotService_ReadNewsMessage_FullMethodName         = "/ds.BotService/ReadNewsMessage"
 	BotService_RoleToIdPing_FullMethodName            = "/ds.BotService/RoleToIdPing"
 	BotService_SendDmText_FullMethodName              = "/ds.BotService/SendDmText"
 	BotService_Send_FullMethodName                    = "/ds.BotService/Send"
@@ -72,6 +73,7 @@ type BotServiceClient interface {
 	GetMembersRoles(ctx context.Context, in *GuildRequest, opts ...grpc.CallOption) (*MembersRolesResponse, error)
 	QueueSend(ctx context.Context, in *QueueSendRequest, opts ...grpc.CallOption) (*Empty, error)
 	ReplaceTextMessage(ctx context.Context, in *ReplaceTextMessageRequest, opts ...grpc.CallOption) (*TextResponse, error)
+	ReadNewsMessage(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NewsTranslateResponse, error)
 	RoleToIdPing(ctx context.Context, in *RoleToIdPingRequest, opts ...grpc.CallOption) (*TextResponse, error)
 	SendDmText(ctx context.Context, in *SendDmTextRequest, opts ...grpc.CallOption) (*Empty, error)
 	Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*TextResponse, error)
@@ -257,6 +259,16 @@ func (c *botServiceClient) ReplaceTextMessage(ctx context.Context, in *ReplaceTe
 	return out, nil
 }
 
+func (c *botServiceClient) ReadNewsMessage(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NewsTranslateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NewsTranslateResponse)
+	err := c.cc.Invoke(ctx, BotService_ReadNewsMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *botServiceClient) RoleToIdPing(ctx context.Context, in *RoleToIdPingRequest, opts ...grpc.CallOption) (*TextResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TextResponse)
@@ -427,6 +439,7 @@ type BotServiceServer interface {
 	GetMembersRoles(context.Context, *GuildRequest) (*MembersRolesResponse, error)
 	QueueSend(context.Context, *QueueSendRequest) (*Empty, error)
 	ReplaceTextMessage(context.Context, *ReplaceTextMessageRequest) (*TextResponse, error)
+	ReadNewsMessage(context.Context, *Empty) (*NewsTranslateResponse, error)
 	RoleToIdPing(context.Context, *RoleToIdPingRequest) (*TextResponse, error)
 	SendDmText(context.Context, *SendDmTextRequest) (*Empty, error)
 	Send(context.Context, *SendRequest) (*TextResponse, error)
@@ -499,6 +512,9 @@ func (UnimplementedBotServiceServer) QueueSend(context.Context, *QueueSendReques
 }
 func (UnimplementedBotServiceServer) ReplaceTextMessage(context.Context, *ReplaceTextMessageRequest) (*TextResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReplaceTextMessage not implemented")
+}
+func (UnimplementedBotServiceServer) ReadNewsMessage(context.Context, *Empty) (*NewsTranslateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadNewsMessage not implemented")
 }
 func (UnimplementedBotServiceServer) RoleToIdPing(context.Context, *RoleToIdPingRequest) (*TextResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RoleToIdPing not implemented")
@@ -854,6 +870,24 @@ func _BotService_ReplaceTextMessage_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BotService_ReadNewsMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).ReadNewsMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_ReadNewsMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).ReadNewsMessage(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BotService_RoleToIdPing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RoleToIdPingRequest)
 	if err := dec(in); err != nil {
@@ -1194,6 +1228,10 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReplaceTextMessage",
 			Handler:    _BotService_ReplaceTextMessage_Handler,
+		},
+		{
+			MethodName: "ReadNewsMessage",
+			Handler:    _BotService_ReadNewsMessage_Handler,
 		},
 		{
 			MethodName: "RoleToIdPing",

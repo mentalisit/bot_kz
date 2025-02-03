@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"time"
 )
@@ -179,4 +181,49 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 		d.log.ErrorErr(err)
 	}
 	return levels
+}
+
+func (d *Db) CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string) (countQueue, countNumberName, NumRsLevel int, errorsAll error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+
+	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
+	row := d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	err := row.Scan(&countQueue)
+	if err != nil {
+		errorsAll = fmt.Errorf("%+v\n", err)
+	}
+
+	ctx, cancel = d.GetContext()
+	defer cancel()
+
+	sel = "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND userid = $3"
+	row = d.db.QueryRow(ctx, sel, lvlkz, CorpName, userid)
+	err = row.Scan(&countNumberName)
+	if err != nil {
+		errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
+	}
+
+	ctx, cancel = d.GetContext()
+	defer cancel()
+
+	sel = "SELECT  number FROM kzbot.numkz WHERE lvlkz = $1 AND corpname = $2"
+	row = d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	err = row.Scan(&NumRsLevel)
+	if err != nil {
+		NumRsLevel = 0
+		if errors.Is(err, pgx.ErrNoRows) {
+			insertSmt := "INSERT INTO kzbot.numkz(lvlkz, number,corpname) VALUES ($1,$2,$3)"
+			_, err = d.db.Exec(ctx, insertSmt, lvlkz, NumRsLevel, CorpName)
+			if err != nil {
+				errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
+			}
+			NumRsLevel = NumRsLevel + 1
+		} else {
+			errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
+		}
+	} else {
+		NumRsLevel++
+	}
+	return countQueue, countNumberName, NumRsLevel, errorsAll
 }

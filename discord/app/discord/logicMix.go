@@ -4,7 +4,6 @@ import (
 	"discord/discord/helpers"
 	"discord/models"
 	"fmt"
-	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
@@ -92,17 +91,12 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		return
 	}
 	go d.latinOrNot(m) //пытаемся переводить гостевой чат
-	go d.redStarEventMessage(m)
 
 	if m.Author != nil && m.Author.Locale != "" {
 		go d.log.Info(m.Author.Username + " " + m.Author.Locale)
 	}
 	if m.Member != nil && m.Member.User != nil && m.Member.User.Locale != "" {
 		go d.log.Info(m.Member.User.Username + " " + m.Member.User.Locale)
-	}
-	if strings.HasPrefix(m.Content, "%") {
-		d.SendToCompendium(m)
-		return
 	}
 
 	if strings.HasPrefix(m.Content, ".") {
@@ -121,6 +115,11 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(m.ChannelID)
 	if ds {
 		d.SendToBridge(m, bridgeConfig)
+	}
+
+	if strings.HasPrefix(m.Content, "%") {
+		d.SendToCompendium(m)
+		return
 	}
 }
 func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.CorporationConfig) {
@@ -320,24 +319,24 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 		d.api.SendBridgeAppRecover(mes)
 	}
 }
-func (d *Discord) redStarEventMessage(m *discordgo.MessageCreate) {
-	if m.Content == "event run" {
-		d.storage.Db.SaveEventDate(m.Content)
-		d.log.Info(m.Content)
-	}
-	if m.ChannelID == "1305333971269324851" {
-		if m.Author.String() == "Hades' Star Official #announcements#0000" {
-			if strings.Contains(m.Content, "Red Star event starts") {
-				d.log.Info(m.Content)
-				d.storage.Db.SaveEventDate(m.Content)
+
+func (d *Discord) logicMixWebhook(m *discordgo.MessageCreate) {
+	sendToRs := func(m *discordgo.MessageCreate, server string) {
+		if len(m.Attachments) > 0 {
+
+			for _, attachment := range m.Attachments {
+				mes := models.InMessage{
+					Tip:      "GameWebhook",
+					Mtext:    attachment.URL,
+					Username: server,
+				}
+				d.api.SendRsBotAppRecover(mes)
 			}
-
-			textTr, _ := gt.Translate(m.Content, "auto", "ru")
-			d.SendWebhook(textTr, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
-
-			textTr, _ = gt.Translate(m.Content, "auto", "uk")
-			d.SendWebhook(textTr, m.Author.Username, m.ChannelID, m.Author.AvatarURL("128"))
-
 		}
+	}
+	if m.ChannelID == "1335327712767643669" {
+		sendToRs(m, "fakeData")
+	} else if m.ChannelID == "1335416176674865242" {
+		sendToRs(m, "русь")
 	}
 }

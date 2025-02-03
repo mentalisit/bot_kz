@@ -30,6 +30,7 @@ func NewQueue(log *logger.Logger) *Queue {
 	q.corpName[-1001685747025] = "Best"
 	q.corpName[-1002098812155] = "Zvezdec"
 	q.corpName[-1002075054059] = "Дом Датэ"
+	q.corpName[-1002467616555] = "СССР"
 
 	return q
 }
@@ -42,7 +43,7 @@ func (q *Queue) GetDBQueue() (tt []models.Tumcha) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("select name,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
+	rows, err := db.Query("select name,nameid,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -51,7 +52,7 @@ func (q *Queue) GetDBQueue() (tt []models.Tumcha) {
 
 	for rows.Next() {
 		var t models.Tumcha
-		err = rows.Scan(&t.Name, &t.Level, &t.Vid, &t.Chatid, &t.Timedown)
+		err = rows.Scan(&t.Name, &t.NameId, &t.Level, &t.Vid, &t.Chatid, &t.Timedown)
 		if err != nil {
 			fmt.Println(err)
 			continue

@@ -5,7 +5,6 @@ import (
 	"rs/models"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -13,9 +12,6 @@ const (
 	emOK      = "✅"
 	emCancel  = "❎"
 	emRsStart = "🚀"
-	emPl30    = "⌛"
-	emPlus    = "➕"
-	emMinus   = "➖"
 )
 
 func percent(lvl int) int {
@@ -72,36 +68,39 @@ func sortByFirstTwoDigits(input []string) []string {
 	// Преобразование кастомного типа обратно в срез строк
 	return ss
 }
-func (b *Bot) getMap(in models.InMessage, numkzl int) map[string]string {
+func (b *Bot) getMap(in models.InMessage, numberLevel int) map[string]string {
 	var n map[string]string
 	n = make(map[string]string)
 
-	if in.Config.DsChannel != "" {
-		darkStar, lvlkz := containsSymbolD(in.Lvlkz)
+	//darkStar, lvlkz := containsSymbolD(in.Lvlkz)
+	darkOrRed, level := in.TypeRedStar()
+	if in.IfDiscord() {
 		var err error
-		if darkStar {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+lvlkz, in.Config.Guildid)
+		if darkOrRed {
+			n["levelRs"], err = b.client.Ds.RoleToIdPing(b.getText(in, "drs")+level, in.Config.Guildid)
 		} else {
-			n["lvlkz"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+in.Lvlkz, in.Config.Guildid)
+			n["levelRs"], err = b.client.Ds.RoleToIdPing(b.getText(in, "rs")+level, in.Config.Guildid)
 		}
+		n["lvlkz"] = n["levelRs"]
+
 		if err != nil {
-			b.log.Info(fmt.Sprintf("RoleToIdPing lvl %s CorpName %s err: %+v", in.Lvlkz, in.Config.CorpName, err))
+			b.log.Info(fmt.Sprintf("RoleToIdPing lvl %s CorpName %s err: %+v", level, in.Config.CorpName, err))
 		}
 	}
 
 	n["lang"] = in.Config.Country
 	n["title"] = b.getText(in, "rs_queue")
-	if strings.HasPrefix(in.Lvlkz, "d") {
+	if darkOrRed {
 		n["title"] = b.getText(in, "queue_drs")
 	}
 
 	n["description"] = fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",
-		b.getLanguageText(in.Config.Country, "wishing_to"), n["lvlkz"], numkzl)
+		b.getLanguageText(in.Config.Country, "wishing_to"), n["lvlkz"], numberLevel)
 	n["EmbedFieldName"] = fmt.Sprintf(" %s %s\n%s %s\n%s %s",
 		emOK, b.getLanguageText(in.Config.Country, "to_add_to_queue"),
 		emCancel, b.getLanguageText(in.Config.Country, "to_exit_the_queue"),
 		emRsStart, b.getLanguageText(in.Config.Country, "forced_start"))
 	n["EmbedFieldValue"] = b.getLanguageText(in.Config.Country, "data_updated") + ": "
-	n["buttonLevel"] = in.Lvlkz
+	n["buttonLevel"] = level
 	return n
 }

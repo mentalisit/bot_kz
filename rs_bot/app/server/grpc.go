@@ -10,6 +10,7 @@ import (
 	"rs/bot"
 	"rs/models"
 	servprof "rs/server/serv"
+	"strconv"
 )
 
 type Server struct {
@@ -67,6 +68,8 @@ func GrpcMain(b *bot.Bot, log *logger.Logger) (*Server, error) {
 }
 
 func (s *Server) LogicRs(ctx context.Context, i *InMessage) (*Empty, error) {
+	atoi, _ := strconv.Atoi(i.Timekz)
+
 	in := models.InMessage{
 		Mtext:       i.Mtext,
 		Tip:         i.Tip,
@@ -74,8 +77,10 @@ func (s *Server) LogicRs(ctx context.Context, i *InMessage) (*Empty, error) {
 		Username:    i.Username,
 		UserId:      i.UserId,
 		NameMention: i.NameMention,
-		Lvlkz:       i.Lvlkz,
-		Timekz:      i.Timekz,
+		//Lvlkz:       i.Lvlkz,
+		//Timekz:      i.Timekz,
+		RsTypeLevel: i.Lvlkz,
+		TimeRs:      atoi,
 		Ds: struct {
 			Mesid   string
 			Guildid string

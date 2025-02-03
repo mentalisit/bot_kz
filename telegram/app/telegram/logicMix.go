@@ -22,11 +22,6 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	//	t.log.Info(m.From.LanguageCode)
 	//}
 
-	//compendium
-	if strings.HasPrefix(m.Text, "%") {
-		go t.sendToCompendiumFilter(m, ChatId)
-	}
-
 	if strings.HasPrefix(m.Text, ".") {
 		go t.ifPrefixPoint(m)
 		return
@@ -36,14 +31,20 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	ok, config := t.checkChannelConfigTG(ChatId)
 	if ok {
 		go t.sendToRsFilter(m, config, ChatId)
+		return
 	}
 
 	//bridge
 	tg, bridgeConfig := t.bridgeCheckChannelConfigTg(ChatId)
 	if tg {
 		go t.sendToBridgeFilter(m, ChatId, bridgeConfig)
+		return
 	}
 
+	//compendium
+	if strings.HasPrefix(m.Text, "%") {
+		go t.sendToCompendiumFilter(m, ChatId)
+	}
 }
 
 func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.CorporationConfig, ChatId string) {
@@ -65,7 +66,7 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 			InClient: true,
 		},
 	}
-	if in.Mtext == "" && config.Forward {
+	if in.Mtext == "" && (m.IsTopicMessage && m.MessageThreadID != 0) {
 		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
 	}
 	if in.NameMention == "@" {
@@ -180,9 +181,7 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
 		chatName = fmt.Sprintf("%s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
 	}
-	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
-		chatName = fmt.Sprintf(" %s/%s", chatName, m.ReplyToMessage.ForumTopicCreated.Name)
-	}
+
 	good, config := t.checkChannelConfigTG(ChatId)
 	in := models.InMessage{
 		Mtext:       m.Text,

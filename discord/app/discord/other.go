@@ -360,3 +360,31 @@ func IsDifferenceMoreThan5Minutes(timeStr string) bool {
 
 	return false
 }
+
+func (d *Discord) ReadNewsChannel() (en, ru, ua string) {
+	// Определяем временную метку 5 минут назад
+	fiveMinutesAgo := time.Now().UTC().Add(-5 * time.Minute)
+
+	messages, _ := d.S.ChannelMessages("1305333971269324851", 5, "", "", "")
+	for i, message := range messages {
+		if message.Timestamp.After(fiveMinutesAgo) {
+			fmt.Printf("Now message %d Timestamp %s %s %s\n", i, message.Timestamp, message.Author, message.Content)
+
+			if message.Author.String() == "Hades' Star Official #announcements#0000" {
+				if strings.Contains(message.Content, "Red Star event starts") {
+					d.log.Info(message.Content)
+					d.storage.Db.SaveEventDate(message.Content)
+				}
+				en = message.Content
+
+				ru, _ = gt.Translate(message.Content, "auto", "ru")
+				//d.SendWebhook(textTr, "Hades' Star Official", message.ChannelID, message.Author.AvatarURL("128"))
+
+				ua, _ = gt.Translate(message.Content, "auto", "uk")
+				//d.SendWebhook(textTr, "Hades' Star Official", message.ChannelID, message.Author.AvatarURL("128"))
+				return
+			}
+		}
+	}
+	return
+}

@@ -9,6 +9,7 @@ import (
 )
 
 func (s *Server) DeleteMessage(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -31,6 +32,7 @@ func (s *Server) DeleteMessage(c *gin.Context) {
 }
 
 func (s *Server) DeleteMessageSecond(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {

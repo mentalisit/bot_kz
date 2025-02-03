@@ -3,9 +3,9 @@ package kzbotdb
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
 	"queue/config"
@@ -48,12 +48,12 @@ func NewClient(ctx context.Context, log *logger.Logger, maxAttempts int, conf *c
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		pool, err = pgxpool.Connect(ctx, dns)
+		pool, err = pgxpool.New(ctx, dns)
 		if err != nil {
 			dns = fmt.Sprintf("postgres://%s:%s@%s/%s",
 				conf.Postgress.Username, conf.Postgress.Password, "192.168.100.131:5435", conf.Postgress.Name)
 
-			pool, err = pgxpool.Connect(ctx, dns)
+			pool, err = pgxpool.New(ctx, dns)
 			if err != nil {
 				log.ErrorErr(err)
 				os.Exit(1)

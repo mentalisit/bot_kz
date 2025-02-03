@@ -7,6 +7,15 @@ func (s *Server) QueueSend(ctx context.Context, req *QueueSendRequest) (*Empty, 
 	return &Empty{}, nil
 }
 
+func (s *Server) ReadNewsMessage(context.Context, *Empty) (*NewsTranslateResponse, error) {
+	en, ru, ua := s.ds.ReadNewsChannel()
+	return &NewsTranslateResponse{
+		En: en,
+		Ru: ru,
+		Ua: ua,
+	}, nil
+}
+
 func (s *Server) ReplaceTextMessage(ctx context.Context, req *ReplaceTextMessageRequest) (*TextResponse, error) {
 	newtext := s.ds.ReplaceTextMessage(req.Text, req.Guildid)
 	return &TextResponse{Text: newtext}, nil

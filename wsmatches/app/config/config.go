@@ -7,12 +7,22 @@ import (
 )
 
 type ConfigBot struct {
+	Token struct {
+		TokenDiscord   string `yaml:"token_discord"`
+		TokenTelegram  string `yaml:"token_telegram"`
+		NameDbWhatsapp string `yaml:"name_db_whatsapp"`
+	} `yaml:"token"`
 	Logger struct {
 		Token   string `yaml:"token"`
 		ChatId  int64  `yaml:"chat_id"`
 		Webhook string `yaml:"webhook"`
 	} `yaml:"logger"`
-	Port string `yaml:"port"`
+	Postgress struct {
+		Host     string `yaml:"host" env-default:"127.0.0.1:3306"`
+		Name     string `yaml:"name" env-default:"rsbot"`
+		Username string `yaml:"username" env-default:"root"`
+		Password string `yaml:"password" env-default:"root"`
+	} `yaml:"postgress"`
 }
 
 var Instance *ConfigBot

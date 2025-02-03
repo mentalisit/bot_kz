@@ -45,6 +45,7 @@ func (s *Srv) runServer() {
 	router.GET("/", s.docs)
 	router.GET("/corps", s.getWsCorps)
 	router.GET("/poll/:id", s.poll)
+	router.GET("/health", HealthCheckHandler)
 
 	fmt.Println("Running port:" + port)
 
@@ -99,4 +100,13 @@ func BlockIPMiddleware(blockedIPs []string) gin.HandlerFunc {
 		}
 		c.Next() // Продолжаем обработку для других IP-адресов
 	}
+}
+
+// HealthCheckHandler проверяет здоровье сервиса
+func HealthCheckHandler(c *gin.Context) {
+	// Если все проверки пройдены успешно
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Service is healthy",
+	})
 }

@@ -7,6 +7,7 @@ import (
 	"rs/models"
 	"rs/storage"
 	"strconv"
+	"strings"
 )
 
 const ds = "ds"
@@ -72,166 +73,147 @@ func (h *Helpers) GetQueueTelegram(n map[string]string, u models.Users) (users s
 	}
 	return users
 }
-func (h *Helpers) emReadName(s models.Sborkz, tip string) string { // склеиваем имя и эмоджи
+func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) string { // склеиваем имя и эмоджи
 	name := s.Name
 	if s.Wamesid != "" {
 		name = s.Wamesid
 	}
-	t := h.storage.Emoji.EmojiModuleReadUsers(name, tip)
+	t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
 	newName := s.Name
-	if tip == ds {
+	if ForType == ds {
 		newName = s.Mention
 	} else {
 		newName = s.Name
 	}
 
+	if mention != nil {
+		if mention[0] {
+			newName = s.Mention
+		}
+	}
+
 	if len(t.Name) > 0 {
-		if tip == ds && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", s.Mention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			if s.Wamesid != "" {
-				newName = fmt.Sprintf("%s [%s]  %s %s %s %s%s%s%s", s.Mention, s.Wamesid, t.Module1, t.Module2, t.Module3, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-		} else if tip == tg && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s%s%s%s", s.Name, t.Em1, t.Em2, t.Em3, t.Em4)
-			if t.Weapon != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", s.Name, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-			if s.Wamesid != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", s.Name, s.Wamesid, t.Em1, t.Em2, t.Em3, t.Em4)
+		//nickName
+		if t.Weapon != "" && s.Tip == "tg" {
+			newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
+		}
+		//Alt
+		if s.Wamesid != "" {
+			newName = fmt.Sprintf("%s [%s]", newName, s.Wamesid)
+		}
+		if t.Module1 != "" {
+			if ForType == ds {
+				newName = fmt.Sprintf("%s %s %s %s %s", newName, t.Module1, t.Module2, t.Module3, t.Weapon)
+			} else if ForType == tg {
+				newName = fmt.Sprintf("%s (%s/%s/%s)", newName, t.Module1, t.Module2, t.Module3)
 			}
 		}
+		newName = fmt.Sprintf("%s %s%s%s%s", newName, t.Em1, t.Em2, t.Em3, t.Em4)
 	}
 	return newName
 }
-func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
-	if in.Tip == ds {
-		if name == "" {
-			name = in.Username
-		}
-		t := h.storage.Emoji.EmojiModuleReadUsers(name, ds)
 
+func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
+	if name == "" {
+		name = in.Username
+	}
+	var tds, ttg models.EmodjiUser
+	var DsGenesis, DsEnrich, DsRsExtender int
+	var TgGenesis, TgEnrich, TgRsExtender int
+	if in.IfDiscord() {
 		genesis1, enrich1, rsextender1 := 0, 0, 0
 		if name == in.Username {
 			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.UserId, in.Config.Guildid)
 		}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
 
-		genesis := max(genesis1, genesis2)
-		if genesis == 0 {
-			genesis = extractNumbers(t.Module2)
+		DsGenesis = max(genesis1, genesis2)
+		DsEnrich = max(enrich1, enrich2)
+		DsRsExtender = max(rsextender1, rsextender2)
+	}
+	if in.IfTelegram() {
+		split := strings.Split(in.Config.TgChannel, "/")
+		TgGenesis, TgEnrich, TgRsExtender = Get2TechDataUserId(name, in.UserId, split[0])
+	}
+
+	genesis := max(DsGenesis, TgGenesis)
+	enrich := max(DsEnrich, TgEnrich)
+	rsextender := max(DsRsExtender, TgRsExtender)
+
+	fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
+
+	if in.IfDiscord() {
+		tds = h.storage.Emoji.EmojiModuleReadUsers(name, ds)
+		if tds.Name == "" {
+			h.storage.Emoji.EmInsertEmpty(ds, name)
 		}
 
-		enrich := max(enrich1, enrich2)
-		if enrich == 0 {
-			enrich = extractNumbers(t.Module3)
-		}
-
-		rsextender := max(rsextender1, rsextender2)
-		if rsextender == 0 {
-			rsextender = extractNumbers(t.Module1)
-		}
-
-		fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
-
-		if t.Name == "" {
-			h.storage.Emoji.EmInsertEmpty("ds", name)
-		}
-		one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-		two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-		three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-		if rsextender != 0 && t.Module1 != one {
+		one := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
+		two := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
+		three := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
+		if genesis != 0 && tds.Module1 != one {
 			h.storage.Emoji.ModuleUpdate(name, "ds", "1", one)
 		}
-		if genesis != 0 && t.Module2 != two {
+		if enrich != 0 && tds.Module2 != two {
 			h.storage.Emoji.ModuleUpdate(name, "ds", "2", two)
 		}
-		if enrich != 0 && t.Module3 != three {
+		if rsextender != 0 && tds.Module3 != three {
 			h.storage.Emoji.ModuleUpdate(name, "ds", "3", three)
 		}
 	}
-}
-func (h *Helpers) UpdateCompendiumModules(in models.InMessage) string {
-	genesis, enrich, rsextender := GetTechDataUserId(in.UserId, in.Config.Guildid)
-	if genesis+enrich+rsextender == 0 {
-		genesis, enrich, rsextender = Get2TechDataUserId(in.Username, in.UserId, in.Ds.Guildid)
-		if genesis+enrich+rsextender == 0 {
-			return "модули не найдены "
+
+	if in.IfTelegram() {
+		ttg = h.storage.Emoji.EmojiModuleReadUsers(name, tg)
+		if ttg.Name == "" {
+			h.storage.Emoji.EmInsertEmpty(tg, name)
+		}
+
+		gen := strconv.Itoa(genesis)
+		enr := strconv.Itoa(enrich)
+		rse := strconv.Itoa(rsextender)
+		if genesis != 0 && ttg.Module1 != gen {
+			h.storage.Emoji.ModuleUpdate(name, "tg", "1", gen)
+		}
+		if enrich != 0 && ttg.Module2 != enr {
+			h.storage.Emoji.ModuleUpdate(name, "tg", "2", enr)
+		}
+		if rsextender != 0 && ttg.Module1 != rse {
+			h.storage.Emoji.ModuleUpdate(name, "tg", "3", rse)
 		}
 	}
-
-	one := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-	two := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-	three := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-	if rsextender != 0 {
-		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "1", one)
-	}
-	if genesis != 0 {
-		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "2", two)
-	}
-	if enrich != 0 {
-		h.storage.Emoji.ModuleUpdate(in.Username, "ds", "3", three)
-	}
-	return " загружено из компендиум бота " + one + two + three
 }
 
 func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
 	if u.User1.Tip == tip {
-		n1 = h.emReadMention(u.User1, tip)
+		n1 = h.emReadName(u.User1, tip, true)
 	} else {
-		n1 = u.User1.Name
+		n1 = h.emReadName(u.User1, tip)
 	}
 	if u.User2 != nil {
 		if u.User2.Tip == tip {
-			n2 = h.emReadMention(*u.User2, tip)
+			n2 = h.emReadName(*u.User2, tip, true)
 		} else {
-			n2 = u.User2.Name
+			n2 = h.emReadName(*u.User2, tip)
 		}
 	}
 	if u.User3 != nil {
 		if u.User3.Tip == tip {
-			n3 = h.emReadMention(*u.User3, tip)
+			n3 = h.emReadName(*u.User3, tip, true)
 		} else {
-			n3 = u.User3.Name
+			n3 = h.emReadName(*u.User3, tip)
 		}
 	}
 	if u.User4 != nil {
 		if u.User4.Tip == tip {
-			n4 = h.emReadMention(*u.User4, tip)
+			n4 = h.emReadName(*u.User4, tip, true)
 		} else {
-			n4 = u.User4.Name
+			n4 = h.emReadName(*u.User4, tip)
 		}
 	}
 
 	return
 }
-func (h *Helpers) emReadMention(u models.Sborkz, tip string) string { // склеиваем имя и эмоджи
-	t := models.EmodjiUser{}
-	if u.Wamesid != "" {
-		t = h.storage.Emoji.EmojiModuleReadUsers(u.Wamesid, tip)
-	} else {
-		t = h.storage.Emoji.EmojiModuleReadUsers(u.Name, tip)
-	}
 
-	newName := u.Mention
-
-	if len(t.Name) > 0 {
-		if tip == ds && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s %s %s %s %s%s%s%s", u.Mention, t.Module1, t.Module2, t.Module3, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			if u.Wamesid != "" {
-				newName = fmt.Sprintf("%s [%s] %s %s %s %s%s%s%s", u.Mention, u.Wamesid, t.Module1, t.Module2, t.Module3, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-		} else if tip == tg && tip == t.Tip {
-			newName = fmt.Sprintf("%s %s%s%s%s", u.Mention, t.Em1, t.Em2, t.Em3, t.Em4)
-			if t.Weapon != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", u.Mention, t.Weapon, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-			if u.Wamesid != "" {
-				newName = fmt.Sprintf("%s [%s] %s%s%s%s", u.Mention, u.Wamesid, t.Em1, t.Em2, t.Em3, t.Em4)
-			}
-		}
-	}
-	return newName
-}
 func extractNumbers(input string) int {
 	re := regexp.MustCompile(`\d+`)
 	matches := re.FindAllString(input, -1)

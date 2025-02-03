@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 func (s *Server) QueueApi(c *gin.Context) {
@@ -18,7 +19,7 @@ func (s *Server) QueueApi(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if c.RemoteIP() != "192.99.246.144" && c.RemoteIP() != "172.18.0.1" {
+	if c.RemoteIP() != "192.99.246.144" && !strings.HasPrefix(c.RemoteIP(), "172.18.0") {
 		fmt.Println(c.RemoteIP())
 		fmt.Println(string(rawData))
 	}

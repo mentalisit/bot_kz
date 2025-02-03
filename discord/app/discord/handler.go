@@ -13,6 +13,7 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 		return
 	}
 	if m.Message.WebhookID != "" {
+		d.logicMixWebhook(m)
 		return
 	}
 	if m.GuildID == "" {

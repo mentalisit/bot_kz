@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package ds;
-option go_package = "/grpc_server;ds";
+option go_package = "/grpc_server;grpc_server";
 
 service BotService {
   rpc CleanChat(CleanChatRequest) returns (Empty);
@@ -20,6 +20,7 @@ service BotService {
   rpc GetMembersRoles(GuildRequest) returns (MembersRolesResponse);
   rpc QueueSend(QueueSendRequest) returns (Empty);
   rpc ReplaceTextMessage(ReplaceTextMessageRequest) returns (TextResponse);
+  rpc ReadNewsMessage(Empty) returns (NewsTranslateResponse);
   rpc RoleToIdPing(RoleToIdPingRequest) returns (TextResponse);
   rpc SendDmText(SendDmTextRequest) returns (Empty);
   rpc Send(SendRequest) returns (TextResponse);
@@ -237,6 +238,11 @@ message ErrorResponse {
 
 message TextResponse {
   string text = 1;
+}
+message NewsTranslateResponse {
+  string en = 1;
+  string ru = 2;
+  string ua = 3;
 }
 
 message IntResponse {

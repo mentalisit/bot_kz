@@ -3,7 +3,7 @@ package dbpostgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
 	"time"
@@ -14,19 +14,15 @@ type Db struct {
 	pool *pgxpool.Pool
 }
 
-func NewDb(log *logger.Logger) *Db {
-	dns := fmt.Sprintf("postgres://postgres:root@%s/postgres", "postgres:5432")
+func NewDb(log *logger.Logger, pass string) *Db {
+	dns := fmt.Sprintf("postgres://postgres:%s@postgres:5432/postgres", pass)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.Connect(ctx, dns)
+	pool, err := pgxpool.New(ctx, dns)
 	if err != nil {
-		dns = fmt.Sprintf("postgres://postgres:root@%s/postgres", "192.168.100.131:5435")
-		pool, err = pgxpool.Connect(ctx, dns)
-		if err != nil {
-			log.ErrorErr(err)
-			os.Exit(1)
-		}
+		log.ErrorErr(err)
+		os.Exit(1)
 	}
 	d := &Db{
 		log:  log,

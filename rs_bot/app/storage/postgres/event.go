@@ -117,7 +117,7 @@ func (d *Db) NumActiveEvent(CorpName string) (event1 int) { //запрос но�
 func (d *Db) NumDeactivEvent(CorpName string) (event0 int) { //запрос номера последнего ивента
 	ctx, cancel := d.GetContext()
 	defer cancel()
-	sel := "SELECT numevent FROM kzbot.rsevent WHERE corpname=$1 AND activeevent=0 ORDER BY numevent DESC LIMIT 1"
+	sel := "SELECT max(numevent) FROM kzbot.rsevent WHERE corpname=$1 AND activeevent=0"
 	row := d.db.QueryRow(ctx, sel, CorpName)
 	err := row.Scan(&event0)
 	if err != nil {
@@ -189,19 +189,32 @@ func (d *Db) EventInsertPreStart(CorpName string, activeevent int) {
 	}
 }
 
-func (d *Db) ReadEventSchedule() (start string, stop string) {
+//func (d *Db) ReadEventSchedule() (start string, stop string) {
+//	ctx, cancel := d.GetContext()
+//	defer cancel()
+//	var nextDateStart string
+//	var nextDateStop string
+//
+//	sel := "SELECT datestart,datestop FROM kzbot.event ORDER BY id DESC LIMIT 1"
+//	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop)
+//	if err != nil {
+//		d.log.ErrorErr(err)
+//		return "", ""
+//	}
+//	return nextDateStart, nextDateStop
+//}
+
+func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
-	var nextDateStart string
-	var nextDateStop string
 
-	sel := "SELECT datestart,datestop FROM kzbot.event ORDER BY id DESC LIMIT 1"
-	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop)
+	sel := "SELECT datestart,datestop,message FROM kzbot.event ORDER BY id DESC LIMIT 1"
+	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop, &message)
 	if err != nil {
 		d.log.ErrorErr(err)
-		return "", ""
+		return "", "", ""
 	}
-	return nextDateStart, nextDateStop
+	return nextDateStart, nextDateStop, message
 }
 
 // ReadRsEvent activeEvent int -1 prepare, 0 stop , 1 run

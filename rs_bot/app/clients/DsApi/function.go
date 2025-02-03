@@ -137,7 +137,13 @@ func (c *Client) SendDmText(text string, id string) {
 		return
 	}
 }
-
+func (c *Client) ReadNews() (en, ru, ua string) {
+	message, err := c.client.ReadNewsMessage(context.Background(), &Empty{})
+	if err != nil {
+		return "", "", ""
+	}
+	return message.En, message.Ru, message.Ua
+}
 func (c *Client) ReplaceTextMessage(text string, guildid string) string {
 	req := &ReplaceTextMessageRequest{
 		Text:    text,
@@ -201,17 +207,34 @@ func (c *Client) ChannelTyping(channel string) {
 	}
 }
 
-func (c *Client) RoleToIdPing(s string, guildid string) (string, error) {
-	req := &RoleToIdPingRequest{
-		RolePing: s,
-		Guildid:  guildid,
+func (c *Client) RoleToIdPing(role string, guildID string) (string, error) {
+	// Проверяем наличие в кэше
+	if guildRoles, exists := c.rolePing[guildID]; exists {
+		if roleID, found := guildRoles[role]; found {
+			return roleID, nil
+		}
 	}
-	tr, err := c.client.RoleToIdPing(context.Background(), req)
+
+	// Формируем запрос
+	req := &RoleToIdPingRequest{
+		RolePing: role,
+		Guildid:  guildID,
+	}
+
+	// Выполняем запрос
+	resp, err := c.client.RoleToIdPing(context.Background(), req)
 	if err != nil {
 		c.log.ErrorErr(err)
 		return "", err
 	}
-	return tr.Text, nil
+
+	// Обновляем кэш
+	if _, exists := c.rolePing[guildID]; !exists {
+		c.rolePing[guildID] = make(map[string]string)
+	}
+	c.rolePing[guildID][role] = resp.Text
+
+	return resp.Text, nil
 }
 
 func (c *Client) QueueSend(queue string) {

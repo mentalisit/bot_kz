@@ -13,9 +13,11 @@ func (b *Bot) AutoHelp() {
 	mtime := tm.Format("15:04")
 	if mtime == "12:00" {
 		go b.client.Ds.CleanRsBotOtherMessage()
-	} else if mtime == "00:00" {
+	}
+	if mtime == "00:00" {
 		go b.EventAutoStart()
-	} else if tm.Minute() == 0 {
+	}
+	if tm.Minute() == 0 {
 		for _, s := range b.storage.ConfigRs.ReadConfigRs() {
 			configTemp := s
 			if s.DsChannel != "" {
@@ -28,16 +30,15 @@ func (b *Bot) AutoHelp() {
 				b.storage.ConfigRs.UpdateConfigRs(configTemp)
 				in := models.InMessage{
 					Config: configTemp,
-					//Option: models.Option{
-					//	Queue:    true,
-					//	MinusMin: true,
-					//},
-					Opt: []string{models.OptionUpdateAutoHelp},
+					Opt:    []string{models.OptionUpdateAutoHelp},
 				}
 				b.Inbox <- in
 				time.Sleep(1 * time.Second)
 			}
 		}
+	}
+	if tm.Minute() == 29 || tm.Minute() == 59 {
+		go b.UpdateTopEvent()
 	}
 	utils.PrintGoroutine(b.log)
 	time.Sleep(time.Minute)

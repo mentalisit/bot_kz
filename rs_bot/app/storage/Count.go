@@ -7,4 +7,5 @@ type Count interface {
 	CountNameQueue(userid string) (countNames int)
 	CountNameQueueCorp(userid, corp string) (countNames int)
 	ReadTop5Level(corpname string) []string
+	CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string) (countQueue, countNumberName, NumRsLevel int, errorsAll error)
 }

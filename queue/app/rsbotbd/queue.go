@@ -16,7 +16,7 @@ func (q *Queue) GetQueueLevel(level string) (m map[string][]models.Tumcha) {
 	var t []models.Tumcha
 	m = make(map[string][]models.Tumcha)
 
-	after, found := strings.CutPrefix(level, "d")
+	after, found := strings.CutPrefix(level, "drs")
 
 	if found {
 		lvl, err := strconv.Atoi(after)
@@ -28,8 +28,10 @@ func (q *Queue) GetQueueLevel(level string) (m map[string][]models.Tumcha) {
 				t = append(t, tumcha)
 			}
 		}
-	} else {
-		lvl, err := strconv.Atoi(level)
+	}
+	after, found = strings.CutPrefix(level, "rs")
+	if found {
+		lvl, err := strconv.Atoi(after)
 		if err != nil {
 			q.log.ErrorErr(err)
 		}

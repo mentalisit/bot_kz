@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
+	"net/http"
 	"queue/config"
 	"queue/kzbotdb"
 	"queue/rsbotbd"
@@ -49,6 +50,9 @@ func (s *Server) runServer() error {
 	router.GET("/queue", s.ReadAllQueue)
 	router.POST("/api/queue", s.QueueApi)
 	router.POST("/api/queue2", s.QueueApi2)
+	router.GET("/api/active0", s.ReadAllQueueActive0)
+	router.POST("/api/left", s.Left)
+	router.GET("/health", HealthCheckHandler)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
@@ -64,6 +68,7 @@ func (s *Server) runServerApi() error {
 	router := gin.Default()
 
 	router.GET("/queue", s.ReadAllQueue)
+	router.GET("/api/readsouzbot", s.ReadQueueTumcha)
 	router.POST("/ai", s.GeminiAI)
 
 	fmt.Println("Running port:" + port)
@@ -87,4 +92,13 @@ func (s *Server) PrintGoroutine() {
 	}
 
 	fmt.Println(text)
+}
+
+// HealthCheckHandler проверяет здоровье сервиса
+func HealthCheckHandler(c *gin.Context) {
+	// Если все проверки пройдены успешно
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Service is healthy",
+	})
 }

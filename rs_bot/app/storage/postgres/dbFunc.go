@@ -94,11 +94,11 @@ func (d *Db) UpdateSborkzPoints(active string, id int, points int) {
 	}
 }
 
-func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
+func (d *Db) InsertQueueOld(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
-	tm := time.Now()
+	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
 	mtime := (tm.Format("15:04"))
 
@@ -116,10 +116,27 @@ func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, 
 		d.log.ErrorErr(err)
 	}
 }
+func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, timekz, tgmesid, numkzN int) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	numevent := 0 // d.NumActiveEvent(CorpName)
+	tm := time.Now().UTC()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+
+	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
+                   numkzn,numberkz,numberevent,eventpoints,active,timedown) 
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
+	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
+		wamesid, mtime, mdate, lvlkz, numkzN, 0, numevent, 0, 0, timekz)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
 func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, tgmesid, numevent, numberkz, numkzN, points int) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
-	tm := time.Now()
+	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
 	mtime := (tm.Format("15:04"))
 
@@ -357,8 +374,10 @@ func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) mo
 		Username:    t.Name,
 		UserId:      t.UserId,
 		NameMention: t.Mention,
-		Lvlkz:       t.Lvlkz,
-		Timekz:      strconv.Itoa(t.Timedown),
+		RsTypeLevel: t.Lvlkz,
+		//Lvlkz:       t.Lvlkz,
+		TimeRs: t.Timedown,
+		//Timekz:      strconv.Itoa(t.Timedown),
 		Ds: struct {
 			Mesid   string
 			Guildid string
@@ -368,10 +387,7 @@ func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) mo
 			Guildid: config.Guildid,
 		},
 		Config: config,
-		//Option: models.Option{
-		//	Edit:   true,
-		//	Update: true},
-		Opt: []string{models.OptionMessageUpdateDS, models.OptionEdit},
+		Opt:    []string{models.OptionMessageUpdateDS, models.OptionEdit},
 	}
 	return in
 
@@ -394,20 +410,17 @@ func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) model
 		Tip:         "tg",
 		Username:    t.Name,
 		NameMention: t.Mention,
-		Lvlkz:       t.Lvlkz,
-		Timekz:      strconv.Itoa(t.Timedown),
+		RsTypeLevel: t.Lvlkz,
+		//Lvlkz:       t.Lvlkz,
+		TimeRs: t.Timedown,
+		//Timekz:      strconv.Itoa(t.Timedown),
 		Tg: struct {
 			Mesid int
-			//Nameid int64
 		}{
 			Mesid: t.Tgmesid,
-			//Nameid: 0
 		},
 		Config: config,
-		//Option: models.Option{
-		//	Edit:   true,
-		//	Update: true,},
-		Opt: []string{models.OptionMessageUpdateTG, models.OptionEdit},
+		Opt:    []string{models.OptionMessageUpdateTG, models.OptionEdit},
 	}
 	return in
 }

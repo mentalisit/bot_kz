@@ -3,7 +3,7 @@ package postgres
 import (
 	"compendium/models"
 	"encoding/json"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"time"
 )
 
@@ -188,6 +188,35 @@ func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
 		return err
 	}
 	return nil
+}
+func (d *Db) CorpMemberDeleteAlt(guildid string, nameId string, name string) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2 AND username = $3`
+	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId, name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (d *Db) CorpMembersReadByUserId(UserId string) ([]models.CorpMember, error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	sel := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1"
+	results, err := d.db.Query(ctx, sel, UserId)
+	defer results.Close()
+	if err != nil {
+		return nil, err
+	}
+	var mm []models.CorpMember
+	for results.Next() {
+		var t models.CorpMember
+		var id int
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+
+		mm = append(mm, t)
+	}
+	return mm, nil
 }
 
 //func (d *Db) CorpMemberReadByUserId(ctx context.Context, userId, guildid string) models.CorpMember {

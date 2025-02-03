@@ -14,7 +14,7 @@ var log *logger.Logger
 func main() {
 	cfg := config.InitConfig()
 	log = logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "WS")
-	hs := hspublic.NewHS(log)
+	hs := hspublic.NewHS(log, cfg.Postgress.Password)
 
 	go server.NewSrv(log)
 

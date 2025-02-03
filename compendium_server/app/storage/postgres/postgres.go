@@ -4,9 +4,9 @@ import (
 	"compendium_s/config"
 	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
 	"time"
@@ -17,8 +17,8 @@ type Db struct {
 	log *logger.Logger
 }
 type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
@@ -28,7 +28,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
-	pool, err := pgxpool.Connect(ctx, dns)
+	pool, err := pgxpool.New(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
@@ -162,8 +162,9 @@ func (d *Db) createTable() {
 	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
 	id           bigserial primary key,
 	code    	 TEXT,
-	time 	     bigint,
-	identity     jsonb
+	identity     jsonb,
+	timestamp 	 bigint
+                                               
 	)`)
 	if err != nil {
 		fmt.Println("Ошибка при создании таблицы codes:", err)

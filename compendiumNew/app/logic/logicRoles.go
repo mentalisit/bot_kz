@@ -103,34 +103,57 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 		text := "попытка оформить подписку \n"
 		roleName := matches[1]
 		usernames := matches[2]
+		if !c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
+			text += "сначала создай роль " + roleName
+			c.sendChat(m, text)
+			return true
+		}
+
 		split := strings.Split(usernames, " ")
 		for _, s := range split {
+			var user *models.User
+			//если с упоминанием
 			after, found := strings.CutPrefix(s, "@")
-			if found {
-				if c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
-					user, errget := c.users.UsersGetByUserName(after)
-					if errget != nil {
-						c.log.ErrorErr(errget)
-						return false
-					}
 
-					if user.ID != "" {
-						err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, user.Username, user.ID)
-						if err != nil {
-							return false
-						}
-						text += fmt.Sprintf("%s подписан\n", after)
-					} else {
-						text += fmt.Sprintf("%s не подписан данные не найдены \n", after)
-					}
-				} else {
-					text += "сначала создай роль " + roleName
-					break
+			if found {
+				user, _ = c.users.UsersGetByUserName(after)
+			} else {
+				user, _ = c.UsersFindByAltsNameOrGameName(s)
+			}
+			fmt.Println(user)
+
+			if user != nil && user.ID != "" {
+				err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, user.Username, user.ID)
+				if err != nil {
+					fmt.Println(err)
+					return false
 				}
+				text += fmt.Sprintf("%s подписан\n", after)
+			} else {
+				text += fmt.Sprintf("%s не подписан данные не найдены \n", after)
 			}
 		}
 		c.sendChat(m, text)
 		return true
 	}
 	return false
+}
+
+func (c *Hs) UsersFindByAltsNameOrGameName(AltNameOrGameName string) (*models.User, error) {
+	usersGetAll, err := c.users.UsersGetAll()
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range usersGetAll {
+		if len(user.Alts) > 0 {
+			for _, alt := range user.Alts {
+				if alt == AltNameOrGameName {
+					return &user, nil
+				}
+			}
+		} else if user.GameName == AltNameOrGameName {
+			return &user, nil
+		}
+	}
+	return nil, nil
 }

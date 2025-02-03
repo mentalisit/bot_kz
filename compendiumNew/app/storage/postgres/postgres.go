@@ -4,9 +4,9 @@ import (
 	"compendium/config"
 	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
 	"time"
@@ -29,7 +29,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
 
-	pool, err := pgxpool.Connect(ctx, dns)
+	pool, err := pgxpool.New(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)

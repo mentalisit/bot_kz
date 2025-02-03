@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
+	"net/http"
 	"runtime"
 	"time"
 )
@@ -62,6 +63,8 @@ func (s *Server) RunServer() {
 
 	router.Static("/compendium/avatars", "docker/compendium/avatars")
 	router.Static("/docker/compendium/avatars", "docker/compendium/avatars")
+
+	router.GET("/health", HealthCheckHandler)
 
 	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, s.certFile, s.keyFile)
@@ -132,4 +135,13 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 		param.Path,
 		param.ErrorMessage,
 	)
+}
+
+// HealthCheckHandler проверяет здоровье сервиса
+func HealthCheckHandler(c *gin.Context) {
+	// Если все проверки пройдены успешно
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Service is healthy",
+	})
 }

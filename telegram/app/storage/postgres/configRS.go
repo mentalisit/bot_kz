@@ -3,8 +3,7 @@ package postgres
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
 	"telegram/models"
 )
 
@@ -79,7 +78,7 @@ func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
 	for rows.Next() {
 		var config models.BridgeConfig
 		var channelDs, channelTg []byte
-		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, pq.Array(&config.Role), &channelDs, &channelTg, pq.Array(&config.ForbiddenPrefixes)); err != nil {
+		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channelDs, &channelTg, &config.ForbiddenPrefixes); err != nil {
 			d.log.ErrorErr(err)
 			return cc
 		}

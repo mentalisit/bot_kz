@@ -9,6 +9,8 @@ type CorpMember interface {
 	CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error
 	CorpMemberByUserId(userId string) (*models.CorpMember, error)
 	CorpMemberDelete(guildid string, nameId string) error
+	CorpMemberDeleteAlt(guildid string, nameId string, name string) error
+	CorpMembersReadByUserId(UserId string) ([]models.CorpMember, error)
 }
 
 type Tech interface {
@@ -43,6 +45,7 @@ type Users interface {
 	UsersFindByGameName(gameName string) (*models.User, error)
 	UserGetCountByUserId(userid string) (int, error)
 	UsersUpdate(u models.User) error
+	UsersGetAll() ([]models.User, error)
 }
 
 type GuildRoles interface {

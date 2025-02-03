@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
 	"os"
 	"telegram/config"
@@ -29,7 +29,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	pool, err := pgxpool.Connect(ctx, dns)
+	pool, err := pgxpool.New(ctx, dns)
 	if err != nil {
 		log.ErrorErr(err)
 		time.Sleep(5 * time.Second)

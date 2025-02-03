@@ -9,6 +9,7 @@ import (
 )
 
 func (s *Server) EditMessage(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {
@@ -34,6 +35,7 @@ func (s *Server) EditMessage(c *gin.Context) {
 }
 
 func (s *Server) EditMessageTextKey(c *gin.Context) {
+	s.log.Info("using server http")
 	var m apiRs
 
 	if err := c.ShouldBindJSON(&m); err != nil {

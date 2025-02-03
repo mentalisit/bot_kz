@@ -39,10 +39,6 @@ func (b *Bot) ifTipSendTextDelSecond(in models.InMessage, text string, time int)
 	}
 }
 
-func (b *Bot) updateCompendiumModules(in models.InMessage) {
-	b.iftipdelete(in)
-	b.ifTipSendMentionText(in, b.helpers.UpdateCompendiumModules(in))
-}
 func (b *Bot) checkAdmin(in models.InMessage) bool {
 	admin := false
 	var err error
@@ -57,6 +53,40 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 		admin = true
 	}
 	return admin
+}
+func (b *Bot) identifyUserGame(users models.Users) {
+
+	getUser := func(sb models.Sborkz) {
+		userId := sb.UserId
+		account, _ := b.storage.UserAccount.UserAccountGetByTgUserId(userId)
+		if account == nil || len(account.GameId) == 0 {
+			account, _ = b.storage.UserAccount.UserAccountGetByDsUserId(userId)
+		}
+
+		if account == nil || len(account.GameId) == 0 {
+			text := fmt.Sprintf("%s не опознано %+v\n", userId, sb)
+			b.log.Info(text)
+		}
+	}
+
+	if users.User1.UserId != "" {
+		getUser(users.User1)
+		u1 := users.User1
+		err := b.storage.EventNumber.InsertEventNumber(u1.Numberkz, u1.Numberevent, false)
+		if err != nil {
+			b.log.ErrorErr(err)
+		}
+
+	}
+	if users.User2 != nil && users.User2.UserId != "" {
+		getUser(*users.User2)
+	}
+	if users.User3 != nil && users.User3.UserId != "" {
+		getUser(*users.User3)
+	}
+	if users.User4 != nil && users.User4.UserId != "" {
+		getUser(*users.User4)
+	}
 }
 
 func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
@@ -74,13 +104,23 @@ func (b *Bot) elseTrue(userid string) { //удаляем игрока с оче�
 	for _, t := range tt {
 		ok, config := b.CheckCorpNameConfig(t.Corpname)
 		if ok {
+			var text string
+			after, drs := strings.CutPrefix(t.Lvlkz, "drs")
+			if drs {
+				text = after
+			}
+			afterRs, rs := strings.CutPrefix(t.Lvlkz, "rs")
+			if rs {
+				text = afterRs
+			}
+
 			in := models.InMessage{
-				Mtext:       t.Lvlkz + "-",
+				Mtext:       text + "-",
 				Tip:         t.Tip,
 				Username:    t.Name,
 				UserId:      t.UserId,
 				NameMention: t.Mention,
-				Lvlkz:       t.Lvlkz,
+				RsTypeLevel: t.Lvlkz,
 				Ds: struct {
 					Mesid   string
 					Guildid string
@@ -94,8 +134,7 @@ func (b *Bot) elseTrue(userid string) { //удаляем игрока с оче�
 					Mesid: t.Tgmesid,
 				},
 				Config: config,
-				//Option: models.Option{Elsetrue: true},
-				Opt: []string{models.OptionElseTrue},
+				Opt:    []string{models.OptionElseTrue},
 			}
 			b.Inbox <- in
 		}
