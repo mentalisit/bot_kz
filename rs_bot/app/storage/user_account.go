@@ -9,4 +9,6 @@ type UserAccount interface {
 	UserAccountGetByTgUserId(TgId string) (*models.UserAccount, error)
 	UserAccountGetByDsUserId(DsId string) (*models.UserAccount, error)
 	UserAccountGetAll() ([]models.UserAccount, error)
+	//FakeUserGetAll() ([]models.PlayerStats, error)
+	//FakeUserInsert(userName string, points, level int) error
 }

@@ -312,3 +312,51 @@ func (c *Client) Unsubscribe(id string, roles string, guildid string) int {
 	}
 	return int(ir.Result)
 }
+
+func (c *Client) SendChannelPic(chatId, text string, pic []byte) error {
+	req := &SendPicRequest{
+		Chatid:     chatId,
+		Text:       text,
+		ImageBytes: pic,
+	}
+
+	errResponse, err := c.client.SendPic(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return err
+	}
+	if errResponse.ErrorMessage != "" {
+		return errors.New(errResponse.ErrorMessage)
+	}
+	return nil
+}
+func (c *Client) SendOrEditEmbedImage(chatId, title, ImageUrl string) error {
+	req := &SendEmbedImageRequest{
+		Chatid:   chatId,
+		Title:    title,
+		Imageurl: ImageUrl,
+	}
+	errorResponse, err := c.client.SendOrEditEmbedImage(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if errorResponse.ErrorMessage != "" {
+		return errors.New(errorResponse.ErrorMessage)
+	}
+	return nil
+}
+func (c *Client) SendOrEditEmbedImageScoreboard(chatid, title, fileNameScoreboard string) error {
+	req := &SendEmbedImageFileNameRequest{
+		ChatId:             chatid,
+		Title:              title,
+		FileNameScoreboard: fileNameScoreboard,
+	}
+	errorResponse, err := c.client.SendOrEditEmbedImageFileName(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if errorResponse.ErrorMessage != "" {
+		return errors.New(errorResponse.ErrorMessage)
+	}
+	return nil
+}

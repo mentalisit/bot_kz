@@ -49,3 +49,17 @@ func (s *Server) SendWebhook(ctx context.Context, req *SendWebhookRequest) (*Tex
 	id := s.ds.SendWebhook(req.Text, req.Username, req.Chatid, req.Avatar)
 	return &TextResponse{Text: id}, nil
 }
+func (s *Server) SendOrEditEmbedImage(ctx context.Context, req *SendEmbedImageRequest) (*ErrorResponse, error) {
+	err := s.ds.SendOrEditEmbedImage(req.GetChatid(), req.GetTitle(), req.GetImageurl())
+	if err != nil {
+		return &ErrorResponse{ErrorMessage: err.Error()}, err
+	}
+	return &ErrorResponse{}, nil
+}
+func (s *Server) SendOrEditEmbedImageFileName(ctx context.Context, req *SendEmbedImageFileNameRequest) (*ErrorResponse, error) {
+	err := s.ds.SendOrEditEmbedImageFileName(req.GetChatId(), req.GetTitle(), req.GetFileNameScoreboard())
+	if err != nil {
+		return &ErrorResponse{ErrorMessage: err.Error()}, err
+	}
+	return &ErrorResponse{}, nil
+}

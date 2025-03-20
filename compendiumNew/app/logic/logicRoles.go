@@ -136,6 +136,47 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 		c.sendChat(m, text)
 		return true
 	}
+
+	reUnSubs := regexp.MustCompile(`^role unsubs (\w+)((?: @\w+)+)$`)
+
+	matches = reUnSubs.FindStringSubmatch(cutPrefix)
+	if matches != nil && len(matches) > 2 {
+		text := "попытка отменить подписку \n"
+		roleName := matches[1]
+		usernames := matches[2]
+		if !c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
+			text += "сначала создай роль " + roleName
+			c.sendChat(m, text)
+			return true
+		}
+
+		split := strings.Split(usernames, " ")
+		for _, s := range split {
+			var user *models.User
+			//если с упоминанием
+			after, found := strings.CutPrefix(s, "@")
+
+			if found {
+				user, _ = c.users.UsersGetByUserName(after)
+			} else {
+				user, _ = c.UsersFindByAltsNameOrGameName(s)
+			}
+			fmt.Println(user)
+
+			if user != nil && user.ID != "" {
+				err = c.guildsRole.GuildRolesDeleteSubscribeUser(m.GuildId, roleName, user.Username, user.ID)
+				if err != nil {
+					fmt.Println(err)
+					return false
+				}
+				text += fmt.Sprintf("%s отписан\n", after)
+			} else {
+				text += fmt.Sprintf("%s не отписан данные не найдены \n", after)
+			}
+		}
+		c.sendChat(m, text)
+		return true
+	}
 	return false
 }
 

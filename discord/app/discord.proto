@@ -31,6 +31,8 @@ service BotService {
   rpc SendComplex(SendComplexRequest) returns (TextResponse);
   rpc SendEmbedText(SendEmbedTextRequest) returns (TextResponse);
   rpc SendHelp(SendHelpRequest) returns (TextResponse);
+  rpc SendOrEditEmbedImage(SendEmbedImageRequest) returns (ErrorResponse);
+  rpc SendOrEditEmbedImageFileName(SendEmbedImageFileNameRequest) returns (ErrorResponse);
   rpc SendPoll(SendPollRequest) returns (TextResponse);
   rpc SendPic(SendPicRequest) returns (ErrorResponse);
   rpc SendWebhook(SendWebhookRequest) returns (TextResponse);
@@ -204,6 +206,16 @@ message SendEmbedTextRequest {
   string chatid = 1;
   string title = 2;
   string text = 3;
+}
+message SendEmbedImageRequest {
+  string chatid = 1;
+  string title = 2;
+  string imageurl = 3;
+}
+message SendEmbedImageFileNameRequest {
+  string chatId = 1;
+  string title = 2;
+  string fileNameScoreboard = 3;
 }
 
 message SendHelpRequest {

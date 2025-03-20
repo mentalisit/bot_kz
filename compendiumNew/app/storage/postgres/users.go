@@ -57,17 +57,28 @@ func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
 	}
 	return &u, nil
 }
-func (d *Db) UsersFindByGameName(gameName string) (*models.User, error) {
+func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
 	ctx, cancel := d.GetContext()
 	defer cancel()
-	var u models.User
-	var id int
-	selectUser := "SELECT * FROM hs_compendium.users WHERE gamename = $1 "
-	err := d.db.QueryRow(ctx, selectUser, gameName).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, &u.Alts, &u.GameName)
+	var users []models.User
+	selectUsers := "SELECT * FROM hs_compendium.users WHERE gamename = $1 "
+	results, err := d.db.Query(ctx, selectUsers, gameName)
+	defer results.Close()
 	if err != nil {
 		return nil, err
 	}
-	return &u, nil
+	for results.Next() {
+		var t models.User
+		var id int
+		err = results.Scan(&id, &t.ID, &t.Username, &t.Discriminator, &t.Avatar, &t.AvatarURL, &t.Alts, &t.GameName)
+
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, t)
+	}
+
+	return users, nil
 }
 
 func (d *Db) UserGetCountByUserId(userid string) (int, error) {

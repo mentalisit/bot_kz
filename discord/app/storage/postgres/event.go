@@ -11,8 +11,8 @@ func (d *Db) SaveEventDate(message string) {
 	nextSaturday := now.AddDate(0, 0, int(daysUntilSaturday))
 	nextSaturdayMidnight := time.Date(nextSaturday.Year(), nextSaturday.Month(), nextSaturday.Day(), 0, 0, 0, 0, time.UTC)
 
-	dateStart := nextSaturdayMidnight.Format(time.DateOnly)
-	dateStop := nextSaturdayMidnight.Add(48 * time.Hour).Format(time.DateOnly)
+	dateStart := nextSaturdayMidnight.Format("02-01-2006")
+	dateStop := nextSaturdayMidnight.Add(48 * time.Hour).Format("02-01-2006")
 
 	ctx, cancel := d.getContext()
 	defer cancel()

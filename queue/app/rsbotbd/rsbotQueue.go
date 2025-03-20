@@ -1,6 +1,7 @@
 package rsbotbd
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -9,6 +10,7 @@ import (
 	"queue/models"
 	"sort"
 	"strconv"
+	"time"
 )
 
 type Queue struct {
@@ -43,7 +45,10 @@ func (q *Queue) GetDBQueue() (tt []models.Tumcha) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("select name,nameid,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancelFunc()
+
+	rows, err := db.QueryContext(ctx, "select name,nameid,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

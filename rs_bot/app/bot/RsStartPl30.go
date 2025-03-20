@@ -181,6 +181,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 				go b.identifyUserGame(u)
 			}
 			go b.helpers.SaveUsersIdQueue(user, in.Config)
+			go b.SendFakeDataForMyBot(u)
 		}
 	}
 }

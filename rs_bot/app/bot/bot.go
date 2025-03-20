@@ -43,6 +43,7 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 
 	go b.loadInbox()
 	go b.timerBot()
+	go b.ReadAndSendPic()
 
 	return b
 }
@@ -68,7 +69,12 @@ func (b *Bot) timerBot() { //цикл для удаления сообщений
 			if now.Minute() == 0 {
 				go b.AutoHelp() //автозапуск справки
 			}
+			if now.Minute() == 29 || now.Minute() == 59 {
+				go b.UpdateTopEvent()
+				go b.ReadAndSendPic()
+			}
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -98,6 +104,11 @@ func (b *Bot) PrepareLogicRs(in models.InMessage) {
 func (b *Bot) LogicRs(in models.InMessage) {
 	if strings.HasPrefix(in.Mtext, ".") {
 		b.accessChat(in)
+		return
+	}
+	if in.Tip == "GameWebhook" {
+		b.log.InfoStruct("LogicRs", in)
+		go b.GameWebhook(in)
 		return
 	}
 

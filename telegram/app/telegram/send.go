@@ -3,7 +3,9 @@ package telegram
 import (
 	"bytes"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+
+	//tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -113,6 +115,11 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 				}
 				messageIds = append(messageIds, messageData)
 			}
+			if strings.Contains(in.Text, "@&Русь") || strings.Contains(in.Text, "@everyone") {
+				pinConfig := tgbotapi.NewPinChatMessage(chatId, tMessage.MessageID, false)
+				_, _ = t.t.Send(pinConfig)
+			}
+
 		}
 	}
 	return messageIds

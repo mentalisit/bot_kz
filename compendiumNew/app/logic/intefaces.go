@@ -42,7 +42,7 @@ type Users interface {
 	UsersInsert(u models.User) error
 	UsersGetByUserId(userid string) (*models.User, error)
 	UsersGetByUserName(username string) (*models.User, error)
-	UsersFindByGameName(gameName string) (*models.User, error)
+	UsersFindByGameName(gameName string) ([]models.User, error)
 	UserGetCountByUserId(userid string) (int, error)
 	UsersUpdate(u models.User) error
 	UsersGetAll() ([]models.User, error)
@@ -56,5 +56,6 @@ type GuildRoles interface {
 	GuildRolesSubscribe(guildid, RoleName, userName, userid string) error
 	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
 	GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error
+	GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid string) error
 	//GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, error)
 }

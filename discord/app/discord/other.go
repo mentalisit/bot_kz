@@ -105,6 +105,9 @@ func (d *Discord) CleanOldMessageChannel(chatId, lim string) {
 				d.DeleteMessage(chatId, message.ID)
 				continue
 			}
+			if strings.HasPrefix(message.Content, "Hades' Star Official") {
+				continue
+			}
 			if !strings.HasPrefix(message.Content, ".") {
 				d.DeleteMessage(chatId, message.ID)
 				continue
@@ -301,6 +304,9 @@ func (d *Discord) CleanRsBotOtherMessage() {
 				t := time.Now().Unix()
 				for _, message := range channelMessages {
 					if message.Author.String() == "Rs_bot#9945" {
+						if strings.HasPrefix(message.Content, "Hades' Star Official") {
+							continue
+						}
 						if len(message.Embeds) > 0 {
 							if IsDifferenceMoreThan5Minutes(message.Embeds[0].Timestamp) {
 								d.log.Info(fmt.Sprintf("Rs_bot#9945 message.Embeds.Title: %+v\ndelete \n", message.Embeds[0].Title))

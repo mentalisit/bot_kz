@@ -2,7 +2,7 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"strconv"
 	"strings"
 	"telegram/models"
@@ -38,7 +38,6 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	tg, bridgeConfig := t.bridgeCheckChannelConfigTg(ChatId)
 	if tg {
 		go t.sendToBridgeFilter(m, ChatId, bridgeConfig)
-		return
 	}
 
 	//compendium

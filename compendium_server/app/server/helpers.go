@@ -335,6 +335,8 @@ func (s *Server) listOfCompatible(g *models.Guild) (*models.Guild, error) {
 			return s.db.GuildGet("398761209022644224")
 		} else if g.Name == "DV NEBULA" && g.ID == "-1002014251679" {
 			return s.db.GuildGet("656495834195558402")
+		} else if g.ID == "-1002421683868" { //Hades Star: Eden.
+			return s.db.GuildGet("1347552010383261797")
 		}
 
 	} else if g.Type == "ds" {
@@ -348,7 +350,10 @@ func (s *Server) listOfCompatible(g *models.Guild) (*models.Guild, error) {
 			return s.db.GuildGet("-1002298028181")
 		} else if g.Name == "ГОРИЗОНТ" && g.ID == "656495834195558402" {
 			return s.db.GuildGet("-1002014251679")
+		} else if g.ID == "1347552010383261797" {
+			return s.db.GuildGet("-1002421683868")
 		}
+
 	}
 	return nil, nil
 }

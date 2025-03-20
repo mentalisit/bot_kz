@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"rs/models"
 	"rs/pkg/utils"
 	"strconv"
@@ -12,12 +13,14 @@ import (
 
 func (b *Bot) MinusMin() {
 	tt := b.storage.Timers.MinusMin()
-	go b.client.Ds.QueueSend(b.otherQueue.MyQueue())
+	//go b.client.Ds.QueueSend(b.otherQueue.MyQueue())
 	if time.Now().Minute()%5 == 0 {
 		go func() {
 			en, ru, ua := b.client.Ds.ReadNews()
 			if en != "" && ru != "" && ua != "" {
+
 				sendChannel := func(config models.CorporationConfig, text string) {
+					text = fmt.Sprintf("%s \n%s", "Hades' Star Official", text)
 					if config.TgChannel != "" {
 						b.client.Tg.SendChannelDelSecond(config.TgChannel, text, 172800)
 					}

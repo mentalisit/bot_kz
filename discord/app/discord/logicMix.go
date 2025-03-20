@@ -319,24 +319,3 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 		d.api.SendBridgeAppRecover(mes)
 	}
 }
-
-func (d *Discord) logicMixWebhook(m *discordgo.MessageCreate) {
-	sendToRs := func(m *discordgo.MessageCreate, server string) {
-		if len(m.Attachments) > 0 {
-
-			for _, attachment := range m.Attachments {
-				mes := models.InMessage{
-					Tip:      "GameWebhook",
-					Mtext:    attachment.URL,
-					Username: server,
-				}
-				d.api.SendRsBotAppRecover(mes)
-			}
-		}
-	}
-	if m.ChannelID == "1335327712767643669" {
-		sendToRs(m, "fakeData")
-	} else if m.ChannelID == "1335416176674865242" {
-		sendToRs(m, "русь")
-	}
-}

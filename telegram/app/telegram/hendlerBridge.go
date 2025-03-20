@@ -2,7 +2,7 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"strings"
 	"telegram/models"
 	"telegram/telegram/helper"

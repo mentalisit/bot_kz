@@ -116,50 +116,61 @@ func mergeAndSumTops(tops []models.Top) []models.Top {
 }
 
 func (b *Bot) UpdateTopEvent() {
-	nextDateStart, nextDateStop, messagee := b.storage.Event.ReadEventScheduleAndMessage()
-	date1 := time.Now().UTC().Format(time.DateOnly)
-	date2 := time.Now().UTC().Add(24 * time.Hour).Format(time.DateOnly)
-	if date1 == nextDateStart || date2 == nextDateStop {
-		title := fmt.Sprintf("Сезон №%d %s - %s", getSeasonNumber(messagee), nextDateStart, nextDateStop)
-		fmt.Println(title)
-		CorpName := "Корпорация  \"РУСЬ\".сбор-на-кз"
-		number := 1
-		message2 := ""
-		var allPoints int
-		var resultsTop []models.Top
-		format := func(top models.Top) string {
-			if top.Points == 0 {
-				return fmt.Sprintf("%d. %s - %d \n", number, top.Name, top.Numkz)
-			}
-			allPoints += top.Points
-			return fmt.Sprintf("%d. %s - %d (%d)\n", number, top.Name, top.Numkz, top.Points)
-		}
-
-		numEvent := b.storage.Event.NumActiveEvent(CorpName)
-
-		if numEvent == 0 {
-			resultsTop = b.storage.Top.TopAllPerMonthNew(CorpName)
-		} else {
-			resultsTop = b.storage.Top.TopAllEventNew(CorpName, numEvent)
-		}
-
-		resultsTop = mergeAndSumTops(resultsTop)
-
-		if len(resultsTop) == 0 {
-			return
-		} else if len(resultsTop) > 0 {
-			for _, top := range resultsTop {
-				message2 = message2 + format(top)
-				number++
-			}
-		}
-		if allPoints != 0 {
-			message2 = fmt.Sprintf("%s\nВсего: %d\nОбновлено: <t:%d:R>",
-				message2, allPoints, time.Now().UTC().Unix())
-		}
-
-		b.client.Ds.SendEmbedText("1198012575615561979", title, message2)
+	corp1 := models.CorporationHistory{
+		CorpName:  "Корпорация  \"РУСЬ\".сбор-на-кз",
+		ChannelDs: "1198012575615561979",
 	}
+	corp2 := models.CorporationHistory{
+		CorpName:  "IX Legion.сбор-на-кз-бот",
+		ChannelDs: "1253851338408857641",
+	}
+
+	nextDateStart, nextDateStop, messagee := b.storage.Event.ReadEventScheduleAndMessage()
+	date1 := time.Now().UTC().Format("02-01-2006")
+	date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
+	if date1 == nextDateStart || date2 == nextDateStop {
+		title := fmt.Sprintf("Сезон №%d   %s  -  %s", getSeasonNumber(messagee), nextDateStart, nextDateStop)
+		b.UpdateTopEventForCorporation(corp1, title)
+		b.UpdateTopEventForCorporation(corp2, title)
+	}
+}
+func (b *Bot) UpdateTopEventForCorporation(Corp models.CorporationHistory, title string) {
+	number := 1
+	message2 := ""
+	var allPoints int
+	var resultsTop []models.Top
+	format := func(top models.Top) string {
+		if top.Points == 0 {
+			return fmt.Sprintf("%d. %s - %d \n", number, top.Name, top.Numkz)
+		}
+		allPoints += top.Points
+		return fmt.Sprintf("%d. %s - %d (%d)\n", number, top.Name, top.Numkz, top.Points)
+	}
+
+	numEvent := b.storage.Event.NumActiveEvent(Corp.CorpName)
+
+	if numEvent == 0 {
+		resultsTop = b.storage.Top.TopAllPerMonthNew(Corp.CorpName)
+	} else {
+		resultsTop = b.storage.Top.TopAllEventNew(Corp.CorpName, numEvent)
+	}
+
+	resultsTop = mergeAndSumTops(resultsTop)
+
+	if len(resultsTop) == 0 {
+		return
+	} else if len(resultsTop) > 0 {
+		for _, top := range resultsTop {
+			message2 = message2 + format(top)
+			number++
+		}
+	}
+	if allPoints != 0 {
+		message2 = fmt.Sprintf("%s\nВсего: %d\nОбновлено: <t:%d:R>",
+			message2, allPoints, time.Now().UTC().Unix())
+	}
+
+	b.client.Ds.SendEmbedText(Corp.ChannelDs, title, message2)
 }
 
 func getSeasonNumber(text string) int {

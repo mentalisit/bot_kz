@@ -7,6 +7,28 @@ import (
 	"strings"
 )
 
+type Identify struct {
+	Id           int64
+	MID          int
+	SolarId      int64
+	Author       string
+	Count        int
+	Participants string
+	Points       int
+	StartTime    string
+}
+type BattlesTop struct {
+	Id       int
+	CorpName string
+	Name     string
+	Level    int
+	Count    int
+}
+type ScoreboardParams struct {
+	Name              string
+	ChannelWebhook    string
+	ChannelScoreboard string
+}
 type InMessage struct {
 	Mtext       string
 	Tip         string
@@ -257,4 +279,16 @@ type Events struct {
 	Number int
 	Event  int
 	Status bool
+}
+
+type CorporationHistory struct {
+	CorpName  string
+	ChannelDs string
+}
+
+type EntryScoreboard struct {
+	DisplayName string
+	RsLevel     int
+	StarsCount  int
+	Score       int
 }

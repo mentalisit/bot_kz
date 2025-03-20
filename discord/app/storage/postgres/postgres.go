@@ -65,4 +65,18 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.battlestop
+	(
+		id     bigserial        primary key,
+		corporation text NOT NULL DEFAULT '',
+		name text NOT NULL DEFAULT '',
+		level    integer NOT NULL DEFAULT 0,
+		count   integer NOT NULL DEFAULT 0
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 }

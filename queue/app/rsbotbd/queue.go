@@ -13,6 +13,9 @@ func (q *Queue) GetQueueLevel(level string) (m map[string][]models.Tumcha) {
 	}
 
 	tt := q.GetDBQueue()
+	if len(tt) == 0 {
+		return
+	}
 	var t []models.Tumcha
 	m = make(map[string][]models.Tumcha)
 
@@ -52,6 +55,9 @@ func (q *Queue) GetQueueLevel(level string) (m map[string][]models.Tumcha) {
 
 func (q *Queue) GetQueueAll() (m map[string][]models.Tumcha) {
 	tt := q.GetDBQueue()
+	if len(tt) == 0 {
+		return
+	}
 	m = make(map[string][]models.Tumcha)
 
 	for _, tumcha := range tt {

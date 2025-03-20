@@ -8,14 +8,16 @@ import (
 	"path/filepath"
 )
 
+const twoDay = 172800
+
 func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if m.Message.WebhookID != "" {
-		d.logicMixWebhook(m)
+	if d.logicScoreboardSetting(m) {
 		return
 	}
+
 	if m.GuildID == "" {
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)

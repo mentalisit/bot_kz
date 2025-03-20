@@ -24,6 +24,8 @@ type Storage struct {
 	LevelCorp         LevelCorp
 	UserAccount       UserAccount
 	EventNumber       EventNumber
+	ConfigWebhook     ConfigWebhook
+	Battles           Battles
 	postgres          *postgres.Db
 }
 
@@ -50,6 +52,8 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		LevelCorp:         local,
 		postgres:          local,
 		EventNumber:       local,
+		ConfigWebhook:     local,
+		Battles:           local,
 		UserAccount:       local,
 	}
 

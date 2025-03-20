@@ -12,7 +12,7 @@ import (
 func (b *Bot) SendPercent(Config models.CorporationConfig) {
 	ch := utils.WaitForMessage("SendChannelDelSecond")
 	defer close(ch)
-	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
+	currentCorp, err := b.storage.LevelCorp.ReadCorpLevelByCorpConf(Config.CorpName)
 	if err != nil {
 		b.log.ErrorErr(err)
 	}
@@ -53,16 +53,30 @@ func (b *Bot) SendPercent(Config models.CorporationConfig) {
 }
 
 func (b *Bot) GetTextPercent(Config models.CorporationConfig, dark bool) string {
-	currentCorp, err := b.storage.LevelCorp.ReadCorpLevel(Config.CorpName)
+	currentCorp, err := b.storage.LevelCorp.ReadCorpLevelByCorpConf(Config.CorpName)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			twoYearsAgo := time.Now().AddDate(-2, 0, 0) // Отнимаем 2 года
+			old, err := b.storage.LevelCorp.ReadCorpsLevelAllOld()
+			if err != nil {
+				return ""
+			}
+			hcorp := ""
+			for _, corps := range old {
+				if corps.CorpName == Config.CorpName {
+					hcorp = corps.HCorp
+				}
+			}
+			if hcorp != "" {
+				b.log.Warn(fmt.Sprintf("Нужно выполнить сравнение для корпорациии %s", hcorp))
+			}
 			b.storage.LevelCorp.InsertUpdateCorpLevel(models.LevelCorps{
 				CorpName:   Config.CorpName,
 				Level:      0,
-				EndDate:    time.Time{},
-				HCorp:      "",
+				EndDate:    twoYearsAgo,
+				HCorp:      hcorp,
 				Percent:    0,
-				LastUpdate: time.Time{},
+				LastUpdate: twoYearsAgo,
 				Relic:      0,
 			})
 			return ""

@@ -1,6 +1,9 @@
 package models
 
-import "strconv"
+import (
+	"encoding/json"
+	"strconv"
+)
 
 type UserAccount struct {
 	InternalId  int
@@ -33,4 +36,54 @@ func (u *UserAccount) ContainsGameId(i int64) bool {
 		}
 	}
 	return false
+}
+
+type PlayerStats struct {
+	Player string
+	Points int
+	Runs   int
+	Level  int
+}
+
+type Participants struct {
+	PlayerID   string `json:"PlayerID"`
+	PlayerName string `json:"PlayerName"`
+}
+
+type ParticipantsInt64 struct {
+	PlayerID   int64  `json:"PlayerID"`
+	PlayerName string `json:"PlayerName"`
+}
+type RedStarEvent struct {
+	StarSystemID  string         `json:"StarSystemID"`
+	StarLevel     int            `json:"StarLevel"`
+	DarkRedStar   bool           `json:"DarkRedStar"`
+	EventType     string         `json:"EventType"`
+	Timestamp     string         `json:"Timestamp"`
+	RSEventPoints int            `json:"RSEventPoints,omitempty"`
+	Players       []Participants // Это поле будет сериализоваться как Players или PlayersWhoContributed
+}
+
+func (r *RedStarEvent) UnmarshalJSON(data []byte) error {
+	type Alias RedStarEvent
+	aux := &struct {
+		*Alias
+		PlayersField []Participants `json:"Players,omitempty"`
+		ContribField []Participants `json:"PlayersWhoContributed,omitempty"`
+	}{
+		Alias: (*Alias)(r),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Определяем, какое поле использовать
+	if len(aux.PlayersField) > 0 {
+		r.Players = aux.PlayersField
+	} else if len(aux.ContribField) > 0 {
+		r.Players = aux.ContribField
+	}
+
+	return nil
 }

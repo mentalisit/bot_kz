@@ -4,6 +4,8 @@ import "rs/models"
 
 type LevelCorp interface {
 	InsertUpdateCorpLevel(l models.LevelCorps)
-	ReadCorpLevel(CorpName string) (models.LevelCorps, error)
+	ReadCorpLevelByCorpConf(CorpName string) (models.LevelCorps, error)
 	ReadCorpLevelAll() ([]models.LevelCorps, error)
+
+	ReadCorpsLevelAllOld() ([]models.LevelCorps, error)
 }

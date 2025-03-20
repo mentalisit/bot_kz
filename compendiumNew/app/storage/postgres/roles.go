@@ -71,6 +71,17 @@ func (d *Db) GuildRolesSubscribe(guildid, RoleName, userName, userid string) err
 	}
 	return nil
 }
+func (d *Db) GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid string) error {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+	deleteSubscribe := `DELETE FROM hs_compendium.userroles WHERE guildid = $1 AND role = $2 AND userid = $3 AND username = $4`
+	_, err := d.db.Exec(ctx, deleteSubscribe, guildid, RoleName, userid, userName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *Db) GuildRolesExistSubscribe(guildid, RoleName, userid string) bool {
 	ctx, cancel := d.GetContext()
 	defer cancel()

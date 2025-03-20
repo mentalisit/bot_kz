@@ -112,3 +112,48 @@ func (d *Db) UserAccountGetAll() ([]models.UserAccount, error) {
 
 	return users, nil
 }
+
+//func (d *Db) FakeUserInsert(userName string, points, level int) error {
+//	ctx, cancel := d.GetContext()
+//	defer cancel()
+//	insert := `INSERT INTO rs_bot.fakeuser(name,level,points) VALUES ($1,$2,$3)`
+//	_, err := d.db.Exec(ctx, insert, userName, level, points)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
+//func (d *Db) FakeUserGetAll() ([]models.PlayerStats, error) {
+//	ctx, cancel := d.GetContext()
+//	defer cancel()
+//	query := `
+//		SELECT name,
+//		       SUM(points) AS total_points,
+//		       COUNT(*) AS runs,
+//		       MAX(level) AS max_level
+//		FROM rs_bot.fakeuser
+//		GROUP BY name;
+//	`
+//
+//	rows, err := d.db.Query(ctx, query)
+//	if err != nil {
+//		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
+//	}
+//	defer rows.Close()
+//
+//	var stats []models.PlayerStats
+//	for rows.Next() {
+//		var ps models.PlayerStats
+//		if err := rows.Scan(&ps.Player, &ps.Points, &ps.Runs, &ps.Level); err != nil {
+//			return nil, fmt.Errorf("ошибка чтения данных: %v", err)
+//		}
+//		stats = append(stats, ps)
+//	}
+//
+//	if err := rows.Err(); err != nil {
+//		return nil, fmt.Errorf("ошибка после чтения строк: %v", err)
+//	}
+//
+//	return stats, nil
+//}

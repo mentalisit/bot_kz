@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"mime"
+	"os"
 	"path/filepath"
 	"time"
 )
 
 func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
-	if chatid == "1198012575615561979" {
+	if chatid == "1198012575615561979" || chatid == "1253851338408857641" {
 		d.SendOrEditTopEmbedText(chatid, title, text)
 		return &discordgo.Message{}
 	}
@@ -62,6 +63,109 @@ func (d *Discord) SendOrEditTopEmbedText(chatid, title, text string) {
 		_, _ = d.S.ChannelMessageEditEmbed(chatid, mId, Emb)
 	}
 
+}
+
+func (d *Discord) SendOrEditEmbedImage(channelID, title, imageUrl string) error {
+	messages, err := d.S.ChannelMessages(channelID, 10, "", "", "")
+	if err != nil {
+		return fmt.Errorf("ошибка получения сообщений: %v", err)
+	}
+
+	var mId string
+
+	// Ищем сообщение с таким же заголовком
+	for _, message := range messages {
+		for _, embed := range message.Embeds {
+			if embed.Title == title {
+				mId = message.ID
+				break // Нашли нужное сообщение, выходим из цикла
+			}
+		}
+		if mId != "" {
+			break // Выход из основного цикла тоже
+		}
+	}
+
+	// Создаём новый эмбед
+	embed := &discordgo.MessageEmbed{
+		Title:     title,
+		Color:     0x00ff00,
+		Image:     &discordgo.MessageEmbedImage{URL: imageUrl},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+
+	if mId == "" {
+		// Если сообщение не найдено, создаём новое
+		_, err = d.S.ChannelMessageSendEmbed(channelID, embed)
+	} else {
+		// Если заголовок совпадает, просто обновляем сообщение
+		_, err = d.S.ChannelMessageEditEmbed(channelID, mId, embed)
+	}
+
+	return err
+}
+func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScoreboard string) error {
+	var mId string
+	messages, err := d.S.ChannelMessages(channelID, 5, "", "", "")
+	if err != nil {
+		return fmt.Errorf("ошибка получения сообщений: %v", err)
+	}
+	// Ищем сообщение с таким же заголовком
+	for _, message := range messages {
+		for _, embed := range message.Embeds {
+			if embed.Title == title {
+				mId = message.ID
+				break // Нашли нужное сообщение, выходим из цикла
+			}
+		}
+		if mId != "" {
+			break // Выход из основного цикла тоже
+		}
+	}
+	//отправка без обновления сообщения раз в 3 часа
+	tn := time.Now().UTC()
+	if tn.Hour()%3 == 0 && tn.Minute() == 59 && mId != "" {
+		d.DeleteMessage(channelID, mId)
+		mId = ""
+	}
+
+	open, err := os.Open("docker/scoreboard/" + fileNameScoreboard)
+	if err != nil {
+		return err
+	}
+	file := &discordgo.File{
+		Name:   fileNameScoreboard,
+		Reader: open,
+	}
+	dFile := []*discordgo.File{file}
+
+	// Создаём новый эмбед
+	embed := &discordgo.MessageEmbed{
+		Title:     title,
+		Color:     0x00ff00,
+		Image:     &discordgo.MessageEmbedImage{URL: "attachment://" + fileNameScoreboard},
+		Timestamp: time.Now().Format(time.RFC3339),
+	}
+
+	wparams := &discordgo.WebhookParams{
+		AvatarURL: "https://cdn.discordapp.com/icons/700238199070523412/9ddd77ab4f137a64a0cd74019318cd34.png",
+		Username:  "Scoreboard",
+		Embeds:    []*discordgo.MessageEmbed{embed},
+		Files:     dFile,
+	}
+
+	if mId == "" {
+		// Отправляем сообщение с изображением
+		_, err = d.webhook.Send(channelID, wparams)
+	} else {
+		// Если заголовок совпадает, просто обновляем сообщение
+		err = d.webhook.Edit(channelID, mId, wparams)
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {

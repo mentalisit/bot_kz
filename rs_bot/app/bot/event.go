@@ -183,7 +183,7 @@ func (b *Bot) EventPreStart(in models.InMessage) {
 }
 
 func (b *Bot) EventAutoStart() {
-	date := time.Now().UTC().Format(time.DateOnly)
+	date := time.Now().UTC().Format("02-01-2006")
 	nextDateEventStart, nextDateEventStop, _ := b.storage.Event.ReadEventScheduleAndMessage()
 
 	send := func(config models.CorporationConfig, text string) {

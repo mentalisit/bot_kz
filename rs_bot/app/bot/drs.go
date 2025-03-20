@@ -231,6 +231,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						go b.identifyUserGame(u)
 					}
 					go b.helpers.SaveUsersIdQueue(user, in.Config)
+					go b.SendFakeDataForMyBot(u)
 				}
 			}
 
@@ -341,6 +342,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						go b.identifyUserGame(u)
 					}
 					go b.helpers.SaveUsersIdQueue(user, in.Config)
+					go b.SendFakeDataForMyBot(u)
 				}
 			}
 		}
@@ -350,6 +352,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 	}
 }
+
 func (b *Bot) RsSoloPlus(in models.InMessage) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -414,7 +417,6 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 	}
 
 }
-
 func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -449,14 +451,15 @@ func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
 	b.storage.DbFunc.InsertQueueSolo(dsmesid, "", in.Config.CorpName, in.Username, in.UserId,
 		in.NameMention, in.Tip, in.RsTypeLevel, tgmesid, numberevent, numkzEvent, numkzN, points)
 }
+
 func (b *Bot) SendLsNotification(in models.InMessage, u models.Users) {
-	dmText := fmt.Sprintf("%s\n%s %s\n", b.getText(in, "go"), u.User2.Name, u.User3.Name)
+	dmText := fmt.Sprintf("%s\n %s\n %s\n", b.getText(in, "go"), u.User2.Name, u.User3.Name)
 	if u.User1.Tip == ds {
 		go b.client.Ds.SendDmText(dmText, u.User1.UserId)
 	} else if u.User1.Tip == tg {
 		b.client.Tg.SendChannel(u.User1.UserId, dmText)
 	}
-	dmText = fmt.Sprintf("%s\n%s %s\n", b.getText(in, "go"), u.User1.Name, u.User3.Name)
+	dmText = fmt.Sprintf("%s\n %s\n %s\n", b.getText(in, "go"), u.User1.Name, u.User3.Name)
 	if u.User2.Tip == ds {
 		go b.client.Ds.SendDmText(dmText, u.User2.UserId)
 	} else if u.User2.Tip == tg {

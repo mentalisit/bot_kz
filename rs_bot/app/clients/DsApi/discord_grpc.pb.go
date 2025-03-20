@@ -19,38 +19,40 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BotService_CleanChat_FullMethodName               = "/ds.BotService/CleanChat"
-	BotService_CleanRsBotOtherMessage_FullMethodName  = "/ds.BotService/CleanRsBotOtherMessage"
-	BotService_CleanOldMessageChannel_FullMethodName  = "/ds.BotService/CleanOldMessageChannel"
-	BotService_CheckAdmin_FullMethodName              = "/ds.BotService/CheckAdmin"
-	BotService_CheckRole_FullMethodName               = "/ds.BotService/CheckRole"
-	BotService_ChannelTyping_FullMethodName           = "/ds.BotService/ChannelTyping"
-	BotService_DeleteMessage_FullMethodName           = "/ds.BotService/DeleteMessage"
-	BotService_DeleteMessageSecond_FullMethodName     = "/ds.BotService/DeleteMessageSecond"
-	BotService_EditComplexButton_FullMethodName       = "/ds.BotService/EditComplexButton"
-	BotService_EditWebhook_FullMethodName             = "/ds.BotService/EditWebhook"
-	BotService_EditMessage_FullMethodName             = "/ds.BotService/EditMessage"
-	BotService_GetAvatarUrl_FullMethodName            = "/ds.BotService/GetAvatarUrl"
-	BotService_GetRoles_FullMethodName                = "/ds.BotService/GetRoles"
-	BotService_GetMembersRoles_FullMethodName         = "/ds.BotService/GetMembersRoles"
-	BotService_QueueSend_FullMethodName               = "/ds.BotService/QueueSend"
-	BotService_ReplaceTextMessage_FullMethodName      = "/ds.BotService/ReplaceTextMessage"
-	BotService_ReadNewsMessage_FullMethodName         = "/ds.BotService/ReadNewsMessage"
-	BotService_RoleToIdPing_FullMethodName            = "/ds.BotService/RoleToIdPing"
-	BotService_SendDmText_FullMethodName              = "/ds.BotService/SendDmText"
-	BotService_Send_FullMethodName                    = "/ds.BotService/Send"
-	BotService_SendBridgeArrayMessages_FullMethodName = "/ds.BotService/SendBridgeArrayMessages"
-	BotService_SendChannelDelSecond_FullMethodName    = "/ds.BotService/SendChannelDelSecond"
-	BotService_SendEmbedTime_FullMethodName           = "/ds.BotService/SendEmbedTime"
-	BotService_SendComplexContent_FullMethodName      = "/ds.BotService/SendComplexContent"
-	BotService_SendComplex_FullMethodName             = "/ds.BotService/SendComplex"
-	BotService_SendEmbedText_FullMethodName           = "/ds.BotService/SendEmbedText"
-	BotService_SendHelp_FullMethodName                = "/ds.BotService/SendHelp"
-	BotService_SendPoll_FullMethodName                = "/ds.BotService/SendPoll"
-	BotService_SendPic_FullMethodName                 = "/ds.BotService/SendPic"
-	BotService_SendWebhook_FullMethodName             = "/ds.BotService/SendWebhook"
-	BotService_Subscribe_FullMethodName               = "/ds.BotService/Subscribe"
-	BotService_Unsubscribe_FullMethodName             = "/ds.BotService/Unsubscribe"
+	BotService_CleanChat_FullMethodName                    = "/ds.BotService/CleanChat"
+	BotService_CleanRsBotOtherMessage_FullMethodName       = "/ds.BotService/CleanRsBotOtherMessage"
+	BotService_CleanOldMessageChannel_FullMethodName       = "/ds.BotService/CleanOldMessageChannel"
+	BotService_CheckAdmin_FullMethodName                   = "/ds.BotService/CheckAdmin"
+	BotService_CheckRole_FullMethodName                    = "/ds.BotService/CheckRole"
+	BotService_ChannelTyping_FullMethodName                = "/ds.BotService/ChannelTyping"
+	BotService_DeleteMessage_FullMethodName                = "/ds.BotService/DeleteMessage"
+	BotService_DeleteMessageSecond_FullMethodName          = "/ds.BotService/DeleteMessageSecond"
+	BotService_EditComplexButton_FullMethodName            = "/ds.BotService/EditComplexButton"
+	BotService_EditWebhook_FullMethodName                  = "/ds.BotService/EditWebhook"
+	BotService_EditMessage_FullMethodName                  = "/ds.BotService/EditMessage"
+	BotService_GetAvatarUrl_FullMethodName                 = "/ds.BotService/GetAvatarUrl"
+	BotService_GetRoles_FullMethodName                     = "/ds.BotService/GetRoles"
+	BotService_GetMembersRoles_FullMethodName              = "/ds.BotService/GetMembersRoles"
+	BotService_QueueSend_FullMethodName                    = "/ds.BotService/QueueSend"
+	BotService_ReplaceTextMessage_FullMethodName           = "/ds.BotService/ReplaceTextMessage"
+	BotService_ReadNewsMessage_FullMethodName              = "/ds.BotService/ReadNewsMessage"
+	BotService_RoleToIdPing_FullMethodName                 = "/ds.BotService/RoleToIdPing"
+	BotService_SendDmText_FullMethodName                   = "/ds.BotService/SendDmText"
+	BotService_Send_FullMethodName                         = "/ds.BotService/Send"
+	BotService_SendBridgeArrayMessages_FullMethodName      = "/ds.BotService/SendBridgeArrayMessages"
+	BotService_SendChannelDelSecond_FullMethodName         = "/ds.BotService/SendChannelDelSecond"
+	BotService_SendEmbedTime_FullMethodName                = "/ds.BotService/SendEmbedTime"
+	BotService_SendComplexContent_FullMethodName           = "/ds.BotService/SendComplexContent"
+	BotService_SendComplex_FullMethodName                  = "/ds.BotService/SendComplex"
+	BotService_SendEmbedText_FullMethodName                = "/ds.BotService/SendEmbedText"
+	BotService_SendHelp_FullMethodName                     = "/ds.BotService/SendHelp"
+	BotService_SendOrEditEmbedImage_FullMethodName         = "/ds.BotService/SendOrEditEmbedImage"
+	BotService_SendOrEditEmbedImageFileName_FullMethodName = "/ds.BotService/SendOrEditEmbedImageFileName"
+	BotService_SendPoll_FullMethodName                     = "/ds.BotService/SendPoll"
+	BotService_SendPic_FullMethodName                      = "/ds.BotService/SendPic"
+	BotService_SendWebhook_FullMethodName                  = "/ds.BotService/SendWebhook"
+	BotService_Subscribe_FullMethodName                    = "/ds.BotService/Subscribe"
+	BotService_Unsubscribe_FullMethodName                  = "/ds.BotService/Unsubscribe"
 )
 
 // BotServiceClient is the client API for BotService service.
@@ -84,6 +86,8 @@ type BotServiceClient interface {
 	SendComplex(ctx context.Context, in *SendComplexRequest, opts ...grpc.CallOption) (*TextResponse, error)
 	SendEmbedText(ctx context.Context, in *SendEmbedTextRequest, opts ...grpc.CallOption) (*TextResponse, error)
 	SendHelp(ctx context.Context, in *SendHelpRequest, opts ...grpc.CallOption) (*TextResponse, error)
+	SendOrEditEmbedImage(ctx context.Context, in *SendEmbedImageRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
+	SendOrEditEmbedImageFileName(ctx context.Context, in *SendEmbedImageFileNameRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
 	SendPoll(ctx context.Context, in *SendPollRequest, opts ...grpc.CallOption) (*TextResponse, error)
 	SendPic(ctx context.Context, in *SendPicRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
 	SendWebhook(ctx context.Context, in *SendWebhookRequest, opts ...grpc.CallOption) (*TextResponse, error)
@@ -369,6 +373,26 @@ func (c *botServiceClient) SendHelp(ctx context.Context, in *SendHelpRequest, op
 	return out, nil
 }
 
+func (c *botServiceClient) SendOrEditEmbedImage(ctx context.Context, in *SendEmbedImageRequest, opts ...grpc.CallOption) (*ErrorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ErrorResponse)
+	err := c.cc.Invoke(ctx, BotService_SendOrEditEmbedImage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) SendOrEditEmbedImageFileName(ctx context.Context, in *SendEmbedImageFileNameRequest, opts ...grpc.CallOption) (*ErrorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ErrorResponse)
+	err := c.cc.Invoke(ctx, BotService_SendOrEditEmbedImageFileName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *botServiceClient) SendPoll(ctx context.Context, in *SendPollRequest, opts ...grpc.CallOption) (*TextResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TextResponse)
@@ -450,6 +474,8 @@ type BotServiceServer interface {
 	SendComplex(context.Context, *SendComplexRequest) (*TextResponse, error)
 	SendEmbedText(context.Context, *SendEmbedTextRequest) (*TextResponse, error)
 	SendHelp(context.Context, *SendHelpRequest) (*TextResponse, error)
+	SendOrEditEmbedImage(context.Context, *SendEmbedImageRequest) (*ErrorResponse, error)
+	SendOrEditEmbedImageFileName(context.Context, *SendEmbedImageFileNameRequest) (*ErrorResponse, error)
 	SendPoll(context.Context, *SendPollRequest) (*TextResponse, error)
 	SendPic(context.Context, *SendPicRequest) (*ErrorResponse, error)
 	SendWebhook(context.Context, *SendWebhookRequest) (*TextResponse, error)
@@ -545,6 +571,12 @@ func (UnimplementedBotServiceServer) SendEmbedText(context.Context, *SendEmbedTe
 }
 func (UnimplementedBotServiceServer) SendHelp(context.Context, *SendHelpRequest) (*TextResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendHelp not implemented")
+}
+func (UnimplementedBotServiceServer) SendOrEditEmbedImage(context.Context, *SendEmbedImageRequest) (*ErrorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendOrEditEmbedImage not implemented")
+}
+func (UnimplementedBotServiceServer) SendOrEditEmbedImageFileName(context.Context, *SendEmbedImageFileNameRequest) (*ErrorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendOrEditEmbedImageFileName not implemented")
 }
 func (UnimplementedBotServiceServer) SendPoll(context.Context, *SendPollRequest) (*TextResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendPoll not implemented")
@@ -1068,6 +1100,42 @@ func _BotService_SendHelp_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BotService_SendOrEditEmbedImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendEmbedImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).SendOrEditEmbedImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_SendOrEditEmbedImage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).SendOrEditEmbedImage(ctx, req.(*SendEmbedImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_SendOrEditEmbedImageFileName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendEmbedImageFileNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).SendOrEditEmbedImageFileName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_SendOrEditEmbedImageFileName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).SendOrEditEmbedImageFileName(ctx, req.(*SendEmbedImageFileNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BotService_SendPoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendPollRequest)
 	if err := dec(in); err != nil {
@@ -1272,6 +1340,14 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendHelp",
 			Handler:    _BotService_SendHelp_Handler,
+		},
+		{
+			MethodName: "SendOrEditEmbedImage",
+			Handler:    _BotService_SendOrEditEmbedImage_Handler,
+		},
+		{
+			MethodName: "SendOrEditEmbedImageFileName",
+			Handler:    _BotService_SendOrEditEmbedImageFileName_Handler,
 		},
 		{
 			MethodName: "SendPoll",

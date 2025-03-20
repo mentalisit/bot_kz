@@ -192,18 +192,47 @@ func (d *Db) createTable() {
 		return
 	}
 
+	//_, err = d.db.Exec(ctx, `
+	//	CREATE TABLE IF NOT EXISTS rs_bot.fakeuser
+	//(
+	//	id     bigserial        primary key,
+	//	name text NOT NULL DEFAULT '',
+	//	level    integer NOT NULL DEFAULT 0,
+	//	points   integer NOT NULL DEFAULT 0
+	//);`)
+	//if err != nil {
+	//	d.log.ErrorErr(err)
+	//	return
+	//}
+
 	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.eventnumber
+		CREATE TABLE IF NOT EXISTS rs_bot.scoreboard
 	(
 		id     bigserial        primary key,
-		number   integer NOT NULL DEFAULT 0,
-		event  integer NOT NULL DEFAULT 0,
-		status bool NOT NULL DEFAULT false
+		Name text NOT NULL DEFAULT '',
+		WebhookChannel    text NOT NULL DEFAULT '',
+		ScoreChannel   text NOT NULL DEFAULT ''
 	);`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
 	}
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.battles
+	(
+		id     bigserial        primary key,
+		eventId integer NOT NULL DEFAULT 0,
+		corporation text NOT NULL DEFAULT '',
+		name text NOT NULL DEFAULT '',
+		level    integer NOT NULL DEFAULT 0,
+		points   integer NOT NULL DEFAULT 0
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
 }
 func (d *Db) Shutdown() {
 	d.client.Close()

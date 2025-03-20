@@ -20,6 +20,10 @@ func main() {
 
 	newContent := hs.GetContentAll()
 	hs.DownloadFile("wsAll", newContent)
+	sort.Slice(newContent, func(i, j int) bool {
+		return newContent[i].LastModified < newContent[j].LastModified
+	})
+	hs.SavePercent(newContent)
 
 	var count int
 
