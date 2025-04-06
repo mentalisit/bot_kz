@@ -111,9 +111,9 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		go b.GameWebhook(in)
 		return
 	}
+	if in.Tip == "dsDM" || in.Tip == "tgDM" {
+		b.log.Info(fmt.Sprintf("%s @%s: %s", in.Tip, in.Username, in.Mtext))
 
-	dm, conf := b.helpers.IfMessageDM(in)
-	if dm {
 		utils.PrintGoroutine(b.log)
 		if strings.HasPrefix(in.Mtext, "!") {
 			answer := b.helpers.GeminiSay(in.Mtext, in.Username)
@@ -139,20 +139,9 @@ func (b *Bot) LogicRs(in models.InMessage) {
 				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
 				go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 600)
 			}
-
-			if conf.DsChannel != "" {
-				go b.client.Ds.SendWebhook(in.Mtext, in.Username, conf.DsChannel, in.Ds.Avatar)
-			}
-			if conf.TgChannel != "" {
-				go b.client.Tg.SendChannel(conf.TgChannel, fmt.Sprintf("%s: %s", in.Username, in.Mtext))
-			}
 		}
 
 		return
-	}
-
-	if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
-		b.insertUserAccount(in)
 	}
 
 	ch := utils.WaitForMessage("LogicRs ")

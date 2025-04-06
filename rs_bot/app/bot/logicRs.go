@@ -57,7 +57,7 @@ func (b *Bot) lRsPlus(in models.InMessage) (rs bool) {
 	}
 
 	//solo
-	reSolo := regexp.MustCompile(`^([sSсС])([7-9]|1[0-2])(\+)?(\d*)$`)
+	reSolo := regexp.MustCompile(`^([sSсС])([7-9]|1[0-2])(\+)?\s*(\d*)$`)
 	arrSolo := reSolo.FindAllStringSubmatch(in.Mtext, -1)
 	if len(arrSolo) > 0 {
 		in.SetLevelRsOrDrs("solo" + arrSolo[0][2])
@@ -264,6 +264,9 @@ func (b *Bot) lTop(in models.InMessage) (bb bool) {
 	case "Топ", "Top":
 		bb = true
 		go b.Top(in)
+		//case "Топчик":
+		//	bb = true
+		//	go b.TopForGame(in)
 	}
 
 	return bb

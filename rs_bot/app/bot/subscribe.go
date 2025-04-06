@@ -18,7 +18,7 @@ func (b *Bot) SubscribePing(in models.InMessage) {
 		}
 		text1 := fmt.Sprintf(b.getText(in, "call_rs"), lvl)
 		text := fmt.Sprintf("%s\n%s", text1, men)
-		go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+		go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 1800)
 	}
 }
 

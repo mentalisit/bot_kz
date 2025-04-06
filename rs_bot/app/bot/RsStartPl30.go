@@ -174,14 +174,6 @@ func (b *Bot) RsStart(in models.InMessage) {
 			user, UserIdTg := u.GetAllUserId()
 			go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
 			go b.elseChat(user)
-			if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
-				fmt.Println("Корпорация  \"РУСЬ\".сбор-на-кз")
-				u.User1.Numberevent = numberevent
-				u.User1.Numberkz = numberkz
-				go b.identifyUserGame(u)
-			}
-			go b.helpers.SaveUsersIdQueue(user, in.Config)
-			go b.SendFakeDataForMyBot(u)
 		}
 	}
 }

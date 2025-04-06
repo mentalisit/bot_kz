@@ -54,44 +54,6 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 	}
 	return admin
 }
-func (b *Bot) identifyUserGame(users models.Users) {
-	var waitText string
-	getUser := func(sb models.Sborkz) {
-		userId := sb.UserId
-		account, _ := b.storage.UserAccount.UserAccountGetByTgUserId(userId)
-		if account == nil || len(account.GameId) == 0 {
-			account, _ = b.storage.UserAccount.UserAccountGetByDsUserId(userId)
-		}
-
-		if account == nil || len(account.GameId) == 0 {
-			text := fmt.Sprintf("%s не опознано %+v\n", userId, sb)
-			b.log.Info(text)
-		}
-	}
-
-	if users.User1.UserId != "" {
-		getUser(users.User1)
-		u1 := users.User1
-		err := b.storage.EventNumber.InsertEventNumber(u1.Numberkz, u1.Numberevent, false)
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		waitText = "ожидаем " + users.User1.Name
-	}
-	if users.User2 != nil && users.User2.UserId != "" {
-		getUser(*users.User2)
-		waitText = fmt.Sprintf("%s %s", waitText, users.User2.Name)
-	}
-	if users.User3 != nil && users.User3.UserId != "" {
-		getUser(*users.User3)
-		waitText = fmt.Sprintf("%s %s", waitText, users.User3.Name)
-	}
-	if users.User4 != nil && users.User4.UserId != "" {
-		getUser(*users.User4)
-		waitText = fmt.Sprintf("%s %s", waitText, users.User4.Name)
-	}
-	b.client.Ds.Send("1334386926257705011", waitText)
-}
 
 func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
 	ch := utils.WaitForMessage("SendChannelDelSecond")

@@ -136,8 +136,8 @@ func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 }
 func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, numberkz, numberEvent int) {
 	nd, nt, t := b.storage.Event.ReadNamesMessage(in.Config.CorpName, numberkz, numberEvent)
-	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.getText(in, "event_game"), t.Numberkz, t.Lvlkz)
-	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText(in, "contributed"), in.Username, points)
+	mes1 := fmt.Sprintf("🔴 %s №%d (%s) ", b.getText(in, "event_game"), t.Numberkz, t.Lvlkz)
+	mesOld := fmt.Sprintf("🎉 %s %s  '%s'\nㅤ\nㅤ", b.getText(in, "contributed"), in.NameMention, formatNumber(points))
 	if countEvent == 1 {
 		if in.Config.DsChannel != "" {
 			text := fmt.Sprintf("%s %s \n%s", mes1, nd.Name1, mesOld)
@@ -148,29 +148,29 @@ func (b *Bot) changeMessageEvent(in models.InMessage, points, countEvent, number
 		}
 	} else if countEvent == 2 {
 		if in.Config.DsChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nd.Name1, nd.Name2, mesOld)
+			text := fmt.Sprintf("%s %s %s\n %s", mes1, nd.Name1, nd.Name2, mesOld)
 			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s", mes1, nt.Name1, nt.Name2, mesOld)
+			text := fmt.Sprintf("%s %s %s\n %s", mes1, nt.Name1, nt.Name2, mesOld)
 			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	} else if countEvent == 3 {
 		if in.Config.DsChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, mesOld)
+			text := fmt.Sprintf("%s %s %s %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, mesOld)
 			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, mesOld)
+			text := fmt.Sprintf("%s %s %s %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, mesOld)
 			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	} else if countEvent == 4 {
 		if in.Config.DsChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, nd.Name4, mesOld)
+			text := fmt.Sprintf("%s %s %s %s %s\n %s", mes1, nd.Name1, nd.Name2, nd.Name3, nd.Name4, mesOld)
 			b.client.Ds.EditWebhook(text, in.Username, in.Config.DsChannel, t.Dsmesid, in.Ds.Avatar)
 		}
 		if in.Config.TgChannel != "" {
-			text := fmt.Sprintf("%s %s\n %s\n %s\n %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)
+			text := fmt.Sprintf("%s %s %s %s %s\n %s", mes1, nt.Name1, nt.Name2, nt.Name3, nt.Name4, mesOld)
 			_ = b.client.Tg.EditTextParse(in.Config.TgChannel, strconv.Itoa(t.Tgmesid), text, "")
 		}
 	}

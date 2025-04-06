@@ -224,14 +224,6 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					user, UserIdTg := u.GetAllUserId()
 					go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
 					go b.elseChat(user)
-					if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
-						fmt.Println("Корпорация  \"РУСЬ\".сбор-на-кз")
-						u.User1.Numberevent = numberEvent
-						u.User1.Numberkz = numberLevel
-						go b.identifyUserGame(u)
-					}
-					go b.helpers.SaveUsersIdQueue(user, in.Config)
-					go b.SendFakeDataForMyBot(u)
 				}
 			}
 
@@ -335,14 +327,6 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					user, UserIdTg := u.GetAllUserId()
 					go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
 					go b.elseChat(user)
-					if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
-						fmt.Println("Корпорация  \"РУСЬ\".сбор-на-кз")
-						u.User1.Numberevent = numberevent
-						u.User1.Numberkz = numberLevel
-						go b.identifyUserGame(u)
-					}
-					go b.helpers.SaveUsersIdQueue(user, in.Config)
-					go b.SendFakeDataForMyBot(u)
 				}
 			}
 		}
@@ -398,20 +382,6 @@ func (b *Bot) RsSoloPlus(in models.InMessage) {
 
 	//проверка есть ли игрок в других чатах
 	go b.elseChat([]string{in.UserId})
-	if in.Config.CorpName == "Корпорация  \"РУСЬ\".сбор-на-кз" {
-		fmt.Println("Корпорация  \"РУСЬ\".сбор-на-кз")
-		go b.identifyUserGame(models.Users{
-			User1: models.Sborkz{
-				UserId:      in.UserId,
-				Name:        in.Username,
-				Mention:     in.NameMention,
-				Lvlkz:       in.RsTypeLevel,
-				Tip:         in.Tip,
-				Numberkz:    numkzL,
-				Numberevent: numberevent,
-			},
-		})
-	}
 	if in.Tip == tg {
 		go b.otherQueue.NeedRemoveOtherQueue([]string{in.UserId})
 	}
@@ -435,8 +405,8 @@ func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
 	}
 	_, level := in.TypeRedStar()
 
-	mes1 := fmt.Sprintf("🔴 %s №%d (%s)\n", b.getText(in, "event_game"), numkzEvent, level)
-	mesOld := fmt.Sprintf("🎉 %s %s %d\nㅤ\nㅤ", b.getText(in, "contributed"), in.Username, points)
+	mes1 := fmt.Sprintf("🔴 %s №%d (%s) ", b.getText(in, "event_game"), numkzEvent, level)
+	mesOld := fmt.Sprintf("🎉 %s %s %s\nㅤ\nㅤ", b.getText(in, "contributed"), in.NameMention, formatNumber(points))
 
 	dsmesid := ""
 	tgmesid := 0
@@ -457,13 +427,15 @@ func (b *Bot) SendLsNotification(in models.InMessage, u models.Users) {
 	if u.User1.Tip == ds {
 		go b.client.Ds.SendDmText(dmText, u.User1.UserId)
 	} else if u.User1.Tip == tg {
-		b.client.Tg.SendChannel(u.User1.UserId, dmText)
+		sendChannel := b.client.Tg.SendChannel(u.User1.UserId, dmText)
+		b.client.Tg.DelMessageSecond(u.User1.UserId, strconv.Itoa(sendChannel), 1800)
 	}
 	dmText = fmt.Sprintf("%s\n %s\n %s\n", b.getText(in, "go"), u.User1.Name, u.User3.Name)
 	if u.User2.Tip == ds {
 		go b.client.Ds.SendDmText(dmText, u.User2.UserId)
 	} else if u.User2.Tip == tg {
-		b.client.Tg.SendChannel(u.User2.UserId, dmText)
+		sendChannel := b.client.Tg.SendChannel(u.User2.UserId, dmText)
+		b.client.Tg.DelMessageSecond(u.User2.UserId, strconv.Itoa(sendChannel), 1800)
 	}
 
 }

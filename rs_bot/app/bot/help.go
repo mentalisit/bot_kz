@@ -17,9 +17,6 @@ func (b *Bot) AutoHelp() {
 	if mtime == "00:00" {
 		go b.EventAutoStart()
 	}
-	if mtime == "1:00" || mtime == "01:00" {
-		go b.EventAutoStart()
-	}
 	if tm.Minute() == 0 {
 		for _, s := range b.storage.ConfigRs.ReadConfigRs() {
 			configTemp := s

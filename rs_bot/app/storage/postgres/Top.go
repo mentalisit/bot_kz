@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	"rs/models"
 	"sort"
 )
@@ -141,4 +142,30 @@ func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
 		return top[i].Numkz > top[j].Numkz
 	})
 	return top
+}
+
+func (d *Db) RedStarFightGetStar() (ss []models.RedStarFight, err error) {
+	ctx, cancel := d.GetContext()
+	defer cancel()
+
+	query := `
+		SELECT * FROM rs_bot.redstarfight`
+
+	rows, err := d.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка запроса: %v", err)
+	}
+	defer rows.Close()
+
+	var records []models.RedStarFight
+	for rows.Next() {
+		var rec models.RedStarFight
+		if err = rows.Scan(&rec.Id, &rec.GameMId, &rec.SolarId, &rec.SendId, &rec.Author, &rec.Level, &rec.Count, &rec.Participants,
+			&rec.Points, &rec.EventId, &rec.StartTime, &rec.ClientId); err != nil {
+			return nil, fmt.Errorf("ошибка при сканировании: %v", err)
+		}
+		records = append(records, rec)
+	}
+
+	return records, nil
 }
