@@ -264,9 +264,9 @@ func (b *Bot) lTop(in models.InMessage) (bb bool) {
 	case "Топ", "Top":
 		bb = true
 		go b.Top(in)
-		//case "Топчик":
-		//	bb = true
-		//	go b.TopForGame(in)
+	case "Топ игры":
+		bb = true
+		go b.TopGame(in)
 	}
 
 	return bb
@@ -313,18 +313,18 @@ func (b *Bot) lEmoji(in models.InMessage) (bb bool) {
 		bb = true
 		go b.emodjis(in)
 	}
-	if in.Tip == "tg" {
-		ok, n := b.instalNick(in, in.Mtext)
-		if ok {
-			go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 20)
-			bb = true
-			if n == "удалено" {
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Удалено дополнительное имя "), 20)
-			} else {
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Установлено дополнительное имя %s", n), 20)
-			}
-		}
-	}
+	//if in.Tip == "tg" {
+	//	ok, n := b.instalNick(in, in.Mtext)
+	//	if ok {
+	//		go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(in.Tg.Mesid), 20)
+	//		bb = true
+	//		if n == "удалено" {
+	//			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Удалено дополнительное имя "), 20)
+	//		} else {
+	//			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, fmt.Sprintf("Установлено дополнительное имя %s", n), 20)
+	//		}
+	//	}
+	//}
 
 	return bb
 }

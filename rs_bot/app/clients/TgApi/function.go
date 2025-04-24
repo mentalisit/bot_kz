@@ -143,3 +143,17 @@ func (c *Client) SendEmbedTime(chatid string, text string) int {
 	}
 	return int(response.Result)
 }
+func (c *Client) SendPicScoreboard(chatID, text, fileNameScoreboard string) (mid string, err error) {
+	scoreboardResponse, err := c.client.SendPicScoreboard(context.Background(), &ScoreboardRequest{
+		ChaatId:            chatID,
+		Text:               text,
+		FileNameScoreboard: fileNameScoreboard,
+	})
+	if err != nil {
+		return "", err
+	}
+	if scoreboardResponse.ErrorMessage != "" {
+		return "", errors.New(scoreboardResponse.ErrorMessage)
+	}
+	return scoreboardResponse.Mid, nil
+}

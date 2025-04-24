@@ -24,22 +24,17 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 
 	identity := s.CheckCode(code)
 
-	if identity.Token == "" {
-		checkIdentity, err1 := original.CheckIdentity(code)
-		if err1 == nil && checkIdentity != nil && checkIdentity.Token != "" {
-			checkIdentity.User.Discriminator = "original"
-			c.JSON(http.StatusOK, checkIdentity)
-			//c.JSON(http.StatusForbidden, gin.H{"error": checkIdentity.User.Username + " please use the default client"})
-			return
-		}
-	}
-	// Проверка на наличие токена в полученной идентификации
-	if identity.Token == "" {
-		fmt.Println(code, identity)
-		c.JSON(http.StatusForbidden, gin.H{"error": "Outdated or invalid code"})
+	if identity.Token != "" {
+		c.JSON(http.StatusOK, identity)
+		return
+	} else {
+		//c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
+
+		original.IdentityHandler(c, code)
+		fmt.Println("original.IdentityHandler(c, code)")
 		return
 	}
-	c.JSON(http.StatusOK, identity)
+
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
@@ -47,15 +42,17 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 	token := c.GetHeader("authorization")
+
+	// Локальная проверка
 	i := s.GetTokenIdentity(token)
-	if i == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+	if i != nil {
+		if i.User.GameName != "" {
+			i.User.Username = i.User.GameName
+		}
+		c.JSON(http.StatusOK, i)
 		return
 	}
-	if i.User.GameName != "" {
-		i.User.Username = i.User.GameName
-	}
-	c.JSON(http.StatusOK, i)
+	c.JSON(http.StatusForbidden, nil)
 }
 
 func (s *Server) CheckCorpDataHandler(c *gin.Context) {
@@ -64,16 +61,21 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "Authorization")
 	token := c.GetHeader("authorization")
 	roleId := c.Query("roleId")
-
-	i := s.GetTokenIdentity(token)
-	if i == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
+	if token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, s.GetCorpData(i, roleId))
+	i := s.GetTokenIdentity(token)
 
+	if i != nil {
+		c.JSON(http.StatusOK, s.GetCorpData(i, roleId))
+		return
+	}
+	original.CorpDataHandler(c, token, roleId)
+	fmt.Println("original.CorpDataHandler(c, token, roleId)")
 }
+
 func (s *Server) CheckRefreshHandler(c *gin.Context) {
 	s.PrintGoroutine()
 	c.Header("Access-Control-Allow-Origin", "*")
@@ -81,19 +83,25 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 
 	token := c.GetHeader("authorization")
+	if token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
+		return
+	}
 
 	token = s.refreshToken(token)
 
 	i := s.GetTokenIdentity(token)
-	if i == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid code"})
+	if i != nil {
+		if i.User.GameName != "" {
+			i.User.Username = i.User.GameName
+		}
+		c.JSON(http.StatusOK, i)
 		return
 	}
-	if i.User.GameName != "" {
-		i.User.Username = i.User.GameName
-	}
-	c.JSON(http.StatusOK, i)
+	original.RefreshHandler(c, token)
+	fmt.Println("original.RefreshHandler(c, token)")
 }
+
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
@@ -101,14 +109,17 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 
 	mode := c.Param("mode")
 	twin := c.DefaultQuery("twin", "")
-
 	token := c.GetHeader("authorization")
 
 	i := s.GetTokenIdentity(token)
 
-	if i == nil || i.User.Username == "" || i.Guild.Name == "" {
-		fmt.Println("i==nil")
-		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid token"})
+	if i == nil {
+		original.SyncTechHandler(c, token, mode)
+		fmt.Println("original.SyncTechHandler(c, token, mode)")
+		return
+	}
+	if i.Uid != nil && i.GId != nil {
+		s.SyncTechMulti(c, i, mode, twin)
 		return
 	}
 	userId := i.User.ID
@@ -149,7 +160,6 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		err = s.db.TechUpdate(userName, userId, guildId, bytes)
 		if err != nil {
 			s.log.ErrorErr(err)
-			return
 		}
 
 		// Используйте переменную data с полученными данными

@@ -4,21 +4,24 @@ import (
 	"compendium/models"
 	"compendium/server/pb"
 	"compendium/storage"
+	"compendium/storage/postgres/multi"
 	"github.com/mentalisit/logger"
 )
 
 type Server struct {
-	log *logger.Logger
-	db  db
-	In  chan models.IncomingMessage
+	log   *logger.Logger
+	db    db
+	multi multi.Db
+	In    chan models.IncomingMessage
 }
 
 func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 	g := pb.GrpcMain(log, st)
 	s := &Server{
-		log: log,
-		db:  st.DB,
-		In:  g.In,
+		log:   log,
+		db:    st.DB,
+		multi: *st.Multi,
+		In:    g.In,
 	}
 
 	go s.RunServerRestApi()

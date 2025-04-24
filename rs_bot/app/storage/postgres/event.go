@@ -9,7 +9,7 @@ import (
 
 func (d *Db) UpdatePoints(CorpName string, numberkz, points, event1 int) int {
 	// считаем количество участников КЗ опр уровня
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var countEvent int
 	selec := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE numberevent = $1 AND corpname=$2 AND numberkz=$3  AND active=1"
@@ -31,7 +31,7 @@ func (d *Db) UpdatePoints(CorpName string, numberkz, points, event1 int) int {
 	return countEvent
 }
 func (d *Db) ReadNamesMessage(CorpName string, numberkz, numberEvent int) (nd, nt models.Names, t models.Sborkz) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var name string
 	sel := "SELECT * FROM kzbot.sborkz WHERE corpname=$1 AND numberkz=$2 AND numberevent = $3 AND active=1"
@@ -77,7 +77,7 @@ func (d *Db) ReadNamesMessage(CorpName string, numberkz, numberEvent int) (nd, n
 	return nd, nt, t
 }
 func (d *Db) CountEventNames(CorpName, mention string, numberkz, numEvent int) (countEventNames int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname = $1 AND numberkz=$2  AND active=1 AND mention=$3 AND numberevent = $4"
 	row := d.db.QueryRow(ctx, sel, CorpName, numberkz, mention, numEvent)
@@ -88,7 +88,7 @@ func (d *Db) CountEventNames(CorpName, mention string, numberkz, numEvent int) (
 	return countEventNames
 }
 func (d *Db) CountEventsPoints(CorpName string, numberkz, numberEvent int) int {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var countEventPoints int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname=$1 AND numberkz=$2 AND numberevent = $3 AND active=1 AND eventpoints > 0"
@@ -100,7 +100,7 @@ func (d *Db) CountEventsPoints(CorpName string, numberkz, numberEvent int) int {
 	return countEventPoints
 }
 func (d *Db) NumActiveEvent(CorpName string) (event1 int) { //запрос номера ивента
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT numevent FROM kzbot.rsevent WHERE corpname=$1 AND activeevent=1 ORDER BY numevent DESC LIMIT 1"
 	row := d.db.QueryRow(ctx, sel, CorpName)
@@ -115,7 +115,7 @@ func (d *Db) NumActiveEvent(CorpName string) (event1 int) { //запрос но�
 	return event1
 }
 func (d *Db) NumDeactivEvent(CorpName string) (event0 int) { //запрос номера последнего ивента
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT max(numevent) FROM kzbot.rsevent WHERE corpname=$1 AND activeevent=0"
 	row := d.db.QueryRow(ctx, sel, CorpName)
@@ -128,7 +128,7 @@ func (d *Db) NumDeactivEvent(CorpName string) (event0 int) { //запрос но
 	return event0
 }
 func (d *Db) UpdateActiveEvent0(CorpName string, event1 int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := "UPDATE kzbot.rsevent SET activeevent=0 WHERE corpname=$1 AND numevent=$2"
 	_, err := d.db.Exec(ctx, upd, CorpName, event1)
@@ -137,7 +137,7 @@ func (d *Db) UpdateActiveEvent0(CorpName string, event1 int) {
 	}
 }
 func (d *Db) EventStartInsert(CorpName string) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	event0 := d.NumDeactivEvent(CorpName)
 	insertEvent := `INSERT INTO kzbot.rsevent (corpname,numevent,activeevent,number) VALUES ($1,$2,$3,$4)`
@@ -155,7 +155,7 @@ func (d *Db) EventStartInsert(CorpName string) {
 	}
 }
 func (d *Db) NumberQueueEvents(CorpName string) int {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var number int
 	sel := "SELECT  number FROM kzbot.rsevent WHERE activeevent = 1 AND corpname = $1 "
@@ -171,7 +171,7 @@ func (d *Db) NumberQueueEvents(CorpName string) int {
 
 // activeevent int -1 prepare, 0 stop , 1 run
 func (d *Db) EventInsertPreStart(CorpName string, activeevent int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	event0 := d.NumDeactivEvent(CorpName)
 	insertEvent := `INSERT INTO kzbot.rsevent (corpname,numevent,activeevent,number) VALUES ($1,$2,$3,$4)`
@@ -190,7 +190,7 @@ func (d *Db) EventInsertPreStart(CorpName string, activeevent int) {
 }
 
 //func (d *Db) ReadEventSchedule() (start string, stop string) {
-//	ctx, cancel := d.GetContext()
+//	ctx, cancel := d.getContext()
 //	defer cancel()
 //	var nextDateStart string
 //	var nextDateStop string
@@ -204,22 +204,9 @@ func (d *Db) EventInsertPreStart(CorpName string, activeevent int) {
 //	return nextDateStart, nextDateStop
 //}
 
-func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string) {
-	ctx, cancel := d.GetContext()
-	defer cancel()
-
-	sel := "SELECT datestart,datestop,message FROM kzbot.event ORDER BY id DESC LIMIT 1"
-	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop, &message)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return "", "", ""
-	}
-	return nextDateStart, nextDateStop, message
-}
-
 // ReadRsEvent activeEvent int -1 prepare, 0 stop , 1 run
 func (d *Db) ReadRsEvent(activeEvent int) []models.RsEvent {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT * FROM kzbot.rsevent WHERE activeevent=$1"
@@ -242,7 +229,7 @@ func (d *Db) ReadRsEvent(activeEvent int) []models.RsEvent {
 	return eventsCorps
 }
 func (d *Db) UpdateActiveEvent(activeEvent int, CorpName string, numEvent int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := "UPDATE kzbot.rsevent SET activeevent=$1 WHERE corpname=$2 AND numevent=$3"
 	_, err := d.db.Exec(ctx, upd, activeEvent, CorpName, numEvent)

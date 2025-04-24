@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -96,6 +97,42 @@ func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextend
 	return
 }
 
+func Get3TechDataUserId(name, userIdTg string) (genesis, enrich, rse int) {
+	url := fmt.Sprintf("https://123bot.ru/rssoyuzbot/Json/module.php?userid=%s", userIdTg)
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	var tech []map[string]string
+
+	if err = json.Unmarshal(body, &tech); err != nil {
+		return
+	}
+	if len(tech) == 1 {
+		genesis, _ = strconv.Atoi(tech[0]["g"])
+		enrich, _ = strconv.Atoi(tech[0]["o"])
+		rse, _ = strconv.Atoi(tech[0]["ikz"])
+		return genesis, enrich, rse
+	} else {
+		for _, m := range tech {
+			if strings.ToLower(m["nameacc"]) == strings.ToLower(name) {
+				genesis, _ = strconv.Atoi(m["g"])
+				enrich, _ = strconv.Atoi(m["o"])
+				rse, _ = strconv.Atoi(m["ikz"])
+				return genesis, enrich, rse
+			}
+		}
+	}
+	return
+}
+
 func Get2AltsUserId(userID string) (alts []string) {
 	// Создаем контекст с тайм-аутом 2 секунды
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -138,6 +175,7 @@ func Get2AltsUserId(userID string) (alts []string) {
 	// Декодирование JSON-данных в структуру TechnicalData
 	err = json.Unmarshal(body, &alts)
 	if err != nil {
+		fmt.Println(string(body))
 		fmt.Println("Ошибка при декодировании JSON:", err)
 		return
 	}

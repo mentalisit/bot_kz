@@ -28,11 +28,11 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	go d.createTable()
 	return d
 }
-func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }
 func (d *Db) createTable() {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS kzbot")
 	// Создание таблиц
@@ -174,18 +174,27 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, _ = d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS rs_bot")
+	_, err = d.db.Exec(ctx,
+		`CREATE TABLE IF NOT EXISTS rs_bot.emoji(
+    uid uuid references compendium.multi_accounts(uuid) on delete cascade,
+    tip     text,
+    em1     text,
+	em2     text,
+	em3     text,
+	em4     text
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 
-	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.user_account
-	(
-		internal_user_id     bigserial        primary key,
-		general_name text NOT NULL DEFAULT '',
-		user_id_tg   text NOT NULL DEFAULT '',
-		user_id_ds  text NOT NULL DEFAULT '',
-		user_id_game text[] DEFAULT '{}',
-		user_name_active text NOT NULL DEFAULT '',
-		user_accounts text[] DEFAULT '{}'
+	_, err = d.db.Exec(ctx,
+		`CREATE TABLE IF NOT EXISTS rs_bot.module(
+    uid uuid references compendium.multi_accounts(uuid) on delete cascade,
+    name    text,
+	gen bigint,
+	enr bigint,
+	rse bigint
 	);`)
 	if err != nil {
 		d.log.ErrorErr(err)

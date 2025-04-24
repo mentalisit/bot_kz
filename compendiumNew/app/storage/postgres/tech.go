@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
@@ -35,7 +35,7 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 }
 
 func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
 	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2 AND username = $3"
@@ -48,7 +48,7 @@ func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
 	return tech, nil
 }
 func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
 	var userid string
@@ -63,7 +63,7 @@ func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
 }
 
 func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var acm []models.CorpMember
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
@@ -102,7 +102,7 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 }
 
 func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3 and guildid = $4`
 	updresult, err := d.db.Exec(ctx, upd, tech, username, userid, guildid)
@@ -120,7 +120,7 @@ func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
 }
 
 func (d *Db) TechDelete(username, userid, guildid string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
@@ -137,17 +137,9 @@ func (d *Db) TechDelete(username, userid, guildid string) error {
 	}
 	return nil
 }
-func (d *Db) Unsubscribe(name, lvlkz string, TgChannel string, tipPing int) {
-	ctx, cancel := d.GetContext()
-	defer cancel()
-	del := "delete from kzbot.subscribe where name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
-	_, err := d.db.Exec(ctx, del, name, lvlkz, TgChannel, tipPing)
-	if err != nil {
-		d.log.ErrorErr(err)
-	}
-}
+
 func (d *Db) TechGetCount(userid, guildid string) (int, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2"
@@ -156,4 +148,30 @@ func (d *Db) TechGetCount(userid, guildid string) (int, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (d *Db) TechGetAllUserId(userid string) ([]models.TechTable, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	var acm []models.TechTable
+	sel := "SELECT * FROM hs_compendium.tech where userid = $1"
+	q, err := d.db.Query(ctx, sel, userid)
+	defer q.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	for q.Next() {
+		var ncm models.TechTable
+		err = q.Scan(&ncm.Id, &ncm.Name, &ncm.NameId, &ncm.GuildId, &ncm.Tech)
+		if err != nil {
+			return nil, err
+		}
+
+		acm = append(acm, ncm)
+	}
+	if err = q.Err(); err != nil { // Проверка ошибок после завершения итерации
+		return nil, err
+	}
+	return acm, nil
 }

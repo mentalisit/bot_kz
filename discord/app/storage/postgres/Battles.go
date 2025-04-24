@@ -76,6 +76,9 @@ func (d *Db) BattlesTopInsert(b models.BattlesTop) error {
 	topGet, _ := d.BattlesTopGet(b)
 	if topGet.Name == b.Name {
 		topGet.Count++
+		if b.Level > topGet.Level {
+			topGet.Level = b.Level
+		}
 		err := d.BattlesTopUpdate(topGet)
 		if err != nil {
 			return err
@@ -96,13 +99,14 @@ func (d *Db) BattlesTopInsert(b models.BattlesTop) error {
 func (d *Db) BattlesTopUpdate(b models.BattlesTop) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	sqlUpd := "update rs_bot.battlestop set count = $1 where id = $2 "
-	_, err := d.db.Exec(ctx, sqlUpd, b.Count, b.Id)
+	sqlUpd := "update rs_bot.battlestop set count = $1, level = $2 where id = $3 "
+	_, err := d.db.Exec(ctx, sqlUpd, b.Count, b.Level, b.Id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
 func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
@@ -132,8 +136,8 @@ func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
 func (d *Db) BattlesTopGet(b models.BattlesTop) (models.BattlesTop, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	query := `SELECT * FROM rs_bot.battlestop where name=$1 AND corporation=$2 AND level=$3 `
-	row := d.db.QueryRow(ctx, query, b.Name, b.CorpName, b.Level)
+	query := `SELECT * FROM rs_bot.battlestop where name=$1 AND corporation=$2`
+	row := d.db.QueryRow(ctx, query, b.Name, b.CorpName)
 
 	var ps models.BattlesTop
 	err := row.Scan(&ps.Id, &ps.CorpName, &ps.Name, &ps.Level, &ps.Count)

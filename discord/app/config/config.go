@@ -23,6 +23,7 @@ type ConfigBot struct {
 		Username string `yaml:"username" env-default:"root"`
 		Password string `yaml:"password" env-default:"root"`
 	} `yaml:"postgress"`
+	MySQl string `yaml:"mysql"`
 }
 
 var Instance *ConfigBot

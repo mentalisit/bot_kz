@@ -8,21 +8,21 @@ import (
 )
 
 func (d *Db) WsKillInsert(w models.WsKill) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO hs_compendium.wskill(guildid, chatid, username, mention, shipname, timestampend,language) VALUES ($1,$2,$3,$4,$5,$6,$7)`
 	_, err := d.db.Exec(ctx, insert, w.GuildId, w.ChatId, w.UserName, w.Mention, w.ShipName, w.TimestampEnd, w.Language)
 	return err
 }
 func (d *Db) WsKillDelete(w models.WsKill) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteRole := `DELETE FROM hs_compendium.wskill WHERE guildid = $1 AND username = $2 AND shipname = $3`
 	_, err := d.db.Exec(ctx, deleteRole, w.GuildId, w.UserName, w.ShipName)
 	return err
 }
 func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	selectWsKill := `SELECT * FROM hs_compendium.wskill WHERE guildid = $1`
 	var wskill []models.WsKill
@@ -47,7 +47,7 @@ func (d *Db) WsKillReadByGuildId(guildid string) ([]models.WsKill, error) {
 }
 
 func (d *Db) WsKillReadAll() ([]models.WsKill, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	selectWsKill := `SELECT * FROM hs_compendium.wskill`
 	var wskill []models.WsKill

@@ -1273,6 +1273,120 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_telegram_proto_rawDescGZIP(), []int{21}
 }
 
+type ScoreboardRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ChaatId            string `protobuf:"bytes,1,opt,name=ChaatId,proto3" json:"ChaatId,omitempty"`
+	Text               string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	FileNameScoreboard string `protobuf:"bytes,3,opt,name=fileNameScoreboard,proto3" json:"fileNameScoreboard,omitempty"`
+}
+
+func (x *ScoreboardRequest) Reset() {
+	*x = ScoreboardRequest{}
+	mi := &file_telegram_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScoreboardRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScoreboardRequest) ProtoMessage() {}
+
+func (x *ScoreboardRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_telegram_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScoreboardRequest.ProtoReflect.Descriptor instead.
+func (*ScoreboardRequest) Descriptor() ([]byte, []int) {
+	return file_telegram_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ScoreboardRequest) GetChaatId() string {
+	if x != nil {
+		return x.ChaatId
+	}
+	return ""
+}
+
+func (x *ScoreboardRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *ScoreboardRequest) GetFileNameScoreboard() string {
+	if x != nil {
+		return x.FileNameScoreboard
+	}
+	return ""
+}
+
+type ScoreboardResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Mid          string `protobuf:"bytes,1,opt,name=Mid,proto3" json:"Mid,omitempty"`
+	ErrorMessage string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+}
+
+func (x *ScoreboardResponse) Reset() {
+	*x = ScoreboardResponse{}
+	mi := &file_telegram_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScoreboardResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScoreboardResponse) ProtoMessage() {}
+
+func (x *ScoreboardResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_telegram_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScoreboardResponse.ProtoReflect.Descriptor instead.
+func (*ScoreboardResponse) Descriptor() ([]byte, []int) {
+	return file_telegram_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ScoreboardResponse) GetMid() string {
+	if x != nil {
+		return x.Mid
+	}
+	return ""
+}
+
+func (x *ScoreboardResponse) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
 var File_telegram_proto protoreflect.FileDescriptor
 
 var file_telegram_proto_rawDesc = []byte{
@@ -1399,7 +1513,19 @@ var file_telegram_proto_rawDesc = []byte{
 	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x09, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x63,
 	0x68, 0x61, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x63, 0x68,
-	0x61, 0x74, 0x49, 0x64, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x32, 0xad, 0x07,
+	0x61, 0x74, 0x49, 0x64, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x71, 0x0a,
+	0x11, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x43, 0x68, 0x61, 0x61, 0x74, 0x49, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x07, 0x43, 0x68, 0x61, 0x61, 0x74, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04,
+	0x74, 0x65, 0x78, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74,
+	0x12, 0x2e, 0x0a, 0x12, 0x66, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x53, 0x63, 0x6f, 0x72,
+	0x65, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x66, 0x69,
+	0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61, 0x72, 0x64,
+	0x22, 0x4b, 0x0a, 0x12, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x4d, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x4d, 0x69, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x72, 0x72, 0x6f,
+	0x72, 0x5f, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0c, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x32, 0xf1, 0x07,
 	0x0a, 0x0f, 0x54, 0x65, 0x6c, 0x65, 0x67, 0x72, 0x61, 0x6d, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
 	0x65, 0x12, 0x3c, 0x0a, 0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4d, 0x65, 0x73, 0x73, 0x61,
 	0x67, 0x65, 0x12, 0x18, 0x2e, 0x74, 0x67, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4d, 0x65,
@@ -1458,9 +1584,13 @@ var file_telegram_proto_rawDesc = []byte{
 	0x69, 0x64, 0x67, 0x65, 0x41, 0x72, 0x72, 0x61, 0x79, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
 	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x74, 0x67, 0x2e, 0x53, 0x65,
 	0x6e, 0x64, 0x42, 0x72, 0x69, 0x64, 0x67, 0x65, 0x41, 0x72, 0x72, 0x61, 0x79, 0x4d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x11, 0x5a,
-	0x0f, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x3b, 0x74, 0x67,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x61, 0x67, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x42, 0x0a,
+	0x11, 0x53, 0x65, 0x6e, 0x64, 0x50, 0x69, 0x63, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61,
+	0x72, 0x64, 0x12, 0x15, 0x2e, 0x74, 0x67, 0x2e, 0x53, 0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61,
+	0x72, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x74, 0x67, 0x2e, 0x53,
+	0x63, 0x6f, 0x72, 0x65, 0x62, 0x6f, 0x61, 0x72, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x42, 0x11, 0x5a, 0x0f, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x3b, 0x74, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1475,7 +1605,7 @@ func file_telegram_proto_rawDescGZIP() []byte {
 	return file_telegram_proto_rawDescData
 }
 
-var file_telegram_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_telegram_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_telegram_proto_goTypes = []any{
 	(*TextResponse)(nil),                    // 0: tg.TextResponse
 	(*ErrorResponse)(nil),                   // 1: tg.ErrorResponse
@@ -1499,10 +1629,12 @@ var file_telegram_proto_goTypes = []any{
 	(*SendBridgeArrayMessagesResponse)(nil), // 19: tg.SendBridgeArrayMessagesResponse
 	(*MessageIds)(nil),                      // 20: tg.MessageIds
 	(*Empty)(nil),                           // 21: tg.Empty
-	nil,                                     // 22: tg.SendPollRequest.DataEntry
+	(*ScoreboardRequest)(nil),               // 22: tg.ScoreboardRequest
+	(*ScoreboardResponse)(nil),              // 23: tg.ScoreboardResponse
+	nil,                                     // 24: tg.SendPollRequest.DataEntry
 }
 var file_telegram_proto_depIdxs = []int32{
-	22, // 0: tg.SendPollRequest.data:type_name -> tg.SendPollRequest.DataEntry
+	24, // 0: tg.SendPollRequest.data:type_name -> tg.SendPollRequest.DataEntry
 	17, // 1: tg.SendBridgeArrayMessagesRequest.extra:type_name -> tg.FileInfo
 	18, // 2: tg.SendBridgeArrayMessagesRequest.reply:type_name -> tg.BridgeMessageReply
 	20, // 3: tg.SendBridgeArrayMessagesResponse.message_ids:type_name -> tg.MessageIds
@@ -1521,23 +1653,25 @@ var file_telegram_proto_depIdxs = []int32{
 	14, // 16: tg.TelegramService.SendChannelTyping:input_type -> tg.SendChannelTypingRequest
 	15, // 17: tg.TelegramService.SendPic:input_type -> tg.SendPicRequest
 	16, // 18: tg.TelegramService.SendBridgeArrayMessages:input_type -> tg.SendBridgeArrayMessagesRequest
-	1,  // 19: tg.TelegramService.DeleteMessage:output_type -> tg.ErrorResponse
-	1,  // 20: tg.TelegramService.DeleteMessageSecond:output_type -> tg.ErrorResponse
-	1,  // 21: tg.TelegramService.EditMessage:output_type -> tg.ErrorResponse
-	1,  // 22: tg.TelegramService.EditMessageTextKey:output_type -> tg.ErrorResponse
-	2,  // 23: tg.TelegramService.CheckAdmin:output_type -> tg.FlagResponse
-	0,  // 24: tg.TelegramService.GetAvatarUrl:output_type -> tg.TextResponse
-	0,  // 25: tg.TelegramService.Send:output_type -> tg.TextResponse
-	0,  // 26: tg.TelegramService.SendPoll:output_type -> tg.TextResponse
-	2,  // 27: tg.TelegramService.SendChannelDelSecond:output_type -> tg.FlagResponse
-	0,  // 28: tg.TelegramService.SendHelp:output_type -> tg.TextResponse
-	13, // 29: tg.TelegramService.SendEmbedText:output_type -> tg.IntResponse
-	13, // 30: tg.TelegramService.SendEmbedTime:output_type -> tg.IntResponse
-	21, // 31: tg.TelegramService.SendChannelTyping:output_type -> tg.Empty
-	1,  // 32: tg.TelegramService.SendPic:output_type -> tg.ErrorResponse
-	19, // 33: tg.TelegramService.SendBridgeArrayMessages:output_type -> tg.SendBridgeArrayMessagesResponse
-	19, // [19:34] is the sub-list for method output_type
-	4,  // [4:19] is the sub-list for method input_type
+	22, // 19: tg.TelegramService.SendPicScoreboard:input_type -> tg.ScoreboardRequest
+	1,  // 20: tg.TelegramService.DeleteMessage:output_type -> tg.ErrorResponse
+	1,  // 21: tg.TelegramService.DeleteMessageSecond:output_type -> tg.ErrorResponse
+	1,  // 22: tg.TelegramService.EditMessage:output_type -> tg.ErrorResponse
+	1,  // 23: tg.TelegramService.EditMessageTextKey:output_type -> tg.ErrorResponse
+	2,  // 24: tg.TelegramService.CheckAdmin:output_type -> tg.FlagResponse
+	0,  // 25: tg.TelegramService.GetAvatarUrl:output_type -> tg.TextResponse
+	0,  // 26: tg.TelegramService.Send:output_type -> tg.TextResponse
+	0,  // 27: tg.TelegramService.SendPoll:output_type -> tg.TextResponse
+	2,  // 28: tg.TelegramService.SendChannelDelSecond:output_type -> tg.FlagResponse
+	0,  // 29: tg.TelegramService.SendHelp:output_type -> tg.TextResponse
+	13, // 30: tg.TelegramService.SendEmbedText:output_type -> tg.IntResponse
+	13, // 31: tg.TelegramService.SendEmbedTime:output_type -> tg.IntResponse
+	21, // 32: tg.TelegramService.SendChannelTyping:output_type -> tg.Empty
+	1,  // 33: tg.TelegramService.SendPic:output_type -> tg.ErrorResponse
+	19, // 34: tg.TelegramService.SendBridgeArrayMessages:output_type -> tg.SendBridgeArrayMessagesResponse
+	23, // 35: tg.TelegramService.SendPicScoreboard:output_type -> tg.ScoreboardResponse
+	20, // [20:36] is the sub-list for method output_type
+	4,  // [4:20] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -1554,7 +1688,7 @@ func file_telegram_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_telegram_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

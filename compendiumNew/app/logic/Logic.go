@@ -3,14 +3,51 @@ package logic
 import (
 	"compendium/models"
 	"fmt"
-	"runtime"
 	"time"
 )
 
 func (c *Hs) logic(m models.IncomingMessage) {
 	c.PrintGoroutine()
+
+	if m.GuildId != "" {
+		guild, _ := c.db.Multi.GuildGet(m.GuildId)
+		if guild == nil {
+			err := c.db.Multi.GuildInsert(models.MultiAccountGuild{
+				GuildName: m.GuildName,
+				Channels:  []string{m.GuildId},
+				AvatarUrl: m.GuildAvatar,
+			})
+			if err != nil {
+				c.log.ErrorErr(err)
+			}
+			guild, _ = c.db.Multi.GuildGet(m.GuildId)
+		} else if guild.AvatarUrl != m.GuildAvatar {
+			guild.AvatarUrl = m.GuildAvatar
+			err := c.db.Multi.GuildUpdateAvatar(*guild)
+			if err != nil {
+				c.log.ErrorErr(err)
+			}
+		}
+		m.MultiGuild = guild
+	}
+
+	multiAccount, _ := c.db.Multi.FindMultiAccountByUserId(m.NameId)
+	if multiAccount != nil && multiAccount.TelegramID != "" && multiAccount.DiscordID != "" {
+		if m.Avatar != "" {
+			if multiAccount.AvatarURL != m.Avatar {
+				multiAccount.AvatarURL = m.Avatar
+				_, _ = c.db.Multi.UpdateMultiAccountAvatarUrl(*multiAccount)
+			}
+		}
+		m.MultiAccount = multiAccount
+	}
+
 	fmt.Printf("logic: %+v %+v\n", time.Now().Format(time.RFC3339), m)
+	if m.MultiAccount != nil {
+		fmt.Printf("logic: %+v %+v\n", time.Now().Format(time.RFC3339), m.MultiAccount)
+	}
 	if c.connect(m) {
+	} else if c.multiConnect(m) {
 	} else if c.Help(m) {
 	} else if c.techImage(m) {
 	} else if c.techImageName(m) {
@@ -24,19 +61,4 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	} else {
 		c.log.Info(fmt.Sprintf("else %+v\n", m))
 	}
-}
-func (c *Hs) PrintGoroutine() {
-	goroutine := runtime.NumGoroutine()
-	tm := time.Now()
-	mdate := (tm.Format("2006-01-02"))
-	mtime := (tm.Format("15:04"))
-	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
-	if goroutine > 120 {
-		c.log.Info(text)
-		c.log.Panic(text)
-	} else if goroutine > 50 && goroutine%10 == 0 {
-		c.log.Info(text)
-	}
-
-	fmt.Println(text)
 }

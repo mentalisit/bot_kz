@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"queue/rsbotbd/GetDataSborkz"
 )
 
 func (s *Server) ReadAllQueue(c *gin.Context) {
@@ -80,16 +81,11 @@ func (s *Server) Left(c *gin.Context) {
 
 func (s *Server) ReadQueueTumcha(c *gin.Context) {
 	s.PrintGoroutine()
-	q := s.queue.GetDBQueue()
-	var namesId []int64
-	if q != nil && len(q) > 0 {
-		for _, tumcha := range q {
-			namesId = append(namesId, tumcha.NameId)
-		}
-	} else {
+	namesIds := GetDataSborkz.ReadQueueTumchaNameIds()
+	if len(namesIds) == 0 {
 		c.JSON(http.StatusNoContent, "nil")
 		return
 	}
 
-	c.JSON(http.StatusOK, namesId)
+	c.JSON(http.StatusOK, namesIds)
 }

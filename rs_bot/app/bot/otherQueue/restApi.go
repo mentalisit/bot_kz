@@ -57,7 +57,7 @@ func GetQueueLevel(level string) (t map[string][]models.QueueStruct, err error) 
 }
 
 func GetQueueAll() (t map[string][]models.QueueStruct, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel() // Освобождаем ресурсы контекста после завершения функции
 
 	// Формирование URL-адреса

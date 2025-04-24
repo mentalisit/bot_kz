@@ -4,20 +4,11 @@ import (
 	"discord/models"
 )
 
-func (d *Db) ScoreboardInsertParam(p models.ScoreboardParams) {
+func (d *Db) ScoreboardUpdateParamLastMessageId(p models.ScoreboardParams) {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	insert := `INSERT INTO rs_bot.scoreboard(name,webhookchannel,scorechannel) VALUES ($1,$2,$3)`
-	_, err := d.db.Exec(ctx, insert, p.Name, p.ChannelWebhook, p.ChannelScoreboard)
-	if err != nil {
-		d.log.ErrorErr(err)
-	}
-}
-func (d *Db) ScoreboardUpdateParam(p models.ScoreboardParams) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	update := `UPDATE rs_bot.scoreboard SET webhookchannel = $1,scorechannel = $2 where name = $3`
-	_, err := d.db.Exec(ctx, update, p.ChannelWebhook, p.ChannelScoreboard, p.Name)
+	update := `UPDATE rs_bot.scoreboard SET lastmessage = $1 where name = $2`
+	_, err := d.db.Exec(ctx, update, p.LastMessageID, p.Name)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -25,7 +16,7 @@ func (d *Db) ScoreboardUpdateParam(p models.ScoreboardParams) {
 func (d *Db) ScoreboardReadWebhookChannel(webhookChannel string) *models.ScoreboardParams {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	selectScoreboard := "SELECT name, webhookchannel, scorechannel FROM rs_bot.scoreboard WHERE webhookchannel = $1"
+	selectScoreboard := "SELECT name, webhookchannel, scorechannel,lastmessage FROM rs_bot.scoreboard WHERE webhookchannel = $1"
 	results, err := d.db.Query(ctx, selectScoreboard, webhookChannel)
 	defer results.Close()
 	if err != nil {
@@ -33,7 +24,7 @@ func (d *Db) ScoreboardReadWebhookChannel(webhookChannel string) *models.Scorebo
 	}
 	var s models.ScoreboardParams
 	for results.Next() {
-		err = results.Scan(&s.Name, &s.ChannelWebhook, &s.ChannelScoreboard)
+		err = results.Scan(&s.Name, &s.ChannelWebhook, &s.ChannelScoreboard, &s.LastMessageID)
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
@@ -43,27 +34,27 @@ func (d *Db) ScoreboardReadWebhookChannel(webhookChannel string) *models.Scorebo
 	}
 	return &s
 }
-func (d *Db) ScoreboardReadName(name string) *models.ScoreboardParams {
+func (d *Db) ScoreboardReadAll() []models.ScoreboardParams {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	selectScoreboard := "SELECT name, webhookchannel, scorechannel FROM rs_bot.scoreboard WHERE name = $1"
-	results, err := d.db.Query(ctx, selectScoreboard, name)
-	defer results.Close()
+	selectScoreboard := "SELECT name, webhookchannel, scorechannel,lastmessage FROM rs_bot.scoreboard"
+	rows, err := d.db.Query(ctx, selectScoreboard)
+	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
-	var s models.ScoreboardParams
-	for results.Next() {
-		err = results.Scan(&s.Name, &s.ChannelWebhook, &s.ChannelScoreboard)
+	var ss []models.ScoreboardParams
+	for rows.Next() {
+		var s models.ScoreboardParams
+		err = rows.Scan(&s.Name, &s.ChannelWebhook, &s.ChannelScoreboard, &s.LastMessageID)
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
+		ss = append(ss, s)
 	}
-	if s.Name == "" {
-		return nil
-	}
-	return &s
+	return ss
 }
+
 func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string) {
 	ctx, cancel := d.getContext()
 	defer cancel()
@@ -75,4 +66,14 @@ func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message
 		return "", "", ""
 	}
 	return nextDateStart, nextDateStop, message
+}
+
+func (d *Db) InsertWebhook(ts int64, corp, message string) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	insert := `INSERT INTO rs_bot.webhooks(tsunix,corp,message) VALUES ($1,$2,$3)`
+	_, err := d.db.Exec(ctx, insert, ts, corp, message)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
 }

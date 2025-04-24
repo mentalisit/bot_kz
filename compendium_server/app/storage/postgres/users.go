@@ -32,7 +32,7 @@ import (
 //}
 
 func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.User
 	var id int

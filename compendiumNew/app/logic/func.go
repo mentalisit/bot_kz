@@ -3,7 +3,9 @@ package logic
 import (
 	"compendium/models"
 	"fmt"
+	"runtime"
 	"strings"
+	"time"
 )
 
 func (c *Hs) sendChat(m models.IncomingMessage, text string) {
@@ -141,4 +143,20 @@ func helperCommand(text, command string) bool {
 	}
 
 	return false
+}
+
+func (c *Hs) PrintGoroutine() {
+	goroutine := runtime.NumGoroutine()
+	tm := time.Now()
+	mdate := (tm.Format("2006-01-02"))
+	mtime := (tm.Format("15:04"))
+	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
+	if goroutine > 120 {
+		c.log.Info(text)
+		c.log.Panic(text)
+	} else if goroutine > 50 && goroutine%10 == 0 {
+		c.log.Info(text)
+	}
+
+	fmt.Println(text)
 }

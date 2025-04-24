@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var tt []models.CorporationConfig
@@ -27,7 +27,7 @@ func (d *Db) ReadConfigRs() []models.CorporationConfig {
 	return tt
 }
 func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE tgchannel = $1"
 	results, err := d.db.Query(ctx, sel, tgChannel)
@@ -46,7 +46,7 @@ func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationCo
 	return conf
 }
 func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE corpname = $1"
 	results, err := d.db.Query(ctx, sel, corpName)
@@ -65,7 +65,7 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 	return conf
 }
 func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var cc []models.BridgeConfig
 	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)

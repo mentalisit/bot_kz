@@ -25,7 +25,7 @@ import (
 //}
 
 func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.Guild
 	var id int

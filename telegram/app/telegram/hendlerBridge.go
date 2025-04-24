@@ -99,7 +99,7 @@ func (t *Telegram) handleDownloadBridge(rmsg *models.ToBridgeMessage, message *t
 	if name == "" {
 		return nil
 	}
-	if int(size) > 12000000 {
+	if int(size) > 10*1024*1024 {
 		return nil
 	}
 	// if we have a file attached, download it (in memory) and put a pointer to it in msg.Extra

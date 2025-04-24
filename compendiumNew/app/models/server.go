@@ -60,6 +60,10 @@ func (a *TechLevelArray) ConvertToTech(b []byte) TechLevelArray {
 	}
 	return mi
 }
+func (a *TechLevelArray) ConvertToByte() []byte {
+	techBytes, _ := json.Marshal(a)
+	return techBytes
+}
 func (l *TechLevels) ConvertToTech(b []byte) map[int]TechLevel {
 	//var m map[int]TechLevel
 	m := make(map[int]TechLevel)
@@ -83,18 +87,19 @@ type CorpData struct {
 }
 
 type CorpMember struct {
-	Name        string         `json:"name"`
-	UserId      string         `json:"userId"`
-	GuildId     string         `json:"guildId"`
-	Avatar      string         `json:"avatar"`
-	Tech        TechLevelArray `json:"tech"`
-	AvatarUrl   string         `json:"avatarUrl"`
-	LocalTime   string         `json:"localTime"`   //localTime:"07:52 PM"
-	LocalTime24 string         `json:"localTime24"` //localTime24:"19:52"
-	TimeZone    string         `json:"timeZone"`    //timeZone:"UTC-5"
-	ZoneOffset  int            `json:"zoneOffset"`  //zoneOffset:-300
-	AfkFor      string         `json:"afkFor"`      // readable afk duration
-	AfkWhen     int            `json:"afkWhen"`     // Unix Epoch when user returns
+	Name         string         `json:"name"`
+	UserId       string         `json:"userId"`
+	GuildId      string         `json:"guildId"`
+	Avatar       string         `json:"avatar"`
+	Tech         TechLevelArray `json:"tech"`
+	AvatarUrl    string         `json:"avatarUrl"`
+	LocalTime    string         `json:"localTime"`   //localTime:"07:52 PM"
+	LocalTime24  string         `json:"localTime24"` //localTime24:"19:52"
+	TimeZone     string         `json:"timeZone"`    //timeZone:"UTC-5"
+	ZoneOffset   int            `json:"zoneOffset"`  //zoneOffset:-300
+	AfkFor       string         `json:"afkFor"`      // readable afk duration
+	AfkWhen      int            `json:"afkWhen"`     // Unix Epoch when user returns
+	MultiAccount *MultiAccount
 }
 
 type CorpRole struct {
@@ -110,4 +115,11 @@ type WsKill struct {
 	ShipName     string
 	TimestampEnd int64
 	Language     string
+}
+type TechTable struct {
+	Id      int64
+	Name    string
+	NameId  string
+	GuildId string
+	Tech    []byte
 }

@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"telegram/config"
 	"telegram/grpc_server"
-	"telegram/server"
 	"telegram/storage"
 	"telegram/telegram"
 )
@@ -22,8 +21,6 @@ func main() {
 	tg := telegram.NewTelegram(log, cfg.Token.TokenTelegram, st)
 
 	grpc_server.GrpcMain(tg, log)
-
-	server.NewServer(tg, log)
 
 	log.Info("Service telegram load")
 

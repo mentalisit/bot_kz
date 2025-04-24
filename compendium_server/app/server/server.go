@@ -4,6 +4,7 @@ import (
 	"compendium_s/models"
 	"compendium_s/server/getCountry"
 	"compendium_s/storage"
+	"compendium_s/storage/postgres/multi"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mentalisit/logger"
@@ -15,6 +16,7 @@ import (
 type Server struct {
 	log      *logger.Logger
 	db       db
+	multi    *multi.Db
 	roles    *Roles
 	cache    *getCountry.Cache
 	certFile string
@@ -25,6 +27,7 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 	s := &Server{
 		log:      log,
 		db:       st.DB,
+		multi:    st.DB.Multi,
 		roles:    NewRoles(log),
 		cache:    getCountry.NewCache(),
 		certFile: "docker/cert/RSA-cert.pem",

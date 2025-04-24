@@ -9,86 +9,27 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
-func (d *Discord) logicScoreboardSetting(m *discordgo.MessageCreate) bool {
-	if m.Message.WebhookID != "" {
-		d.logicMixWebhook(m)
-		return true
-	}
-
-	afterScoreboard, found := strings.CutPrefix(m.Content, ".scoreboard")
-	if found {
-		text := ""
-		afterWebhook, foundWebhook := strings.CutPrefix(afterScoreboard, " webhook ")
-		if afterWebhook == "name" {
-			text = "you can't use the 'name', it's not unique"
-			foundWebhook = false
-		}
-		if foundWebhook {
-			scoreboardReadName := d.storage.Scoreboard.ScoreboardReadName(afterWebhook)
-			if scoreboardReadName == nil {
-				d.storage.Scoreboard.ScoreboardInsertParam(models.ScoreboardParams{
-					Name:              afterWebhook,
-					ChannelWebhook:    m.ChannelID,
-					ChannelScoreboard: "",
-				})
-				text = "now the bot will wait here for webhooks from the game, connect another channel to display the leaderboard"
-			} else {
-				text = "this channel is already listened to by a bot to receive webhooks from the game.Name " + scoreboardReadName.Name
-				d.log.Info("found " + afterWebhook + " in scoreboard")
-			}
-		}
-		afterHere, fountHere := strings.CutPrefix(afterScoreboard, " here ")
-		if afterHere == "name" {
-			text = "you can't use the 'name', it's not unique"
-			fountHere = false
-		}
-		if fountHere {
-			scoreboard := d.storage.Scoreboard.ScoreboardReadName(afterHere)
-			if scoreboard != nil {
-				scoreboard.ChannelScoreboard = m.ChannelID
-				d.storage.Scoreboard.ScoreboardUpdateParam(*scoreboard)
-				text = "now the leaderboard will be displayed here"
-			} else {
-				d.log.Info("not found " + afterHere + " in scoreboard")
-				text = "it is impossible to connect the leaderboard without having a channel of incoming data from the game via webhook"
-			}
-		}
-		if text == "" && !fountHere && !foundWebhook {
-			text = "To set up automatic display of red star event leaders, you need to do several things:\n" +
-				"1) set up sending webhook to you in the game in a hidden channel in discord\n" +
-				"2) execute the command to connect the bot to listening to this channel, come up with a unique name or use the corporation name in the command '.scoreboard webhook name' where name is a unique name that will link the data in the bot.\n" +
-				"3) execute the command in the channel open for viewing your corporation where the leaderboard will be displayed '.scoreboard here name'"
-		}
-		d.DeleteMesageSecond(m.ChannelID, m.ID, twoDay)
-		d.SendChannelDelSecond(m.ChannelID, text, twoDay)
-		return true
-	}
-	return false
-}
-
-func (d *Discord) logicMixWebhook(m *discordgo.MessageCreate) {
+func (d *Discord) logicMixWebhook(m *discordgo.Message) {
 	if m.Attachments != nil && len(m.Attachments) > 0 && m.Attachments[0].Filename == "data.json" {
 		scoreboard := d.storage.Scoreboard.ScoreboardReadWebhookChannel(m.ChannelID)
 		if scoreboard != nil {
-			err := d.FetchJSON(m.Attachments[0].URL, scoreboard)
+			err := d.FetchJSON(m.Attachments[0].URL, scoreboard, m.Timestamp.Unix())
 			if err != nil {
 				d.log.ErrorErr(err)
 				return
 			}
+			scoreboard.LastMessageID = m.ID
+			d.storage.Scoreboard.ScoreboardUpdateParamLastMessageId(*scoreboard)
 		} else {
-			fmt.Printf("not found setting for scoreboard channel %s\n", m.ChannelID)
+			d.log.Info(fmt.Sprintf("not found setting for scoreboard channel %s\n", m.ChannelID))
 		}
 	}
-
-	//нужно получить текущий ивент
-
 }
 
-func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams) error {
+func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams, tsUnix int64) error {
 	// Отправка GET-запроса
 	resp, err := http.Get(url)
 	if err != nil {
@@ -107,6 +48,8 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams) error {
 		return fmt.Errorf("ошибка при чтении ответа: %v", err)
 	}
 
+	d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
+
 	// Декодирование JSON в map для удобного отображения
 	var jsonData map[string]interface{}
 	if err = json.Unmarshal(body, &jsonData); err != nil {
@@ -123,10 +66,10 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams) error {
 		var rss models.RedStarEvent
 		err = rss.UnmarshalJSON(formattedJSON)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
-		fmt.Sprintf("RedStarStarted %+v\n", rss) //not usage
+		d.RedStarStart(rss, params)
+
 	case "RedStarEnded":
 		var rse models.RedStarEvent
 		if err = rse.UnmarshalJSON(formattedJSON); err != nil {
@@ -134,16 +77,32 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams) error {
 		}
 		err = d.RedStarEnded(rse, params)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
-	default:
-		fmt.Println(string(formattedJSON))
-	}
 
-	//fmt.Println(len(string(formattedJSON)))
+	case "WhiteStarStarted":
+		var wss models.WhiteStarStarted
+		err = json.Unmarshal(formattedJSON, &wss)
+		if err != nil {
+			return err
+		}
+		d.WhiteStarStarted(wss, params)
+
+	case "WhiteStarEnded":
+		var wse models.WhiteStarEnded
+		err = json.Unmarshal(formattedJSON, &wse)
+		if err != nil {
+			return err
+		}
+		d.WhiteStarEnded(wse, params)
+
+	default:
+		d.log.InfoStruct("default "+params.Name, jsonData)
+		fmt.Println(string(body))
+	}
 	return nil
 }
+
 func getSeasonNumber(text string) int {
 	re := regexp.MustCompile(`Season (\d+)`)
 	matches := re.FindStringSubmatch(text)
@@ -156,42 +115,152 @@ func getSeasonNumber(text string) int {
 }
 
 func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.ScoreboardParams) error {
-	if rse.RSEventPoints != 0 {
-		nextDateStart, nextDateStop, message := d.storage.Scoreboard.ReadEventScheduleAndMessage()
-		date1 := time.Now().UTC().Format("02-01-2006")
-		date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
-		eventId := time.Now().UTC().Day() - 10 //test id
-		if date1 == nextDateStart || date2 == nextDateStop {
-			eventId = getSeasonNumber(message)
+	if len(rse.Players) > 0 {
+		text := "RedStarEnded "
+		if rse.DarkRedStar {
+			text = text + fmt.Sprintf("ТКЗ%d\n", rse.StarLevel)
+		} else {
+			text = text + fmt.Sprintf("КЗ%d\n", rse.StarLevel)
+		}
+		for i, player := range rse.Players {
+			text = text + fmt.Sprintf("%d. %s\n", i+1, player.PlayerName)
+		}
+		if rse.RSEventPoints != 0 {
+			text = text + fmt.Sprintf("Получено %d", rse.RSEventPoints)
 		}
 
-		points := rse.RSEventPoints / len(rse.Players)
-		for _, player := range rse.Players {
-			err := d.storage.Battles.BattlesInsert(models.Battles{
-				EventId:  eventId,
-				CorpName: params.Name,
-				Name:     player.PlayerName,
-				Level:    rse.StarLevel,
-				Points:   points,
-			})
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-		}
+		d.SendWebhook(text, rse.Players[0].PlayerName, params.ChannelWebhook, "")
 	} else {
-		for _, player := range rse.Players {
-			err := d.storage.Battles.BattlesTopInsert(models.BattlesTop{
-				CorpName: params.Name,
-				Name:     player.PlayerName,
-				Level:    rse.StarLevel,
-				Count:    1, //+1
-			})
-			if err != nil {
-				fmt.Println(err)
-				return err
+		d.SendWebhook(rse.EventType+" \nучастники не обнаружены", params.Name, params.ChannelWebhook, "")
+	}
+	if params.ChannelScoreboard != "" {
+		if rse.RSEventPoints != 0 {
+			nextDateStart, nextDateStop, message := d.storage.Scoreboard.ReadEventScheduleAndMessage()
+			date1 := time.Now().UTC().Format("02-01-2006")
+			date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
+			eventId := 0
+			if date1 == nextDateStart || date2 == nextDateStop {
+				eventId = getSeasonNumber(message)
+			}
+
+			points := rse.RSEventPoints / len(rse.Players)
+			for _, player := range rse.Players {
+				err := d.storage.Battles.BattlesInsert(models.Battles{
+					EventId:  eventId,
+					CorpName: params.Name,
+					Name:     combineNames(player.PlayerName),
+					Level:    rse.StarLevel,
+					Points:   points,
+				})
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+			}
+		} else {
+			for _, player := range rse.Players {
+				err := d.storage.Battles.BattlesTopInsert(models.BattlesTop{
+					CorpName: params.Name,
+					Name:     combineNames(player.PlayerName),
+					Level:    rse.StarLevel,
+					Count:    1, //+1
+				})
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
 			}
 		}
 	}
+
 	return nil
+}
+func (d *Discord) RedStarStart(rse models.RedStarEvent, params *models.ScoreboardParams) {
+	if len(rse.Players) > 0 {
+		text := "RedStarStart "
+		if rse.DarkRedStar {
+			text = text + fmt.Sprintf("ТКЗ%d\n", rse.StarLevel)
+		} else {
+			text = text + fmt.Sprintf("КЗ%d\n", rse.StarLevel)
+		}
+		for i, player := range rse.Players {
+			text = text + fmt.Sprintf("%d. %s\n", i+1, player.PlayerName)
+		}
+		if rse.RSEventPoints != 0 {
+			text = text + fmt.Sprintf("Получено %d", rse.RSEventPoints)
+		}
+
+		d.SendWebhook(text, rse.Players[0].PlayerName, params.ChannelWebhook, "")
+	} else {
+		d.SendWebhook(rse.EventType+" \nучастники не обнаружены", params.Name, params.ChannelWebhook, "")
+	}
+
+}
+func (d *Discord) WhiteStarStarted(wss models.WhiteStarStarted, params *models.ScoreboardParams) {
+	if wss.Opponent.CorporationName != "" {
+		text := wss.EventType
+		if len(wss.OurParticipants) > 0 {
+			text = text + fmt.Sprintf("\n  Участники: \n")
+			for i, participant := range wss.OurParticipants {
+				text = text + fmt.Sprintf("%d. %s\n", i+1, participant.PlayerName)
+			}
+		}
+		if len(wss.OpponentParticipants) > 0 {
+			text = text + fmt.Sprintf("\n  Противник %s: \n", wss.Opponent.CorporationName)
+			for i, participant := range wss.OpponentParticipants {
+				text = text + fmt.Sprintf("%d. %s\n", i+1, participant.PlayerName)
+			}
+		}
+		d.SendWebhook(text, params.Name, params.ChannelWebhook, "")
+	}
+}
+func (d *Discord) WhiteStarEnded(wse models.WhiteStarEnded, params *models.ScoreboardParams) {
+	text := fmt.Sprintf("%s\nПротивник: %s \n Opponent %d - Our %d \nXPGained %d\n",
+		wse.EventType, wse.Opponent.CorporationName, wse.OpponentScore, wse.OurScore, wse.XPGained)
+	d.SendWebhook(text, params.Name, params.ChannelWebhook, "")
+
+}
+func combineNames(r string) string {
+	switch r {
+	case "Mchuleft", "Valenvaryon":
+		return "Mchuleft"
+	case "Overturned", "Overturned-1.1":
+		return "Overturned"
+	case "RedArrow", "Light Matter", "Dark Matter", "Drake":
+		return "RedArrow"
+	case "Коньячный ЗАВОД", "falcon_2":
+		return "falcon_2"
+	case "Silent_Noise", "WarySamurai1055":
+		return "Silent_Noise"
+	case "arsenium23", "Tabu 666", "Psyker", "kozlovskiu":
+		return "Tabu"
+	case "delov@r", "delovar", "Plague":
+		return "delovar"
+	case "iVanCoMik", "eVanCoMik", "VanCoMik":
+		return "VanCoMik"
+	case "Альтаир", "АЛЬТАИР", "Storm":
+		return "Альтаир"
+	case "Гэндальф серый", "Ёжик71":
+		return "Ёжик71"
+	case "Джонни_De", "JonnyDe":
+		return "JonnyDe"
+	case "N@N", "ChubbChubbs":
+		return "ChubbChubbs"
+	case "Nixonblade", "TimA":
+		return "Nixonblade"
+	case "Widowmaker":
+		return "retresh90"
+	case "Persil", "Pasis", "ILTS":
+		return "Shishu"
+
+	case "Iterius", "Furia":
+		return "Iterius"
+	case "Gennadiy Reng", "Mr.Reng":
+		return "Mr.Reng"
+	//case "DevilMyCry":
+	//	return "Wait and Bleed"
+
+	default:
+		return r
+	}
 }

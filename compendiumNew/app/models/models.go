@@ -16,4 +16,6 @@ type IncomingMessage struct {
 	GuildAvatarF string
 	Type         string
 	Language     string
+	MultiAccount *MultiAccount
+	MultiGuild   *MultiAccountGuild
 }

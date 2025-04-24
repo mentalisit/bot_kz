@@ -9,7 +9,7 @@ import (
 )
 
 func (d *Db) OptimizationSborkz() {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	// Подсчет активных записей и сортировка по имени
 	query := `SELECT mention,corpname,lvlkz, SUM(active) AS active_sum FROM kzbot.sborkz GROUP BY corpname, mention,lvlkz ORDER BY mention`
@@ -76,7 +76,7 @@ func (d *Db) OptimizationSborkz() {
 	}
 }
 func (d *Db) СountName(userid, lvlkz, corpName string) (int, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var countNames int
@@ -91,7 +91,7 @@ func (d *Db) СountName(userid, lvlkz, corpName string) (int, error) {
 	return countNames, nil
 }
 func (d *Db) CountQueue(lvlkz, CorpName string) (int, error) { //проверка сколько игровок в очереди
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var count int
@@ -106,7 +106,7 @@ func (d *Db) CountQueue(lvlkz, CorpName string) (int, error) { //проверк�
 	return count, nil
 }
 func (d *Db) CountNumberNameActive1(lvlkz, CorpName, userid string) (int, error) { // выковыриваем из базы значение количества походов на кз
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var countNumberNameActive1 int
@@ -122,7 +122,7 @@ func (d *Db) CountNumberNameActive1(lvlkz, CorpName, userid string) (int, error)
 }
 
 func (d *Db) CountNameQueue(userid string) (countNames int) { //проверяем есть ли игрок в других очередях
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
 	row := d.db.QueryRow(ctx, sel, userid)
@@ -134,7 +134,7 @@ func (d *Db) CountNameQueue(userid string) (countNames int) { //проверяе
 	return countNames
 }
 func (d *Db) CountNameQueueCorp(userid, corp string) (countNames int) { //проверяем есть ли игрок в других очередях
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
 	row := d.db.QueryRow(ctx, sel, userid, corp)
@@ -147,7 +147,7 @@ func (d *Db) CountNameQueueCorp(userid, corp string) (countNames int) { //про
 	return countNames
 }
 func (d *Db) ReadTop5Level(corpname string) []string {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `
         SELECT lvlkz, COUNT(*) AS lvlkz_count
@@ -184,7 +184,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 }
 
 func (d *Db) CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string) (countQueue, countNumberName, NumRsLevel int, errorsAll error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
@@ -194,7 +194,7 @@ func (d *Db) CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string)
 		errorsAll = fmt.Errorf("%+v\n", err)
 	}
 
-	ctx, cancel = d.GetContext()
+	ctx, cancel = d.getContext()
 	defer cancel()
 
 	sel = "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND userid = $3"
@@ -204,7 +204,7 @@ func (d *Db) CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string)
 		errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
 	}
 
-	ctx, cancel = d.GetContext()
+	ctx, cancel = d.getContext()
 	defer cancel()
 
 	sel = "SELECT  number FROM kzbot.numkz WHERE lvlkz = $1 AND corpname = $2"

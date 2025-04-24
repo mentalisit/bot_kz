@@ -14,9 +14,9 @@ const ds = "ds"
 const tg = "tg"
 
 type Helpers struct {
-	log       *logger.Logger
-	storage   *storage.Storage
-	saveArray []SaveDM
+	log     *logger.Logger
+	storage *storage.Storage
+	//saveArray []SaveDM
 	//Gemini    *Gemini
 }
 
@@ -78,13 +78,19 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 	if s.Wamesid != "" {
 		name = s.Wamesid
 	}
-	t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
+	//multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(s.UserId)
+	//if multiAccount != nil {
+	//	emojiReadUUID := h.storage.Postgres.EmojiReadUUID(multiAccount.UUID, ForType)
+	//}
+
 	newName := s.Name
 	if ForType == ds {
 		newName = s.Mention
 	} else {
 		newName = s.Name
 	}
+
+	t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
 
 	if mention != nil {
 		if mention[0] {
@@ -93,10 +99,10 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 	}
 
 	if len(t.Name) > 0 {
-		//nickName
-		if t.Weapon != "" && s.Tip == "tg" {
-			newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
-		}
+		////nickName
+		//if t.Weapon != "" && s.Tip == "tg" {
+		//	newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
+		//}
 		//Alt
 		if s.Wamesid != "" {
 			newName = fmt.Sprintf("%s [%s]", newName, s.Wamesid)
@@ -115,16 +121,22 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 
 func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 	if name == "" {
+		multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
+		if multiAccount != nil {
+			h.ReadNameModulesUUID(in, name)
+			//return
+		}
 		name = in.Username
 	}
 	var tds, ttg models.EmodjiUser
 	var DsGenesis, DsEnrich, DsRsExtender int
 	var TgGenesis, TgEnrich, TgRsExtender int
+	var genesisA, enrichA, rseA int
 	if in.IfDiscord() {
 		genesis1, enrich1, rsextender1 := 0, 0, 0
-		if name == in.Username {
-			genesis1, enrich1, rsextender1 = GetTechDataUserId(in.UserId, in.Config.Guildid)
-		}
+		//if name == in.Username {
+		//	genesis1, enrich1, rsextender1 = GetTechDataUserId(in.UserId, in.Config.Guildid)
+		//}
 		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
 
 		DsGenesis = max(genesis1, genesis2)
@@ -135,10 +147,16 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		split := strings.Split(in.Config.TgChannel, "/")
 		TgGenesis, TgEnrich, TgRsExtender = Get2TechDataUserId(name, in.UserId, split[0])
 	}
+	if in.Tip == tg {
+		genesisA, enrichA, rseA = Get3TechDataUserId(name, in.UserId)
+		if genesisA != 0 || enrichA != 0 || rseA != 0 {
+			fmt.Printf("use Get3TechDataUserId for %s %s\n", name, in.UserId)
+		}
+	}
 
-	genesis := max(DsGenesis, TgGenesis)
-	enrich := max(DsEnrich, TgEnrich)
-	rsextender := max(DsRsExtender, TgRsExtender)
+	genesis := max(DsGenesis, TgGenesis, genesisA)
+	enrich := max(DsEnrich, TgEnrich, enrichA)
+	rsextender := max(DsRsExtender, TgRsExtender, rseA)
 
 	fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
 

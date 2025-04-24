@@ -122,9 +122,9 @@ func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScorebo
 			break // Выход из основного цикла тоже
 		}
 	}
-	//отправка без обновления сообщения раз в 3 часа
+
 	tn := time.Now().UTC()
-	if tn.Hour()%3 == 0 && tn.Minute() == 59 && mId != "" {
+	if tn.Minute() == 59 && mId != "" {
 		d.DeleteMessage(channelID, mId)
 		mId = ""
 	}

@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
+	"queue/models"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-var merged1 []QueueStruct
+var merged1 []models.QueueStruct
 
 type DataCaprican struct {
 	Category    string  `json:"category"`
@@ -25,13 +26,13 @@ type DataCaprican struct {
 	UserID      string  `json:"userId"`
 }
 
-func sortData(data []DataCaprican) []QueueStruct {
-	var queueSlice []QueueStruct
+func sortData(data []DataCaprican) []models.QueueStruct {
+	var queueSlice []models.QueueStruct
 	for _, datum := range data {
 		if datum.Share != 1 {
 			continue
 		}
-		var st QueueStruct
+		var st models.QueueStruct
 		st.CorpName = datum.GuildName
 		st.Level = fmt.Sprintf("%.1f", datum.RSN)
 		st.Count = 1

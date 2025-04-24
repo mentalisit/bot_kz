@@ -68,6 +68,21 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 		}
 	} else if m.Text == ".паника" {
 		t.log.Panic(".паника " + m.From.String())
+	} else if strings.HasPrefix(m.Text, "%") {
+		i := models.IncomingMessage{
+			Text:        m.Text,
+			DmChat:      strconv.FormatInt(m.From.ID, 10),
+			Name:        m.From.String(),
+			MentionName: "@" + m.From.String(),
+			NameId:      strconv.FormatInt(m.From.ID, 10),
+			NickName:    "", //нет способа извлечь ник кроме member.CustomTitle
+			Type:        "tgDM",
+		}
+
+		if m.From != nil && m.From.LanguageCode != "" {
+			i.Language = m.From.LanguageCode
+		}
+		t.api.SendCompendiumAppRecover(i)
 	} else {
 		in := models.InMessage{
 			Mtext:       m.Text,

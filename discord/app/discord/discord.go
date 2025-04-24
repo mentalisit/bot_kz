@@ -61,6 +61,8 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		}
 	}()
 	go DS.DeleteMessageTimer()
+	DS.ReadWebhookOldMessages()
+
 	return DS
 }
 func (d *Discord) Shutdown() {
@@ -95,6 +97,20 @@ func (d *Discord) DeleteMessageTimer() {
 						d.DeleteMessage(t.Dschatid, t.Dsmesid)
 						d.storage.Db.TimerDeleteMessage(t)
 					}
+				}
+			}
+		}
+	}
+}
+func (d *Discord) ReadWebhookOldMessages() {
+	params := d.storage.Scoreboard.ScoreboardReadAll()
+	if len(params) > 0 {
+		for _, param := range params {
+			messages, _ := d.S.ChannelMessages(param.ChannelWebhook, 100, "", param.LastMessageID, "")
+			if messages != nil && len(messages) > 0 {
+				//обратное чтение слайса
+				for i := len(messages) - 1; i >= 0; i-- {
+					d.logicMixWebhook(messages[i])
 				}
 			}
 		}

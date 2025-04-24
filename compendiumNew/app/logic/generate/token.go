@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 )
 
-func GenerateToken() string {
+func GenerateToken(size int) string {
 	// Вычисляем необходимый размер байт для указанной длины токена
-	tokenBytes := make([]byte, 174)
+	tokenBytes := make([]byte, size)
 	_, err := rand.Read(tokenBytes)
 	if err != nil {
 		return ""

@@ -50,6 +50,7 @@ func (s *Server) runServer() error {
 	router.GET("/queue", s.ReadAllQueue)
 	router.POST("/api/queue", s.QueueApi)
 	router.POST("/api/queue2", s.QueueApi2)
+	router.GET("/api/webhooks", s.GetWebhooks)
 	router.GET("/api/active0", s.ReadAllQueueActive0)
 	router.POST("/api/left", s.Left)
 	router.GET("/health", HealthCheckHandler)

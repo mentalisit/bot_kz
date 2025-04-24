@@ -44,6 +44,9 @@ func (dict *Dictionary) setDictionaryJson(jsonByte []byte) {
 	}
 }
 func (dict *Dictionary) GetText(lang string, key string) string {
+	if lang == "" {
+		return key
+	}
 
 	text := dict.dictionary[lang][key]
 

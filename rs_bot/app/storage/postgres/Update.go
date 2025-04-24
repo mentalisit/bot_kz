@@ -9,7 +9,7 @@ func (d *Db) MesidTgUpdate(mesidtg int, lvlkz string, corpname string) error {
 	if mesidtg == 0 {
 		return errors.New("mesId == null")
 	}
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set tgmesid = $1 where lvlkz = $2 AND corpname = $3 AND active = 0`
 	_, err := d.db.Exec(ctx, upd, mesidtg, lvlkz, corpname)
@@ -22,7 +22,7 @@ func (d *Db) MesidDsUpdate(mesidds, lvlkz, corpname string) error {
 	if mesidds == "" {
 		return errors.New("mesId == null")
 	}
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set dsmesid = $1 where lvlkz = $2 AND corpname = $3 AND active = 0`
 	_, err := d.db.Exec(ctx, upd, mesidds, lvlkz, corpname)
@@ -32,7 +32,7 @@ func (d *Db) MesidDsUpdate(mesidds, lvlkz, corpname string) error {
 	return nil
 }
 func (d *Db) UpdateCompliteRS(lvlkz string, dsmesid string, tgmesid int, wamesid string, numberkz int, numberevent int, corpname string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
@@ -59,7 +59,7 @@ func (d *Db) UpdateCompliteRS(lvlkz string, dsmesid string, tgmesid int, wamesid
 	return nil
 }
 func (d *Db) UpdateCompliteSolo(lvlkz string, dsmesid string, tgmesid int, numberkz int, numberevent int, corpname string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))

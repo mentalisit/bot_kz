@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Db) SubscribePing(nameMention, lvlkz string, tipPing int, TgChannel string) string {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var name1 string
 	var nameIds []string
@@ -44,7 +44,7 @@ func (d *Db) SubscribePing(nameMention, lvlkz string, tipPing int, TgChannel str
 	return strings.TrimSuffix(men, ", ")
 }
 func (d *Db) CheckSubscribe(name, lvlkz string, TgChannel string, tipPing int) int {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var counts int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.subscribe WHERE name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
@@ -59,7 +59,7 @@ func (d *Db) Subscribe(name, nameMention, lvlkz string, tipPing int, TgChannel s
 	if d.CheckSubscribe(name, lvlkz, TgChannel, tipPing) > 0 {
 		return
 	}
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insertSubscribe := `INSERT INTO kzbot.subscribe (name, nameid, lvlkz, tip, chatid, timestart, timeend) VALUES ($1,$2,$3,$4,$5,$6,$7)`
 	_, err := d.db.Exec(ctx, insertSubscribe, name, nameMention, lvlkz, tipPing, TgChannel, "0", "0")
@@ -68,7 +68,7 @@ func (d *Db) Subscribe(name, nameMention, lvlkz string, tipPing int, TgChannel s
 	}
 }
 func (d *Db) Unsubscribe(name, lvlkz string, TgChannel string, tipPing int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	del := "delete from kzbot.subscribe where name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
 	_, err := d.db.Exec(ctx, del, name, lvlkz, TgChannel, tipPing)

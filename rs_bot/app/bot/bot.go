@@ -106,11 +106,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		b.accessChat(in)
 		return
 	}
-	if in.Tip == "GameWebhook" {
-		b.log.InfoStruct("LogicRs", in)
-		go b.GameWebhook(in)
-		return
-	}
+
 	if in.Tip == "dsDM" || in.Tip == "tgDM" {
 		b.log.Info(fmt.Sprintf("%s @%s: %s", in.Tip, in.Username, in.Mtext))
 

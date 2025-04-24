@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"rs/models"
@@ -24,6 +25,8 @@ func (b *Bot) accessChat(in models.InMessage) {
 			b.accessDelChannel(in, "ru")
 		case "видалити":
 			b.accessDelChannel(in, "ua")
+		case "scoreboard":
+			b.logicScoreboardSetting(in)
 		case "паника":
 			b.log.Panic("перезагрузка по требованию")
 		default:
@@ -136,6 +139,77 @@ func (b *Bot) cleanOldMessage(in models.InMessage) bool {
 	if len(matches) > 0 {
 		fmt.Println("limitMessage " + matches[1])
 		b.client.Ds.CleanOldMessageChannel(in.Config.DsChannel, matches[1])
+		return true
+	}
+	return false
+}
+func (b *Bot) logicScoreboardSetting(in models.InMessage) bool {
+	afterScoreboard, found := strings.CutPrefix(in.Mtext, ".scoreboard")
+	if found {
+		text := ""
+		afterWebhook, foundWebhook := strings.CutPrefix(afterScoreboard, " webhook ")
+		if afterWebhook == "name" {
+			text = "you can't use the 'name', it's not unique"
+			foundWebhook = false
+		}
+		if foundWebhook {
+			if in.Tip != ds {
+				return false
+			}
+			scoreboardReadName := b.storage.Scoreboard.ScoreboardReadName(afterWebhook)
+			if scoreboardReadName == nil {
+				s := models.ScoreboardParams{
+					Name: afterWebhook,
+				}
+				if in.Tip == ds {
+					s.ChannelWebhook = in.Config.DsChannel
+				}
+				b.storage.Scoreboard.ScoreboardInsertParam(s)
+				text = "now the bot will wait here for webhooks from the game, connect another channel to display the leaderboard"
+			} else {
+				text = "this channel is already listened to by a bot to receive webhooks from the game.Name " + scoreboardReadName.Name
+				b.log.Info("found " + afterWebhook + " in scoreboard")
+			}
+		}
+		afterHere, fountHere := strings.CutPrefix(afterScoreboard, " here ")
+		if afterHere == "name" {
+			text = "you can't use the 'name', it's not unique"
+			fountHere = false
+		}
+		if fountHere {
+			scoreboard := b.storage.Scoreboard.ScoreboardReadName(afterHere)
+			if scoreboard != nil {
+				m, str := scoreboard.GetMapOrString()
+				if str != "" {
+					m = make(map[string]string)
+					if strings.HasPrefix(str, "-") {
+						m["tg"] = str
+					} else {
+						m["ds"] = str
+					}
+				}
+				if in.Tip == ds {
+					m["ds"] = in.Config.DsChannel
+				} else if in.Tip == tg {
+					m["tg"] = in.Config.TgChannel
+				}
+				marshal, _ := json.Marshal(m)
+				scoreboard.ChannelScoreboardOrMap = string(marshal)
+				b.storage.Scoreboard.ScoreboardUpdateParamScoreChannels(*scoreboard)
+				text = "now the leaderboard will be displayed here"
+			} else {
+				b.log.Info("not found " + afterHere + " in scoreboard")
+				text = "it is impossible to connect the leaderboard without having a channel of incoming data from the game via webhook"
+			}
+		}
+		if text == "" && !fountHere && !foundWebhook {
+			text = "To set up automatic display of red star event leaders, you need to do several things:\n" +
+				"1) set up sending webhook to you in the game in a hidden channel in discord\n" +
+				"2) execute the command to connect the bot to listening to this channel, come up with a unique name or use the corporation name in the command '.scoreboard webhook name' where name is a unique name that will link the data in the bot.\n" +
+				"3) execute the command in the channel open for viewing your corporation where the leaderboard will be displayed '.scoreboard here name'"
+		}
+		b.iftipdelete(in)
+		b.ifTipSendTextDelSecond(in, text, 1800)
 		return true
 	}
 	return false

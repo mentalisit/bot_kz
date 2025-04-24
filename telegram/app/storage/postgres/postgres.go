@@ -43,6 +43,6 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 
 	return db
 }
-func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }

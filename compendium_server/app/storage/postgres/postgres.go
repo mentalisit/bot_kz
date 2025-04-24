@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"compendium_s/config"
+	"compendium_s/storage/postgres/multi"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
@@ -13,8 +14,9 @@ import (
 )
 
 type Db struct {
-	db  Client
-	log *logger.Logger
+	db    Client
+	log   *logger.Logger
+	Multi *multi.Db
 }
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
@@ -34,18 +36,17 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		os.Exit(1)
 		//return err
 	}
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+
 	db := &Db{
-		db:  pool,
-		log: log,
+		db:    pool,
+		log:   log,
+		Multi: multi.NewDb(log, pool),
 	}
 	go db.createTable()
 	return db
 }
 func (d *Db) createTable() {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS hs_compendium")
 
@@ -172,6 +173,6 @@ func (d *Db) createTable() {
 	}
 }
 
-func (d *Db) GetContext() (ctx context.Context, cancel context.CancelFunc) {
+func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }

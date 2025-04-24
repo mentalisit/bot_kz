@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"os"
 
 	//tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"path/filepath"
@@ -71,6 +72,28 @@ func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) error {
 
 	return nil
 }
+func (t *Telegram) SendPicScoreboard(chatID, text, fileNameScoreboard string) (mid string, err error) {
+	chatid, threadID := t.chat(chatID)
+	open, err := os.Open("docker/scoreboard/" + fileNameScoreboard)
+	if err != nil {
+		return "", err
+	}
+
+	msg := tgbotapi.NewPhoto(chatid, tgbotapi.FileReader{
+		Name:   fileNameScoreboard,
+		Reader: open,
+	})
+	msg.MessageThreadID = threadID
+	msg.Caption = text
+
+	// Отправляем изображение
+	mes, err := t.t.Send(msg)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(mes.MessageID), nil
+}
 func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.MessageIds {
 	var messageIds []models.MessageIds
 	for _, chat := range in.ChannelId {
@@ -128,7 +151,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 	if extra != nil {
 		if len(extra) > 0 {
 			chatId, threadID := t.chat(chatID)
-			var media []interface{}
+			var media []tgbotapi.InputMedia
 			for _, f := range extra {
 				if f.URL == "" && len(f.Data) == 0 && f.FileID == "" {
 					continue
@@ -149,15 +172,15 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 				case ".jpg", ".jpe", ".png":
 					pc := tgbotapi.NewInputMediaPhoto(fileRequestData)
 					pc.Caption = text
-					media = append(media, pc)
+					media = append(media, &pc)
 				case ".mp4", ".m4v":
 					vc := tgbotapi.NewInputMediaVideo(fileRequestData)
 					vc.Caption = text
-					media = append(media, vc)
+					media = append(media, &vc)
 				case ".mp3", ".oga":
 					ac := tgbotapi.NewInputMediaAudio(fileRequestData)
 					ac.Caption = text
-					media = append(media, ac)
+					media = append(media, &ac)
 				case ".ogg":
 					chatid, _ := t.chat(chatID)
 					voc := tgbotapi.NewVoice(chatid, fileRequestData)
@@ -172,7 +195,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 				default:
 					dc := tgbotapi.NewInputMediaDocument(fileRequestData)
 					dc.Caption = text
-					media = append(media, dc)
+					media = append(media, &dc)
 				}
 			}
 

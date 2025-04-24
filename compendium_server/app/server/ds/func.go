@@ -3,6 +3,7 @@ package ds
 import (
 	"compendium_s/models"
 	"context"
+	"fmt"
 )
 
 func (c *Client) CheckRoleDs(guildId, memderId, roleid string) bool {
@@ -42,6 +43,7 @@ func (c *Client) GetRoles(guildId string) ([]models.CorpRole, error) {
 		return nil, err
 	}
 	var roles2 []models.CorpRole
+	fmt.Printf("GetRoles %s len %d\n", guildId, len(roles.Roles))
 	for _, role := range roles.Roles {
 		roles2 = append(roles2, models.CorpRole{
 			Id:   role.Id,

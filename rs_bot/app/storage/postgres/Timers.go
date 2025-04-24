@@ -5,7 +5,7 @@ import (
 )
 
 func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
@@ -33,7 +33,7 @@ func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
 }
 
 func (d *Db) MinusMin() []models.Sborkz {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set timedown = timedown - 1 where active = 0`
 	_, err := d.db.Exec(ctx, upd)
@@ -59,7 +59,7 @@ func (d *Db) MinusMin() []models.Sborkz {
 }
 
 func (d *Db) TimerInsert(c models.Timer) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO kzbot.timer(dsmesid, dschatid, tgmesid, tgchatid, timed) 
 				VALUES ($1,$2,$3,$4,$5)`
@@ -70,7 +70,7 @@ func (d *Db) TimerInsert(c models.Timer) {
 }
 
 func (d *Db) TimerDeleteMessage() []models.Timer {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `UPDATE kzbot.timer SET timed = timed - 60 WHERE timed > 60`
 

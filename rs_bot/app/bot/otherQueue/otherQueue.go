@@ -6,7 +6,6 @@ import (
 	"rs/models"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type OtherQ struct {
@@ -18,11 +17,10 @@ func NewOtherQ(log *logger.Logger) *OtherQ {
 }
 
 func (o *OtherQ) MyQueue() string {
-	time.Sleep(5 * time.Second)
 	queueAll, err := GetQueueAll()
 	if err != nil {
 		fmt.Println(err)
-		return ""
+		return "Сервис временно недоступен "
 	}
 	var text string
 	for s, structs := range queueAll {

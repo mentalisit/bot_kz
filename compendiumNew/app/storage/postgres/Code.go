@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Db) CodeInsert(u models.Code) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO hs_compendium.codes(code,timestamp,identity) VALUES ($1,$2,$3)`
 	bytes, err := json.Marshal(u.Identity)
@@ -23,7 +23,7 @@ func (d *Db) CodeInsert(u models.Code) error {
 }
 
 func (d *Db) CodeGet(code string) (*models.Code, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.Code
 	var id int

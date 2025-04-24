@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Db) GuildRoleCreate(guildid string, RoleName string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO hs_compendium.guildroles(guildid, role) VALUES ($1,$2)`
 	_, err := d.db.Exec(ctx, insert, guildid, RoleName)
@@ -16,7 +16,7 @@ func (d *Db) GuildRoleCreate(guildid string, RoleName string) error {
 	return nil
 }
 func (d *Db) GuildRoleExist(guildid string, RoleName string) bool {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	selectid := "SELECT count(*) FROM hs_compendium.guildroles WHERE guildid = $1 AND role = $2"
@@ -27,7 +27,7 @@ func (d *Db) GuildRoleExist(guildid string, RoleName string) bool {
 	return false
 }
 func (d *Db) GuildRoleDelete(guildid string, RoleName string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteRole := `DELETE FROM hs_compendium.guildroles WHERE guildid = $1 AND role = $2`
 	_, err := d.db.Exec(ctx, deleteRole, guildid, RoleName)
@@ -38,7 +38,7 @@ func (d *Db) GuildRoleDelete(guildid string, RoleName string) error {
 }
 
 func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	selectRoLes := `SELECT id,role FROM hs_compendium.guildroles WHERE guildid = $1`
 	var roles []models.CorpRole
@@ -62,7 +62,7 @@ func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
 }
 
 func (d *Db) GuildRolesSubscribe(guildid, RoleName, userName, userid string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO hs_compendium.userroles(guildid, role,username,userid) VALUES ($1,$2,$3,$4)`
 	_, err := d.db.Exec(ctx, insert, guildid, RoleName, userName, userid)
@@ -72,7 +72,7 @@ func (d *Db) GuildRolesSubscribe(guildid, RoleName, userName, userid string) err
 	return nil
 }
 func (d *Db) GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteSubscribe := `DELETE FROM hs_compendium.userroles WHERE guildid = $1 AND role = $2 AND userid = $3 AND username = $4`
 	_, err := d.db.Exec(ctx, deleteSubscribe, guildid, RoleName, userid, userName)
@@ -83,7 +83,7 @@ func (d *Db) GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid s
 }
 
 func (d *Db) GuildRolesExistSubscribe(guildid, RoleName, userid string) bool {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var id int
 	selectid := "SELECT id FROM hs_compendium.userroles WHERE guildid = $1 AND role = $2 AND userid = $3"
@@ -94,7 +94,7 @@ func (d *Db) GuildRolesExistSubscribe(guildid, RoleName, userid string) bool {
 	return true
 }
 func (d *Db) GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteSubscribe := `DELETE FROM hs_compendium.userroles WHERE guildid = $1 AND role = $2 AND userid = $3`
 	_, err := d.db.Exec(ctx, deleteSubscribe, guildid, RoleName, userid)
@@ -105,7 +105,7 @@ func (d *Db) GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error {
 }
 
 //func (d *Db) GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, error) {
-//	ctx, cancel := d.GetContext()
+//	ctx, cancel := d.getContext()
 //	defer cancel()
 //	selectUsers := `SELECT username FROM compendium.guildrole WHERE guildid = $1 AND role = $2`
 //	var users []string

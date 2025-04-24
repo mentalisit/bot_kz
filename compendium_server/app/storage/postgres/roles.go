@@ -33,7 +33,7 @@ import (
 //}
 
 func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	selectRoLes := `SELECT id,role FROM hs_compendium.guildroles WHERE guildid = $1`
 	var roles []models.CorpRole
@@ -65,7 +65,7 @@ func (d *Db) GuildRolesRead(guildid string) ([]models.CorpRole, error) {
 //}
 
 func (d *Db) GuildRolesExistSubscribe(guildid, RoleName, userid string) bool {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var id int
 	selectid := "SELECT id FROM hs_compendium.userroles WHERE guildid = $1 AND role = $2 AND userid = $3"

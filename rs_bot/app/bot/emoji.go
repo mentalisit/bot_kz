@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 	"rs/models"
-	"strings"
 )
 
 // lang ok
@@ -30,19 +29,20 @@ func (b *Bot) emodjis(in models.InMessage) {
 	}
 	b.ifTipSendTextDelSecond(in, b.getText(in, "your_emoji")+text, 60)
 }
-func (b *Bot) instalNick(in models.InMessage, input string) (ok bool, nick string) {
-	words := strings.Fields(input)
-	if len(words) >= 2 && strings.ToLower(words[0]) == "nick" {
-		nick = words[1]
-		ok = true
-		t := b.storage.Emoji.EmojiModuleReadUsers(in.Username, in.Tip)
-		if len(t.Name) == 0 {
-			b.storage.Emoji.EmInsertEmpty(in.Tip, in.Username)
-		}
-		go b.storage.Emoji.WeaponUpdate(in.Username, in.Tip, nick)
-	} else if len(words) == 1 && strings.ToLower(words[0]) == "nick" {
-		go b.storage.Emoji.WeaponUpdate(in.Username, in.Tip, "")
-		return true, "удалено"
-	}
-	return ok, nick
-}
+
+//func (b *Bot) instalNick(in models.InMessage, input string) (ok bool, nick string) {
+//	words := strings.Fields(input)
+//	if len(words) >= 2 && strings.ToLower(words[0]) == "nick" {
+//		nick = words[1]
+//		ok = true
+//		t := b.storage.Emoji.EmojiModuleReadUsers(in.Username, in.Tip)
+//		if len(t.Name) == 0 {
+//			b.storage.Emoji.EmInsertEmpty(in.Tip, in.Username)
+//		}
+//		go b.storage.Emoji.WeaponUpdate(in.Username, in.Tip, nick)
+//	} else if len(words) == 1 && strings.ToLower(words[0]) == "nick" {
+//		go b.storage.Emoji.WeaponUpdate(in.Username, in.Tip, "")
+//		return true, "удалено"
+//	}
+//	return ok, nick
+//}

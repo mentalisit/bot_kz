@@ -1,16 +1,9 @@
 package rsbotbd
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mentalisit/logger"
-	"queue/config"
-	"queue/models"
-	"sort"
 	"strconv"
-	"time"
 )
 
 type Queue struct {
@@ -36,40 +29,6 @@ func NewQueue(log *logger.Logger) *Queue {
 
 	return q
 }
-func (q *Queue) GetDBQueue() (tt []models.Tumcha) {
-
-	db, err := sql.Open("mysql", config.Instance.MySQl)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer db.Close()
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancelFunc()
-
-	rows, err := db.QueryContext(ctx, "select name,nameid,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var t models.Tumcha
-		err = rows.Scan(&t.Name, &t.NameId, &t.Level, &t.Vid, &t.Chatid, &t.Timedown)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		tt = append(tt, t)
-	}
-	sort.Slice(tt, func(i, j int) bool {
-		return tt[i].Chatid < tt[j].Chatid
-	})
-
-	return
-}
 
 func (q *Queue) getname(chatid int) string {
 	text := q.corpName[chatid]
@@ -78,3 +37,38 @@ func (q *Queue) getname(chatid int) string {
 	}
 	return text
 }
+
+//func (q *Queue) GetDBQueue() (tt []models.Tumcha) {
+//
+//	db, err := sql.Open("mysql", config.Instance.MySQl)
+//	if err != nil {
+//		q.log.ErrorErr(err)
+//		return
+//	}
+//	defer db.Close()
+//
+//	ctx, cancelFunc := context.WithTimeout(context.Background(), 9*time.Second)
+//	defer cancelFunc()
+//
+//	rows, err := db.QueryContext(ctx, "select name,nameid,lvlkz,vid,chatid,timedown from sborkz WHERE active = 0")
+//	if err != nil {
+//		q.log.ErrorErr(err)
+//		return
+//	}
+//	defer rows.Close()
+//
+//	for rows.Next() {
+//		var t models.Tumcha
+//		err = rows.Scan(&t.Name, &t.NameId, &t.Level, &t.Vid, &t.Chatid, &t.Timedown)
+//		if err != nil {
+//			q.log.ErrorErr(err)
+//			continue
+//		}
+//		tt = append(tt, t)
+//	}
+//	sort.Slice(tt, func(i, j int) bool {
+//		return tt[i].Chatid < tt[j].Chatid
+//	})
+//
+//	return
+//}

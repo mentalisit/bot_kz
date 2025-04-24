@@ -19,6 +19,7 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 	if !conn {
 		return false
 	}
+
 	text := fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName)
 	mid1, err := c.sendDM(m, text)
 	if err != nil && err.Error() == "forbidden" {
@@ -34,66 +35,87 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 		c.log.InfoStruct("connect error ", err)
 		return
 	}
+
 	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
 
 	newIdentify, cm := generate.GenerateIdentity(m)
 
-	tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
-	if tokenOld != "" {
-		prefixToken := m.Type + m.GuildId + "." + m.NameId
-		if len(tokenOld) < 60 {
-			newToken := prefixToken + generate.GenerateToken()
-			err = c.listUser.ListUserUpdateToken(tokenOld, newToken)
-			if err == nil {
-				newIdentify.Token = newToken
+	if m.MultiAccount != nil {
+		jwtGenerateToken, errJwt := generate.JWTGenerateToken(m.MultiAccount.UUID, m.MultiGuild.GId, m.Name)
+		if errJwt != nil {
+			c.log.ErrorErr(errJwt)
+			return false
+		}
+		newIdentify.Token = jwtGenerateToken
+
+		sendDM, _ := c.sendDM(m, "Подготавливаю секретную ссылку")
+		go func() {
+			time.Sleep(5 * time.Second)
+
+			links := "https://mentalisit.github.io/HadesSpace/compendiumTech?secretToken=" + newIdentify.Token
+			text = fmt.Sprintf(c.getText(m, "SECRET_LINK"), links, m.MultiGuild.GuildName)
+			err = c.editMessage(m, m.DmChat, sendDM, text, "MarkdownV2")
+			if err != nil {
+				c.log.ErrorErr(err)
+				return
 			}
-		} else {
-			if strings.Contains(tokenOld, prefixToken) {
-				newIdentify.Token = tokenOld
+		}()
+	} else {
+		tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
+		if tokenOld != "" {
+			prefixToken := m.Type + m.GuildId + "." + m.NameId
+			if len(tokenOld) < 60 {
+				newToken := prefixToken + generate.GenerateToken(174)
+				err = c.listUser.ListUserUpdateToken(tokenOld, newToken)
+				if err == nil {
+					newIdentify.Token = newToken
+				}
 			} else {
-				newIdentify.Token = prefixToken + tokenOld
+				if strings.Contains(tokenOld, prefixToken) {
+					newIdentify.Token = tokenOld
+				} else {
+					newIdentify.Token = prefixToken + tokenOld
+				}
 			}
 		}
-	}
+		code := c.generateCodeAndSave(newIdentify)
 
-	code := c.generateCodeAndSave(newIdentify)
+		err = c.guilds.GuildInsert(newIdentify.Guild)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+		err = c.users.UsersInsert(newIdentify.User)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+		err = c.corpMember.CorpMemberInsert(cm)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+		err = c.listUser.ListUserInsert(newIdentify.Token, newIdentify.User.ID, newIdentify.Guild.ID)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
 
-	err = c.guilds.GuildInsert(newIdentify.Guild)
-	if err != nil {
-		c.log.ErrorErr(err)
-		return
-	}
-	err = c.users.UsersInsert(newIdentify.User)
-	if err != nil {
-		c.log.ErrorErr(err)
-		return
-	}
-	err = c.corpMember.CorpMemberInsert(cm)
-	if err != nil {
-		c.log.ErrorErr(err)
-		return
-	}
-	err = c.listUser.ListUserInsert(newIdentify.Token, newIdentify.User.ID, newIdentify.Guild.ID)
-	if err != nil {
-		c.log.ErrorErr(err)
-		return
-	}
+		mid2, errs1 := c.sendDM(m, code)
+		if errs1 != nil {
+			c.log.ErrorErr(errs1)
+			return
+		}
 
-	mid2, errs1 := c.sendDM(m, code)
-	if errs1 != nil {
-		c.log.ErrorErr(errs1)
-		return
+		urlLinkAdd := "compendiumTech?c=" + code + "&lang=" + m.Language + "&client=1"
+		mid3, errs2 := c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
+		if errs2 != nil {
+			c.log.ErrorErr(errs2)
+			return
+		}
+
+		go c.timerEditMessage(m, mid1, mid2, mid3)
 	}
-
-	urlLinkAdd := "compendiumTech?c=" + code + "&lang=" + m.Language + "&client=1"
-	mid3, errs2 := c.sendDM(m, fmt.Sprintf(c.getText(m, "PLEASE_PASTE_CODE"), urlLink, urlLink+urlLinkAdd))
-	if errs2 != nil {
-		c.log.ErrorErr(errs2)
-		return
-	}
-
-	go c.timerEditMessage(m, mid1, mid2, mid3)
-
 	return
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
@@ -34,7 +34,7 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 	return nil
 }
 func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
 	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2 AND username = $3"
@@ -47,7 +47,7 @@ func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
 	return tech, nil
 }
 func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
 	var userid string
@@ -61,7 +61,7 @@ func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
 	return tech, userid, nil
 }
 func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var acm []models.CorpMember
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
@@ -100,7 +100,7 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	return acm, nil
 }
 func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3 and guildid = $4`
 	updresult, err := d.db.Exec(ctx, upd, tech, username, userid, guildid)
@@ -117,7 +117,7 @@ func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
 	return nil
 }
 func (d *Db) TechDelete(username, userid, guildid string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"

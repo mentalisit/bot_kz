@@ -39,7 +39,7 @@ import (
 //}
 
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
 	results, err := d.db.Query(ctx, sel, guildid)

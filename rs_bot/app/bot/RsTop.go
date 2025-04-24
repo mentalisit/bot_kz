@@ -80,10 +80,21 @@ func (b *Bot) Top(in models.InMessage) {
 	}
 }
 
-func (b *Bot) TopForGame(in models.InMessage) {
+func (b *Bot) TopGame(in models.InMessage) {
 	b.iftipdelete(in)
+
+	corpName := ""
+	switch in.Config.CorpName {
+	case "Корпорация  \"РУСЬ\".сбор-на-кз":
+		corpName = "rusb"
+	case "IX Legion.сбор-на-кз-бот":
+		corpName = "IX_Легион"
+	default:
+		return
+	}
+
 	number := 1
-	message := ""
+	title := ""
 	message2 := ""
 	var allpoints int
 	var resultsTop []models.Top
@@ -95,46 +106,69 @@ func (b *Bot) TopForGame(in models.InMessage) {
 		return fmt.Sprintf("%d. %s - %d (%s)\n", number, top.Name, top.Numkz, formatNumber(top.Points))
 	}
 
-	b.ifTipSendTextDelSecond(in, b.getText(in, "scan_db"), 5)
-	message = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s:\n",
-		b.getText(in, "top_participants"), b.getText(in, "event"))
-	star, _ := b.storage.Top.RedStarFightGetStar()
-	if star == nil {
-		return
+	nextDateStart, nextDateStop, messageNews := b.storage.Battles.ReadEventScheduleAndMessage()
+	date1 := time.Now().UTC().Format("02-01-2006")
+	date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
+	numEvent := 0
+
+	if date1 == nextDateStart || date2 == nextDateStop {
+		numEvent = getSeasonNumber(messageNews)
+		title = fmt.Sprintf("Сезон №%d %s - %s\n", numEvent, nextDateStart, nextDateStop)
 	}
-	rr := make(map[string][]models.Top)
-	for _, fight := range star {
-		if fight.CountParticipants() != 0 {
-			for _, participants := range fight.ParticipantsSlice {
-				name := combineNames(participants.PlayerName)
-				rr[name] = append(rr[name], models.Top{
-					Name:   name,
-					Numkz:  1,
-					Points: fight.Points / fight.CountParticipants(),
+
+	b.ifTipSendTextDelSecond(in, b.getText(in, "scan_db"), 5)
+
+	_, level := in.TypeRedStar()
+	if numEvent == 0 {
+		battlesTopGetAll, err := b.storage.Battles.BattlesTopGetAll(corpName)
+		if err != nil {
+			b.log.ErrorErr(err)
+			return
+		}
+		if in.RsTypeLevel != "" {
+			title = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s%s:\n",
+				b.getText(in, "top_participants"), b.getText(in, "rs"), level)
+
+			levelInt, err := strconv.Atoi(level)
+			if err != nil {
+				return
+			}
+			for _, top := range battlesTopGetAll {
+				if top.Level == levelInt {
+					resultsTop = append(resultsTop, models.Top{
+						Name:   top.Name,
+						Numkz:  top.Count,
+						Points: 0,
+					})
+				}
+			}
+		} else {
+			title = fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText(in, "top_participants"))
+			for _, t := range battlesTopGetAll {
+				resultsTop = append(resultsTop, models.Top{
+					Name:  t.Name,
+					Numkz: t.Count,
 				})
 			}
 		}
-	}
-	rrr := make(map[string]models.Top)
-
-	for s, tops := range rr {
-		var tr models.Top
-		tr.Name = s
-		for _, top := range tops {
-			tr.Points += top.Points
-			tr.Numkz += top.Numkz
+		sort.Slice(resultsTop, func(i, j int) bool {
+			return resultsTop[i].Numkz > resultsTop[j].Numkz
+		})
+	} else {
+		battlesGetAll, err := b.storage.Battles.BattlesGetAll(corpName, numEvent)
+		if err != nil {
+			b.log.ErrorErr(err)
+			return
 		}
-		rrr[s] = tr
+		for _, stats := range battlesGetAll {
+			resultsTop = append(resultsTop, models.Top{
+				Name:   stats.Player,
+				Numkz:  stats.Runs,
+				Points: stats.Points,
+			})
+		}
+		resultsTop = mergeAndSumTops(resultsTop)
 	}
-
-	for _, top := range rrr {
-		resultsTop = append(resultsTop, top)
-	}
-
-	sort.Slice(resultsTop, func(i, j int) bool {
-		return resultsTop[i].Points > resultsTop[j].Points
-	})
-
 	if len(resultsTop) == 0 {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "no_history"), 20)
 		return
@@ -150,52 +184,14 @@ func (b *Bot) TopForGame(in models.InMessage) {
 	}
 
 	if in.Tip == ds {
-		mid := b.client.Ds.SendEmbedText(in.Config.DsChannel, message, message2)
+		mid := b.client.Ds.SendEmbedText(in.Config.DsChannel, title, message2)
 		b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, mid, 600)
 	} else if in.Tip == tg {
-		text := message + message2
-		if in.Config.Guildid != "" {
-			b.ifTipSendTextDelSecond(in, b.getText(in, "form_list"), 10)
-			text = b.client.Ds.ReplaceTextMessage(text, in.Config.Guildid)
-		}
-		text = strings.ReplaceAll(text, "@", "")
+		text := title + message2
 		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
 	}
 }
 
-func combineNames(r string) string {
-	switch r {
-	case "Mchuleft", "Valenvaryon":
-		return "Mchuleft"
-	case "Overturned", "Overturned-1.1":
-		return "Overturned"
-	case "RedArrow", "Light Matter", "Dark Matter", "Drake":
-		return "RedArrow"
-	case "Коньячный ЗАВОД", "falcon_2":
-		return "falcon_2"
-	case "Silent_Noise", "WarySamurai1055":
-		return "Silent_Noise"
-	case "arsenium23", "Tabu 666", "Psyker":
-		return "Tabu"
-	case "delov@r", "delovar", "Plague":
-		return "delovar"
-	case "iVanCoMik", "eVanCoMik", "VanCoMik":
-		return "VanCoMik"
-	case "Альтаир", "АЛЬТАИР", "Storm":
-		return "Альтаир"
-	case "Гэндальф серый", "Ёжик71":
-		return "Ёжик71"
-	case "Джонни_De", "JonnyDe":
-		return "JonnyDe"
-	case "N@N", "ChubbChubbs":
-		return "ChubbChubbs"
-	case "Nixonblade", "TimA":
-		return "Nixonblade"
-
-	default:
-		return r
-	}
-}
 func mergeAndSumTops(tops []models.Top) []models.Top {
 	merged := make(map[string]models.Top)
 

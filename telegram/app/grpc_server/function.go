@@ -54,6 +54,13 @@ func (s *Server) SendPic(ctx context.Context, in *SendPicRequest) (*ErrorRespons
 	}
 	return &ErrorResponse{}, nil
 }
+func (s *Server) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest) (*ScoreboardResponse, error) {
+	mid, err := s.tg.SendPicScoreboard(in.ChaatId, in.Text, in.FileNameScoreboard)
+	if err != nil {
+		return &ScoreboardResponse{ErrorMessage: err.Error()}, err
+	}
+	return &ScoreboardResponse{Mid: mid}, nil
+}
 func (s *Server) CheckAdmin(ctx context.Context, in *CheckAdminRequest) (*FlagResponse, error) {
 	admin := s.tg.CheckAdminTg(in.GetChatid(), in.GetName())
 	return &FlagResponse{Flag: admin}, nil

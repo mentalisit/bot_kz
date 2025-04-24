@@ -5,21 +5,8 @@ import (
 	"rs/models"
 )
 
-/*
-`
-		CREATE TABLE IF NOT EXISTS rs_bot.battles
-	(
-		id     bigserial        primary key,
-		eventId integer NOT NULL DEFAULT 0,
-		corporation text NOT NULL DEFAULT '',
-		name text NOT NULL DEFAULT '',
-		level    integer NOT NULL DEFAULT 0,
-		points   integer NOT NULL DEFAULT 0
-	);`
-*/
-
 func (d *Db) BattlesInsert(b models.Battles) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO rs_bot.battles(eventid,corporation,name,level,points) VALUES ($1,$2,$3,$4,$5)`
 	_, err := d.db.Exec(ctx, insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points)
@@ -30,7 +17,7 @@ func (d *Db) BattlesInsert(b models.Battles) error {
 }
 
 func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `
 		SELECT name,
@@ -65,7 +52,7 @@ func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, er
 }
 
 func (d *Db) ScoreboardParamsReadAll() []models.ScoreboardParams {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `SELECT name,webhookchannel,scorechannel FROM rs_bot.scoreboard`
 	rows, err := d.db.Query(ctx, query)
@@ -78,7 +65,7 @@ func (d *Db) ScoreboardParamsReadAll() []models.ScoreboardParams {
 	var params []models.ScoreboardParams
 	for rows.Next() {
 		var ps models.ScoreboardParams
-		if err = rows.Scan(&ps.Name, &ps.ChannelWebhook, &ps.ChannelScoreboard); err != nil {
+		if err = rows.Scan(&ps.Name, &ps.ChannelWebhook, &ps.ChannelScoreboardOrMap); err != nil {
 			d.log.ErrorErr(err)
 			return nil
 		}
@@ -94,7 +81,7 @@ func (d *Db) ScoreboardParamsReadAll() []models.ScoreboardParams {
 }
 
 func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `SELECT * FROM rs_bot.battlestop where corporation=$1 `
 	rows, err := d.db.Query(ctx, query, corpName)
@@ -117,32 +104,4 @@ func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
 	}
 
 	return stats, nil
-}
-
-func (d *Db) IdentifyGetPoints() (ss []models.Identify, err error) {
-	ctx, cancel := d.GetContext()
-	defer cancel()
-
-	query := `
-	SELECT * 
-	FROM rs_bot.identify
-	WHERE points > 0 
-	AND participants <> '';`
-
-	rows, err := d.db.Query(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка запроса: %v", err)
-	}
-	defer rows.Close()
-
-	var records []models.Identify
-	for rows.Next() {
-		var rec models.Identify
-		if err := rows.Scan(&rec.Id, &rec.MID, &rec.SolarId, &rec.Author, &rec.Count, &rec.Participants, &rec.Points, &rec.StartTime); err != nil {
-			return nil, fmt.Errorf("ошибка при сканировании: %v", err)
-		}
-		records = append(records, rec)
-	}
-
-	return records, nil
 }

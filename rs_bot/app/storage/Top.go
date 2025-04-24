@@ -9,5 +9,4 @@ type Top interface {
 	TopAllEventNew(CorpName string, numberevent int) (top []models.Top)
 	TopAllPerMonthNew(CorpName string) (top []models.Top)
 	TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top
-	RedStarFightGetStar() (ss []models.RedStarFight, err error)
 }

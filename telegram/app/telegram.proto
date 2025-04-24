@@ -19,8 +19,9 @@ service TelegramService {
   rpc SendChannelTyping(SendChannelTypingRequest) returns (Empty);
   rpc SendPic(SendPicRequest) returns (ErrorResponse);
   rpc SendBridgeArrayMessages(SendBridgeArrayMessagesRequest) returns (SendBridgeArrayMessagesResponse);
-
+  rpc SendPicScoreboard(ScoreboardRequest) returns (ScoreboardResponse);
 }
+
 message TextResponse {
   string text = 1;
 }
@@ -119,3 +120,14 @@ message MessageIds {
   string chat_id = 2;
 }
 message Empty {}
+
+message ScoreboardRequest {
+  string ChaatId = 1;
+  string text = 2;
+  string fileNameScoreboard = 3;
+}
+message ScoreboardResponse {
+  string Mid = 1;
+  string error_message = 2;
+}
+

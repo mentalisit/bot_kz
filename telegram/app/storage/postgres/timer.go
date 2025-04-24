@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Db) TimerInsert(c models.Timer) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO kzbot.timer(dsmesid, dschatid, tgmesid, tgchatid, timed) 
 				VALUES ($1,$2,$3,$4,$5)`
@@ -16,7 +16,7 @@ func (d *Db) TimerInsert(c models.Timer) {
 	}
 }
 func (d *Db) TimerReadMessage() []models.Timer {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	tu := int(time.Now().UTC().Unix())
@@ -41,7 +41,7 @@ func (d *Db) TimerReadMessage() []models.Timer {
 	return tt
 }
 func (d *Db) TimerDeleteMessage(t models.Timer) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	query := `DELETE FROM kzbot.timer WHERE tgmesid = $1 `

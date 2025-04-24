@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"path/filepath"
+	"strings"
 )
 
 const twoDay = 172800
@@ -14,13 +15,34 @@ func (d *Discord) messageHandler(s *discordgo.Session, m *discordgo.MessageCreat
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if d.logicScoreboardSetting(m) {
+	if m.WebhookID != "" {
+		d.logicMixWebhook(m.Message)
 		return
 	}
 
 	if m.GuildID == "" {
 		if m.Content == ".паника" {
 			d.log.Panic(".паника " + m.Author.Username)
+		} else if strings.HasPrefix(m.Content, "%") {
+			user := m.Author
+			if m.Member != nil && m.Member.User != nil {
+				user = m.Member.User
+			}
+			nick := ""
+			if m.Member != nil && m.Member.Nick != "" {
+				nick = m.Member.Nick
+			}
+			i := models.IncomingMessage{
+				Text:        m.Content,
+				DmChat:      d.dmChannel(user.ID),
+				Name:        user.Username,
+				MentionName: user.Mention(),
+				NameId:      user.ID,
+				NickName:    nick,
+				Avatar:      user.AvatarURL(""),
+				Type:        "dsDM",
+			}
+			d.api.SendCompendiumAppRecover(i)
 		} else {
 			in := models.InMessage{
 				Mtext:       m.Content,

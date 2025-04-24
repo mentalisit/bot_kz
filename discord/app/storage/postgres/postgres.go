@@ -79,4 +79,32 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.scoreboard
+	(
+		id     bigserial        primary key,
+		Name text NOT NULL DEFAULT '',
+		WebhookChannel    text NOT NULL DEFAULT '',
+		ScoreChannel   text NOT NULL DEFAULT '',
+		LastMessage text NOT NULL DEFAULT ''
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS rs_bot.webhooks
+	(
+		id     bigserial        primary key,
+		TsUnix bigint NOT NULL DEFAULT 0,
+		corp    text NOT NULL DEFAULT '',
+		message   jsonb
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
 }

@@ -1,16 +1,50 @@
 package server
 
 import (
+	"compendium_s/config"
 	"compendium_s/models"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"sort"
 	"strings"
 	"time"
 )
 
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
+	var i models.Identity
+	if strings.HasPrefix(token, "Multi_") {
+		uid, gid, nick, err := GetTokenData(token)
+		if err == nil {
+			i.Uid = &uid
+			i.GId = &gid
+			i.Token = token
+			multiAccount, _ := s.multi.FindMultiAccountUUID(uid)
+			if multiAccount != nil {
+				i.User = models.User{
+					Username:  multiAccount.Nickname,
+					AvatarURL: multiAccount.AvatarURL,
+					Alts:      multiAccount.Alts,
+				}
+			}
+			multiAccountGuild, _ := s.multi.GuildGet(i.GId)
+			if multiAccountGuild != nil {
+				i.Guild = models.Guild{
+					URL:  multiAccountGuild.AvatarUrl,
+					ID:   gid.String(),
+					Name: multiAccountGuild.GuildName,
+					Type: "ma",
+				}
+			}
+			fmt.Println("GetTokenData " + nick)
+			return &i
+		} else {
+			s.log.ErrorErr(err)
+		}
+	}
+
 	userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
 	if err != nil {
 		token2 := s.db.ListUserGetByMatch(token)
@@ -20,7 +54,43 @@ func (s *Server) GetTokenIdentity(token string) *models.Identity {
 			return nil
 		}
 	}
-	var i models.Identity
+	ma, _ := s.multi.FindMultiAccountByUserId(userid)
+	if ma != nil {
+		i.Uid = &ma.UUID
+		var gg *models.MultiAccountGuild
+		corpMember, _ := s.multi.CorpMemberByUId(ma.UUID)
+		if corpMember != nil {
+			for _, id := range corpMember.GuildIds {
+				g, _ := s.multi.GuildGet(&id)
+				for _, channel := range g.Channels {
+					if channel == guildid {
+						i.GId = &g.GId
+						gg = g
+						break
+					}
+				}
+			}
+		}
+		if i.GId != nil && i.Uid != nil {
+			i.Token, _ = JWTGenerateToken(*i.Uid, *i.GId, ma.Nickname)
+			i.User = models.User{
+				Username:  ma.Nickname,
+				AvatarURL: ma.AvatarURL,
+				Alts:      ma.Alts,
+			}
+			if gg != nil {
+				i.Guild = models.Guild{
+					URL:  gg.AvatarUrl,
+					ID:   gg.GId.String(),
+					Name: gg.GuildName,
+					Type: "ma",
+				}
+			}
+			return &i
+		}
+
+	}
+
 	i.Token = token
 	user, err := s.db.UsersGetByUserId(userid)
 	if err != nil {
@@ -41,6 +111,13 @@ func (s *Server) GetTokenIdentity(token string) *models.Identity {
 }
 
 func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData {
+	c := models.CorpData{}
+	c.Members = []models.CorpMember{}
+
+	if i.Uid != nil && i.GId != nil {
+		return s.GetCorpDataMulti(i, roleId)
+	}
+
 	together := s.GetCorpDataIfTogether(i, roleId)
 	if together != nil {
 		return together
@@ -48,8 +125,6 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 	if i.Guild.Type == "ds" {
 		s.roles.LoadGuild(i.Guild.ID)
 	}
-	c := models.CorpData{}
-	c.Members = []models.CorpMember{}
 
 	if i.Guild.ID != "" {
 		c.Roles = s.getRoles(i.Guild)
@@ -155,6 +230,10 @@ func (s *Server) CleanOldCodes() {
 	}
 }
 func (s *Server) refreshToken(token string) string {
+	if strings.HasPrefix(token, "Multi_") {
+		return token
+	}
+
 	if len(token) < 60 {
 		newToken := s.checkPrefixToken(token)
 		err := s.db.ListUserUpdateToken(token, newToken)
@@ -356,4 +435,55 @@ func (s *Server) listOfCompatible(g *models.Guild) (*models.Guild, error) {
 
 	}
 	return nil, nil
+}
+func parseToken(tokenString string) (jwt.MapClaims, error) {
+	// удаляем префикс "Multi_"
+	if len(tokenString) > 6 && tokenString[:6] == "Multi_" {
+		tokenString = tokenString[6:]
+	}
+
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		return []byte(config.Instance.Postgress.Password), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("invalid token: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("cannot parse claims")
+	}
+
+	return claims, nil
+}
+
+func GetTokenData(tokenString string) (uid, gid uuid.UUID, nickname string, err error) {
+	mapClaims, err := parseToken(tokenString)
+	if err != nil {
+		return
+	}
+	uid, _ = uuid.Parse(mapClaims["uuid"].(string))
+	gid, _ = uuid.Parse(mapClaims["gid"].(string))
+	nickname = mapClaims["nick"].(string)
+
+	return uid, gid, nickname, nil
+}
+
+func JWTGenerateToken(uid uuid.UUID, GId uuid.UUID, NickName string) (string, error) {
+	claims := jwt.MapClaims{
+		"uuid": uid,
+		"gid":  GId,
+		"nick": NickName,
+		"exp":  time.Now().AddDate(1, 0, 0).Unix(), // токен на год
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(config.Instance.Postgress.Password))
+	if err != nil {
+		return "", err
+	}
+
+	// добавляем префикс
+	return "Multi_" + signedToken, nil
 }

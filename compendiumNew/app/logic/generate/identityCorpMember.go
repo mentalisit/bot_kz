@@ -3,12 +3,10 @@ package generate
 import "compendium/models"
 
 func GenerateIdentity(m models.IncomingMessage) (models.Identity, models.CorpMember) {
-	//проверить если есть NameId то предложить соединить для двух корпораций
 	identity := models.Identity{
 		User: models.User{
-			ID:       m.NameId,
-			Username: m.Name,
-			//Avatar:    m.AvatarF,
+			ID:        m.NameId,
+			Username:  m.Name,
 			AvatarURL: m.Avatar,
 			Alts:      []string{},
 		},
@@ -16,10 +14,9 @@ func GenerateIdentity(m models.IncomingMessage) (models.Identity, models.CorpMem
 			URL:  m.GuildAvatar,
 			ID:   m.GuildId,
 			Name: m.GuildName,
-			//Icon: m.GuildAvatarF,
 			Type: m.Type,
 		},
-		Token: m.Type + m.GuildId + "." + m.NameId + GenerateToken(),
+		Token: m.Type + m.GuildId + "." + m.NameId + GenerateToken(174),
 	}
 
 	cm := models.CorpMember{

@@ -1,13 +1,12 @@
 package postgres
 
 import (
-	"fmt"
 	"rs/models"
 	"sort"
 )
 
 func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var top []models.Top
 	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND numberevent = $4 GROUP BY mention LIMIT 50"
@@ -47,7 +46,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 }
 
 func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY mention"
 	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
@@ -85,7 +84,7 @@ func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top)
 }
 
 func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
 	results, err := d.db.Query(ctx, sel, CorpName)
@@ -115,7 +114,7 @@ func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
 }
 
 func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var top []models.Top
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
@@ -142,30 +141,4 @@ func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
 		return top[i].Numkz > top[j].Numkz
 	})
 	return top
-}
-
-func (d *Db) RedStarFightGetStar() (ss []models.RedStarFight, err error) {
-	ctx, cancel := d.GetContext()
-	defer cancel()
-
-	query := `
-		SELECT * FROM rs_bot.redstarfight`
-
-	rows, err := d.db.Query(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка запроса: %v", err)
-	}
-	defer rows.Close()
-
-	var records []models.RedStarFight
-	for rows.Next() {
-		var rec models.RedStarFight
-		if err = rows.Scan(&rec.Id, &rec.GameMId, &rec.SolarId, &rec.SendId, &rec.Author, &rec.Level, &rec.Count, &rec.Participants,
-			&rec.Points, &rec.EventId, &rec.StartTime, &rec.ClientId); err != nil {
-			return nil, fmt.Errorf("ошибка при сканировании: %v", err)
-		}
-		records = append(records, rec)
-	}
-
-	return records, nil
 }

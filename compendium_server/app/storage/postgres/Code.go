@@ -21,7 +21,7 @@ import (
 //}
 
 func (d *Db) CodeGet(code string) (*models.Code, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.Code
 	var id int
@@ -39,7 +39,7 @@ func (d *Db) CodeGet(code string) (*models.Code, error) {
 	return &u, nil
 }
 func (d *Db) CodeAllGet() []models.Code {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	selectCodes := "SELECT * FROM hs_compendium.codes"
 
@@ -66,7 +66,7 @@ func (d *Db) CodeAllGet() []models.Code {
 	return uu
 }
 func (d *Db) CodeDelete(code string) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	del := "delete from hs_compendium.codes where code = $1"
 	_, err := d.db.Exec(ctx, del, code)

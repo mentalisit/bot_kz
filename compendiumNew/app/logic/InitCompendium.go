@@ -1,6 +1,5 @@
 package logic
 
-import "C"
 import (
 	"compendium/logic/dictionary"
 	"compendium/logic/ds"
@@ -11,8 +10,7 @@ import (
 )
 
 type Hs struct {
-	log *logger.Logger
-	//in         models.IncomingMessage
+	log        *logger.Logger
 	db         *storage.Storage
 	corpMember CorpMember
 	tech       Tech

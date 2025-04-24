@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
@@ -43,7 +43,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	return nil
 }
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
 	results, err := d.db.Query(ctx, sel, guildid)
@@ -91,7 +91,7 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 }
 
 func (d *Db) CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
 	results, err := d.db.Query(ctx, sel, guildid, userid)
@@ -132,7 +132,7 @@ func getTimeStrings(offset int) (string, string) {
 	return time12HourFormat, time24HourFormat
 }
 func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set zonaoffset = $1,timezona = $2 where userid = $3 AND guildid = $4`
 	row, err := d.db.Exec(ctx, sqlUpd, offset, timeZone, userid, guildid)
@@ -143,7 +143,7 @@ func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) er
 }
 
 func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.CorpMember
 	var id int
@@ -155,7 +155,7 @@ func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
 	return &u, nil
 }
 func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set avatarurl = $1 where userid = $2 AND guildid = $3`
 	row, err := d.db.Exec(ctx, sqlUpd, avatarurl, userid, guildid)
@@ -180,7 +180,7 @@ func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
 	return nil
 }
 func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2`
 	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId)
@@ -190,7 +190,7 @@ func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
 	return nil
 }
 func (d *Db) CorpMemberDeleteAlt(guildid string, nameId string, name string) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2 AND username = $3`
 	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId, name)
@@ -200,7 +200,7 @@ func (d *Db) CorpMemberDeleteAlt(guildid string, nameId string, name string) err
 	return nil
 }
 func (d *Db) CorpMembersReadByUserId(UserId string) ([]models.CorpMember, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1"
 	results, err := d.db.Query(ctx, sel, UserId)

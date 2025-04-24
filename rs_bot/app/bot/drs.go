@@ -21,6 +21,7 @@ func (b *Bot) darkAlt(in models.InMessage, i int) {
 			}
 		}
 	}
+	fmt.Println("RsDarkPlus " + alt)
 	b.RsDarkPlus(in, alt)
 }
 

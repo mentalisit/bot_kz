@@ -1,10 +1,13 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Identify struct {
@@ -25,10 +28,23 @@ type BattlesTop struct {
 	Count    int
 }
 type ScoreboardParams struct {
-	Name              string
-	ChannelWebhook    string
-	ChannelScoreboard string
+	Name                   string
+	ChannelWebhook         string
+	ChannelScoreboardOrMap string
+	LastMessageID          string
 }
+
+func (s *ScoreboardParams) GetMapOrString() (m map[string]string, str string) {
+	is := strings.TrimSpace(s.ChannelScoreboardOrMap)
+	isLikelyJSON := strings.HasPrefix(is, "{") && strings.HasSuffix(is, "}") ||
+		strings.HasPrefix(is, "[") && strings.HasSuffix(is, "]")
+	if isLikelyJSON {
+		_ = json.Unmarshal([]byte(s.ChannelScoreboardOrMap), &m)
+		return m, ""
+	}
+	return nil, s.ChannelScoreboardOrMap
+}
+
 type InMessage struct {
 	Mtext       string
 	Tip         string
@@ -246,6 +262,22 @@ type EmodjiUser struct {
 	Module1, Module2, Module3, Weapon string
 }
 
+type Emoji struct {
+	Uid uuid.UUID
+	Tip string
+	Em1 string
+	Em2 string
+	Em3 string
+	Em4 string
+}
+
+type Module struct {
+	Uid  uuid.UUID
+	Name string
+	Gen  int
+	Enr  int
+	Rse  int
+}
 type Timer struct {
 	//Id       string `bson:"_id"`
 	Dsmesid  string `bson:"dsmesid"`
@@ -291,4 +323,18 @@ type EntryScoreboard struct {
 	RsLevel     int
 	StarsCount  int
 	Score       int
+}
+
+type MultiAccount struct {
+	UUID             uuid.UUID
+	Nickname         string
+	TelegramID       string
+	TelegramUsername string
+	DiscordID        string
+	DiscordUsername  string
+	WhatsappID       string
+	WhatsappUsername string
+	CreatedAt        time.Time
+	AvatarURL        string
+	Alts             []string
 }

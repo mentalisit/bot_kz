@@ -11,7 +11,7 @@ import (
 )
 
 func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	u := models.Users{
@@ -66,7 +66,7 @@ func (d *Db) ReadAllActive() (sb []models.Sborkz) {
 	return sb
 }
 func (d *Db) DeleteSborkzId(id int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	del := "delete from kzbot.sborkz where id = $1"
@@ -76,7 +76,7 @@ func (d *Db) DeleteSborkzId(id int) {
 	}
 }
 func (d *Db) UpdateSborkz(active string, id int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set active = $1 where id = $2`
 	_, err := d.db.Exec(ctx, upd, active, id)
@@ -85,7 +85,7 @@ func (d *Db) UpdateSborkz(active string, id int) {
 	}
 }
 func (d *Db) UpdateSborkzPoints(active string, id int, points int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.sborkz set active = $1, eventpoints = $2 where id = $3`
 	_, err := d.db.Exec(ctx, upd, active, points, id)
@@ -95,7 +95,7 @@ func (d *Db) UpdateSborkzPoints(active string, id int, points int) {
 }
 
 func (d *Db) InsertQueueOld(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now().UTC()
@@ -117,7 +117,7 @@ func (d *Db) InsertQueueOld(dsmesid, wamesid, CorpName, name, userid, nameMentio
 	}
 }
 func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, timekz, tgmesid, numkzN int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now().UTC()
@@ -134,7 +134,7 @@ func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, 
 	}
 }
 func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, tgmesid, numevent, numberkz, numkzN, points int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
@@ -166,7 +166,7 @@ func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMenti
 }
 
 func (d *Db) ElseTrue(userid string) []models.Sborkz {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
@@ -185,7 +185,7 @@ func (d *Db) ElseTrue(userid string) []models.Sborkz {
 	return tt
 }
 func (d *Db) DeleteQueue(userid, lvlkz, CorpName string) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	del := "delete from kzbot.sborkz where userid = $1 AND lvlkz = $2 AND corpname = $3 AND active = 0"
@@ -196,7 +196,7 @@ func (d *Db) DeleteQueue(userid, lvlkz, CorpName string) {
 }
 
 func (d *Db) ReadMesIdDS(mesid string) (string, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
@@ -223,7 +223,7 @@ func (d *Db) ReadMesIdDS(mesid string) (string, error) {
 }
 
 func (d *Db) P30Pl(lvlkz, CorpName, userid string) int {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var timedown int
@@ -240,7 +240,7 @@ func (d *Db) P30Pl(lvlkz, CorpName, userid string) int {
 	return timedown
 }
 func (d *Db) UpdateTimedown(lvlkz, CorpName, userid string) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	upd := `update kzbot.sborkz set timedown = timedown+30 where lvlkz = $1 AND corpname = $2 AND userid = $3`
@@ -250,7 +250,7 @@ func (d *Db) UpdateTimedown(lvlkz, CorpName, userid string) {
 	}
 }
 func (d *Db) Queue(corpname string) []string {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
@@ -272,7 +272,7 @@ func (d *Db) Queue(corpname string) []string {
 }
 
 func (d *Db) OneMinutsTimer() []string {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int //количество активных игроков
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE active = 0"
@@ -315,7 +315,7 @@ func (d *Db) OneMinutsTimer() []string {
 	return CorpActive0
 }
 func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var countCorp int
@@ -356,7 +356,7 @@ func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
 	return ds, tg
 }
 func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) models.InMessage {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
@@ -393,7 +393,7 @@ func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) mo
 
 }
 func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) models.InMessage {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE tgmesid = $1 AND active = 0"
@@ -425,7 +425,7 @@ func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) model
 	return in
 }
 func (d *Db) NumberQueueLvl(lvlkz, CorpName string) (int, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 
 	var number int

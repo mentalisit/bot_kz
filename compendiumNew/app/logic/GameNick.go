@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// multi OK
 func (c *Hs) setGameName(m models.IncomingMessage) bool {
 	after, found := strings.CutPrefix(m.Text, "%")
 	if found {
@@ -19,19 +20,28 @@ func (c *Hs) setGameName(m models.IncomingMessage) bool {
 			} else if matches[3] == "" && matches[2] != "" {
 				gameName = matches[2]
 			}
-			user, err := c.users.UsersGetByUserId(m.NameId)
-			if err != nil {
-				c.log.ErrorErr(err)
-				text := fmt.Sprintf(c.getText(m, "YOU_ARE_NOT_FOUND"), m.MentionName)
-				c.sendChat(m, text)
-				return true
-			}
-			user.GameName = gameName
-			err = c.users.UsersUpdate(*user)
-			if err != nil {
-				c.log.ErrorErr(err)
-				c.log.InfoStruct("UsersUpdate", user)
-				return false
+			if m.MultiAccount != nil {
+				_ = c.db.Multi.TechnologiesUpdateUsername(m.MultiAccount.UUID, m.MultiAccount.Nickname, gameName)
+				m.MultiAccount.Nickname = gameName
+				_, err := c.db.Multi.UpdateMultiAccountNickname(*m.MultiAccount)
+				if err != nil {
+					c.log.ErrorErr(err)
+				}
+			} else {
+				user, err := c.users.UsersGetByUserId(m.NameId)
+				if err != nil {
+					c.log.ErrorErr(err)
+					text := fmt.Sprintf(c.getText(m, "YOU_ARE_NOT_FOUND"), m.MentionName)
+					c.sendChat(m, text)
+					return true
+				}
+				user.GameName = gameName
+				err = c.users.UsersUpdate(*user)
+				if err != nil {
+					c.log.ErrorErr(err)
+					c.log.InfoStruct("UsersUpdate", user)
+					return false
+				}
 			}
 			text := fmt.Sprintf(c.getText(m, "GAME_NAME_SET"), m.MentionName, gameName)
 			c.sendChat(m, text)

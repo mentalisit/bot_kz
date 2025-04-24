@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/fogleman/gg"
 	"image/color"
@@ -15,9 +14,6 @@ import (
 )
 
 func (h *Helpers) CreateScoreboard(filename string, corpName string, eventId int) string {
-	if corpName == "русь" {
-		return h.CreateScoreboardForRusb(filename)
-	}
 	all, err := h.storage.Battles.BattlesGetAll(corpName, eventId)
 	if err != nil {
 		h.log.ErrorErr(err)
@@ -210,107 +206,6 @@ func (h *Helpers) CreateScoreboardTop(filename string, corpName string) string {
 			Score:       0,
 		})
 	}
-	if len(data) > 60 {
-		data = data[:59]
-	}
-	folder := "docker/scoreboard/" + filename
-
-	err = CreateScoreboardImage(data, folder)
-	if err != nil {
-		h.log.ErrorErr(err)
-		return ""
-	}
-
-	return folder
-}
-
-func (h *Helpers) CreateScoreboardForRusb(filename string) string {
-	all, err := h.storage.Battles.IdentifyGetPoints()
-	if err != nil {
-		h.log.ErrorErr(err)
-		return ""
-	}
-	type stats struct {
-		points int
-		count  int
-	}
-
-	if len(all) == 0 {
-		return ""
-	}
-	var m = make(map[string]stats) // Инициализация мапы
-
-	for _, identify := range all {
-		points := identify.Points / identify.Count
-		var users []models.ParticipantsInt64
-
-		err = json.Unmarshal([]byte(identify.Participants), &users)
-		if err != nil || len(users) == 0 {
-			fmt.Println("Ошибка парсинга JSON:", err)
-			continue
-		}
-
-		for _, user := range users {
-			if user.PlayerName == "VanCoMik" || user.PlayerName == "eVanCoMik" {
-				user.PlayerName = "iVanCoMik"
-			} else if user.PlayerName == "Коньячный ЗАВОД" {
-				user.PlayerName = "falcon_2"
-			} else if user.PlayerName == "Джонни_De" {
-				user.PlayerName = "JonnyDe"
-			} else if user.PlayerName == "delov@r" {
-				user.PlayerName = "delovar"
-			} else if user.PlayerName == "Pasis" || user.PlayerName == "ILTS" {
-				user.PlayerName = "Persil"
-			} else if user.PlayerName == "N@N" {
-				user.PlayerName = "ChubbChubbs"
-			}
-			//else if user.PlayerName == "" {
-			//	user.PlayerName = ""
-			//} else if user.PlayerName == "" {
-			//	user.PlayerName = ""
-			//}
-
-			// Если участник уже есть в мапе, прибавляем очки
-			var s stats
-			if _, exists := m[user.PlayerName]; exists {
-				s.points = m[user.PlayerName].points + points
-				s.count = m[user.PlayerName].count + 1
-			} else {
-				// Если участника нет, добавляем его в мапу
-				s.points = points
-				s.count = 1
-			}
-			m[user.PlayerName] = s
-		}
-	}
-
-	type sortedParticipant struct {
-		Name  string
-		Score int
-		Count int
-	}
-	var sortedParticipants []sortedParticipant
-
-	for name, i := range m {
-		sortedParticipants = append(sortedParticipants, sortedParticipant{
-			Name:  name,
-			Score: i.points,
-			Count: i.count,
-		})
-	}
-
-	sort.Slice(sortedParticipants, func(i, j int) bool { return sortedParticipants[i].Score > sortedParticipants[j].Score })
-
-	var data []models.EntryScoreboard
-	for _, stat := range sortedParticipants {
-		data = append(data, models.EntryScoreboard{
-			DisplayName: stat.Name,
-			RsLevel:     0,
-			StarsCount:  stat.Count,
-			Score:       stat.Score,
-		})
-	}
-
 	if len(data) > 60 {
 		data = data[:59]
 	}

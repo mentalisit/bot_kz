@@ -21,8 +21,7 @@ func GrpcMain(b *logic.Bridge, log *logger.Logger) *Server {
 	if err != nil {
 		log.ErrorErr(err)
 	}
-
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.MaxRecvMsgSize(10 * 1024 * 1024)) // Устанавливаем максимальный размер принимаемого сообщения в 10MB
 	serv := &Server{
 		b:   b,
 		log: log,

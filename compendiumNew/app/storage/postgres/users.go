@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Db) UsersInsert(u models.User) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	count, err := d.UserGetCountByUserId(u.ID)
 	if err != nil {
@@ -34,7 +34,7 @@ func (d *Db) UsersInsert(u models.User) error {
 	return nil
 }
 func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.User
 	var id int
@@ -46,7 +46,7 @@ func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	return &u, nil
 }
 func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.User
 	var id int
@@ -58,7 +58,7 @@ func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
 	return &u, nil
 }
 func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var users []models.User
 	selectUsers := "SELECT * FROM hs_compendium.users WHERE gamename = $1 "
@@ -82,7 +82,7 @@ func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
 }
 
 func (d *Db) UserGetCountByUserId(userid string) (int, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.users WHERE userid = $1"
@@ -93,7 +93,7 @@ func (d *Db) UserGetCountByUserId(userid string) (int, error) {
 	return count, nil
 }
 func (d *Db) UsersUpdate(u models.User) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update hs_compendium.users set avatarurl = $1, alts = $2, gamename = $3, username = $4 where userid = $5`
 	_, err := d.db.Exec(ctx, upd, u.AvatarURL, u.Alts, u.GameName, u.Username, u.ID)
@@ -103,7 +103,7 @@ func (d *Db) UsersUpdate(u models.User) error {
 	return nil
 }
 func (d *Db) UsersGetAll() ([]models.User, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var users []models.User
 	selectUsers := "SELECT * FROM hs_compendium.users "

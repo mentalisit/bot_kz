@@ -2,13 +2,15 @@ package models
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 )
 
 type Identity struct {
 	User  User   `json:"user"`
 	Guild Guild  `json:"guild"`
 	Token string `json:"token"`
-	//Type  string `json:"type"`
+	Uid   *uuid.UUID
+	GId   *uuid.UUID
 }
 type Code struct {
 	Code      string
@@ -96,11 +98,14 @@ type CorpMember struct {
 	ZoneOffset  int            `json:"zoneOffset"`  //zoneOffset:-300
 	AfkFor      string         `json:"afkFor"`      // readable afk duration
 	AfkWhen     int            `json:"afkWhen"`     // Unix Epoch when user returns
+	TypeAccount string
+	Multi       *MultiAccount
 }
 
 type CorpRole struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	TypeRole string
 }
 
 //type WsKill struct {
@@ -112,3 +117,11 @@ type CorpRole struct {
 //	TimestampEnd int64
 //	Language     string
 //}
+
+type UserAccount struct {
+	InternalId int
+	Name       string
+	TgId       string
+	DsId       string
+	WsId       string
+}

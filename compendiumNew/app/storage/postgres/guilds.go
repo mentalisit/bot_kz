@@ -5,7 +5,7 @@ import (
 )
 
 func (d *Db) GuildInsert(u models.Guild) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	count, err := d.GuildGetCountByGuildId(u.ID)
 	if err != nil {
@@ -26,7 +26,7 @@ func (d *Db) GuildInsert(u models.Guild) error {
 	return nil
 }
 func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.Guild
 	var id int
@@ -38,7 +38,7 @@ func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
 	return &u, nil
 }
 func (d *Db) GuildGetCountByGuildId(guildid string) (int, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.guilds WHERE guildid = $1"
@@ -49,7 +49,7 @@ func (d *Db) GuildGetCountByGuildId(guildid string) (int, error) {
 	return count, nil
 }
 func (d *Db) GuildUpdate(u models.Guild) error {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update hs_compendium.guilds set url = $1 where guildid = $2`
 	_, err := d.db.Exec(ctx, upd, u.URL, u.ID)
@@ -59,7 +59,7 @@ func (d *Db) GuildUpdate(u models.Guild) error {
 	return nil
 }
 func (d *Db) GuildGetAll() ([]models.Guild, error) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM hs_compendium.guilds"
 	results, err := d.db.Query(ctx, sel)

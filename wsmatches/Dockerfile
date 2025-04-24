@@ -1,4 +1,4 @@
-FROM golang:1.23.1-alpine3.20 AS builder
+FROM golang:1.24.2-alpine3.20 AS builder
 
 WORKDIR /usr/local/src
 RUN apk --no-cache add bash git make gcc gettext musl-dev

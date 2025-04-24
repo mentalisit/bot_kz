@@ -57,16 +57,8 @@ func (b *Bot) GetTextPercent(Config models.CorporationConfig, dark bool) string 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			twoYearsAgo := time.Now().AddDate(-2, 0, 0) // Отнимаем 2 года
-			old, err := b.storage.LevelCorp.ReadCorpsLevelAllOld()
-			if err != nil {
-				return ""
-			}
 			hcorp := ""
-			for _, corps := range old {
-				if corps.CorpName == Config.CorpName {
-					hcorp = corps.HCorp
-				}
-			}
+
 			if hcorp != "" {
 				b.log.Warn(fmt.Sprintf("Нужно выполнить сравнение для корпорациии %s", hcorp))
 			}

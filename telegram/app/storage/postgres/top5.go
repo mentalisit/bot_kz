@@ -3,7 +3,7 @@ package postgres
 import "fmt"
 
 func (d *Db) ReadTop5Level(corpname string) []string {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `
         SELECT lvlkz, COUNT(*) AS lvlkz_count
@@ -40,7 +40,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 }
 
 func (d *Db) ReadTelegramLastMessage(corpname string) int {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `
         SELECT MAX(tgmesid) FROM kzbot.sborkz

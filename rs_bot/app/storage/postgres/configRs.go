@@ -8,7 +8,7 @@ import (
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	var tt []models.CorporationConfig
 	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
@@ -26,7 +26,7 @@ func (d *Db) ReadConfigRs() []models.CorporationConfig {
 	return tt
 }
 func (d *Db) InsertConfigRs(c models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	insert := `INSERT INTO kzbot.config(corpname, dschannel, tgchannel, mesiddshelp, mesidtghelp, country, delmescomplite, guildid, forvard) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 	_, err := d.db.Exec(ctx, insert, c.CorpName, c.DsChannel, c.TgChannel, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.DelMesComplite, c.Guildid, c.Forward)
@@ -36,7 +36,7 @@ func (d *Db) InsertConfigRs(c models.CorporationConfig) {
 	fmt.Printf("insert %+v\n", c)
 }
 func (d *Db) DeleteConfigRs(c models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	del := "delete from kzbot.config where corpname = $1"
 	_, err := d.db.Exec(ctx, del, c.CorpName)
@@ -45,7 +45,7 @@ func (d *Db) DeleteConfigRs(c models.CorporationConfig) {
 	}
 }
 func (d *Db) UpdateConfigRs(c models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	upd := `update kzbot.config set mesiddshelp = $1,mesidtghelp = $2,country = $3 where corpname = $4`
 	_, err := d.db.Exec(ctx, upd, c.MesidDsHelp, c.MesidTgHelp, c.Country, c.CorpName)
@@ -54,7 +54,7 @@ func (d *Db) UpdateConfigRs(c models.CorporationConfig) {
 	}
 }
 func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE dschannel = $1"
 	results, err := d.db.Query(ctx, sel, dsChannel)
@@ -73,7 +73,7 @@ func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationCo
 	return conf
 }
 func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE tgchannel = $1"
 	results, err := d.db.Query(ctx, sel, tgChannel)
@@ -92,7 +92,7 @@ func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationCo
 	return conf
 }
 func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig) {
-	ctx, cancel := d.GetContext()
+	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE corpname = $1"
 	results, err := d.db.Query(ctx, sel, corpName)
