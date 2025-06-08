@@ -41,9 +41,7 @@ func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
 	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2 AND username = $3"
 	err := d.db.QueryRow(ctx, sel, userid, guildid, username).Scan(&tech)
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, err
-		}
+		return nil, err
 	}
 	return tech, nil
 }
@@ -110,11 +108,11 @@ func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
 		return err
 	}
 	if updresult.RowsAffected() == 0 {
-		err = d.TechInsert(username, userid, guildid, tech)
-		if err != nil {
-			d.log.ErrorErr(err)
-			return err
-		}
+		//err = d.TechInsert(username, userid, guildid, tech)
+		//if err != nil {
+		//	d.log.ErrorErr(err)
+		//	return err
+		//}
 	}
 	return nil
 }

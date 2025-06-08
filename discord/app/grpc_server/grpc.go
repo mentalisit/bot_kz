@@ -20,7 +20,7 @@ func GrpcMain(ds *DiscordClient.Discord, log *logger.Logger) *Server {
 		log.ErrorErr(err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.MaxRecvMsgSize(10 * 1024 * 1024)) // Устанавливаем максимальный размер принимаемого сообщения в 10MB
 	server := &Server{
 		log: log,
 		ds:  ds,

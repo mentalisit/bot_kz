@@ -44,7 +44,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 				_ = c.db.Multi.TechnologiesInsert(m.MultiAccount.UUID, split[2], nil)
 				c.log.Info(fmt.Sprintf("User %s alts new %+v", m.MultiAccount.Nickname, alts))
 			} else {
-				_ = c.tech.TechInsert(split[2], m.NameId, m.GuildId, nil)
+				_ = c.tech.TechInsert(split[2], m.NameId, m.MultiGuild.GuildId(), nil)
 				user.Alts = alts
 				err := c.users.UsersUpdate(user)
 				if err != nil {
@@ -86,7 +86,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 								c.log.ErrorErr(err)
 							}
 						} else {
-							err = c.tech.TechDelete(split[2], u.ID, m.GuildId)
+							err = c.tech.TechDelete(split[2], u.ID, m.MultiGuild.GuildId())
 							if err != nil {
 								c.log.ErrorErr(err)
 							}
@@ -100,7 +100,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 					if err != nil {
 						c.log.ErrorErr(err)
 					}
-					//todo удалить корп мембера безопасно
+					return true
 				} else {
 					u.Alts = alts
 					if u == nil {
@@ -112,7 +112,7 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 						c.log.ErrorErr(err)
 						return false
 					}
-					err = c.corpMember.CorpMemberDeleteAlt(m.GuildId, m.NameId, split[2])
+					err = c.corpMember.CorpMemberDeleteAlt(m.MultiGuild.GuildId(), m.NameId, split[2])
 					if err != nil {
 						c.log.ErrorErr(err)
 						return false

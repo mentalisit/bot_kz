@@ -142,14 +142,14 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			}
 			if darkOrRed {
 				if countQueue == 2 {
-					textEvent, numberRsEvent := b.EventText(in)
-					if textEvent == "" {
-						textEvent = b.GetTextPercent(in.Config, true)
-					}
+					//textEvent, numberRsEvent := b.EventText(in)
+					//if textEvent == "" {
+					textEvent := b.GetTextPercent(in.Config, true)
+					//}
 					numberEvent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
-					if numberEvent > 0 {
-						numberLevel = numberRsEvent
-					}
+					//if numberEvent > 0 {
+					//	numberLevel = numberRsEvent
+					//}
 					u.User3 = &UserIn
 
 					if in.IfDiscord() {
@@ -217,10 +217,10 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 						}
 					}
 
-					if numberRsEvent == 0 {
-						//отправляем сообщение о корпорациях с %
-						go b.SendPercent(in.Config)
-					}
+					//if numberRsEvent == 0 {
+					//отправляем сообщение о корпорациях с %
+					go b.SendPercent(in.Config)
+					//}
 					//проверка есть ли игрок в других чатах
 					user, UserIdTg := u.GetAllUserId()
 					go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
@@ -261,14 +261,14 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				}
 				if countQueue == 3 {
 					u.User4 = &UserIn
-					textEvent, numkzEvent := b.EventText(in)
-					if textEvent == "" {
-						textEvent = b.GetTextPercent(in.Config, false)
-					}
-					numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
-					if numberevent > 0 {
-						numberLevel = numkzEvent
-					}
+					//textEvent, numkzEvent := b.EventText(in)
+					//if textEvent == "" {
+					textEvent := b.GetTextPercent(in.Config, false)
+					//}
+					//numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
+					//if numberevent > 0 {
+					//	numberLevel = numkzEvent
+					//}
 					if in.IfDiscord() {
 						b.wg.Add(1)
 						go func() {
@@ -311,18 +311,18 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					b.wg.Wait()
 					b.storage.DbFunc.InsertQueue(DsMessageId, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention,
 						in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberLevel)
-					err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, "", numberLevel, numberevent, in.Config.CorpName)
+					err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, "", numberLevel, 0, in.Config.CorpName)
 					if err != nil {
-						err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, "", numberLevel, numberevent, in.Config.CorpName)
+						err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, "", numberLevel, 0, in.Config.CorpName)
 						if err != nil {
 							b.log.ErrorErr(err)
 						}
 					}
 
-					if numberevent == 0 {
-						//отправляем сообщение о корпорациях с %
-						go b.SendPercent(in.Config)
-					}
+					//if numberevent == 0 {
+					//отправляем сообщение о корпорациях с %
+					go b.SendPercent(in.Config)
+					//}
 
 					//проверка есть ли игрок в других чатах
 					user, UserIdTg := u.GetAllUserId()
@@ -338,90 +338,90 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 	}
 }
 
-func (b *Bot) RsSoloPlus(in models.InMessage) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.iftipdelete(in)
-	numkzN, err2 := b.storage.Count.CountNumberNameActive1(in.RsTypeLevel, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
-	if err2 != nil {
-		return
-	}
-	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(in.RsTypeLevel, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
-	if err3 != nil {
-		return
-	}
-	dsmesid := ""
-	tgmesid := 0
-	textEvent, numkzEvent := b.EventText(in)
-	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
-	if numberevent > 0 {
-		numkzL = numkzEvent
-	} else {
-		b.ifTipSendTextDelSecond(in, "event not active ", 30)
-		return
-	}
-	_, level := in.TypeRedStar()
-	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", level, in.NameMention, b.getText(in, "go"), textEvent)
-	if in.IfDiscord() {
-		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
-	}
-	if in.IfTelegram() {
-		if in.IfDiscord() {
-			text = b.client.Ds.ReplaceTextMessage(text, in.Config.Guildid)
-		}
-		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
-	}
-
-	b.storage.DbFunc.InsertQueue(dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, tgmesid, numkzN)
-	err := b.storage.Update.UpdateCompliteSolo(in.RsTypeLevel, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
-	if err != nil {
-		err = b.storage.Update.UpdateCompliteSolo(in.RsTypeLevel, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-	}
-
-	//проверка есть ли игрок в других чатах
-	go b.elseChat([]string{in.UserId})
-	if in.Tip == tg {
-		go b.otherQueue.NeedRemoveOtherQueue([]string{in.UserId})
-	}
-
-}
-func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.iftipdelete(in)
-	numkzN, _ := b.storage.Count.CountNumberNameActive1(in.RsTypeLevel, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
-	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)                                  //получаем номер ивета если он активен
-	if numberevent == 0 {
-		b.ifTipSendTextDelSecond(in, "event not active ", 30)
-		return
-	}
-	_, numkzEvent := b.EventText(in)
-	points, err := strconv.Atoi(pointsStr)
-	if err != nil || points > 99999 {
-		b.ifTipSendTextDelSecond(in, "не распознал очки  ", 30)
-		return
-	}
-	_, level := in.TypeRedStar()
-
-	mes1 := fmt.Sprintf("🔴 %s №%d (%s) ", b.getText(in, "event_game"), numkzEvent, level)
-	mesOld := fmt.Sprintf("🎉 %s %s %s\nㅤ\nㅤ", b.getText(in, "contributed"), in.NameMention, formatNumber(points))
-
-	dsmesid := ""
-	tgmesid := 0
-	text := fmt.Sprintf("%s %s \n%s", mes1, in.NameMention, mesOld)
-	if in.IfDiscord() {
-		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
-	}
-	if in.IfTelegram() {
-		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
-	}
-
-	b.storage.DbFunc.InsertQueueSolo(dsmesid, "", in.Config.CorpName, in.Username, in.UserId,
-		in.NameMention, in.Tip, in.RsTypeLevel, tgmesid, numberevent, numkzEvent, numkzN, points)
-}
+//func (b *Bot) RsSoloPlus(in models.InMessage) {
+//	b.mu.Lock()
+//	defer b.mu.Unlock()
+//	b.iftipdelete(in)
+//	numkzN, err2 := b.storage.Count.CountNumberNameActive1(in.RsTypeLevel, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+//	if err2 != nil {
+//		return
+//	}
+//	numkzL, err3 := b.storage.DbFunc.NumberQueueLvl(in.RsTypeLevel, in.Config.CorpName) //проверяем какой номер боя определенной красной звезды
+//	if err3 != nil {
+//		return
+//	}
+//	dsmesid := ""
+//	tgmesid := 0
+//	textEvent, numkzEvent := b.EventText(in)
+//	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName) //получаем номер ивета если он активен
+//	if numberevent > 0 {
+//		numkzL = numkzEvent
+//	} else {
+//		b.ifTipSendTextDelSecond(in, "event not active ", 30)
+//		return
+//	}
+//	_, level := in.TypeRedStar()
+//	text := fmt.Sprintf("Соло 😱 %s \n🤘  %s \n%s%s", level, in.NameMention, b.getText(in, "go"), textEvent)
+//	if in.IfDiscord() {
+//		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
+//	}
+//	if in.IfTelegram() {
+//		if in.IfDiscord() {
+//			text = b.client.Ds.ReplaceTextMessage(text, in.Config.Guildid)
+//		}
+//		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+//	}
+//
+//	b.storage.DbFunc.InsertQueue(dsmesid, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, tgmesid, numkzN)
+//	err := b.storage.Update.UpdateCompliteSolo(in.RsTypeLevel, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
+//	if err != nil {
+//		err = b.storage.Update.UpdateCompliteSolo(in.RsTypeLevel, dsmesid, tgmesid, numkzL, numberevent, in.Config.CorpName)
+//		if err != nil {
+//			b.log.ErrorErr(err)
+//		}
+//	}
+//
+//	//проверка есть ли игрок в других чатах
+//	go b.elseChat([]string{in.UserId})
+//	if in.Tip == tg {
+//		go b.otherQueue.NeedRemoveOtherQueue([]string{in.UserId})
+//	}
+//
+//}
+//func (b *Bot) RsSoloPlusComplete(in models.InMessage, pointsStr string) {
+//	b.mu.Lock()
+//	defer b.mu.Unlock()
+//	b.iftipdelete(in)
+//	numkzN, _ := b.storage.Count.CountNumberNameActive1(in.RsTypeLevel, in.Config.CorpName, in.UserId) //проверяем количество боёв по уровню кз игрока
+//	numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)                                  //получаем номер ивета если он активен
+//	if numberevent == 0 {
+//		b.ifTipSendTextDelSecond(in, "event not active ", 30)
+//		return
+//	}
+//	_, numkzEvent := b.EventText(in)
+//	points, err := strconv.Atoi(pointsStr)
+//	if err != nil || points > 99999 {
+//		b.ifTipSendTextDelSecond(in, "не распознал очки  ", 30)
+//		return
+//	}
+//	_, level := in.TypeRedStar()
+//
+//	mes1 := fmt.Sprintf("🔴 %s №%d (%s) ", b.getText(in, "event_game"), numkzEvent, level)
+//	mesOld := fmt.Sprintf("🎉 %s %s %s\nㅤ\nㅤ", b.getText(in, "contributed"), in.NameMention, formatNumber(points))
+//
+//	dsmesid := ""
+//	tgmesid := 0
+//	text := fmt.Sprintf("%s %s \n%s", mes1, in.NameMention, mesOld)
+//	if in.IfDiscord() {
+//		dsmesid = b.client.Ds.SendWebhook(text, "RsBot", in.Config.DsChannel, in.Ds.Avatar)
+//	}
+//	if in.IfTelegram() {
+//		tgmesid = b.client.Tg.SendChannel(in.Config.TgChannel, text)
+//	}
+//
+//	b.storage.DbFunc.InsertQueueSolo(dsmesid, "", in.Config.CorpName, in.Username, in.UserId,
+//		in.NameMention, in.Tip, in.RsTypeLevel, tgmesid, numberevent, numkzEvent, numkzN, points)
+//}
 
 func (b *Bot) SendLsNotification(in models.InMessage, u models.Users) {
 	dmText := fmt.Sprintf("%s\n %s\n %s\n", b.getText(in, "go"), u.User2.Name, u.User3.Name)

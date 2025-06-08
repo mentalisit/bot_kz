@@ -254,21 +254,6 @@ func (c *Hs) migrationDataMultiUser(m models.IncomingMessage) {
 				}
 				getGuild, _ := c.db.Multi.GuildGet(i.GuildId)
 				if getGuild == nil {
-					getGuildOld, _ := c.guilds.GuildGet(i.GuildId)
-					if getGuildOld != nil {
-						err = c.db.Multi.GuildInsert(models.MultiAccountGuild{
-							GuildName: getGuildOld.Name,
-							Channels:  []string{i.GuildId},
-							AvatarUrl: getGuildOld.URL,
-						})
-						if err != nil {
-							c.log.ErrorErr(err)
-						}
-						getGuild, _ = c.db.Multi.GuildGet(i.GuildId)
-					}
-
-				}
-				if getGuild == nil {
 					c.log.Error("getGuild == nil")
 					return
 				}

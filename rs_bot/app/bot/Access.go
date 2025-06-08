@@ -25,8 +25,6 @@ func (b *Bot) accessChat(in models.InMessage) {
 			b.accessDelChannel(in, "ru")
 		case "видалити":
 			b.accessDelChannel(in, "ua")
-		case "scoreboard":
-			b.logicScoreboardSetting(in)
 		case "паника":
 			b.log.Panic("перезагрузка по требованию")
 		default:
@@ -37,6 +35,9 @@ func (b *Bot) accessChat(in models.InMessage) {
 				return
 			}
 			if b.cleanOldMessage(in) {
+				return
+			}
+			if b.logicScoreboardSetting(in) {
 				return
 			}
 		}
@@ -180,8 +181,10 @@ func (b *Bot) logicScoreboardSetting(in models.InMessage) bool {
 			scoreboard := b.storage.Scoreboard.ScoreboardReadName(afterHere)
 			if scoreboard != nil {
 				m, str := scoreboard.GetMapOrString()
-				if str != "" {
+				if m == nil {
 					m = make(map[string]string)
+				}
+				if str != "" {
 					if strings.HasPrefix(str, "-") {
 						m["tg"] = str
 					} else {

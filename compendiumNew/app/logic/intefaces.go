@@ -22,22 +22,24 @@ type Tech interface {
 	TechGetAllUserId(userid string) ([]models.TechTable, error)
 }
 
-type Guilds interface {
-	GuildInsert(u models.Guild) error
-	GuildGet(guildid string) (*models.Guild, error)
-	GuildGetAll() ([]models.Guild, error)
-	GuildGetCountByGuildId(guildid string) (int, error)
-	GuildUpdate(u models.Guild) error
-}
+//type Guilds interface {
+//	GuildInsert(u models.Guild) error
+//	GuildGet(guildid string) (*models.Guild, error)
+//	GuildGetAll() ([]models.Guild, error)
+//	GuildGetCountByGuildId(guildid string) (int, error)
+//	GuildUpdate(u models.Guild) error
+//}
 
-type ListUser interface {
-	ListUserInsert(token, userid, guildid string) error
-	ListUserGetCountByGuildIdByUserId(guildid, userid string) (int, error)
-	ListUserUpdate(token, userid, guildid string) error
-	ListUserGetToken(userid, guildid string) (string, error)
-	ListUserUpdateToken(tokenOld, tokenNew string) error
-	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
-}
+//type ListUser interface {
+//	ListUserInsert(token, userid, guildid string) error
+//	ListUserGetCountByGuildIdByUserId(guildid, userid string) (int, error)
+//	ListUserUpdate(token, userid, guildid string) error
+//	ListUserDelete(token string) error
+//	ListUserDeleteByUserIdByGuildId(userid, guildid string) error
+//	ListUserGetToken(userid, guildid string) (string, error)
+//	ListUserUpdateToken(tokenOld, tokenNew string) error
+//	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
+//}
 
 type Users interface {
 	UsersInsert(u models.User) error

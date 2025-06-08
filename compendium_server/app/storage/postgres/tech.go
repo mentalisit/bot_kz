@@ -91,7 +91,7 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 		if len(techl) > 0 {
 			m := make(map[int][2]int)
 			for i, level := range techl {
-				m[i] = [2]int{level.Level}
+				m[i] = [2]int{level.Level, int(level.Ts)}
 			}
 			ncm.Tech = m
 		}

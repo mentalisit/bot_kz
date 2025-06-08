@@ -2,12 +2,12 @@ package server
 
 import (
 	"compendium_s/models"
-	"compendium_s/server/original"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
@@ -27,14 +27,8 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 	if identity.Token != "" {
 		c.JSON(http.StatusOK, identity)
 		return
-	} else {
-		//c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
-
-		original.IdentityHandler(c, code)
-		fmt.Println("original.IdentityHandler(c, code)")
-		return
 	}
-
+	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
@@ -59,6 +53,7 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	c.Header("Access-Control-Allow-Headers", "Authorization")
+
 	token := c.GetHeader("authorization")
 	roleId := c.Query("roleId")
 	if token == "" {
@@ -66,14 +61,37 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 		return
 	}
 
-	i := s.GetTokenIdentity(token)
+	cacheKey := token + ":" + roleId
 
-	if i != nil {
-		c.JSON(http.StatusOK, s.GetCorpData(i, roleId))
+	// Проверяем кэш
+	s.cacheMutex.Lock()
+	entry, exists := s.cacheReq[cacheKey]
+	if exists && time.Since(entry.timestamp) <= 2*time.Second {
+		// Есть свежий кэш, возвращаем
+		s.cacheMutex.Unlock()
+		c.JSON(http.StatusOK, entry.data)
 		return
 	}
-	original.CorpDataHandler(c, token, roleId)
-	fmt.Println("original.CorpDataHandler(c, token, roleId)")
+	s.cacheMutex.Unlock()
+
+	// Кэш отсутствует или устарел — получаем заново
+	i := s.GetTokenIdentity(token)
+	if i != nil {
+		result := s.GetCorpData(i, roleId)
+
+		// Сохраняем в кэш
+		s.cacheMutex.Lock()
+		s.cacheReq[cacheKey] = cacheEntry{
+			data:      result,
+			timestamp: time.Now(),
+		}
+		s.cacheMutex.Unlock()
+
+		c.JSON(http.StatusOK, result)
+		return
+	}
+
+	c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
 }
 
 func (s *Server) CheckRefreshHandler(c *gin.Context) {
@@ -98,8 +116,7 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, i)
 		return
 	}
-	original.RefreshHandler(c, token)
-	fmt.Println("original.RefreshHandler(c, token)")
+	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 }
 
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
@@ -114,17 +131,16 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	i := s.GetTokenIdentity(token)
 
 	if i == nil {
-		original.SyncTechHandler(c, token, mode)
-		fmt.Println("original.SyncTechHandler(c, token, mode)")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 		return
 	}
-	if i.Uid != nil && i.GId != nil {
+	if i.MultiAccount != nil && i.MultiGuild != nil {
 		s.SyncTechMulti(c, i, mode, twin)
 		return
 	}
 	userId := i.User.ID
 	userName := i.User.Username
-	guildId := i.Guild.ID
+	guildId := i.MultiGuild.GId.String()
 	if twin != "" && twin != "default" {
 		userName = twin
 	}
@@ -157,7 +173,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
-		err = s.db.TechUpdate(userName, userId, guildId, bytes)
+		err = s.db.TechUpdate(userName, userId, i.MultiGuild.GId.String(), bytes)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}

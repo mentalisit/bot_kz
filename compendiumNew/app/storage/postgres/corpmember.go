@@ -11,32 +11,39 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
-	err := d.db.QueryRow(ctx, sel, cm.GuildId, cm.UserId).Scan(&count)
-	if err != nil {
-		return err
-	}
-	techOld, tzNameOld, tzOffsetOld := GetOldCompendium(cm.GuildId, cm.UserId)
-	if tzNameOld != "" {
-		cm.TimeZone = tzNameOld
-		cm.ZoneOffset = tzOffsetOld
-	}
-	if count == 0 {
-		insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-		_, err = d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.GuildId, cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
-		if err != nil {
-			return err
+	selCount := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
+	if len(cm.GuildId) < 24 {
+		_ = d.db.QueryRow(ctx, selCount, cm.GuildId, cm.UserId).Scan(&count)
+		if count != 0 {
+			sqlUpd := `update hs_compendium.corpmember set guildid = $1 where userid = $2 AND guildid = $3`
+			_, _ = d.db.Exec(ctx, sqlUpd, cm.MultiGuild.GuildId(), cm.UserId, cm.GuildId)
+		}
+	} else {
+		_ = d.db.QueryRow(ctx, selCount, cm.MultiGuild.GuildId(), cm.UserId).Scan(&count)
+		if count == 0 {
+			insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
+			_, err := d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.MultiGuild.GuildId(), cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
 	techBytes, err := json.Marshal(cm.Tech)
 	if err != nil {
 		return err
 	}
-	if len(cm.Tech) == 0 && len(techOld) > 0 {
-		techBytes = techOld
+
+	if len(cm.GuildId) < 24 {
+		count, _ = d.TechGetCount(cm.UserId, cm.GuildId)
+		if count != 0 {
+			upd := `update hs_compendium.tech set guildid = $1 where userid = $2 and guildid = $3`
+			_, _ = d.db.Exec(ctx, upd, cm.MultiGuild.GuildId(), cm.UserId, cm.GuildId)
+			return nil
+		}
 	}
 
-	err = d.TechInsert(cm.Name, cm.UserId, cm.GuildId, techBytes)
+	err = d.TechInsert(cm.Name, cm.UserId, cm.MultiGuild.GuildId(), techBytes)
 	if err != nil {
 		return err
 	}

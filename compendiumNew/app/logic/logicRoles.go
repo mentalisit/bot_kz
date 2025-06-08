@@ -22,19 +22,19 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 	if matches != nil {
 		action := matches[1]
 		roleName := matches[2]
-		ifExistRole := c.guildsRole.GuildRoleExist(m.GuildId, roleName)
+		ifExistRole := c.guildsRole.GuildRoleExist(m.MultiGuild.GuildId(), roleName)
 
 		if action == "create" {
 			if ifExistRole {
 				c.sendChat(m, roleName+" роль уже существует")
 			} else {
-				c.guildsRole.GuildRoleCreate(m.GuildId, roleName)
+				c.guildsRole.GuildRoleCreate(m.MultiGuild.GuildId(), roleName)
 				c.sendChat(m, roleName+" роль создана")
 			}
 		}
 		if action == "delete" {
 			if ifExistRole {
-				err = c.guildsRole.GuildRoleDelete(m.GuildId, roleName)
+				err = c.guildsRole.GuildRoleDelete(m.MultiGuild.GuildId(), roleName)
 				if err != nil {
 					c.log.ErrorErr(err)
 					return false
@@ -59,14 +59,14 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 	if matches != nil {
 		action := matches[1]
 		roleName := matches[2]
-		existRole := c.guildsRole.GuildRoleExist(m.GuildId, roleName)
-		existSubscribe := c.guildsRole.GuildRolesExistSubscribe(m.GuildId, roleName, m.NameId)
+		existRole := c.guildsRole.GuildRoleExist(m.MultiGuild.GuildId(), roleName)
+		existSubscribe := c.guildsRole.GuildRolesExistSubscribe(m.MultiGuild.GuildId(), roleName, m.NameId)
 		if action == "s" {
 			if existRole {
 				if existSubscribe {
 					c.sendChat(m, "ты уже подписан на роль "+roleName)
 				} else {
-					err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, m.Name, m.NameId)
+					err = c.guildsRole.GuildRolesSubscribe(m.MultiGuild.GuildId(), roleName, m.Name, m.NameId)
 					if err != nil {
 						c.log.ErrorErr(err)
 						return false
@@ -80,7 +80,7 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 		if action == "u" {
 			if existRole {
 				if existSubscribe {
-					err = c.guildsRole.GuildRolesDeleteSubscribe(m.GuildId, roleName, m.NameId)
+					err = c.guildsRole.GuildRolesDeleteSubscribe(m.MultiGuild.GuildId(), roleName, m.NameId)
 					if err != nil {
 						c.log.ErrorErr(err)
 						return false
@@ -103,7 +103,7 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 		text := "попытка оформить подписку \n"
 		roleName := matches[1]
 		usernames := matches[2]
-		if !c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
+		if !c.guildsRole.GuildRoleExist(m.MultiGuild.GuildId(), roleName) {
 			text += "сначала создай роль " + roleName
 			c.sendChat(m, text)
 			return true
@@ -123,7 +123,7 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 			fmt.Println(user)
 
 			if user != nil && user.ID != "" {
-				err = c.guildsRole.GuildRolesSubscribe(m.GuildId, roleName, user.Username, user.ID)
+				err = c.guildsRole.GuildRolesSubscribe(m.MultiGuild.GuildId(), roleName, user.Username, user.ID)
 				if err != nil {
 					fmt.Println(err)
 					return false
@@ -144,7 +144,7 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 		text := "попытка отменить подписку \n"
 		roleName := matches[1]
 		usernames := matches[2]
-		if !c.guildsRole.GuildRoleExist(m.GuildId, roleName) {
+		if !c.guildsRole.GuildRoleExist(m.MultiGuild.GuildId(), roleName) {
 			text += "сначала создай роль " + roleName
 			c.sendChat(m, text)
 			return true
@@ -164,7 +164,7 @@ func (c *Hs) logicRoles(m models.IncomingMessage) bool {
 			fmt.Println(user)
 
 			if user != nil && user.ID != "" {
-				err = c.guildsRole.GuildRolesDeleteSubscribeUser(m.GuildId, roleName, user.Username, user.ID)
+				err = c.guildsRole.GuildRolesDeleteSubscribeUser(m.MultiGuild.GuildId(), roleName, user.Username, user.ID)
 				if err != nil {
 					fmt.Println(err)
 					return false

@@ -23,13 +23,14 @@ type ConfigBot struct {
 		Username string `yaml:"username" env-default:"root"`
 		Password string `yaml:"password" env-default:"root"`
 	} `yaml:"postgress"`
-	MySQl string `yaml:"mysql"`
+	MySQl   string `yaml:"mysql"`
+	WsToken string `yaml:"ws_token"`
 }
 
 var Instance *ConfigBot
 var once sync.Once
 
-func InitConfig() *ConfigBot {
+func InitConfig(nameApp string) *ConfigBot {
 	once.Do(func() {
 		Instance = &ConfigBot{}
 		err := cleanenv.ReadConfig("docker/config/config.yml", Instance)
@@ -38,5 +39,9 @@ func InitConfig() *ConfigBot {
 			fmt.Println(help)
 		}
 	})
+	if Instance != nil {
+		l := Instance.Logger
+		InitLogger(nameApp, l.Webhook, l.Token, l.ChatId)
+	}
 	return Instance
 }

@@ -44,6 +44,29 @@ func (d *Db) ListUserUpdate(token, userid, guildid string) error {
 	}
 	return nil
 }
+func (d *Db) ListUserDelete(token string) error {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	deleteUser := `DELETE FROM hs_compendium.list_users WHERE token = $1`
+	_, err := d.db.Exec(ctx, deleteUser, token)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+func (d *Db) ListUserDeleteByUserIdByGuildId(userid, guildid string) error {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	deleteUser := `DELETE FROM hs_compendium.list_users WHERE userid = $1 AND guildid = $2`
+	_, err := d.db.Exec(ctx, deleteUser, userid, guildid)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (d *Db) ListUserGetToken(userid, guildid string) (string, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()

@@ -2,6 +2,9 @@ package postgres
 
 import (
 	"compendium/models"
+	"context"
+	"fmt"
+	"time"
 )
 
 func (d *Db) GuildInsert(u models.Guild) error {
@@ -77,4 +80,49 @@ func (d *Db) GuildGetAll() ([]models.Guild, error) {
 		mm = append(mm, t)
 	}
 	return mm, nil
+}
+
+func (d *Db) MigrationToNewGuild() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	sel := "SELECT * FROM compendium.guilds"
+	results, err := d.db.Query(ctx, sel)
+	defer results.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+	var mm []models.MultiAccountGuild
+	for results.Next() {
+		var t models.MultiAccountGuild
+		err = results.Scan(&t.GId, &t.GuildName, &t.Channels, &t.AvatarUrl)
+		mm = append(mm, t)
+	}
+
+	for _, guild := range mm {
+		fmt.Println(guild.GuildName)
+		for _, channel := range guild.Channels {
+			fmt.Println(channel)
+			//corpmember
+			sqlUpd := `update hs_compendium.corpmember set guildid = $1 where guildid = $2`
+			_, _ = d.db.Exec(ctx, sqlUpd, guild.GuildId(), channel)
+
+			//guildRoles
+			sqlUpd = `update hs_compendium.guildroles set guildid = $1 where guildid = $2`
+			_, _ = d.db.Exec(ctx, sqlUpd, guild.GuildId(), channel)
+
+			//tech
+			sqlUpd = `update hs_compendium.tech set guildid = $1 where guildid = $2`
+			_, _ = d.db.Exec(ctx, sqlUpd, guild.GuildId(), channel)
+
+			//userRoles
+			sqlUpd = `update hs_compendium.userroles set guildid = $1 where guildid = $2`
+			_, _ = d.db.Exec(ctx, sqlUpd, guild.GuildId(), channel)
+
+			//wsKill
+			sqlUpd = `update hs_compendium.wskill set guildid = $1 where guildid = $2`
+			_, _ = d.db.Exec(ctx, sqlUpd, guild.GuildId(), channel)
+		}
+	}
+	fmt.Println("DONE")
 }

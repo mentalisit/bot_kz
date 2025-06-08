@@ -7,15 +7,14 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (d *Db) ReadConfigRs() []models.CorporationConfig {
+func (d *Db) ReadConfigRs() ([]models.CorporationConfig, error) {
 	ctx, cancelFunc := d.getContext()
 	defer cancelFunc()
 	var tt []models.CorporationConfig
 	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
 	defer results.Close()
 	if err != nil {
-		d.log.ErrorErr(err)
-		return tt
+		return nil, err
 	}
 	for results.Next() {
 		var t models.CorporationConfig
@@ -23,9 +22,9 @@ func (d *Db) ReadConfigRs() []models.CorporationConfig {
 			&t.Country, &t.DelMesComplite, &t.Guildid, &t.Forward)
 		tt = append(tt, t)
 	}
-	return tt
+	return tt, nil
 }
-func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationConfig) {
+func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationConfig, err error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE dschannel = $1"
@@ -35,16 +34,16 @@ func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationCo
 		if errors.Is(err, pgx.ErrNoRows) {
 			return
 		} else {
-			d.log.ErrorErr(err)
+			return conf, nil
 		}
 	}
 	for results.Next() {
 		err = results.Scan(&conf.Type, &conf.CorpName, &conf.DsChannel, &conf.TgChannel, &conf.MesidDsHelp, &conf.MesidTgHelp,
 			&conf.Country, &conf.DelMesComplite, &conf.Guildid, &conf.Forward)
 	}
-	return conf
+	return conf, nil
 }
-func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig) {
+func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig, err error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	sel := "SELECT * FROM kzbot.config WHERE corpname = $1"
@@ -54,24 +53,23 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 		if errors.Is(err, pgx.ErrNoRows) {
 			return
 		} else {
-			d.log.ErrorErr(err)
+			return conf, err
 		}
 	}
 	for results.Next() {
 		err = results.Scan(&conf.Type, &conf.CorpName, &conf.DsChannel, &conf.TgChannel, &conf.MesidDsHelp, &conf.MesidTgHelp,
 			&conf.Country, &conf.DelMesComplite, &conf.Guildid, &conf.Forward)
 	}
-	return conf
+	return conf, nil
 }
 
-func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
+func (d *Db) DBReadBridgeConfig() ([]models.BridgeConfig, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var cc []models.BridgeConfig
 	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)
 	if err != nil {
-		d.log.ErrorErr(err)
-		return cc
+		return cc, err
 	}
 	defer rows.Close()
 
@@ -79,23 +77,21 @@ func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
 		var config models.BridgeConfig
 		var channelDs, channelTg []byte
 		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channelDs, &channelTg, &config.ForbiddenPrefixes); err != nil {
-			d.log.ErrorErr(err)
-			return cc
+			return cc, err
 		}
 
 		if err = json.Unmarshal(channelDs, &config.ChannelDs); err != nil {
-			d.log.ErrorErr(err)
+			return cc, err
 		}
 
 		if err = json.Unmarshal(channelTg, &config.ChannelTg); err != nil {
-			d.log.ErrorErr(err)
+			return cc, err
 		}
 
 		cc = append(cc, config)
 	}
 	if err = rows.Err(); err != nil {
-		d.log.ErrorErr(err)
-		return cc
+		return cc, err
 	}
-	return cc
+	return cc, nil
 }

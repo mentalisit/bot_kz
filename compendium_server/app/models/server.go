@@ -2,15 +2,16 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
+	"fmt"
+	"strings"
 )
 
 type Identity struct {
-	User  User   `json:"user"`
-	Guild Guild  `json:"guild"`
-	Token string `json:"token"`
-	Uid   *uuid.UUID
-	GId   *uuid.UUID
+	User         User               `json:"user"`
+	Guild        Guild              `json:"guild"`
+	Token        string             `json:"token"`
+	MultiAccount *MultiAccount      `json:"multiAccount"`
+	MultiGuild   *MultiAccountGuild `json:"multiGuild"`
 }
 type Code struct {
 	Code      string
@@ -83,6 +84,21 @@ type CorpData struct {
 	Roles      []CorpRole   `json:"roles"`
 	FilterId   string       `json:"filterId"`   // Current filter roleId
 	FilterName string       `json:"filterName"` // Name of current filter roleId
+}
+
+func (c *CorpData) Initialization() {
+	c.Members = []CorpMember{}
+	c.Roles = []CorpRole{{
+		Id:   "",
+		Name: "@everyone",
+	}}
+}
+func (c *CorpData) AppendEveryone(typeRole string) {
+	c.Roles = append(c.Roles, CorpRole{
+		Id:       typeRole,
+		Name:     fmt.Sprintf("(%s)@everyone", strings.ToUpper(typeRole)),
+		TypeRole: typeRole,
+	})
 }
 
 type CorpMember struct {

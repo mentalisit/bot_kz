@@ -5,6 +5,7 @@ import (
 	"discord/models"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"log/slog"
 	"path/filepath"
 	"strings"
 )
@@ -237,7 +238,12 @@ func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func (d *Discord) ready() {
-	for _, configrs := range d.storage.Db.ReadConfigRs() {
+	rs, err := d.storage.Db.ReadConfigRs()
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	for _, configrs := range rs {
 		if configrs.DsChannel != "" && configrs.Guildid != "" {
 			//d.removeCommand(configrs.Guildid)
 			commandsModuleWeapon := AddSlashCommandModuleWeaponLocale()

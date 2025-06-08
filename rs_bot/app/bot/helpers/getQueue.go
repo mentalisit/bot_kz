@@ -119,6 +119,51 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 	return newName
 }
 
+func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
+	if u.User1.Tip == tip {
+		n1 = h.emReadName(u.User1, tip, true)
+	} else {
+		n1 = h.emReadName(u.User1, tip)
+	}
+	if u.User2 != nil {
+		if u.User2.Tip == tip {
+			n2 = h.emReadName(*u.User2, tip, true)
+		} else {
+			n2 = h.emReadName(*u.User2, tip)
+		}
+	}
+	if u.User3 != nil {
+		if u.User3.Tip == tip {
+			n3 = h.emReadName(*u.User3, tip, true)
+		} else {
+			n3 = h.emReadName(*u.User3, tip)
+		}
+	}
+	if u.User4 != nil {
+		if u.User4.Tip == tip {
+			n4 = h.emReadName(*u.User4, tip, true)
+		} else {
+			n4 = h.emReadName(*u.User4, tip)
+		}
+	}
+
+	return
+}
+
+func extractNumbers(input string) int {
+	re := regexp.MustCompile(`\d+`)
+	matches := re.FindAllString(input, -1)
+
+	if len(matches) == 0 {
+		return 0
+	}
+	level, err := strconv.Atoi(matches[len(matches)-1])
+	if err != nil || level > 16 {
+		return 0
+	}
+	return level
+}
+
 func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 	if name == "" {
 		multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
@@ -199,49 +244,4 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 			h.storage.Emoji.ModuleUpdate(name, "tg", "3", rse)
 		}
 	}
-}
-
-func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
-	if u.User1.Tip == tip {
-		n1 = h.emReadName(u.User1, tip, true)
-	} else {
-		n1 = h.emReadName(u.User1, tip)
-	}
-	if u.User2 != nil {
-		if u.User2.Tip == tip {
-			n2 = h.emReadName(*u.User2, tip, true)
-		} else {
-			n2 = h.emReadName(*u.User2, tip)
-		}
-	}
-	if u.User3 != nil {
-		if u.User3.Tip == tip {
-			n3 = h.emReadName(*u.User3, tip, true)
-		} else {
-			n3 = h.emReadName(*u.User3, tip)
-		}
-	}
-	if u.User4 != nil {
-		if u.User4.Tip == tip {
-			n4 = h.emReadName(*u.User4, tip, true)
-		} else {
-			n4 = h.emReadName(*u.User4, tip)
-		}
-	}
-
-	return
-}
-
-func extractNumbers(input string) int {
-	re := regexp.MustCompile(`\d+`)
-	matches := re.FindAllString(input, -1)
-
-	if len(matches) == 0 {
-		return 0
-	}
-	level, err := strconv.Atoi(matches[len(matches)-1])
-	if err != nil || level > 16 {
-		return 0
-	}
-	return level
 }

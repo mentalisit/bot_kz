@@ -32,10 +32,10 @@ func (c *Hs) wskill(m models.IncomingMessage) bool {
 	return true
 }
 func (c *Hs) wskillList(m models.IncomingMessage) {
-	ws, err := c.db.DB.WsKillReadByGuildId(m.GuildId)
+	ws, err := c.db.DB.WsKillReadByGuildId(m.MultiGuild.GuildId())
 	if err != nil {
 		c.log.ErrorErr(err)
-		c.log.Info(m.GuildId)
+		c.log.InfoStruct("MultiGuild", m.MultiGuild)
 		return
 	}
 	if len(ws) > 0 {
@@ -66,7 +66,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		add := now.Add(18 * time.Hour)
 		timestamp := add.Unix()
 		wskill := models.WsKill{
-			GuildId:      m.GuildId,
+			GuildId:      m.MultiGuild.GuildId(),
 			ChatId:       m.ChannelId,
 			UserName:     c.getNameText(name),
 			Mention:      name,
@@ -74,18 +74,22 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			TimestampEnd: timestamp,
 			Language:     m.Language,
 		}
-		count, _ := c.guilds.GuildGetCountByGuildId(m.GuildId)
-		if count == 0 {
-			err := c.guilds.GuildInsert(models.Guild{
-				URL:  m.GuildAvatar,
-				ID:   m.GuildId,
-				Name: m.GuildName,
-				Type: m.Type,
-			})
-			if err != nil {
-				c.log.ErrorErr(err)
-			}
-		}
+		//getMultiGuild, err := c.db.Multi.GuildGet(m.GuildId)
+		//count, _ := c.guilds.GuildGetCountByGuildId(m.GuildId)
+		//if count == 0 {
+		//	err := c.guilds.GuildInsert(models.Guild{
+		//		URL:  m.GuildAvatar,
+		//		ID:   m.GuildId,
+		//		Name: m.GuildName,
+		//		Type: m.Type,
+		//	})
+		//	if err != nil {
+		//		c.log.ErrorErr(err)
+		//	}
+		//}
+		//if err != nil && getMultiGuild==nil{
+		//	c.log.InfoStruct("MultiGuild", getMultiGuild)
+		//}
 
 		err := c.db.DB.WsKillInsert(wskill)
 		if err != nil {
@@ -104,7 +108,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		if len(matches) > 0 {
 			if matches[1] == "delete" {
 				wskill := models.WsKill{
-					GuildId:  m.GuildId,
+					GuildId:  m.MultiGuild.GuildId(),
 					UserName: c.getNameText(name),
 					ShipName: ship,
 				}
@@ -143,7 +147,7 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 				timestamp := timeMinute.Unix()
 
 				wskill := models.WsKill{
-					GuildId:      m.GuildId,
+					GuildId:      m.MultiGuild.GuildId(),
 					ChatId:       m.ChannelId,
 					UserName:     c.getNameText(name),
 					Mention:      name,
@@ -193,7 +197,7 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 	parsedTime := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), minutes, 0, 0, location)
 
 	wskill := models.WsKill{
-		GuildId:      m.GuildId,
+		GuildId:      m.MultiGuild.GuildId(),
 		ChatId:       m.ChannelId,
 		UserName:     c.getNameText(name),
 		Mention:      name,
@@ -259,15 +263,16 @@ func (c *Hs) wsKillTimer() {
 				for _, kill := range all {
 					h, m := getTimeLeft(kill.TimestampEnd)
 					if h == 0 && (m == 15 || m == 0) {
-						guild, errs := c.guilds.GuildGet(kill.GuildId)
-						if errs != nil {
-							c.log.ErrorErr(errs)
-							c.log.InfoStruct("kill. ", kill)
-							continue
-						}
+						//parse, _ := uuid.Parse(kill.GuildId)
+						//guild, errs := c.db.Multi.GuildGetUUID(parse)
+						//if errs != nil {
+						//	c.log.ErrorErr(errs)
+						//	c.log.InfoStruct("kill. ", kill)
+						//	continue
+						//}
 						in := models.IncomingMessage{
 							ChannelId: kill.ChatId,
-							Type:      guild.Type,
+							Type:      "guild.Type", //todo need refactor logic
 							Language:  kill.Language,
 						}
 						if m == 15 {
@@ -290,7 +295,7 @@ func (c *Hs) wsKillTimer() {
 			}
 			time.Sleep(20 * time.Second)
 		} else if now.Hour() == 23 && now.Minute() == 45 && now.Second() == 30 {
-			go c.updateAvatars()
+			//go c.updateAvatars()
 			time.Sleep(time.Second)
 		} else {
 			time.Sleep(time.Second)

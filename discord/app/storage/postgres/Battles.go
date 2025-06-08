@@ -62,14 +62,15 @@ func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, er
 
 	return stats, nil
 }
-func (d *Db) BattlesUpdate(b models.Battles) {
+func (d *Db) BattlesUpdate(b models.Battles) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	sqlUpd := "update rs_bot.battles set points = $1 where name = $2 AND level = $3 AND eventid = $4 AND corporation = $5"
 	_, err := d.db.Exec(ctx, sqlUpd, b.Points, b.Name, b.Level, b.EventId, b.CorpName)
 	if err != nil {
-		d.log.ErrorErr(err)
+		return err
 	}
+	return nil
 }
 
 func (d *Db) BattlesTopInsert(b models.BattlesTop) error {

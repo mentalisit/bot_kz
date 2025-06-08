@@ -3,32 +3,18 @@ package logic
 import (
 	"compendium/models"
 	"fmt"
+	"strings"
 	"time"
 )
 
 func (c *Hs) logic(m models.IncomingMessage) {
 	c.PrintGoroutine()
 
-	if m.GuildId != "" {
-		guild, _ := c.db.Multi.GuildGet(m.GuildId)
-		if guild == nil {
-			err := c.db.Multi.GuildInsert(models.MultiAccountGuild{
-				GuildName: m.GuildName,
-				Channels:  []string{m.GuildId},
-				AvatarUrl: m.GuildAvatar,
-			})
-			if err != nil {
-				c.log.ErrorErr(err)
-			}
-			guild, _ = c.db.Multi.GuildGet(m.GuildId)
-		} else if guild.AvatarUrl != m.GuildAvatar {
-			guild.AvatarUrl = m.GuildAvatar
-			err := c.db.Multi.GuildUpdateAvatar(*guild)
-			if err != nil {
-				c.log.ErrorErr(err)
-			}
-		}
-		m.MultiGuild = guild
+	if strings.Contains(m.Type, "DM") && !strings.HasPrefix(m.Text, "%") {
+		return
+	}
+	if m.MultiGuild == nil {
+		c.log.InfoStruct("m.MultiGuild==nil ", m)
 	}
 
 	multiAccount, _ := c.db.Multi.FindMultiAccountByUserId(m.NameId)
@@ -44,8 +30,9 @@ func (c *Hs) logic(m models.IncomingMessage) {
 
 	fmt.Printf("logic: %+v %+v\n", time.Now().Format(time.RFC3339), m)
 	if m.MultiAccount != nil {
-		fmt.Printf("logic: %+v %+v\n", time.Now().Format(time.RFC3339), m.MultiAccount)
+		fmt.Printf("logic MultiAccount: %+v %+v\n", time.Now().Format(time.RFC3339), m.MultiAccount)
 	}
+
 	if c.connect(m) {
 	} else if c.multiConnect(m) {
 	} else if c.Help(m) {
@@ -59,6 +46,6 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	} else if c.setGameName(m) {
 	} else if c.removeMember(m) {
 	} else {
-		c.log.Info(fmt.Sprintf("else %+v\n", m))
+		c.log.Info(fmt.Sprintf("else Corp:%s %+v\n", m.MultiGuild.GuildName, m))
 	}
 }

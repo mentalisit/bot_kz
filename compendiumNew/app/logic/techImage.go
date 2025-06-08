@@ -28,11 +28,13 @@ func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLe
 	}
 	return m, mi
 }
+
 func (c *Hs) sendPic(m models.IncomingMessage, userAvatar, guildAvatar, picName, guildName string, mBytes []byte) {
 	_, mt := c.BytesToTechLevel(mBytes)
 	userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, mt)
 	c.sendChatPic(m, "", userPic)
 }
+
 func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	if m.Text == "%т и" || m.Text == "%t i" || m.Text == "%т і" || m.Text == "%tech" || m.Text == "%техи" {
 		tech = true
@@ -43,14 +45,9 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 
 	var mBytes []byte
 	picName := m.Name
-	guildName := m.GuildName
-	guildAvatar := m.GuildAvatar
+	guildName := m.MultiGuild.GuildName
+	guildAvatar := m.MultiGuild.AvatarUrl
 	userAvatar := m.Avatar
-
-	if m.MultiGuild != nil {
-		guildName = m.MultiGuild.GuildName
-		guildAvatar = m.MultiGuild.AvatarUrl
-	}
 
 	if m.MultiAccount != nil {
 		mBytesTech, err := c.db.Multi.TechnologiesGet(m.MultiAccount.UUID, m.MultiAccount.Nickname)
@@ -67,7 +64,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	}
 
 	if len(mBytes) == 0 {
-		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId, m.GuildId)
+		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId, m.MultiGuild.GuildId())
 		if err != nil {
 			c.log.ErrorErr(err)
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
@@ -111,14 +108,9 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 	if len(matches) > 0 || len(matchestg) > 0 || len(matchesNew) > 0 {
 		var mBytes []byte
 		picName := ""
-		guildName := m.GuildName
-		guildAvatar := m.GuildAvatar
 		userAvatar := ""
-
-		if m.MultiGuild != nil {
-			guildName = m.MultiGuild.GuildName
-			guildAvatar = m.MultiGuild.AvatarUrl
-		}
+		guildName := m.MultiGuild.GuildName
+		guildAvatar := m.MultiGuild.AvatarUrl
 
 		var err error
 		userID := ""
@@ -154,8 +146,8 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				picName = multiAcc.Nickname
 				userAvatar = multiAcc.AvatarURL
 			}
-
 		}
+
 		if len(mBytes) == 0 {
 			var user *models.User
 			if userID != "" {
@@ -170,7 +162,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 				return true
 			}
-			techBytes, err := c.tech.TechGet(user.Username, user.ID, m.GuildId)
+			techBytes, err := c.tech.TechGet(user.Username, user.ID, m.MultiGuild.GuildId())
 			if err != nil {
 				c.log.ErrorErr(err)
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
@@ -221,14 +213,9 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 	if userName != "" {
 		var mBytes []byte
 		picName := userName
-		guildName := m.GuildName
-		guildAvatar := m.GuildAvatar
 		userAvatar := ""
-
-		if m.MultiGuild != nil {
-			guildName = m.MultiGuild.GuildName
-			guildAvatar = m.MultiGuild.AvatarUrl
-		}
+		guildName := m.MultiGuild.GuildName
+		guildAvatar := m.MultiGuild.AvatarUrl
 
 		multiAccount, _ := c.db.Multi.FindMultiAccountByUsername(userName)
 		if multiAccount != nil {
@@ -239,7 +226,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 			}
 		}
 		if multiAccount == nil {
-			techBytes, userID, err := c.tech.TechGetName(userName, m.GuildId)
+			techBytes, userID, err := c.tech.TechGetName(userName, m.MultiGuild.GId.String())
 			if err != nil || userID == "" {
 				usersGetNick, _ := c.users.UsersFindByGameName(userName)
 				if len(usersGetNick) > 1 {
@@ -247,21 +234,15 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 				}
 				if usersGetNick != nil && len(usersGetNick) > 0 {
 					for _, userGetNick := range usersGetNick {
-						techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.GuildId)
+						techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.MultiGuild.GuildId())
 						if userID != "" || techBytes != nil {
 							break
 						}
 					}
 				}
 				if userID == "" || techBytes == nil {
-					compatible, _ := c.listOfCompatible(&models.Guild{ID: m.GuildId, Type: m.Type, Name: m.GuildName})
-					if compatible != nil {
-						techBytes, userID, _ = c.tech.TechGetName(userName, compatible.ID)
-					}
-					if userID == "" || techBytes == nil {
-						c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-						return true
-					}
+					c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
+					return true
 				}
 			}
 

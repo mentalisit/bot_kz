@@ -7,4 +7,5 @@ type Battles interface {
 	BattlesGetAll(corpName string, event int) ([]models.PlayerStats, error)
 	BattlesTopInsert(b models.BattlesTop) error
 	BattlesTopGetAll(corpName string) ([]models.BattlesTop, error)
+	LoadNameAliases() (map[string]string, error)
 }

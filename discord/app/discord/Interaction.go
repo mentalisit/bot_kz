@@ -5,6 +5,7 @@ import (
 	"discord/models"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -91,7 +92,10 @@ func (d *Discord) updateModuleOrWeapon(username, module, level string) {
 	massbattery := "<:massbattery:1199072493760151593>"
 	dartlauncher := "<:dartlauncher:1199072434674991145>"
 	rocketlauncher := "<:rocketlauncher:1199071677548605562>"
-	t := d.storage.Emoji.EmojiModuleReadUsers(username, "ds")
+	t, err := d.storage.Emoji.EmojiModuleReadUsers(username, "ds")
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	if len(t.Name) == 0 {
 		d.storage.Emoji.EmInsertEmpty("ds", username)
 	}

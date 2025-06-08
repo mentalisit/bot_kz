@@ -22,12 +22,31 @@ func (h *Helpers) CreateScoreboard(filename string, corpName string, eventId int
 	if len(all) == 0 {
 		return h.CreateScoreboardTop(filename, corpName)
 	}
+	if corpName == "rusb" {
+		allbest, _ := h.storage.Battles.BattlesGetAll("best", eventId)
+		aa := make(map[string]models.PlayerStats)
+		for _, stats := range all {
+			aa[stats.Player] = stats
+		}
+		for _, stats := range allbest {
+			if existing, ok := aa[stats.Player]; ok {
+				// Если уже есть — складываем нужные поля
+				existing.Points += stats.Points
+				existing.Runs += stats.Runs
+				aa[stats.Player] = existing // обновляем обратно
+			} else {
+				// Иначе просто записываем
+				aa[stats.Player] = stats
+			}
+		}
+		all = []models.PlayerStats{}
+		for _, stats := range aa {
+			all = append(all, stats)
+		}
+	}
 	sort.Slice(all, func(i, j int) bool { return all[i].Points > all[j].Points })
 	var data []models.EntryScoreboard
 	for _, stats := range all {
-		if stats.Level <= 8 {
-			continue
-		}
 		data = append(data, models.EntryScoreboard{
 			DisplayName: stats.Player,
 			RsLevel:     stats.Level,

@@ -15,10 +15,10 @@ func (h *Helpers) ReadNameModulesUUID(in models.InMessage, name string) {
 	var multiAccount *models.MultiAccount
 	if name == "" {
 		name = in.Username
-		multiAccount, _ = h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
-		if multiAccount != nil {
-			name = multiAccount.Nickname
-		}
+	}
+	multiAccount, _ = h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
+	if multiAccount != nil {
+		name = multiAccount.Nickname
 	}
 	if multiAccount == nil {
 		h.log.Error("multiAccount==nil")

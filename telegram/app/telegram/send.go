@@ -5,8 +5,6 @@ import (
 	"fmt"
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"os"
-
-	//tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"path/filepath"
 	"strconv"
 	"strings"

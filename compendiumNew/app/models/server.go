@@ -5,10 +5,11 @@ import (
 )
 
 type Identity struct {
-	User  User   `json:"user"`
-	Guild Guild  `json:"guild"`
-	Token string `json:"token"`
-	//Type  string `json:"type"`
+	User         User               `json:"user"`
+	Guild        Guild              `json:"guild"`
+	Token        string             `json:"token"`
+	MultiAccount *MultiAccount      `json:"multiAccount"`
+	MultiGuild   *MultiAccountGuild `json:"multiGuild"`
 }
 type Code struct {
 	Code      string
@@ -100,6 +101,7 @@ type CorpMember struct {
 	AfkFor       string         `json:"afkFor"`      // readable afk duration
 	AfkWhen      int            `json:"afkWhen"`     // Unix Epoch when user returns
 	MultiAccount *MultiAccount
+	MultiGuild   *MultiAccountGuild
 }
 
 type CorpRole struct {

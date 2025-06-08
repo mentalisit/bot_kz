@@ -5,23 +5,23 @@ import (
 	"fmt"
 )
 
-func (d *Db) EmojiModuleReadUsers(name, tip string) models.EmodjiUser {
+func (d *Db) EmojiModuleReadUsers(name, tip string) (models.EmodjiUser, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	selec := "SELECT * FROM kzbot.users WHERE name = $1 AND tip = $2"
 	results, err := d.db.Query(ctx, selec, name, tip)
 	defer results.Close()
 	if err != nil {
-		d.log.ErrorErr(err)
+		return models.EmodjiUser{}, err
 	}
 	var t models.EmodjiUser
 	for results.Next() {
 		err = results.Scan(&t.Id, &t.Tip, &t.Name, &t.Em1, &t.Em2, &t.Em3, &t.Em4, &t.Module1, &t.Module2, &t.Module3, &t.Weapon)
 		if err != nil {
-			d.log.ErrorErr(err)
+			return models.EmodjiUser{}, err
 		}
 	}
-	return t
+	return t, nil
 }
 func (d *Db) EmojiUpdate(name, tip, slot, emo string) string {
 	ctx, cancel := d.getContext()

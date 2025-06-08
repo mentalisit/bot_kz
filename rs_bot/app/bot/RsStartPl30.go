@@ -37,14 +37,14 @@ func (b *Bot) RsStart(in models.InMessage) {
 
 		if count > 0 {
 			u := b.storage.DbFunc.ReadAll(in.RsTypeLevel, in.Config.CorpName)
-			textEvent, numkzEvent := b.EventText(in)
-			if textEvent == "" {
-				textEvent = b.GetTextPercent(in.Config, d)
-			}
-			numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)
-			if numberevent > 0 {
-				numberkz = numkzEvent
-			}
+			//textEvent, numkzEvent := b.EventText(in)
+			//if textEvent == "" {
+			textEvent := b.GetTextPercent(in.Config, d)
+			//}
+			//numberevent := b.storage.Event.NumActiveEvent(in.Config.CorpName)
+			//if numberevent > 0 {
+			//	numberkz = numkzEvent
+			//}
 			textStart := fmt.Sprintf("🚀 %s%s (%d) %s\n\n", b.getText(in, "queue_drs"), level, numberkz, b.getText(in, "was_launched_incomplete"))
 			if !d {
 				textStart = fmt.Sprintf("🚀 %s%s (%d) %s\n\n", b.getText(in, "rs_queue"), level, numberkz, b.getText(in, "was_launched_incomplete"))
@@ -157,19 +157,19 @@ func (b *Bot) RsStart(in models.InMessage) {
 				}
 			}
 			b.wg.Wait()
-			err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, dsmesid, tgmesid, "", numberkz, numberevent, in.Config.CorpName)
+			err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, dsmesid, tgmesid, "", numberkz, 0, in.Config.CorpName)
 			if err != nil {
 				b.log.ErrorErr(err)
-				err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, dsmesid, tgmesid, "", numberkz, numberevent, in.Config.CorpName)
+				err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, dsmesid, tgmesid, "", numberkz, 0, in.Config.CorpName)
 				if err != nil {
 					b.log.ErrorErr(err)
 				}
 			}
 
-			if numberevent == 0 {
-				//отправляем сообщение о корпорациях с %
-				go b.SendPercent(in.Config)
-			}
+			//if numberevent == 0 {
+			//отправляем сообщение о корпорациях с %
+			go b.SendPercent(in.Config)
+			//}
 
 			user, UserIdTg := u.GetAllUserId()
 			go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)

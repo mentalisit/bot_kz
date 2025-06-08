@@ -28,6 +28,18 @@ func (d *Db) GuildGet(guid *uuid.UUID) (*models.MultiAccountGuild, error) {
 	return &u, nil
 }
 
+func (d *Db) GuildGetById(guildId string) (*models.MultiAccountGuild, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	var u models.MultiAccountGuild
+	selectGuild := "SELECT * FROM compendium.guilds WHERE $1 = ANY(channels)"
+	err := d.db.QueryRow(ctx, selectGuild, guildId).Scan(&u.GId, &u.GuildName, &u.Channels, &u.AvatarUrl)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 func (d *Db) GuildUpdateAvatar(u models.MultiAccountGuild) error {
 	ctx, cancel := d.getContext()
 	defer cancel()

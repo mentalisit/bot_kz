@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ScoreboardParams struct {
 	Name              string
@@ -14,6 +17,7 @@ type RedStarEvent struct {
 	StarLevel     int           `json:"StarLevel"`
 	DarkRedStar   bool          `json:"DarkRedStar"`
 	EventType     string        `json:"EventType"`
+	Corporation   Corporation   `json:"Corporation"`
 	Timestamp     string        `json:"Timestamp"`
 	RSEventPoints int           `json:"RSEventPoints,omitempty"`
 	Players       []Participant // Это поле будет сериализоваться как Players или PlayersWhoContributed
@@ -44,26 +48,37 @@ func (r *RedStarEvent) UnmarshalJSON(data []byte) error {
 }
 
 type WhiteStarStarted struct {
-	Opponent             Opponent      `json:"Opponent"`
+	Slot                 int           `json:"Slot"`
+	Opponent             Corporation   `json:"Opponent"`
 	EventType            string        `json:"EventType"`
 	Timestamp            string        `json:"Timestamp"`
 	IsUnderdog           bool          `json:"IsUnderdog"`
+	Corporation          Corporation   `json:"Corporation"`
 	WhiteStarID          string        `json:"WhiteStarID"`
 	OurParticipants      []Participant `json:"OurParticipants"`
 	OpponentParticipants []Participant `json:"OpponentParticipants"`
 }
 type WhiteStarEnded struct {
-	WhiteStarID   string   `json:"WhiteStarID"`
-	Opponent      Opponent `json:"Opponent"`
-	OurScore      int64    `json:"OurScore"`
-	OpponentScore int64    `json:"OpponentScore"`
-	XPGained      int64    `json:"XPGained"`
-	EventType     string   `json:"EventType"`
-	Timestamp     string   `json:"Timestamp"`
+	WhiteStarID   string      `json:"WhiteStarID"`
+	Opponent      Corporation `json:"Opponent"`
+	OurScore      int         `json:"OurScore"`
+	OpponentScore int         `json:"OpponentScore"`
+	XPGained      int         `json:"XPGained"`
+	Corporation   Corporation `json:"Corporation"`
+	EventType     string      `json:"EventType"`
+	Timestamp     string      `json:"Timestamp"`
 }
-type Opponent struct {
+
+type Corporation struct {
 	CorporationID   string `json:"CorporationID"`
 	CorporationName string `json:"CorporationName"`
+}
+
+func (c *Corporation) GetAvatar() string {
+	if c.CorporationID != "" {
+		return fmt.Sprintf("https://ws.tsl.rocks/corp/%s/favicon.png", c.CorporationID)
+	}
+	return ""
 }
 
 type Participant struct {

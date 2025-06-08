@@ -14,8 +14,8 @@ type Hs struct {
 	db         *storage.Storage
 	corpMember CorpMember
 	tech       Tech
-	guilds     Guilds
-	listUser   ListUser
+	//guilds     Guilds
+	//listUser   ListUser
 	users      Users
 	guildsRole GuildRoles
 	Dict       *dictionary.Dictionary
@@ -30,8 +30,8 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 		db:         db,
 		corpMember: db.DB,
 		tech:       db.DB,
-		guilds:     db.DB,
-		listUser:   db.DB,
+		//guilds:     db.DB,
+		//listUser:   db.DB,
 		users:      db.DB,
 		guildsRole: db.DB,
 		Dict:       dictionary.NewDictionary(log),

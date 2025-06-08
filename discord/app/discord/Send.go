@@ -105,7 +105,6 @@ func (d *Discord) SendOrEditEmbedImage(channelID, title, imageUrl string) error 
 	return err
 }
 func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScoreboard string) error {
-	var mId string
 	messages, err := d.S.ChannelMessages(channelID, 5, "", "", "")
 	if err != nil {
 		return fmt.Errorf("ошибка получения сообщений: %v", err)
@@ -114,19 +113,10 @@ func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScorebo
 	for _, message := range messages {
 		for _, embed := range message.Embeds {
 			if embed.Title == title {
-				mId = message.ID
+				d.DeleteMessage(channelID, message.ID)
 				break // Нашли нужное сообщение, выходим из цикла
 			}
 		}
-		if mId != "" {
-			break // Выход из основного цикла тоже
-		}
-	}
-
-	tn := time.Now().UTC()
-	if tn.Minute() == 59 && mId != "" {
-		d.DeleteMessage(channelID, mId)
-		mId = ""
 	}
 
 	open, err := os.Open("docker/scoreboard/" + fileNameScoreboard)
@@ -154,13 +144,7 @@ func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScorebo
 		Files:     dFile,
 	}
 
-	if mId == "" {
-		// Отправляем сообщение с изображением
-		_, err = d.webhook.Send(channelID, wparams)
-	} else {
-		// Если заголовок совпадает, просто обновляем сообщение
-		err = d.webhook.Edit(channelID, mId, wparams)
-	}
+	_, err = d.webhook.Send(channelID, wparams)
 	if err != nil {
 		return err
 	}
@@ -170,6 +154,7 @@ func (d *Discord) SendOrEditEmbedImageFileName(channelID, title, fileNameScorebo
 
 func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 	if text != "" {
+		text = d.re.replaceNameForDiscord(text)
 		message, err := d.S.ChannelMessageSend(chatid, text)
 		if err != nil {
 			d.log.ErrorErr(err)
@@ -525,14 +510,14 @@ func (d *Discord) SendPic(channelID, text string, imageBytes []byte) error {
 
 func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.MessageIds {
 	params := &discordgo.WebhookParams{
-		Content:   in.Text,
+		Content:   d.re.replaceNameForDiscord(in.Text),
 		Username:  in.Sender,
 		AvatarURL: in.Avatar,
 		Files:     []*discordgo.File{},
 	}
 	if in.Reply != nil {
 		params.Embeds = append(params.Embeds, &discordgo.MessageEmbed{
-			Description: in.Reply.Text,
+			Description: d.re.replaceNameForDiscord(in.Reply.Text),
 			Timestamp:   time.Unix(in.Reply.TimeMessage, 0).Format(time.RFC3339),
 			Color:       14232643,
 			Author: &discordgo.MessageEmbedAuthor{

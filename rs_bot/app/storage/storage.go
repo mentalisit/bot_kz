@@ -23,10 +23,8 @@ type Storage struct {
 	LevelCorp         LevelCorp
 	Postgres          *postgres.Db
 	Scoreboard        Scoreboard
-	//EventNumber       EventNumber
-	ConfigWebhook ConfigWebhook
-	Battles       Battles
-	postgres      *postgres.Db
+	Battles           Battles
+	postgres          *postgres.Db
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
@@ -52,10 +50,8 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 		LevelCorp:         local,
 		postgres:          local,
 		Scoreboard:        local,
-		//EventNumber:       local,
-		ConfigWebhook: local,
-		Battles:       local,
-		Postgres:      local,
+		Battles:           local,
+		Postgres:          local,
 	}
 
 	//go s.loadDbArray()

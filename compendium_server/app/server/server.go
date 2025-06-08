@@ -10,17 +10,25 @@ import (
 	"github.com/mentalisit/logger"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
 )
 
 type Server struct {
-	log      *logger.Logger
-	db       db
-	multi    *multi.Db
-	roles    *Roles
-	cache    *getCountry.Cache
-	certFile string
-	keyFile  string
+	log        *logger.Logger
+	db         db
+	multi      *multi.Db
+	roles      *Roles
+	cache      *getCountry.Cache
+	certFile   string
+	keyFile    string
+	cacheReq   map[string]cacheEntry
+	cacheMutex sync.Mutex
+}
+
+type cacheEntry struct {
+	data      any       // Сами данные, которые отправляем
+	timestamp time.Time // Когда сохранили
 }
 
 func NewServer(log *logger.Logger, st *storage.Storage) *Server {
@@ -32,6 +40,7 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 		cache:    getCountry.NewCache(),
 		certFile: "docker/cert/RSA-cert.pem",
 		keyFile:  "docker/cert/RSA-privkey.pem",
+		cacheReq: make(map[string]cacheEntry),
 	}
 
 	go s.RunServer()

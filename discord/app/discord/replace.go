@@ -85,7 +85,7 @@ func (r *replace) replaceUserMentions(text string, guildid string) string {
 		mention := match[0]
 		userId := match[1]
 		username := r.getUserNameById(userId, guildid)
-		text = strings.Replace(text, mention, "@"+username, 1)
+		text = strings.Replace(text, mention, "@"+username+" ", 1)
 	}
 	return text
 }
@@ -109,4 +109,21 @@ func (r *replace) GetGuildRoles(guildId string) []*discordgo.Role {
 		r.guildsRoles[guildId], _ = r.session.GuildRoles(guildId)
 	}
 	return r.guildsRoles[guildId]
+}
+
+func (r *replace) replaceNameForDiscord(s string) string {
+	s = replaceDungeonTerms(s)
+	return s
+}
+func replaceDungeonTerms(text string) string {
+	mention := "<@827709011121799218>"
+
+	text = strings.ReplaceAll(text, "@DungeonMaster", mention)
+	text = strings.ReplaceAll(text, "@Dungeonmaster", mention)
+	text = strings.ReplaceAll(text, "@dungeonmaster", mention)
+
+	text = strings.ReplaceAll(text, "@dm", mention)
+	text = strings.ReplaceAll(text, "@дм", mention)
+
+	return text
 }

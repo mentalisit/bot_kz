@@ -57,23 +57,23 @@ func (b *Bot) lRsPlus(in models.InMessage) (rs bool) {
 	}
 
 	//solo
-	reSolo := regexp.MustCompile(`^([sSсС])([7-9]|1[0-2])(\+)?\s*(\d*)$`)
-	arrSolo := reSolo.FindAllStringSubmatch(in.Mtext, -1)
-	if len(arrSolo) > 0 {
-		in.SetLevelRsOrDrs("solo" + arrSolo[0][2])
-		in.SetTimeRs("1")
-
-		points := arrSolo[0][4]
-		if points != "" {
-			b.RsSoloPlusComplete(in, points)
-			return true
-		}
-
-		if arrSolo[0][3] == "+" {
-			b.RsSoloPlus(in)
-			return true
-		}
-	}
+	//reSolo := regexp.MustCompile(`^([sSсС])([7-9]|1[0-2])(\+)?\s*(\d*)$`)
+	//arrSolo := reSolo.FindAllStringSubmatch(in.Mtext, -1)
+	//if len(arrSolo) > 0 {
+	//	in.SetLevelRsOrDrs("solo" + arrSolo[0][2])
+	//	in.SetTimeRs("1")
+	//
+	//	points := arrSolo[0][4]
+	//	if points != "" {
+	//		b.RsSoloPlusComplete(in, points)
+	//		return true
+	//	}
+	//
+	//	if arrSolo[0][3] == "+" {
+	//		b.RsSoloPlus(in)
+	//		return true
+	//	}
+	//}
 
 	return rs
 }
@@ -196,34 +196,34 @@ func (b *Bot) lRsStart(in models.InMessage) (bb bool) {
 
 // ivent not lang
 func (b *Bot) lEvent(in models.InMessage) (bb bool) {
-	re7 := regexp.MustCompile(`^(["К"]|["к"]|["K"]|["k"])\s+([0-9]+)\s+([0-9]+)$`) // ивент
-	arr7 := (re7.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr7) > 0 {
-		bb = true
-		points, err := strconv.Atoi(arr7[0][3])
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		numkz, err := strconv.Atoi(arr7[0][2])
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		go b.EventPoints(in, numkz, points)
-	}
-	re7s := regexp.MustCompile(`^(rs|Rs)\s(p|P)\s([0-9]+)\s([0-9]+)$`)
-	arr7s := (re7s.FindAllStringSubmatch(in.Mtext, -1))
-	if len(arr7s) > 0 {
-		bb = true
-		points, err := strconv.Atoi(arr7[0][4])
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		numkz, err := strconv.Atoi(arr7[0][3])
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		go b.EventPoints(in, numkz, points)
-	}
+	//re7 := regexp.MustCompile(`^(["К"]|["к"]|["K"]|["k"])\s+([0-9]+)\s+([0-9]+)$`) // ивент
+	//arr7 := (re7.FindAllStringSubmatch(in.Mtext, -1))
+	//if len(arr7) > 0 {
+	//	bb = true
+	//	points, err := strconv.Atoi(arr7[0][3])
+	//	if err != nil {
+	//		b.log.ErrorErr(err)
+	//	}
+	//	numkz, err := strconv.Atoi(arr7[0][2])
+	//	if err != nil {
+	//		b.log.ErrorErr(err)
+	//	}
+	//	go b.EventPoints(in, numkz, points)
+	//}
+	//re7s := regexp.MustCompile(`^(rs|Rs)\s(p|P)\s([0-9]+)\s([0-9]+)$`)
+	//arr7s := (re7s.FindAllStringSubmatch(in.Mtext, -1))
+	//if len(arr7s) > 0 {
+	//	bb = true
+	//	points, err := strconv.Atoi(arr7[0][4])
+	//	if err != nil {
+	//		b.log.ErrorErr(err)
+	//	}
+	//	numkz, err := strconv.Atoi(arr7[0][3])
+	//	if err != nil {
+	//		b.log.ErrorErr(err)
+	//	}
+	//	go b.EventPoints(in, numkz, points)
+	//}
 	switch in.Mtext {
 	case "Ивент старт":
 		go b.EventStart(in)

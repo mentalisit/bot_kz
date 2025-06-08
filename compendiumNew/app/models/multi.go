@@ -48,6 +48,10 @@ type MultiAccountGuild struct {
 	AvatarUrl string
 }
 
+func (m *MultiAccountGuild) GuildId() string {
+	return m.GId.String()
+}
+
 type MultiAccountCorpMember struct {
 	Uid        uuid.UUID
 	GuildIds   []uuid.UUID

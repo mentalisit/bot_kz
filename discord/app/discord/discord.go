@@ -21,6 +21,7 @@ type Discord struct {
 	bridgeConfigUpdateTime int64
 	api                    *restapi.Recover
 	re                     *replace
+	NameAliases            map[string]string
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
@@ -61,7 +62,7 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 		}
 	}()
 	go DS.DeleteMessageTimer()
-	DS.ReadWebhookOldMessages()
+	go DS.ReadWebhookOldMessages()
 
 	return DS
 }

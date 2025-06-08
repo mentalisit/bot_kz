@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	cfg := config.InitConfig()
+	cfg := config.InitConfig("DS")
 
 	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "DS")
 

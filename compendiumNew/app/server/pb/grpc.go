@@ -3,6 +3,7 @@ package pb
 import (
 	"compendium/models"
 	"compendium/storage"
+	"compendium/storage/postgres/multi"
 	"context"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ type Server struct {
 	db  db
 	In  chan models.IncomingMessage
 	LogicServiceServer
+	Multi *multi.Db
 }
 
 func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
@@ -27,9 +29,10 @@ func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
 
 	s := grpc.NewServer()
 	serv := &Server{
-		log: log,
-		db:  st.DB,
-		In:  make(chan models.IncomingMessage, 10),
+		log:   log,
+		db:    st.DB,
+		In:    make(chan models.IncomingMessage, 10),
+		Multi: st.Multi,
 	}
 
 	RegisterLogicServiceServer(s, serv)
@@ -54,12 +57,38 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		NickName:    req.NickName,
 		Avatar:      req.Avatar,
 		ChannelId:   req.ChannelId,
-		GuildId:     req.GuildId,
-		GuildName:   req.GuildName,
-		GuildAvatar: req.GuildAvatar,
-		Type:        req.Type,
-		Language:    req.Language,
+		//GuildId:     req.GuildId,
+		//GuildName:   req.GuildName,
+		//GuildAvatar: req.GuildAvatar,
+		Type:     req.Type,
+		Language: req.Language,
 	}
+	if req.GuildId == "" {
+		req.GuildId = "DM"
+		req.GuildName = "DM"
+		in.ChannelId = in.DmChat
+		in.Type = in.Type[:2]
+	}
+	guild, _ := s.Multi.GuildGet(req.GuildId)
+	if guild == nil {
+		err := s.Multi.GuildInsert(models.MultiAccountGuild{
+			GuildName: req.GuildName,
+			Channels:  []string{req.GuildId},
+			AvatarUrl: req.GuildAvatar,
+		})
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+		guild, _ = s.Multi.GuildGet(req.GuildId)
+	} else if guild.AvatarUrl != req.GuildAvatar {
+		guild.AvatarUrl = req.GuildAvatar
+		err := s.Multi.GuildUpdateAvatar(*guild)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+	}
+	in.MultiGuild = guild
+
 	s.In <- in
 	return &Empty{}, nil
 }

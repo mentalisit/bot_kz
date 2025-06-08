@@ -10,9 +10,34 @@ import (
 	"time"
 )
 
+func GetCorpAlias(config models.CorporationConfig) string {
+	corpName := ""
+	switch config.CorpName {
+	case "Корпорация  \"РУСЬ\".сбор-на-кз":
+		corpName = "rusb"
+	case "IX Legion.сбор-на-кз-бот":
+		corpName = "IX_Легион"
+	case "Неизбежный Рок/КЗ сбор":
+		corpName = "neizbejnii_rock"
+	case "Повстанцы Хаоса.кз-чат":
+		corpName = "povstanci"
+	case "ЛУННЫЙ ФЕНИКС/КЗ и новости":
+		corpName = "ЛУННЫЙ ФЕНИКС"
+
+	default:
+		return ""
+	}
+	return corpName
+}
+
 // lang ok
 // нужно переделать полностью
 func (b *Bot) Top(in models.InMessage) {
+	corpAlias := GetCorpAlias(in.Config)
+	if corpAlias != "" {
+		b.TopGame(in)
+		return
+	}
 	b.iftipdelete(in)
 	number := 1
 	message := ""
@@ -78,18 +103,15 @@ func (b *Bot) Top(in models.InMessage) {
 		text = strings.ReplaceAll(text, "@", "")
 		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
 	}
+	b.TopGame(in)
 }
 
 func (b *Bot) TopGame(in models.InMessage) {
 	b.iftipdelete(in)
 
-	corpName := ""
-	switch in.Config.CorpName {
-	case "Корпорация  \"РУСЬ\".сбор-на-кз":
-		corpName = "rusb"
-	case "IX Legion.сбор-на-кз-бот":
-		corpName = "IX_Легион"
-	default:
+	corpName := GetCorpAlias(in.Config)
+	if corpName == "" {
+		b.log.Info("corpNameAlias not found ")
 		return
 	}
 
@@ -160,6 +182,29 @@ func (b *Bot) TopGame(in models.InMessage) {
 			b.log.ErrorErr(err)
 			return
 		}
+		if corpName == "rusb" {
+			battlesGetAll2, _ := b.storage.Battles.BattlesGetAll("best", numEvent)
+			aa := make(map[string]models.PlayerStats)
+			for _, stats := range battlesGetAll {
+				aa[stats.Player] = stats
+			}
+			for _, stats := range battlesGetAll2 {
+				if existing, ok := aa[stats.Player]; ok {
+					// Если уже есть — складываем нужные поля
+					existing.Points += stats.Points
+					existing.Runs += stats.Runs
+					aa[stats.Player] = existing // обновляем обратно
+				} else {
+					// Иначе просто записываем
+					aa[stats.Player] = stats
+				}
+			}
+			battlesGetAll = []models.PlayerStats{}
+			for _, stats := range aa {
+				battlesGetAll = append(battlesGetAll, stats)
+			}
+		}
+
 		for _, stats := range battlesGetAll {
 			resultsTop = append(resultsTop, models.Top{
 				Name:   stats.Player,

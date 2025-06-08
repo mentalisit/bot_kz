@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
+	"log/slog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -288,7 +289,12 @@ func (d *Discord) CleanRsBotOtherMessage() {
 			d.log.Info(fmt.Sprintf("recover() %+v", r))
 		}
 	}()
-	for _, config := range d.storage.Db.ReadConfigRs() {
+	configRs, err := d.storage.Db.ReadConfigRs()
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+	for _, config := range configRs {
 		if config.DsChannel != "" {
 			channelMessages, err := d.S.ChannelMessages(config.DsChannel, 100, "", "", "")
 			if err != nil {
@@ -374,7 +380,15 @@ func (d *Discord) ReadNewsChannel() (en, ru, ua string) {
 	messages, _ := d.S.ChannelMessages("1305333971269324851", 5, "", "", "")
 	for i, message := range messages {
 		if message.Timestamp.After(fiveMinutesAgo) {
-			fmt.Printf("Now message %d Timestamp %s %s %s\n", i, message.Timestamp, message.Author, message.Content)
+			if message.Content != "" {
+				fmt.Printf("Now message %d Timestamp %s %s %s\n", i, message.Timestamp, message.Author, message.Content)
+			} else if len(message.Embeds) > 0 {
+				fmt.Printf("Now message %d Timestamp %s %s %s\n", i, message.Embeds[0].Timestamp, message.Embeds[0].Author, message.Embeds[0].Description)
+			}
+
+			if message.MessageReference != nil && message.MessageReference.GuildID == "355101373483712513" {
+				d.log.InfoStruct("news message ", message)
+			}
 
 			if message.Author.String() == "Hades' Star Official #announcements#0000" {
 				if strings.Contains(message.Content, "Red Star event starts") {
@@ -382,15 +396,48 @@ func (d *Discord) ReadNewsChannel() (en, ru, ua string) {
 					d.storage.Db.SaveEventDate(message.Content)
 				}
 				en = message.Content
-
 				ru, _ = gt.Translate(message.Content, "auto", "ru")
-				//d.SendWebhook(textTr, "Hades' Star Official", message.ChannelID, message.Author.AvatarURL("128"))
-
 				ua, _ = gt.Translate(message.Content, "auto", "uk")
-				//d.SendWebhook(textTr, "Hades' Star Official", message.ChannelID, message.Author.AvatarURL("128"))
 				return
+			}
+			if len(message.Embeds) == 1 {
+				return d.filterNewsMessage(message.Embeds[0].Description)
 			}
 		}
 	}
 	return
+}
+func (d *Discord) filterNewsMessage(msg string) (en, ru, ua string) {
+	//message = `Season ${season} of the Corporation Red Star event has just started! Help your Corporation climb the event leaderboard throughout the weekend, and earn free Crystals in the end. For more information, see the in game Leaderboards window.`;
+	reRsEvent := regexp.MustCompile(`Season (\d+) of the Corporation Red Star event has just started! Help your Corporation climb the event leaderboard throughout the weekend, and earn free Crystals in the end. For more information, see the in game Leaderboards window.`)
+	match := reRsEvent.FindStringSubmatch(msg)
+	if len(match) > 1 {
+		season, _ := strconv.Atoi(match[1])
+		d.log.Info(msg)
+		d.storage.Db.SaveEventDate(msg)
+		en = msg
+		ru = fmt.Sprintf("Сезон %d события Корпорации Красная Звезда только что начался! Помогите своей Корпорации подняться в таблице лидеров события в течение выходных и получите бесплатные Кристаллы в конце. Для получения дополнительной информации см. игровое окно Таблицы лидеров.", season)
+		ua = fmt.Sprintf("%d-й сезон події «Червона Зірка корпорації» щойно розпочався! Допоможіть своїй корпорації піднятися в таблиці лідерів події протягом вихідних і заробляйте безкоштовні кристали в кінці. Для отримання додаткової інформації дивіться вікно таблиці лідерів у грі.", season)
+		return
+	}
+	if msg == "White Star event is on now! For all White Stars that start in the next 4 days, your Corporation will be awarded significantly more XP." {
+		en = msg
+		ru = "Событие «Белая звезда» уже началось! За все Белые Звезды, которые начнутся в течение следующих 4 дней, ваша Корпорация получит значительно больше опыта."
+		ua = "Подія «Біла Зірка» вже розпочалася! За всі Білі Зірки, які розпочнуться протягом наступних 4 днів, ваша Корпорація отримає значно більше досвіду."
+		return
+	}
+	if msg == "2x Credit Asteroid event is on now! For the next 3 days, all Rich Asteroid Fields in Red Stars will yield twice the credits." {
+		en = msg
+		ru = "Специальное мероприятие богатых астероидов красных звёзд активно! \nВ течение следующих 3 дней все богатые астероидные поля в красных звездах дадут вдвое больше кредитов."
+		ua = "Спеціальний захід багатих астероїдів червоних зірок активно!\nПротягом наступних 3 днів усі багаті астероїдні поля у червоних зірках дадуть удвічі більше кредитів."
+		return
+	}
+	if msg == "Blue Star special event is active now! For the next 3 days, all Blue Star credit rewards are doubled." {
+		en = msg
+		ru = "Специальное мероприятие голубых звёзд активно!\nВ течение следующих 3 дней награды - кредиты в мероприятии голубых звёзд  удваиваются."
+		ua = "Спеціальний захід блакитних зірок активно!\nПротягом наступних 3 днів нагороди – кредити у заході блакитних зірок подвоюються."
+		return
+	}
+	d.log.Info(msg)
+	return "", "", ""
 }

@@ -49,9 +49,6 @@ func (r *Recover) SendCompendiumAppRecover(m models.IncomingMessage) {
 	}
 }
 func (r *Recover) SendRsBotAppRecover(m models.InMessage) {
-	if m.Tip != "GameWebhook" {
-		fmt.Printf("%s SendRsBotApp :%+v\n", time.Now().Format(time.DateTime), m)
-	}
 	err := r.rs.SendToRs(m)
 	if err != nil {
 		r.log.InfoStruct("SendRsBotApp err "+err.Error(), m)

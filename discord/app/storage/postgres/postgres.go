@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -31,7 +32,8 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	defer cancel()
 	pool, err := pgxpool.New(ctx, dns)
 	if err != nil {
-		log.ErrorErr(err)
+		slog.Error(err.Error())
+		//log.ErrorErr(err)
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
 		//return err
@@ -62,7 +64,8 @@ func (d *Db) createTable() {
         );
     `)
 	if err != nil {
-		d.log.ErrorErr(err)
+		slog.Error(err.Error())
+		//d.log.ErrorErr(err)
 		return
 	}
 
@@ -76,7 +79,8 @@ func (d *Db) createTable() {
 		count   integer NOT NULL DEFAULT 0
 	);`)
 	if err != nil {
-		d.log.ErrorErr(err)
+		slog.Error(err.Error())
+		//d.log.ErrorErr(err)
 		return
 	}
 
@@ -90,7 +94,8 @@ func (d *Db) createTable() {
 		LastMessage text NOT NULL DEFAULT ''
 	);`)
 	if err != nil {
-		d.log.ErrorErr(err)
+		slog.Error(err.Error())
+		//d.log.ErrorErr(err)
 		return
 	}
 
@@ -103,8 +108,20 @@ func (d *Db) createTable() {
 		message   jsonb
 	);`)
 	if err != nil {
-		d.log.ErrorErr(err)
+		slog.Error(err.Error())
+		//d.log.ErrorErr(err)
 		return
 	}
 
+	//_, err = d.db.Exec(ctx, `
+	//	CREATE TABLE rs_bot.name_aliases (
+	//	alias TEXT PRIMARY KEY,
+	//	canonical_name TEXT NOT NULL
+	//);
+	//	CREATE INDEX idx_alias ON rs_bot.name_aliases(alias);`)
+	//if err != nil {
+	//	slog.Error(err.Error())
+	//	//d.log.ErrorErr(err)
+	//	return
+	//}
 }

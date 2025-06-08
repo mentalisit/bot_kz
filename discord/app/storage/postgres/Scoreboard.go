@@ -4,6 +4,15 @@ import (
 	"discord/models"
 )
 
+func (d *Db) ScoreboardInsertParam(p models.ScoreboardParams) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	insert := `INSERT INTO rs_bot.scoreboard(name,webhookchannel,scorechannel,lastmessage) VALUES ($1,$2,$3,$4)`
+	_, err := d.db.Exec(ctx, insert, p.Name, p.ChannelWebhook, p.ChannelScoreboard, p.LastMessageID)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
 func (d *Db) ScoreboardUpdateParamLastMessageId(p models.ScoreboardParams) {
 	ctx, cancel := d.getContext()
 	defer cancel()
@@ -76,4 +85,34 @@ func (d *Db) InsertWebhook(ts int64, corp, message string) {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+}
+
+func (d *Db) InsertWebhookType(ts int64, corpName, eventType, message string) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	insert := `INSERT INTO rs_bot.webhook_type(tsUnix,corpName,eventType,message) VALUES ($1,$2,$3,$4)`
+	_, err := d.db.Exec(ctx, insert, ts, corpName, eventType, message)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}
+
+func (d *Db) LoadNameAliases() (map[string]string, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	rows, err := d.db.Query(ctx, "SELECT alias, canonical_name FROM rs_bot.name_aliases")
+	defer rows.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+	m := make(map[string]string)
+	for rows.Next() {
+		var alias, canonical string
+		if err := rows.Scan(&alias, &canonical); err != nil {
+			return nil, err
+		}
+		m[alias] = canonical
+	}
+
+	return m, nil
 }

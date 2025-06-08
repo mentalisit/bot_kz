@@ -4,6 +4,7 @@ import (
 	"compendium/logic/generate"
 	"compendium/models"
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 	"time"
 )
@@ -20,7 +21,7 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 		return false
 	}
 
-	text := fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.GuildName)
+	text := fmt.Sprintf(c.getText(m, "CODE_FOR_CONNECT"), m.MultiGuild.GuildName)
 	mid1, err := c.sendDM(m, text)
 	if err != nil && err.Error() == "forbidden" {
 		if c.checkMoron(m) {
@@ -39,7 +40,6 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 	c.sendChat(m, fmt.Sprintf(c.getText(m, "INSTRUCTIONS_SEND"), m.MentionName))
 
 	newIdentify, cm := generate.GenerateIdentity(m)
-
 	if m.MultiAccount != nil {
 		jwtGenerateToken, errJwt := generate.JWTGenerateToken(m.MultiAccount.UUID, m.MultiGuild.GId, m.Name)
 		if errJwt != nil {
@@ -51,6 +51,7 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 		sendDM, _ := c.sendDM(m, "Подготавливаю секретную ссылку")
 		go func() {
 			time.Sleep(5 * time.Second)
+			_ = c.deleteMessage(m, m.DmChat, mid1)
 
 			links := "https://mentalisit.github.io/HadesSpace/compendiumTech?secretToken=" + newIdentify.Token
 			text = fmt.Sprintf(c.getText(m, "SECRET_LINK"), links, m.MultiGuild.GuildName)
@@ -60,46 +61,78 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 				return
 			}
 		}()
-	} else {
-		tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
-		if tokenOld != "" {
-			prefixToken := m.Type + m.GuildId + "." + m.NameId
-			if len(tokenOld) < 60 {
-				newToken := prefixToken + generate.GenerateToken(174)
-				err = c.listUser.ListUserUpdateToken(tokenOld, newToken)
-				if err == nil {
-					newIdentify.Token = newToken
-				}
-			} else {
-				if strings.Contains(tokenOld, prefixToken) {
-					newIdentify.Token = tokenOld
-				} else {
-					newIdentify.Token = prefixToken + tokenOld
+		memberByUId, _ := c.db.Multi.CorpMemberByUId(m.MultiAccount.UUID)
+		if memberByUId == nil {
+			_ = c.db.Multi.CorpMemberInsert(models.MultiAccountCorpMember{
+				Uid:        m.MultiAccount.UUID,
+				GuildIds:   []uuid.UUID{m.MultiGuild.GId},
+				TimeZona:   "",
+				ZonaOffset: 0,
+				AfkFor:     "",
+			})
+			return
+		}
+		if len(memberByUId.GuildIds) > 0 {
+			var found bool
+			for _, id := range memberByUId.GuildIds {
+				if id == m.MultiGuild.GId {
+					found = true
 				}
 			}
+			if !found {
+				memberByUId.GuildIds = append(memberByUId.GuildIds, m.MultiGuild.GId)
+				_ = c.db.Multi.CorpMemberUpdateGuildIds(*memberByUId)
+			}
 		}
+
+	} else {
+		//tokenOld, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
+		//if tokenOld == "" {
+		//	tokenOld, _ = c.listUser.ListUserGetToken(m.NameId, m.MultiGuild.GId.String())
+		//}
+		//
+		//
+		//prefixToken := fmt.Sprintf("%s.%s-mg.%s", m.Type, m.NameId, m.MultiGuild.GuildId())
+		//if tokenOld != "" && strings.Contains(tokenOld, prefixToken) {
+		//	newIdentify.Token = tokenOld
+		//} else {
+		//	newIdentify.Token = prefixToken + generate.GenerateToken(174)
+		//	if tokenOld != "" {
+		//		err = c.listUser.ListUserDelete(tokenOld)
+		//		if err != nil {
+		//			c.log.ErrorErr(err)
+		//		}
+		//	}
+		//	err = c.listUser.ListUserInsert(newIdentify.Token, m.NameId, m.MultiGuild.GuildId())
+		//	if err != nil {
+		//		c.log.ErrorErr(err)
+		//	}
+		//}
+
 		code := c.generateCodeAndSave(newIdentify)
 
-		err = c.guilds.GuildInsert(newIdentify.Guild)
+		err = c.users.UsersInsert(newIdentify.User) //insert or update
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
-		err = c.users.UsersInsert(newIdentify.User)
-		if err != nil {
-			c.log.ErrorErr(err)
-			return
-		}
+
 		err = c.corpMember.CorpMemberInsert(cm)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
 		}
-		err = c.listUser.ListUserInsert(newIdentify.Token, newIdentify.User.ID, newIdentify.Guild.ID)
-		if err != nil {
-			c.log.ErrorErr(err)
-			return
-		}
+
+		//getCountByGuildIdByUserId, _ := c.listUser.ListUserGetCountByGuildIdByUserId(m.GuildId, m.NameId)
+		//if getCountByGuildIdByUserId != 0 {
+		//	_ = c.listUser.ListUserDeleteByUserIdByGuildId(m.NameId, m.GuildId)
+		//}
+		//
+		//err = c.listUser.ListUserInsert(newIdentify.Token, newIdentify.User.ID, newIdentify.MultiGuild.GuildId())
+		//if err != nil {
+		//	c.log.ErrorErr(err)
+		//	return
+		//}
 
 		mid2, errs1 := c.sendDM(m, code)
 		if errs1 != nil {
@@ -114,7 +147,7 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 			return
 		}
 
-		go c.timerEditMessage(m, mid1, mid2, mid3)
+		go c.timerEditMessage(m, mid1, mid2, mid3, newIdentify.Token)
 	}
 	return
 }
@@ -138,12 +171,17 @@ func (c *Hs) generateCodeAndSave(Identity models.Identity) string {
 
 	return m.Code
 }
-func (c *Hs) timerEditMessage(m models.IncomingMessage, mid1, mid2, mid3 string) {
+
+func (c *Hs) timerEditMessage(m models.IncomingMessage, mid1, mid2, mid3, token string) {
 	time.Sleep(3 * time.Minute)
 
-	token, _ := c.listUser.ListUserGetToken(m.NameId, m.GuildId)
+	//token, _ := c.listUser.ListUserGetToken(m.NameId, m.MultiGuild.GuildId())
+	//if token == "" {
+	//	c.log.InfoStruct("token is empty", m)
+	//	return
+	//}
 	links := "https://mentalisit.github.io/HadesSpace/compendiumTech?secretToken=" + token
-	text := fmt.Sprintf(c.getText(m, "SECRET_LINK"), links, m.GuildName)
+	text := fmt.Sprintf(c.getText(m, "SECRET_LINK"), links, m.MultiGuild.GuildName)
 	err := c.editMessage(m, m.DmChat, mid1, text, "MarkdownV2")
 	if err != nil {
 		c.log.ErrorErr(err)

@@ -23,6 +23,7 @@ func (s *Server) RunServerRestApi() {
 }
 
 func (s *Server) InboxMessage(c *gin.Context) {
+	s.log.Info("InboxMessage")
 	var data models.IncomingMessage
 	if err := c.BindJSON(&data); err != nil {
 		s.log.ErrorErr(err)
@@ -55,6 +56,10 @@ func (s *Server) api(c *gin.Context) {
 	if userid == "" || guildid == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
 		return
+	}
+	multiAccountGuild, err := s.multi.GuildGet(guildid)
+	if err == nil {
+		guildid = multiAccountGuild.GuildId()
 	}
 	read, err := s.db.CorpMembersApiRead(guildid, userid)
 	if len(read) == 0 || read == nil || err != nil {

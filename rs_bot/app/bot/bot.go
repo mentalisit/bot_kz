@@ -43,7 +43,6 @@ func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logge
 
 	go b.loadInbox()
 	go b.timerBot()
-	go b.ReadAndSendPic()
 
 	return b
 }
@@ -55,49 +54,30 @@ func (b *Bot) loadInbox() {
 		//ПОЛУЧЕНИЕ СООБЩЕНИЙ
 		select {
 		case in := <-b.Inbox:
-			b.PrepareLogicRs(in)
+			b.LogicRs(in)
 
 		}
 	}
 }
 func (b *Bot) timerBot() { //цикл для удаления сообщений
 	for {
-		now := time.Now()
+		now := time.Now().UTC()
 		if now.Second() == 0 {
 			b.MinusMin()
 
-			if now.Minute() == 0 {
+			switch now.Minute() {
+
+			case 0:
 				go b.AutoHelp() //автозапуск справки
-			}
-			if now.Minute() == 29 || now.Minute() == 59 {
-				go b.UpdateTopEvent()
-				go b.ReadAndSendPic()
+
+			case 9, 19, 29, 39, 49, 59:
+				go b.ReadAndSendPic(now)
+
 			}
 		}
 
 		time.Sleep(1 * time.Second)
 	}
-}
-
-func (b *Bot) PrepareLogicRs(in models.InMessage) {
-	// Канал для отслеживания завершения запроса
-	done := make(chan struct{})
-
-	go func() {
-		ch := utils.WaitForMessage("PrepareLogicRs")
-		b.LogicRs(in)
-		close(done)
-		close(ch)
-	}()
-
-	select {
-	case <-done:
-		// Запрос завершился до истечения таймаута
-	case <-time.After(15 * time.Second):
-		// Логируем, если запрос завис
-		b.log.InfoStruct("PrepareLogicRs", in)
-	}
-
 }
 
 // LogicRs логика игры
@@ -176,13 +156,9 @@ func (b *Bot) logicIfText(in models.InMessage) bool {
 	iftext := true
 	switch in.Mtext {
 	case "+":
-		if b.Plus(in) {
-			return true
-		}
+		return b.Plus(in)
 	case "-":
-		if b.Minus(in) {
-			return true
-		}
+		return b.Minus(in)
 	case "Справка", "Help", "help":
 		b.hhelp(in)
 	case "OptimizationSborkz":

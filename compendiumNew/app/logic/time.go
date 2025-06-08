@@ -65,7 +65,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 
 	cm := models.CorpMember{
 		Name:       m.Name,
-		GuildId:    m.GuildId,
+		GuildId:    m.MultiGuild.GuildId(),
 		Avatar:     m.AvatarF,
 		Tech:       map[int][2]int{},
 		AvatarUrl:  m.Avatar,
@@ -79,7 +79,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 	}
 
 	if mentionName == "" {
-		err := c.corpMember.CorpMemberTZUpdate(m.NameId, m.GuildId, timeZona, offsetInt)
+		err := c.corpMember.CorpMemberTZUpdate(m.NameId, m.MultiGuild.GuildId(), timeZona, offsetInt)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				cm.UserId = m.NameId
@@ -101,7 +101,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 		text := ""
 		if matches[1] != "" {
 			//ds nameid
-			err := c.corpMember.CorpMemberTZUpdate(matches[1], m.GuildId, timeZona, offsetInt)
+			err := c.corpMember.CorpMemberTZUpdate(matches[1], m.MultiGuild.GuildId(), timeZona, offsetInt)
 			if err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {
 					cm.UserId = matches[1]
@@ -121,7 +121,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 				c.log.ErrorErr(err)
 				return
 			}
-			err = c.corpMember.CorpMemberTZUpdate(user.ID, m.GuildId, timeZona, offsetInt)
+			err = c.corpMember.CorpMemberTZUpdate(user.ID, m.MultiGuild.GuildId(), timeZona, offsetInt)
 			if err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {
 					cm.UserId = user.ID
@@ -142,7 +142,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 }
 func (c *Hs) TzGet(m models.IncomingMessage) bool {
 	if strings.HasPrefix(m.Text, "%tz get") {
-		members, err := c.corpMember.CorpMembersRead(m.GuildId)
+		members, err := c.corpMember.CorpMembersRead(m.MultiGuild.GuildId())
 		if err != nil {
 			c.log.ErrorErr(err)
 			c.sendChat(m, fmt.Sprintf(c.getText(m, "TIMEZONA_IS_CURRENTLY"), m.MentionName, m.Name, "Not set"))
@@ -160,7 +160,7 @@ func (c *Hs) TzGet(m models.IncomingMessage) bool {
 }
 func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 	if strings.HasPrefix(m.Text, "%time") || strings.HasPrefix(m.Text, "%время") || strings.HasPrefix(m.Text, "%час") {
-		members, err := c.corpMember.CorpMembersRead(m.GuildId)
+		members, err := c.corpMember.CorpMembersRead(m.MultiGuild.GuildId())
 		if err != nil {
 			c.log.ErrorErr(err)
 			return false
