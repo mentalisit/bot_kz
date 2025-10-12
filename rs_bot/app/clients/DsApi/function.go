@@ -224,8 +224,7 @@ func (c *Client) RoleToIdPing(role string, guildID string) (string, error) {
 	// Выполняем запрос
 	resp, err := c.client.RoleToIdPing(context.Background(), req)
 	if err != nil {
-		c.log.ErrorErr(err)
-		return "", err
+		return role, err
 	}
 
 	// Обновляем кэш

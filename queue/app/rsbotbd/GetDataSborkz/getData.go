@@ -1,12 +1,14 @@
 package GetDataSborkz
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"queue/models"
 	"strconv"
+	"time"
 )
 
 type Sborkz struct {
@@ -73,23 +75,63 @@ func GetData() (q []models.QueueStruct) {
 	return q
 }
 
+//func fetchDataSborkz() ([]Sborkz, error) {
+//	url := "https://123bot.ru/rssoyuzbot/Json/sborkz.php"
+//	resp, err := http.Get(url)
+//	if err != nil {
+//		return nil, fmt.Errorf("ошибка запроса: %w", err)
+//	}
+//	defer resp.Body.Close()
+//
+//	body, err := ioutil.ReadAll(resp.Body)
+//	if err != nil {
+//		return nil, fmt.Errorf("ошибка чтения тела ответа: %w", err)
+//	}
+//
+//	var sborkz []Sborkz
+//
+//	if err := json.Unmarshal(body, &sborkz); err != nil {
+//		return nil, fmt.Errorf("ошибка парсинга JSON: %w", err)
+//	}
+//
+//	return sborkz, nil
+//}
+
 func fetchDataSborkz() ([]Sborkz, error) {
 	url := "https://123bot.ru/rssoyuzbot/Json/sborkz.php"
-	resp, err := http.Get(url)
+
+	// 1. Создание HTTP-клиента с таймаутом
+	client := http.Client{
+		Timeout: 15 * time.Second, // 🚨 Устанавливаем общий таймаут на запрос
+	}
+
+	// В отличие от http.Get, http.NewRequest позволяет настроить запрос
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка запроса: %w", err)
+		return nil, fmt.Errorf("ошибка создания запроса: %w", err)
+	}
+
+	// 2. Выполнение запроса с настроенным клиентом
+	resp, err := client.Do(req)
+	if err != nil {
+		// Ошибка может быть вызвана таймаутом или проблемой сети
+		return nil, fmt.Errorf("ошибка выполнения запроса или таймаут: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	// 3. Обработка статуса ответа
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("сервер вернул код ошибки: %d", resp.StatusCode)
+	}
+
+	// 4. Чтение тела ответа с использованием io.ReadAll
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка чтения тела ответа: %w", err)
 	}
-
+	fmt.Println(string(body))
+	// 5. Парсинг JSON
 	var sborkz []Sborkz
-
-	//fmt.Println(string(body))
-
 	if err := json.Unmarshal(body, &sborkz); err != nil {
 		return nil, fmt.Errorf("ошибка парсинга JSON: %w", err)
 	}

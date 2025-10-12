@@ -5,28 +5,32 @@ import (
 	tg "bridge/Telegram"
 	"bridge/models"
 	"bridge/storage"
+	wa "bridge/whatsapp"
 	"fmt"
-	"github.com/mentalisit/logger"
 	"runtime"
 	"time"
+
+	"github.com/mentalisit/logger"
 )
 
 type Bridge struct {
 	log      *logger.Logger
 	in       models.ToBridgeMessage
 	messages []models.BridgeTempMemory
-	configs  map[string]models.BridgeConfig
+	configs  map[string]models.Bridge2Config
 	discord  *ds.Client
 	telegram *tg.Client
 	storage  BridgeConfig
+	whatsapp *wa.Client
 }
 
 func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
 	bridge := &Bridge{
 		log:      log,
-		configs:  make(map[string]models.BridgeConfig),
+		configs:  make(map[string]models.Bridge2Config),
 		discord:  ds.NewClient(log),
 		telegram: tg.NewClient(log),
+		whatsapp: wa.NewClient(log),
 		storage:  st.DB,
 	}
 	bridge.LoadConfig()
@@ -75,6 +79,14 @@ type BridgeConfig interface {
 	UpdateBridgeChat(br models.BridgeConfig)
 	InsertBridgeChat(br models.BridgeConfig)
 	DeleteBridgeChat(br models.BridgeConfig)
+
+	DBReadBridgeConfig2() []models.Bridge2Config
+	UpdateBridge2Chat(br models.Bridge2Config)
+	InsertBridge2Chat(br models.Bridge2Config)
+	DeleteBridge2Chat(br models.Bridge2Config)
+
+	SaveBridgeMap(msgMap map[string]string) error
+	GetMapByLinkedID(msg map[string]string) (map[string]string, error)
 }
 
 func (b *Bridge) PrintGoroutine() {

@@ -21,6 +21,12 @@ func (c *Hs) sendChat(m models.IncomingMessage, text string) {
 			c.log.ErrorErr(err)
 			return
 		}
+	} else if m.Type == "wa" {
+		_, err := c.wa.Send(m.ChannelId, text)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
 	}
 }
 func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
@@ -32,6 +38,12 @@ func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
 		}
 	} else if m.Type == "tg" {
 		_, err := c.tg.Send(m.ChannelId, text+"\n"+table)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	} else if m.Type == "wa" {
+		_, err := c.wa.Send(m.ChannelId, text+"\n"+table)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -53,6 +65,12 @@ func (c *Hs) sendDM(m models.IncomingMessage, text string) (string, error) {
 			return "", err
 		}
 		return mid, nil
+	} else if m.Type == "wa" {
+		mid, err := c.wa.Send(m.DmChat, text)
+		if err != nil {
+			return "", err
+		}
+		return mid, nil
 	}
 	return "", nil
 }
@@ -65,6 +83,12 @@ func (c *Hs) sendChatPic(m models.IncomingMessage, text string, pic []byte) {
 		}
 	} else if m.Type == "tg" {
 		err := c.tg.SendPic(m.ChannelId, text, pic)
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	} else if m.Type == "wa" {
+		err := c.wa.SendPic(m.ChannelId, text, pic)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -112,6 +136,11 @@ func (c *Hs) deleteMessage(m models.IncomingMessage, chat, mid string) error {
 		if err != nil {
 			return err
 		}
+	} else if m.Type == "wa" {
+		err := c.wa.DeleteMessage(chat, mid)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -124,6 +153,11 @@ func (c *Hs) editMessage(m models.IncomingMessage, chat, mid, text, ParseMode st
 		}
 	} else if m.Type == "tg" {
 		err := c.tg.EditMessage(chat, mid, text, ParseMode)
+		if err != nil {
+			return err
+		}
+	} else if m.Type == "wa" {
+		err := c.wa.EditMessage(chat, mid, text, ParseMode)
 		if err != nil {
 			return err
 		}

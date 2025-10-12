@@ -5,12 +5,13 @@ import (
 	"compendium_s/storage/postgres/multi"
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
-	"os"
-	"time"
 )
 
 type Db struct {

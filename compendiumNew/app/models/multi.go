@@ -49,6 +49,10 @@ type MultiAccountGuild struct {
 }
 
 func (m *MultiAccountGuild) GuildId() string {
+	if m == nil {
+		return ""
+	}
+
 	return m.GId.String()
 }
 

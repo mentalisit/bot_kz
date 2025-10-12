@@ -4,10 +4,11 @@ import (
 	"compendium_s/models"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) SyncTechMulti(c *gin.Context, i *models.Identity, mode, twin string) {
@@ -92,17 +93,19 @@ func (s *Server) SyncTechMultiGuild(c *gin.Context, i *models.Identity, mode, tw
 		c.JSON(http.StatusOK, data)
 	}
 }
-func getCorpsTypeId(mg *models.MultiAccountGuild) (guildDs, guildTg []string) {
+func getCorpsTypeId(mg *models.MultiAccountGuild) (guildDs, guildTg, guildWa []string) {
 	for _, channel := range mg.Channels {
 		if channel == "DM" {
 			//fmt.Println(channel)
+		} else if strings.Contains(channel, "@") {
+			guildWa = append(guildWa, channel)
 		} else if !strings.HasPrefix(channel, "-100") {
 			guildDs = append(guildDs, channel)
 		} else if strings.HasPrefix(channel, "-100") {
 			guildTg = append(guildTg, channel)
 		}
 	}
-	return guildDs, guildTg
+	return guildDs, guildTg, guildWa
 }
 func corpMemberDetectType(cm []models.CorpMember) []models.CorpMember {
 	var members []models.CorpMember
@@ -118,6 +121,8 @@ func corpMemberDetectType(cm []models.CorpMember) []models.CorpMember {
 		}
 		if len(uId) < 12 {
 			m.TypeAccount = "tg"
+		} else if strings.Contains(uId, "@") {
+			m.TypeAccount = "wa"
 		} else if len(uId) > 12 && len(uId) < 24 {
 			m.TypeAccount = "ds"
 		}
@@ -151,7 +156,7 @@ func (s *Server) GetCorpDataMultiGuild(i *models.Identity, roleId string) *model
 	cm = corpMemberDetectType(cm)
 	members = append(members, cm...)
 
-	guildDs, guildTg := getCorpsTypeId(i.MultiGuild)
+	guildDs, guildTg, _ := getCorpsTypeId(i.MultiGuild)
 	appendRolesByType := func(roles []models.CorpRole, nameMSG string) {
 		if len(roles) > 0 {
 			for _, role := range roles {

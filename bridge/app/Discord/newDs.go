@@ -4,9 +4,10 @@ import (
 	"bridge/models"
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
-	"sync"
 )
 
 type Client struct {
@@ -71,16 +72,15 @@ func (c *Client) SendPollChannel(m map[string]string, options []string) string {
 	return pollMid.Text
 }
 
-func (c *Client) sendBridgeArrayMessages(text, username string, channelID []string, extra []models.FileInfo, Avatar string, reply *models.BridgeMessageReply) (MessageIds []models.MessageIds) {
+func (c *Client) sendBridgeArrayMessages(inMessenger models.BridgeSendToMessenger) (MessageIds []models.MessageIds) {
 	req := &SendBridgeArrayMessagesRequest{
-		Text:      text,
-		Username:  username,
-		ChannelID: channelID,
-		Avatar:    Avatar,
+		Text:      inMessenger.Text,
+		Username:  inMessenger.Sender,
+		ChannelID: inMessenger.ChannelId,
+		Avatar:    inMessenger.Avatar,
 	}
-	if len(extra) > 0 {
-		req.Extra = make([]*FileInfo, len(extra))
-		for _, i := range extra {
+	if len(inMessenger.Extra) > 0 {
+		for _, i := range inMessenger.Extra {
 			req.Extra = append(req.Extra, &FileInfo{
 				Name:   i.Name,
 				Data:   i.Data,
@@ -91,12 +91,12 @@ func (c *Client) sendBridgeArrayMessages(text, username string, channelID []stri
 		}
 
 	}
-	if reply != nil {
+	if inMessenger.Reply != nil {
 		req.Reply = &BridgeMessageReply{
-			TimeMessage: reply.TimeMessage,
-			Text:        reply.Text,
-			Avatar:      reply.Avatar,
-			UserName:    reply.UserName,
+			TimeMessage: inMessenger.Reply.TimeMessage,
+			Text:        inMessenger.Reply.Text,
+			Avatar:      inMessenger.Reply.Avatar,
+			UserName:    inMessenger.Reply.UserName,
 		}
 	}
 
@@ -115,10 +115,10 @@ func (c *Client) sendBridgeArrayMessages(text, username string, channelID []stri
 	return mids
 }
 
-func (c *Client) SendBridgeArrayMessage(text, username string, channelID []string, extra []models.FileInfo, Avatar string, reply *models.BridgeMessageReply, resultChannel chan<- models.MessageIds, wg *sync.WaitGroup) {
+func (c *Client) SendBridgeArrayMessage(resultChannel chan<- models.MessageIds, wg *sync.WaitGroup, inMessenger models.BridgeSendToMessenger) {
 	defer wg.Done()
 
-	ids := c.sendBridgeArrayMessages(text, username, channelID, extra, Avatar, reply)
+	ids := c.sendBridgeArrayMessages(inMessenger)
 	for _, id := range ids {
 		resultChannel <- id
 	}

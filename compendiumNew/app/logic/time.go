@@ -64,13 +64,15 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 	}
 
 	cm := models.CorpMember{
-		Name:       m.Name,
-		GuildId:    m.MultiGuild.GuildId(),
-		Avatar:     m.AvatarF,
-		Tech:       map[int][2]int{},
-		AvatarUrl:  m.Avatar,
-		TimeZone:   timeZona,
-		ZoneOffset: offsetInt,
+		Name:         m.Name,
+		GuildId:      m.MultiGuild.GuildId(),
+		Avatar:       m.AvatarF,
+		Tech:         map[int][2]int{},
+		AvatarUrl:    m.Avatar,
+		TimeZone:     timeZona,
+		ZoneOffset:   offsetInt,
+		MultiGuild:   m.MultiGuild,
+		MultiAccount: m.MultiAccount,
 	}
 	u := models.User{
 		Username:  m.Name,
@@ -79,13 +81,21 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 	}
 
 	if mentionName == "" {
-		err := c.corpMember.CorpMemberTZUpdate(m.NameId, m.MultiGuild.GuildId(), timeZona, offsetInt)
+		var err error
+		if m.MultiAccount != nil {
+			err = c.db.Multi.CorpMemberTZUpdate(m.MultiAccount.UUID, timeZona, offsetInt)
+		} else {
+			err = c.corpMember.CorpMemberTZUpdate(m.NameId, m.MultiGuild.GuildId(), timeZona, offsetInt)
+		}
+
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				cm.UserId = m.NameId
-				_ = c.corpMember.CorpMemberInsert(cm)
-				u.ID = m.NameId
-				_ = c.users.UsersInsert(u)
+				if m.MultiAccount == nil {
+					_ = c.corpMember.CorpMemberInsert(cm)
+					u.ID = m.NameId
+					_ = c.users.UsersInsert(u)
+				}
 			} else {
 				c.log.ErrorErr(err)
 				return
@@ -165,6 +175,32 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 			c.log.ErrorErr(err)
 			return false
 		}
+		if m.MultiGuild != nil {
+			membersRead, _ := c.db.Multi.CorpMembersRead(m.MultiGuild.GId)
+			if len(membersRead) != 0 {
+				for _, member := range membersRead {
+					accountUUID, _ := c.db.Multi.FindMultiAccountUUID(member.Uid)
+					if accountUUID == nil {
+						continue
+					}
+					mmember := models.CorpMember{
+						Name:       accountUUID.Nickname,
+						UserId:     member.Uid.String(),
+						Avatar:     accountUUID.AvatarURL,
+						TimeZone:   member.TimeZona,
+						ZoneOffset: member.ZonaOffset,
+						AfkFor:     member.AfkFor,
+					}
+					if mmember.TimeZone != "" {
+						t12, t24 := getTimeStrings(mmember.ZoneOffset)
+						mmember.LocalTime = t12
+						mmember.LocalTime24 = t24
+					}
+
+					members = append(members, mmember)
+				}
+			}
+		}
 
 		// Исходные данные
 		data := [][]string{
@@ -173,7 +209,7 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 
 		for _, member := range members {
 			if member.TimeZone != "" {
-				newRow := []string{member.LocalTime, member.Name, ""}
+				newRow := []string{member.LocalTime24, member.Name, ""}
 				data = append(data, newRow)
 			}
 		}
@@ -183,4 +219,21 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 		return true
 	}
 	return false
+}
+
+func getTimeStrings(offset int) (string, string) {
+	// Получаем текущее время в UTC
+	now := time.Now().UTC()
+
+	// Применяем смещение к текущему времени в UTC
+	offsetDuration := time.Duration(offset) * time.Minute
+	timeWithOffset := now.Add(offsetDuration)
+
+	// Форматируем время в 12-часовом формате с AM/PM
+	time12HourFormat := timeWithOffset.Format("03:04 PM")
+
+	// Форматируем время в 24-часовом формате
+	time24HourFormat := timeWithOffset.Format("15:04")
+
+	return time12HourFormat, time24HourFormat
 }

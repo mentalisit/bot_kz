@@ -5,21 +5,23 @@ import (
 	"time"
 )
 
-func (t *Telegram) bridgeCheckChannelConfigTg(channelId string) (bool, models.BridgeConfig) {
+func (t *Telegram) bridgeCheckChannelConfigTg(channelId string) (bool, models.Bridge2Config) {
 	if len(t.bridgeConfig) == 0 || t.bridgeConfigUpdateTime+300 < time.Now().Unix() {
 		t.bridgeConfig = t.Storage.Db.DBReadBridgeConfig()
 		t.bridgeConfigUpdateTime = time.Now().Unix()
 	}
 
 	for _, config := range t.bridgeConfig {
-		for _, channelD := range config.ChannelTg {
-			if channelD.ChannelId == channelId {
-				return true, config
+		if config.Channel["tg"] != nil {
+			for _, channelD := range config.Channel["tg"] {
+				if channelD.ChannelId == channelId {
+					return true, config
+				}
 			}
 		}
 	}
 
-	return false, models.BridgeConfig{}
+	return false, models.Bridge2Config{}
 }
 
 func (t *Telegram) checkChannelConfigTG(chatid string) (channelGood bool, config models.CorporationConfig) {

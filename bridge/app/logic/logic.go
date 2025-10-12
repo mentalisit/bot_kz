@@ -29,3 +29,19 @@ func (b *Bridge) Logic(m models.ToBridgeMessage) {
 	}
 
 }
+
+func (b *Bridge) logicMessage() {
+	if b.checkingForIdenticalMessage() {
+		return
+	}
+	if b.in.Tip == "delDs" || b.in.Tip == "delWa" {
+		b.RemoveMessage()
+		return
+	}
+	if b.in.Tip == "dse" || b.in.Tip == "tge" || b.in.Tip == "wae" {
+		//todo need tested
+		b.EditMessage()
+	}
+
+	b.logicSendMessage()
+}

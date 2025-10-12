@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -16,11 +15,10 @@ func (b *Bridge) ifTipDelSend(text string) {
 		go b.discord.DeleteMessageDs(b.in.ChatId, b.in.MesId)
 	} else if b.in.Tip == "tg" {
 		go b.telegram.SendChannelDelSecond(b.in.ChatId, text, 30)
-		mid, err := strconv.Atoi(b.in.MesId)
-		if err != nil {
-			return
-		}
-		go b.telegram.DeleteMessage(b.in.ChatId, strconv.Itoa(mid))
+		go b.telegram.DeleteMessage(b.in.ChatId, b.in.MesId)
+	} else if b.in.Tip == "wa" {
+		go b.whatsapp.SendChannelDelSecond(b.in.ChatId, text, 30)
+		go b.whatsapp.DeleteMessage(b.in.ChatId, b.in.MesId)
 	}
 }
 func (b *Bridge) ifTipSendDel(text string) {
@@ -28,26 +26,41 @@ func (b *Bridge) ifTipSendDel(text string) {
 		go b.discord.SendChannelDelSecondDs(b.in.ChatId, text, 10)
 	} else if b.in.Tip == "tg" {
 		go b.telegram.SendChannelDelSecond(b.in.ChatId, text, 10)
+	} else if b.in.Tip == "wa" {
+		go b.whatsapp.SendChannelDelSecond(b.in.ChatId, text, 10)
 	}
 }
 
 func (b *Bridge) ifChannelTip() {
-	if b.in.Tip == "ds" {
-		b.in.Config.ChannelDs = append(b.in.Config.ChannelDs, models.BridgeConfigDs{
-			ChannelId:       b.in.ChatId,
-			GuildId:         b.in.GuildId,
-			CorpChannelName: b.in.Config.HostRelay,
-			AliasName:       "",
-			MappingRoles:    map[string]string{},
-		})
+	if b.in.Config == nil {
+		b.in.Config = &models.Bridge2Config{}
 	}
+	b2c := models.Bridge2Configs{
+		ChannelId:       b.in.ChatId,
+		GuildId:         b.in.GuildId,
+		CorpChannelName: b.in.Config.HostRelay,
+		AliasName:       "",
+		MappingRoles:    map[string]string{},
+	}
+
+	if b.in.Tip == "ds" {
+		if b.in.Config.Channel["ds"] == nil {
+			b.in.Config.Channel["ds"] = []models.Bridge2Configs{}
+		}
+		b.in.Config.Channel["ds"] = append(b.in.Config.Channel["ds"], b2c)
+	}
+
 	if b.in.Tip == "tg" {
-		b.in.Config.ChannelTg = append(b.in.Config.ChannelTg, models.BridgeConfigTg{
-			ChannelId:       b.in.ChatId,
-			CorpChannelName: b.in.Config.HostRelay,
-			AliasName:       "",
-			MappingRoles:    map[string]string{},
-		})
+		if b.in.Config.Channel["tg"] == nil {
+			b.in.Config.Channel["tg"] = []models.Bridge2Configs{}
+		}
+		b.in.Config.Channel["tg"] = append(b.in.Config.Channel["tg"], b2c)
+	}
+	if b.in.Tip == "wa" {
+		if b.in.Config.Channel["wa"] == nil {
+			b.in.Config.Channel["wa"] = []models.Bridge2Configs{}
+		}
+		b.in.Config.Channel["wa"] = append(b.in.Config.Channel["wa"], b2c)
 	}
 }
 func GetRandomColor() string {
@@ -108,11 +121,9 @@ func (b *Bridge) delIncomingMessage() {
 	if b.in.Tip == "ds" {
 		go b.discord.DeleteMessageDs(b.in.ChatId, b.in.MesId)
 	} else if b.in.Tip == "tg" {
-		mid, err := strconv.Atoi(b.in.MesId)
-		if err != nil {
-			return
-		}
-		go b.telegram.DeleteMessage(b.in.ChatId, strconv.Itoa(mid))
+		go b.telegram.DeleteMessage(b.in.ChatId, b.in.MesId)
+	} else if b.in.Tip == "wa" {
+		go b.whatsapp.DeleteMessage(b.in.ChatId, b.in.MesId)
 	}
 }
 
@@ -144,17 +155,9 @@ func replaceTextMap(text string, m map[string]string) string {
 // GetSenderName конконтенация имени
 func (b *Bridge) GetSenderName() string {
 	AliasName := ""
-	if b.in.Tip == "ds" {
-		for _, d := range b.in.Config.ChannelDs {
-			if d.ChannelId == b.in.ChatId {
-				AliasName = d.AliasName
-			}
-		}
-	} else if b.in.Tip == "tg" {
-		for _, d := range b.in.Config.ChannelTg {
-			if d.ChannelId == b.in.ChatId {
-				AliasName = d.AliasName
-			}
+	for _, d := range b.in.Config.Channel[b.in.Tip] {
+		if d.ChannelId == b.in.ChatId {
+			AliasName = d.AliasName
 		}
 	}
 	return fmt.Sprintf("%s ([%s]%s)", b.in.Sender, strings.ToUpper(b.in.Tip), AliasName)

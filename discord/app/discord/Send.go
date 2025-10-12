@@ -5,11 +5,12 @@ import (
 	"discord/discord/helpers"
 	"discord/models"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"mime"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
@@ -163,9 +164,10 @@ func (d *Discord) SendChannelDelSecond(chatid, text string, second int) {
 		}
 		tu := int(time.Now().UTC().Unix())
 		d.storage.Db.TimerInsert(models.Timer{
-			Dsmesid:  message.ID,
-			Dschatid: chatid,
-			Timed:    tu + second,
+			Tip:    "ds",
+			ChatId: chatid,
+			MesId:  message.ID,
+			Timed:  tu + second,
 		})
 	}
 }
@@ -509,48 +511,68 @@ func (d *Discord) SendPic(channelID, text string, imageBytes []byte) error {
 //}
 
 func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.MessageIds {
-	params := &discordgo.WebhookParams{
-		Content:   d.re.replaceNameForDiscord(in.Text),
-		Username:  in.Sender,
-		AvatarURL: in.Avatar,
-		Files:     []*discordgo.File{},
-	}
-	if in.Reply != nil {
-		params.Embeds = append(params.Embeds, &discordgo.MessageEmbed{
-			Description: d.re.replaceNameForDiscord(in.Reply.Text),
-			Timestamp:   time.Unix(in.Reply.TimeMessage, 0).Format(time.RFC3339),
-			Color:       14232643,
-			Author: &discordgo.MessageEmbedAuthor{
-				Name:    in.Reply.UserName,
-				IconURL: in.Reply.Avatar,
-			},
-		})
-	} else if len(in.Extra) > 0 {
-		for _, f := range in.Extra {
-			contentType := mime.TypeByExtension(filepath.Ext(f.Name))
-			file := discordgo.File{
-				Name:        f.Name,
-				ContentType: contentType,
-			}
-			if f.URL == "" && len(f.Data) == 0 {
-				continue
-			}
-			if len(f.Data) > 0 {
-				file.Reader = bytes.NewReader(f.Data)
-			} else if f.URL != "" {
-				downloadFile, err := helpers.DownloadFile(f.URL)
-				if err != nil {
-					d.log.ErrorErr(err)
-					return nil
-				}
-				file.Reader = bytes.NewReader(downloadFile)
-			}
-			params.Files = append(params.Files, &file)
-		}
-	}
+
 	var message []models.MessageIds
 
 	for _, channelId := range in.ChannelId {
+		params := &discordgo.WebhookParams{
+			Content:   d.re.replaceNameForDiscord(in.Text),
+			Username:  in.Sender,
+			AvatarURL: in.Avatar,
+			Files:     []*discordgo.File{},
+		}
+		if in.Reply != nil {
+			params.Embeds = append(params.Embeds, &discordgo.MessageEmbed{
+				Description: d.re.replaceNameForDiscord(in.Reply.Text),
+				Timestamp:   time.Unix(in.Reply.TimeMessage, 0).Format(time.RFC3339),
+				Color:       14232643,
+				Author: &discordgo.MessageEmbedAuthor{
+					Name:    in.Reply.UserName,
+					IconURL: in.Reply.Avatar,
+				},
+			})
+		}
+		if len(in.Extra) > 0 {
+			for _, f := range in.Extra {
+				contentType := mime.TypeByExtension(filepath.Ext(f.Name))
+				file := discordgo.File{
+					Name:        f.Name,
+					ContentType: contentType,
+				}
+				if f.URL == "" && len(f.Data) == 0 {
+					continue
+				}
+				if len(f.Data) > 0 {
+					file.Reader = bytes.NewReader(f.Data)
+				} else if f.URL != "" {
+					downloadFile, err := helpers.DownloadFile(f.URL)
+					if err != nil {
+						d.log.ErrorErr(err)
+						return nil
+					}
+					file.Reader = bytes.NewReader(downloadFile)
+				}
+				params.Files = append(params.Files, &file)
+			}
+		}
+		if in.ReplyMap[channelId] != "" && len(in.Extra) == 0 {
+			replyId := in.ReplyMap[channelId]
+			text := fmt.Sprintf("%s:\n%s", in.Sender, in.Text)
+			sendReply, err := d.S.ChannelMessageSendReply(channelId, text, &discordgo.MessageReference{
+				MessageID: replyId,
+				ChannelID: channelId,
+			})
+			if err != nil {
+				d.log.ErrorErr(err)
+			} else {
+				messageData := models.MessageIds{
+					MessageId: sendReply.ID,
+					ChatId:    channelId,
+				}
+				message = append(message, messageData)
+				continue
+			}
+		}
 		m, err := d.webhook.Send(channelId, params)
 		if err != nil {
 			d.log.ErrorErr(err)

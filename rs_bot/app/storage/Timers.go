@@ -9,6 +9,6 @@ type Timers interface {
 	MinusMin() []models.Sborkz
 }
 type TimeDeleteMessage interface {
-	TimerDeleteMessage() []models.Timer
-	TimerInsert(c models.Timer)
+	TimerMessage() []models.Timer
+	TimerDeleteMessage(t models.Timer)
 }

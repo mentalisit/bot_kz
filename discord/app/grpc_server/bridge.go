@@ -11,6 +11,7 @@ func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArr
 		Sender:    req.Username,
 		ChannelId: req.ChannelID,
 		Avatar:    req.Avatar,
+		ReplyMap:  req.ReplyMap,
 	}
 	if len(req.Extra) > 0 {
 		for _, info := range req.Extra {
@@ -34,7 +35,7 @@ func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArr
 	}
 
 	messageIds := s.ds.SendBridgeFuncRest(in)
-	mids := make([]*MessageIds, len(messageIds))
+	var mids []*MessageIds
 	for _, id := range messageIds {
 		mids = append(mids, &MessageIds{
 			MessageId: id.MessageId,

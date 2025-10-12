@@ -7,25 +7,23 @@ import (
 )
 
 // BridgeCheckChannelConfigDS bridge
-func (d *Discord) BridgeCheckChannelConfigDS(ChatId string) (bool, models.BridgeConfig) {
+func (d *Discord) BridgeCheckChannelConfigDS(ChatId string) (bool, models.Bridge2Config) {
 	if len(d.bridgeConfig) == 0 || d.bridgeConfigUpdateTime+300 < time.Now().Unix() {
-		bridgeConfig, err := d.storage.Db.DBReadBridgeConfig()
-		if err != nil {
-			slog.Error(err.Error())
-			return false, models.BridgeConfig{}
-		}
+		bridgeConfig := d.storage.Db.DBReadBridgeConfig()
 		d.bridgeConfig = bridgeConfig
 		d.bridgeConfigUpdateTime = time.Now().Unix()
 	}
 
 	for _, config := range d.bridgeConfig {
-		for _, channelD := range config.ChannelDs {
-			if channelD.ChannelId == ChatId {
-				return true, config
+		if config.Channel["ds"] != nil {
+			for _, channelD := range config.Channel["ds"] {
+				if channelD.ChannelId == ChatId {
+					return true, config
+				}
 			}
 		}
 	}
-	return false, models.BridgeConfig{}
+	return false, models.Bridge2Config{}
 }
 
 // CheckChannelConfigDS RsConfig

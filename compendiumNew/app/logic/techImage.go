@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"regexp"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLevelArray) {
@@ -52,7 +53,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	if m.MultiAccount != nil {
 		mBytesTech, err := c.db.Multi.TechnologiesGet(m.MultiAccount.UUID, m.MultiAccount.Nickname)
 		if err != nil {
-			c.log.ErrorErr(err)
+			c.log.Error(fmt.Sprintf("TechnologiesGet %s err %+v", m.MultiAccount.Nickname, err))
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return
 		}
@@ -66,7 +67,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	if len(mBytes) == 0 {
 		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId, m.MultiGuild.GuildId())
 		if err != nil {
-			c.log.ErrorErr(err)
+			c.log.Error(fmt.Sprintf("TechGet %s err %+v", m.Name, err))
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return
 		}
@@ -75,7 +76,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 		user, err := c.users.UsersGetByUserId(m.NameId)
 		if err != nil {
 			if !errors.Is(err, pgx.ErrNoRows) {
-				c.log.ErrorErr(err)
+				c.log.Error(fmt.Sprintf("UsersGetByUserId %s %s  err %+v", m.Name, m.NameId, err))
 				c.log.InfoStruct("techImage", m)
 			}
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
@@ -156,7 +157,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				user, err = c.users.UsersGetByUserName(userName)
 			}
 			if err != nil || user == nil {
-				if !errors.Is(err, pgx.ErrNoRows) {
+				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 					c.log.Info(err.Error())
 				}
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
@@ -164,7 +165,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 			}
 			techBytes, err := c.tech.TechGet(user.Username, user.ID, m.MultiGuild.GuildId())
 			if err != nil {
-				c.log.ErrorErr(err)
+				c.log.Error(fmt.Sprintf("TechGet %s err %+v", m.Name, err))
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 				return true
 			}
@@ -249,7 +250,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 			user, err := c.users.UsersGetByUserId(userID)
 			if err != nil || user == nil {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-				c.log.ErrorErr(err)
+				c.log.Error(fmt.Sprintf("UsersGetByUserId %s %s  err %+v", m.Name, m.NameId, err))
 				return true
 			}
 			userAvatar = user.AvatarURL

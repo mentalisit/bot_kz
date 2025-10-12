@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"rs/models"
+	"time"
 )
 
 func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
@@ -69,29 +70,35 @@ func (d *Db) TimerInsert(c models.Timer) {
 	}
 }
 
-func (d *Db) TimerDeleteMessage() []models.Timer {
+func (d *Db) TimerMessage() []models.Timer {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	query := `UPDATE kzbot.timer SET timed = timed - 60 WHERE timed > 60`
 
-	_, _ = d.db.Exec(ctx, query)
+	tu := int(time.Now().UTC().Unix())
 
-	query = `SELECT * FROM kzbot.timer WHERE timed <= 60`
+	query := `
+        SELECT *
+        FROM kzbot.timer
+        WHERE $1 > timed;`
 
 	// Выполнение запроса
-	rows, _ := d.db.Query(ctx, query)
+	rows, _ := d.db.Query(ctx, query, tu)
 
 	defer rows.Close()
 	var tt []models.Timer
 	for rows.Next() {
-		var id int
 		var t models.Timer
-		_ = rows.Scan(&id, &t.Dsmesid, &t.Dschatid, &t.Tgmesid, &t.Tgchatid, &t.Timed)
+		_ = rows.Scan(&t.Id, &t.Dsmesid, &t.Dschatid, &t.Tgmesid, &t.Tgchatid, &t.Timed)
 		tt = append(tt, t)
 	}
-	query = `DELETE FROM kzbot.timer WHERE dsmesid = $1 AND tgmesid = $2`
-	for _, t := range tt {
-		_, _ = d.db.Exec(ctx, query, t.Dsmesid, t.Tgmesid)
-	}
+
 	return tt
+}
+
+func (d *Db) TimerDeleteMessage(t models.Timer) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+
+	query := `DELETE FROM kzbot.timer WHERE id = $1 `
+	_, _ = d.db.Exec(ctx, query, t.Id)
 }

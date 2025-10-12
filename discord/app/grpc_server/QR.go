@@ -23,8 +23,5 @@ func (s *Server) ReplaceTextMessage(ctx context.Context, req *ReplaceTextMessage
 
 func (s *Server) RoleToIdPing(ctx context.Context, req *RoleToIdPingRequest) (*TextResponse, error) {
 	ping, err := s.ds.RoleToIdPing(req.RolePing, req.Guildid)
-	if err != nil {
-		return nil, err
-	}
-	return &TextResponse{Text: ping}, nil
+	return &TextResponse{Text: ping}, err
 }

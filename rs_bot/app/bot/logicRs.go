@@ -150,7 +150,7 @@ func (b *Bot) lQueue(in models.InMessage) (bb bool) {
 		bb = true
 		b.ifTipSendTextDelSecond(in, "Поиск.... ", 10)
 		b.iftipdelete(in)
-		b.ifTipSendTextDelSecond(in, b.otherQueue.MyQueue(), 30)
+		go b.ifTipSendTextDelSecond(in, b.otherQueue.MyQueue(), 30)
 	}
 
 	re4s := regexp.MustCompile(`^(Rs|rs)\s(Q|q)$`) // две переменные для чтения  очереди

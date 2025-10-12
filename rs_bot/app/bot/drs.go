@@ -96,7 +96,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			b.wg.Wait()
 			b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 			b.QueueLevel(in)
-			b.ReadQueueLevel(in)
+			go b.ReadQueueLevel(in)
 		} else {
 			u = b.storage.DbFunc.ReadAll(in.RsTypeLevel, in.Config.CorpName)
 			if u.User1.Dsmesid != "" {

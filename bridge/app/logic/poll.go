@@ -42,21 +42,31 @@ func (b *Bridge) ifPoll() {
 			m["url"] = p.UrlPoll
 			m["createTime"] = strconv.FormatInt(p.CreateTime, 10)
 
+			for t, configs := range p.Config.Channel {
+				for _, config := range configs {
+					m["chatid"] = config.ChannelId
+					if t == "ds" {
+						p.PollMessage[config.ChannelId] = b.discord.SendPollChannel(m, p.Options)
+					} else if t == "tg" {
+						p.PollMessage[config.ChannelId] = b.telegram.SendPollChannel(m, p.Options)
+					}
+				}
+			}
 			// Отправка опроса в Discord
-			if len(p.Config.ChannelDs) > 0 {
-				for _, ds := range p.Config.ChannelDs {
-					m["chatid"] = ds.ChannelId
-					p.PollMessage[ds.ChannelId] = b.discord.SendPollChannel(m, p.Options)
-				}
-			}
-
-			// Отправка опроса в Telegram
-			if len(p.Config.ChannelTg) > 0 {
-				for _, tg := range p.Config.ChannelTg {
-					m["chatid"] = tg.ChannelId
-					p.PollMessage[tg.ChannelId] = b.telegram.SendPollChannel(m, p.Options)
-				}
-			}
+			//if len(p.Config.ChannelDs) > 0 {
+			//	for _, ds := range p.Config.ChannelDs {
+			//		m["chatid"] = ds.ChannelId
+			//		p.PollMessage[ds.ChannelId] = b.discord.SendPollChannel(m, p.Options)
+			//	}
+			//}
+			//
+			//// Отправка опроса в Telegram
+			//if len(p.Config.ChannelTg) > 0 {
+			//	for _, tg := range p.Config.ChannelTg {
+			//		m["chatid"] = tg.ChannelId
+			//		p.PollMessage[tg.ChannelId] = b.telegram.SendPollChannel(m, p.Options)
+			//	}
+			//}
 
 			bytes, err := json.Marshal(p)
 			if err != nil {

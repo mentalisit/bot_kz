@@ -3,11 +3,11 @@ package tg
 import (
 	"bridge/models"
 	"context"
-	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
-	"sync"
 )
 
 type Client struct {
@@ -34,20 +34,18 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) DeleteMessage(ChatId string, messageID string) error {
+func (c *Client) DeleteMessage(ChatId string, messageID string) {
 	er, err := c.client.DeleteMessage(context.Background(), &DeleteMessageRequest{
 		Chatid: ChatId,
 		Mesid:  messageID,
 	})
 	if err != nil {
 		c.log.ErrorErr(err)
-		return err
+	} else if er.GetErrorMessage() != "" {
+		c.log.Error(er.GetErrorMessage())
 	}
-	if er.GetErrorMessage() != "" {
-		return errors.New(er.GetErrorMessage())
-	}
-	return nil
 }
+
 func (c *Client) SendChannelDelSecond(chatId, text string, second int) {
 	_, err := c.client.SendChannelDelSecond(context.Background(), &SendMessageRequest{
 		Text:   text,
@@ -70,14 +68,14 @@ func (c *Client) SendPollChannel(m map[string]string, options []string) string {
 	}
 	return poll.GetText()
 }
-func (c *Client) sendBridgeArrayMessages(chatid []string, text string, extra []models.FileInfo) (MessageIds []models.MessageIds) {
+func (c *Client) sendBridgeArrayMessages(inMessenger models.BridgeSendToMessenger) (MessageIds []models.MessageIds) {
 	req := &SendBridgeArrayMessagesRequest{
-		Text:      text,
-		ChannelID: chatid,
+		Text:      inMessenger.Text,
+		ChannelID: inMessenger.ChannelId,
+		ReplyMap:  inMessenger.ReplyMap,
 	}
-	if len(extra) > 0 {
-		req.Extra = make([]*FileInfo, len(extra))
-		for _, i := range extra {
+	if len(inMessenger.Extra) > 0 {
+		for _, i := range inMessenger.Extra {
 			req.Extra = append(req.Extra, &FileInfo{
 				Name:   i.Name,
 				Data:   i.Data,
@@ -103,10 +101,10 @@ func (c *Client) sendBridgeArrayMessages(chatid []string, text string, extra []m
 	}
 	return mids
 }
-func (c *Client) SendBridgeArrayMessage(chatid []string, text string, extra []models.FileInfo, resultChannel chan<- models.MessageIds, wg *sync.WaitGroup) {
+func (c *Client) SendBridgeArrayMessage(resultChannel chan<- models.MessageIds, wg *sync.WaitGroup, inMessenger models.BridgeSendToMessenger) {
 	defer wg.Done()
 
-	ids := c.sendBridgeArrayMessages(chatid, text, extra)
+	ids := c.sendBridgeArrayMessages(inMessenger)
 	for _, id := range ids {
 		resultChannel <- id
 	}

@@ -4,8 +4,9 @@ import (
 	"bridge/config"
 	"database/sql"
 	"fmt"
-	"github.com/mentalisit/logger"
 	"os"
+
+	"github.com/mentalisit/logger"
 )
 
 type Db struct {
@@ -41,16 +42,27 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 
 func (d *Db) createTable() {
 	_, err := d.db.Exec(
-		`CREATE TABLE IF NOT EXISTS kzbot.bridge_config (
+		`CREATE TABLE IF NOT EXISTS rs_bot.bridge_config (
         id SERIAL PRIMARY KEY,
 		name_relay TEXT,
 		host_relay TEXT,
 		role TEXT[],
-		channel_ds JSONB,
-		channel_tg JSONB,
+		channel JSONB,
 		forbidden_prefixes TEXT[]
         );
     `)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
+	_, err = d.db.Exec(
+		`CREATE TABLE IF NOT EXISTS rs_bot.message_maps (
+    	id SERIAL PRIMARY KEY,
+    	message_ids JSONB NOT NULL,
+    	created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    	);
+		CREATE INDEX IF NOT EXISTS idx_message_ids_gin ON rs_bot.message_maps USING GIN (message_ids);
+	`)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

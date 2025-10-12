@@ -3,8 +3,9 @@ package postgres
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jackc/pgx/v5"
 	"telegram/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
@@ -64,11 +65,47 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 	}
 	return conf
 }
-func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
+
+//func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
+//	ctx, cancel := d.getContext()
+//	defer cancel()
+//	var cc []models.BridgeConfig
+//	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)
+//	if err != nil {
+//		d.log.ErrorErr(err)
+//		return cc
+//	}
+//	defer rows.Close()
+//	for rows.Next() {
+//		var config models.BridgeConfig
+//		var channelDs, channelTg []byte
+//		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channelDs, &channelTg, &config.ForbiddenPrefixes); err != nil {
+//			d.log.ErrorErr(err)
+//			return cc
+//		}
+//
+//		if err = json.Unmarshal(channelDs, &config.ChannelDs); err != nil {
+//			d.log.ErrorErr(err)
+//		}
+//
+//		if err = json.Unmarshal(channelTg, &config.ChannelTg); err != nil {
+//			d.log.ErrorErr(err)
+//		}
+//
+//		cc = append(cc, config)
+//	}
+//	if err = rows.Err(); err != nil {
+//		d.log.ErrorErr(err)
+//		return cc
+//	}
+//	return cc
+//}
+
+func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
+	var cc []models.Bridge2Config
 	ctx, cancel := d.getContext()
 	defer cancel()
-	var cc []models.BridgeConfig
-	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)
+	rows, err := d.db.Query(ctx, `SELECT * FROM rs_bot.bridge_config`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return cc
@@ -76,18 +113,14 @@ func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
 	defer rows.Close()
 
 	for rows.Next() {
-		var config models.BridgeConfig
-		var channelDs, channelTg []byte
-		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channelDs, &channelTg, &config.ForbiddenPrefixes); err != nil {
+		var config models.Bridge2Config
+		var channel []byte
+		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channel, &config.ForbiddenPrefixes); err != nil {
 			d.log.ErrorErr(err)
 			return cc
 		}
 
-		if err = json.Unmarshal(channelDs, &config.ChannelDs); err != nil {
-			d.log.ErrorErr(err)
-		}
-
-		if err = json.Unmarshal(channelTg, &config.ChannelTg); err != nil {
+		if err = json.Unmarshal(channel, &config.Channel); err != nil {
 			d.log.ErrorErr(err)
 		}
 

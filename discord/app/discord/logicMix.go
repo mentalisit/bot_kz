@@ -4,8 +4,9 @@ import (
 	"discord/discord/helpers"
 	"discord/models"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 const (
@@ -279,7 +280,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		if ds {
 			mes.Config = &bridgeConfig
 		} else {
-			mes.Config = &models.BridgeConfig{
+			mes.Config = &models.Bridge2Config{
 				HostRelay: d.GuildChatName(m.ChannelID, m.GuildID),
 			}
 		}
@@ -287,7 +288,7 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 	}()
 
 }
-func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.BridgeConfig) {
+func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.Bridge2Config) {
 	mes := models.ToBridgeMessage{
 		ChatId:        m.ChannelID,
 		Extra:         []models.FileInfo{},
@@ -304,6 +305,8 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 	d.handleDownloadBridge(&mes, m)
 
 	if m.ReferencedMessage != nil {
+		mes.ReplyMap = make(map[string]string)
+		mes.ReplyMap[m.ChannelID] = m.ReferencedMessage.ID
 		usernameR := m.ReferencedMessage.Author.String()
 		if m.ReferencedMessage.Member != nil && m.ReferencedMessage.Member.Nick != "" {
 			usernameR = m.ReferencedMessage.Member.Nick

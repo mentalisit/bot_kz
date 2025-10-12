@@ -4,9 +4,10 @@ import (
 	"compendium/logic/generate"
 	"compendium/models"
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const urlLink = "https://mentalisit.github.io/HadesSpace/"
@@ -182,13 +183,16 @@ func (c *Hs) timerEditMessage(m models.IncomingMessage, mid1, mid2, mid3, token 
 	//}
 	links := "https://mentalisit.github.io/HadesSpace/compendiumTech?secretToken=" + token
 	text := fmt.Sprintf(c.getText(m, "SECRET_LINK"), links, m.MultiGuild.GuildName)
-	err := c.editMessage(m, m.DmChat, mid1, text, "MarkdownV2")
-	if err != nil {
-		c.log.ErrorErr(err)
-		return
+	if m.Type == "ds" || m.Type == "tg" {
+		err := c.editMessage(m, m.DmChat, mid1, text, "MarkdownV2")
+		if err != nil {
+			c.log.ErrorErr(err)
+			return
+		}
+	} else if m.Type == "wa" {
+		c.sendDM(m, text)
 	}
-
-	err = c.deleteMessage(m, m.DmChat, mid2)
+	err := c.deleteMessage(m, m.DmChat, mid2)
 	if err != nil {
 		c.log.ErrorErr(err)
 		return

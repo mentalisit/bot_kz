@@ -97,6 +97,20 @@ func (b *Bot) MinusMin() {
 		}
 		b.Inbox <- in
 	}
+
+	go func() {
+		timers := b.storage.TimeDeleteMessage.TimerMessage()
+		for _, timer := range timers {
+			if timer.Dsmesid != "" {
+				b.client.Ds.DeleteMessage(timer.Dsmesid, timer.Dsmesid)
+			} else if timer.Tgmesid != "" {
+				atoi, _ := strconv.Atoi(timer.Tgmesid)
+				b.client.Tg.DelMessage(timer.Tgchatid, atoi)
+			}
+			b.storage.TimeDeleteMessage.TimerDeleteMessage(timer)
+		}
+	}()
+
 }
 func (b *Bot) MinusMinMessageUpdate() {
 	corpActive0 := b.storage.DbFunc.OneMinutsTimer()

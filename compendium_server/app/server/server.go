@@ -6,12 +6,13 @@ import (
 	"compendium_s/storage"
 	"compendium_s/storage/postgres/multi"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/mentalisit/logger"
 )
 
 type Server struct {
@@ -75,6 +76,7 @@ func (s *Server) RunServer() {
 
 	router.Static("/compendium/avatars", "docker/compendium/avatars")
 	router.Static("/docker/compendium/avatars", "docker/compendium/avatars")
+	router.Static("/tv", "docker/compendium/tv")
 
 	router.GET("/health", HealthCheckHandler)
 

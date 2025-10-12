@@ -3,6 +3,7 @@ package postgres
 import (
 	"bridge/models"
 	"encoding/json"
+
 	"github.com/lib/pq"
 )
 
@@ -79,8 +80,8 @@ func (d *Db) InsertBridgeChat(br models.BridgeConfig) {
 }
 
 func (d *Db) DeleteBridgeChat(br models.BridgeConfig) {
-	del := "DELETE FROM kzbot.bridge_config WHERE name_relay = $1"
-	_, err := d.db.Exec(del, br.NameRelay)
+	del := "DELETE FROM kzbot.bridge_config WHERE id = $1"
+	_, err := d.db.Exec(del, br.Id)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

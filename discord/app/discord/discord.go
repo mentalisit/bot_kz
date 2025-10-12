@@ -7,9 +7,10 @@ import (
 	"discord/models"
 	"discord/storage"
 	"fmt"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/mentalisit/logger"
-	"time"
 )
 
 type Discord struct {
@@ -17,7 +18,7 @@ type Discord struct {
 	webhook                *transmitter.Transmitter
 	log                    *logger.Logger
 	storage                *storage.Storage
-	bridgeConfig           []models.BridgeConfig
+	bridgeConfig           []models.Bridge2Config
 	bridgeConfigUpdateTime int64
 	api                    *restapi.Recover
 	re                     *replace
@@ -46,6 +47,7 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 	}
 	ds.AddHandler(DS.messageHandler)
 	ds.AddHandler(DS.messageUpdate)
+	ds.AddHandler(DS.onMessageDelete)
 	ds.AddHandler(DS.messageReactionAdd)
 	ds.AddHandler(DS.slash)
 	go DS.loadSlashCommand()
@@ -91,11 +93,11 @@ func (d *Discord) DeleteMessageTimer() {
 	for {
 		select {
 		case <-ticker.C:
-			m := d.storage.Db.TimerReadMessage()
+			m := d.storage.Db.TimerReadMessage("ds")
 			if len(m) > 0 {
 				for _, t := range m {
-					if t.Dsmesid != "" {
-						d.DeleteMessage(t.Dschatid, t.Dsmesid)
+					if t.MesId != "" {
+						d.DeleteMessage(t.ChatId, t.MesId)
 						d.storage.Db.TimerDeleteMessage(t)
 					}
 				}

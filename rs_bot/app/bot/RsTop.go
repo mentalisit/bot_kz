@@ -23,6 +23,8 @@ func GetCorpAlias(config models.CorporationConfig) string {
 		corpName = "povstanci"
 	case "ЛУННЫЙ ФЕНИКС/КЗ и новости":
 		corpName = "ЛУННЫЙ ФЕНИКС"
+	case "ДИВЕРСАНТЫ 2.0/Бот кз":
+		corpName = "ДИВЕРСАНТЫ"
 
 	default:
 		return ""

@@ -2,10 +2,12 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"strconv"
 	"strings"
 	"telegram/models"
 	"telegram/telegram/helper"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 func (t *Telegram) handleForwarded(rmsg *models.ToBridgeMessage, message *tgbotapi.Message) {
@@ -55,6 +57,8 @@ func (t *Telegram) handleQuoting(rmsg *models.ToBridgeMessage, message *tgbotapi
 			Avatar:      t.getAvatarIsExist(message.ReplyToMessage.From.ID),
 			UserName:    usernameReply,
 		}
+		rmsg.ReplyMap = make(map[string]string)
+		rmsg.ReplyMap[rmsg.ChatId] = strconv.Itoa(message.ReplyToMessage.MessageID)
 		rmsg.Reply = reply
 		fmt.Printf("%+v\n", rmsg.Reply)
 	}

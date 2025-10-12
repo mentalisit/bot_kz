@@ -2,10 +2,11 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"strconv"
 	"strings"
 	"telegram/models"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
@@ -125,7 +126,7 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 
 	t.api.SendCompendiumAppRecover(i)
 }
-func (t *Telegram) sendToBridgeFilter(m *tgbotapi.Message, ChatId string, config models.BridgeConfig) {
+func (t *Telegram) sendToBridgeFilter(m *tgbotapi.Message, ChatId string, config models.Bridge2Config) {
 	if len(m.Text) < 3500 { //игнорируем сообщения большой длины
 		t.handlePoll(m)
 		if m.Text == "" {
@@ -151,6 +152,10 @@ func (t *Telegram) sendToBridgeFilter(m *tgbotapi.Message, ChatId string, config
 			TimestampUnix: m.Time().Unix(),
 			Sender:        ReplaceCyrillicToLatin(m.From.String()),
 			Avatar:        t.getAvatarIsExist(m.From.ID),
+		}
+
+		if m.EditDate != 0 {
+			mes.Tip = "tge"
 		}
 
 		err := t.handleDownloadBridge(&mes, m)
@@ -215,7 +220,7 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 		ChatId:  ChatId,
 		MesId:   strconv.Itoa(m.MessageID),
 		GuildId: chatName,
-		Config: &models.BridgeConfig{
+		Config: &models.Bridge2Config{
 			HostRelay: chatName,
 		},
 	}

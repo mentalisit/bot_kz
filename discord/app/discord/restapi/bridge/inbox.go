@@ -4,6 +4,7 @@ import (
 	"context"
 	"discord/models"
 	"fmt"
+
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
 )
@@ -43,6 +44,7 @@ func (c *Client) SendToBridge(i models.ToBridgeMessage) error {
 		GuildId:     i.GuildId,
 		TimeMessage: i.TimestampUnix,
 		Avatar:      i.Avatar,
+		ReplyMap:    i.ReplyMap,
 	}
 	if len(i.Extra) > 0 {
 		for _, info := range i.Extra {
@@ -65,35 +67,31 @@ func (c *Client) SendToBridge(i models.ToBridgeMessage) error {
 	}
 
 	if i.Config != nil && i.Config.HostRelay != "" {
-		conf := &BridgeConfig{
+		conf := &Bridge2Config{
 			Id:                int32(i.Config.Id),
 			NameRelay:         i.Config.NameRelay,
 			HostRelay:         i.Config.HostRelay,
 			Role:              i.Config.Role,
 			ForbiddenPrefixes: i.Config.ForbiddenPrefixes,
+			Channel:           make(map[string]*Bridge2Config_Bridge2ConfigsList),
 		}
-		if len(i.Config.ChannelDs) > 0 {
-			for _, d := range i.Config.ChannelDs {
-				conf.ChannelDs = append(conf.ChannelDs, &BridgeConfigDs{
-					ChannelId:       d.ChannelId,
-					GuildId:         d.GuildId,
-					CorpChannelName: d.CorpChannelName,
-					AliasName:       d.AliasName,
-					MappingRoles:    d.MappingRoles,
-				})
-			}
-		}
-		if len(i.Config.ChannelTg) > 0 {
-			for _, t := range i.Config.ChannelTg {
-				conf.ChannelTg = append(conf.ChannelTg, &BridgeConfigTg{
-					ChannelId:       t.ChannelId,
-					CorpChannelName: t.CorpChannelName,
-					AliasName:       t.AliasName,
-					MappingRoles:    t.MappingRoles,
-				})
-			}
-		}
+		if len(i.Config.Channel) > 0 {
+			for t, dd := range i.Config.Channel {
+				for _, d := range dd {
+					if conf.Channel[t] == nil {
+						conf.Channel[t] = &Bridge2Config_Bridge2ConfigsList{}
+					}
 
+					conf.Channel[t].Configs = append(conf.Channel[t].Configs, &Bridge2Configs{
+						ChannelId:       d.ChannelId,
+						GuildId:         d.GuildId,
+						CorpChannelName: d.CorpChannelName,
+						AliasName:       d.AliasName,
+						MappingRoles:    d.MappingRoles,
+					})
+				}
+			}
+		}
 		in.Config = conf
 	}
 

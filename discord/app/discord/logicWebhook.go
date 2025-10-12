@@ -7,13 +7,13 @@ import (
 	"discord/models"
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"io"
-	"log/slog"
 	"net/http"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func (d *Discord) logicMixWebhook(m *discordgo.Message) {
@@ -108,11 +108,7 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams, tsUnix 
 		if err != nil {
 			return "", err
 		}
-		d.storage.Db.InsertWebhookType(tsUnix, rse.Corporation.CorporationName, rse.EventType, string(body))
-
-		if params.Name == "rus" || params.Name == "soyuz" {
-			d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
-		}
+		d.saveWebhook(params, tsUnix, body, rse.Corporation.CorporationName, rse.EventType)
 
 	case "WhiteStarStarted":
 		var wss models.WhiteStarStarted
@@ -121,13 +117,7 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams, tsUnix 
 			return "", err
 		}
 		d.WhiteStarStarted(wss, params)
-		d.storage.Db.InsertWebhookType(tsUnix, wss.Corporation.CorporationName, wss.EventType, string(body))
-
-		d.sendWhiteStarData(body)
-
-		if params.Name == "rus" || params.Name == "soyuz" {
-			d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
-		}
+		d.saveWebhook(params, tsUnix, body, wss.Corporation.CorporationName, wss.EventType)
 
 	case "WhiteStarEnded":
 		var wse models.WhiteStarEnded
@@ -136,15 +126,10 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams, tsUnix 
 			return "", err
 		}
 		d.WhiteStarEnded(wse, params)
-		d.storage.Db.InsertWebhookType(tsUnix, wse.Corporation.CorporationName, wse.EventType, string(body))
-
-		d.sendWhiteStarData(body)
-
-		if params.Name == "rus" || params.Name == "soyuz" {
-			d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
-		}
+		d.saveWebhook(params, tsUnix, body, wse.Corporation.CorporationName, wse.EventType)
 
 	default:
+		d.saveWebhook(params, tsUnix, body, "nil", "default")
 		d.log.InfoStruct("default "+params.Name, jsonData)
 		fmt.Println(string(body))
 	}
@@ -255,97 +240,13 @@ func (d *Discord) WhiteStarStarted(wss models.WhiteStarStarted, params *models.S
 			text = text + fmt.Sprintf("\n  Противник %s: \n", wss.Opponent.CorporationName)
 			text = text + d.CombineNamesWithNameAliases(wss.OpponentParticipants)
 		}
-		d.SendWebhook(text, params.Name, params.ChannelWebhook, wss.Corporation.GetAvatar())
+		d.SendWebhook(text, wss.Corporation.CorporationName, params.ChannelWebhook, wss.Corporation.GetAvatar())
 	}
 }
 func (d *Discord) WhiteStarEnded(wse models.WhiteStarEnded, params *models.ScoreboardParams) {
 	text := fmt.Sprintf("%s\nПротивник: %s \n Opponent %d - Our %d \nXPGained %d\n",
 		wse.EventType, wse.Opponent.CorporationName, wse.OpponentScore, wse.OurScore, wse.XPGained)
-	d.SendWebhook(text, params.Name, params.ChannelWebhook, wse.Corporation.GetAvatar())
-}
-func oldCombineNames(r string) string {
-	switch r {
-	case "Mchuleft", "Valenvaryon":
-		return "Mchuleft"
-	case "Overturned", "Overturned-1.1":
-		return "Overturned"
-	case "RedArrow", "Light Matter", "Dark Matter", "Drake", "Leviathan":
-		return "RedArrow"
-	case "falcon_2":
-		return "falcon_2(Миша)"
-	case "Silent_Noise", "WarySamurai1055":
-		return "Silent_Noise"
-	case "arsenium23", "Tabu 666", "Psyker", "kozlovskiu":
-		return "Tabu"
-	case "delov@r", "delovar", "Plague":
-		return "delovar"
-	case "iVanCoMik", "eVanCoMik", "VanCoMik":
-		return "VanCoMik"
-	case "Альтаир", "АЛЬТАИР", "Storm":
-		return "Альтаир"
-	case "Гэндальф серый", "Ёжик71":
-		return "Ёжик71"
-	case "Джонни_De", "JonnyDe", "Red-is":
-		return "JonnyDe"
-	case "N@N", "ChubbChubbs":
-		return "ChubbChubbs"
-	case "Nixonblade", "TimA", "Ted", "Коньячный ЗАВОД":
-		return "Nixonblade"
-	case "Widowmaker":
-		return "retresh90"
-	case "Persil", "Pasis", "ILTS":
-		return "Shishu"
-
-	case "Iterius", "Furia":
-		return "Iterius"
-	case "Gennadiy Reng", "Mr.Reng":
-		return "Mr.Reng"
-	case "ololoki":
-		return "trololo"
-	case "Vera", "Prizrak1astu":
-		return "Mad Max"
-	case "КОРСАРИК", "Танкист39":
-		return "KOPCAP"
-	case "PovAndy":
-		return "vdruzh"
-	case "SpecBalrog":
-		return "Tauren"
-	case "WING☯CHUN":
-		return "Jeff1143"
-
-	default:
-		return r
-	}
-}
-
-// send WhiteStarData to statistic bot
-func (d *Discord) sendWhiteStarData(data []byte) {
-	url := "https://api.tsl.rocks/datajson?token=" + config.Instance.WsToken
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancelFunc()
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
-	if err != nil {
-		slog.Error("Request creation failed: " + err.Error())
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		slog.Error("Request failed: " + err.Error())
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		if resp.StatusCode == 409 {
-			fmt.Println("already recorded")
-			return
-		}
-		slog.Error("Request failed Status: " + resp.Status)
-		return
-	}
+	d.SendWebhook(text, wse.Corporation.CorporationName, params.ChannelWebhook, wse.Corporation.GetAvatar())
 }
 
 func (d *Discord) CombineNames(input string) string {
@@ -373,4 +274,63 @@ func (d *Discord) CombineNamesWithNameAliases(in []models.Participant) string {
 		}
 	}
 	return text
+}
+
+func (d *Discord) saveWebhook(params *models.ScoreboardParams, tsUnix int64, body []byte, CorporationName, EventType string) {
+	if EventType == "WhiteStarStarted" || EventType == "WhiteStarEnded" {
+		err := d.sendWhiteStarData(body)
+		if err != nil {
+			d.log.ErrorErr(err)
+			go func() {
+				errBody := body
+				att := 1
+				for {
+					time.Sleep(5 * time.Minute)
+					err = d.sendWhiteStarData(errBody)
+					if err == nil {
+						break
+					} else {
+						d.log.Info(fmt.Sprintf("Error again attempt:%d  error:%+v", att, err))
+						att++
+					}
+				}
+			}()
+		}
+	}
+
+	d.storage.Db.InsertWebhookType(tsUnix, CorporationName, EventType, string(body))
+
+	if params.Name == "global_ArtZor" {
+		d.storage.Db.InsertWebhook(tsUnix, CorporationName, string(body))
+	} else if params.Name == "rus" || params.Name == "soyuz" { //need remove after event
+		d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
+	}
+}
+
+// send WhiteStarData to statistic bot
+func (d *Discord) sendWhiteStarData(data []byte) error {
+	url := "https://api.tsl.rocks/datajson?token=" + config.Instance.WsToken
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancelFunc()
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		if resp.StatusCode == 409 {
+			fmt.Println("already recorded")
+			return nil
+		}
+		return fmt.Errorf("Request failed Status: " + resp.Status)
+	}
+	return nil
 }

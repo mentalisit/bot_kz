@@ -3,13 +3,14 @@ package telegram
 import (
 	"bytes"
 	"fmt"
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"telegram/models"
 	"time"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 func (t *Telegram) ChatTyping(chatId string) error {
@@ -31,9 +32,10 @@ func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) 
 	}
 	tu := int(time.Now().UTC().Unix())
 	t.Storage.Db.TimerInsert(models.Timer{
-		Tgmesid:  strconv.Itoa(tMessage.MessageID),
-		Tgchatid: chatid,
-		Timed:    tu + second,
+		Tip:    "tg",
+		ChatId: chatid,
+		MesId:  strconv.Itoa(tMessage.MessageID),
+		Timed:  tu + second,
 	})
 
 	if tMessage.MessageID != 0 {
@@ -96,25 +98,17 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 	var messageIds []models.MessageIds
 	for _, chat := range in.ChannelId {
 
-		////бля текст для каждого канала нужен свой
-		//func (b *Bridge) replaceText(text string,conf models.BridgeConfig) string {
-		//	re := regexp.MustCompile("@&(\\w+)")
-		//	mentionRole := re.FindAllStringSubmatch(text, -1)
-		//	if len(mentionRole) > 0 {
-		//	textReplace := mentionRole[0][0]
-		//	roleName := mentionRole[0][1]
-		//	mention := (roleName)
-		//	text = strings.Replace(text, textReplace, mention, 1)
-		//}
-		//	return text
-		//}
-
 		chatId, threadID := t.chat(chat)
+		var replyId int
+		if in.ReplyMap != nil && in.ReplyMap[chat] != "" {
+			found := in.ReplyMap[chat]
+			replyId, _ = strconv.Atoi(found)
+		}
 
 		if len(in.Extra) > 0 {
-			mid, err := t.sendFileExtra(in.Extra, in.Text, chat)
+			mid, err := t.sendFileExtra(in.Extra, in.Text, chat, replyId)
 			if err != nil {
-				t.log.InfoStruct(fmt.Sprintf("err %+v\n", err), in)
+				t.log.Info(fmt.Sprintf("err %s %s %s\n", err.Error(), in.Text, in.Sender))
 			} else {
 				messageData := models.MessageIds{
 					MessageId: mid,
@@ -126,6 +120,7 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 
 			m := tgbotapi.NewMessage(chatId, in.Text)
 			m.MessageThreadID = threadID
+			m.ReplyParameters.MessageID = replyId
 			tMessage, err := t.t.Send(m)
 			if err != nil {
 				t.log.InfoStruct(fmt.Sprintf("err %+v\n", err), in)
@@ -145,7 +140,7 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 	}
 	return messageIds
 }
-func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (string, error) {
+func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string, replyId int) (string, error) {
 	if extra != nil {
 		if len(extra) > 0 {
 			chatId, threadID := t.chat(chatID)
@@ -155,6 +150,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 					continue
 				}
 				var fileRequestData tgbotapi.RequestFileData
+
 				if f.FileID != "" {
 					fileRequestData = tgbotapi.FileID(f.FileID)
 				} else if f.URL != "" {
@@ -207,6 +203,15 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 						ChatID: chatId,
 					},
 					MessageThreadID: threadID,
+					ReplyParameters: tgbotapi.ReplyParameters{
+						MessageID:                replyId,
+						ChatID:                   nil,
+						AllowSendingWithoutReply: false,
+						Quote:                    "",
+						QuoteParseMode:           "",
+						QuoteEntities:            nil,
+						QuotePosition:            0,
+					},
 				},
 				Media: media,
 			}
@@ -220,6 +225,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string) (
 	}
 	return "", nil
 }
+
 func (t *Telegram) SendEmbed(lvlkz string, chatid string, text string) (int, error) {
 	chatId, threadID := t.chat(chatid)
 	var keyboardQueue = tgbotapi.NewInlineKeyboardMarkup(

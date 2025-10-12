@@ -5,9 +5,11 @@ import (
 	"bridge/models"
 	"context"
 	"fmt"
+	"net"
+	"strings"
+
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
-	"net"
 )
 
 type Server struct {
@@ -48,6 +50,7 @@ func (s *Server) InboxBridge(ctx context.Context, i *ToBridgeMessage) (*Empty, e
 		GuildId:       i.GuildId,
 		TimestampUnix: i.TimeMessage,
 		Avatar:        i.Avatar,
+		ReplyMap:      i.ReplyMap,
 	}
 	if len(i.Extra) > 0 {
 		for _, info := range i.Extra {
@@ -70,38 +73,38 @@ func (s *Server) InboxBridge(ctx context.Context, i *ToBridgeMessage) (*Empty, e
 	}
 
 	if i.Config != nil && i.Config.HostRelay != "" {
-		conf := &models.BridgeConfig{
+		conf := &models.Bridge2Config{
 			Id:                int(i.Config.Id),
 			NameRelay:         i.Config.NameRelay,
 			HostRelay:         i.Config.HostRelay,
 			Role:              i.Config.Role,
 			ForbiddenPrefixes: i.Config.ForbiddenPrefixes,
+			Channel:           make(map[string][]models.Bridge2Configs),
 		}
-		if len(i.Config.ChannelDs) > 0 {
-			for _, d := range i.Config.ChannelDs {
-				conf.ChannelDs = append(conf.ChannelDs, models.BridgeConfigDs{
-					ChannelId:       d.ChannelId,
-					GuildId:         d.GuildId,
-					CorpChannelName: d.CorpChannelName,
-					AliasName:       d.AliasName,
-					MappingRoles:    d.MappingRoles,
-				})
+		if len(i.Config.Channel) > 0 {
+			for x, dd := range i.Config.Channel {
+				if conf.Channel[x] == nil {
+					conf.Channel[x] = []models.Bridge2Configs{}
+				}
+				for _, d := range dd.Configs {
+					conf.Channel[x] = append(conf.Channel[x], models.Bridge2Configs{
+						ChannelId:       d.ChannelId,
+						GuildId:         d.GuildId,
+						CorpChannelName: d.CorpChannelName,
+						AliasName:       d.AliasName,
+						MappingRoles:    d.MappingRoles,
+					})
+				}
 			}
 		}
-		if len(i.Config.ChannelTg) > 0 {
-			for _, t := range i.Config.ChannelTg {
-				conf.ChannelTg = append(conf.ChannelTg, models.BridgeConfigTg{
-					ChannelId:       t.ChannelId,
-					CorpChannelName: t.CorpChannelName,
-					AliasName:       t.AliasName,
-					MappingRoles:    t.MappingRoles,
-				})
-			}
-		}
-
 		in.Config = conf
 	}
-
+	if in.Tip == "wa" {
+		if strings.Contains(in.ChatId, "/") {
+			split := strings.Split(in.ChatId, "/")
+			in.ChatId = split[1]
+		}
+	}
 	go s.b.Logic(in)
 	return nil, nil
 }

@@ -20,16 +20,20 @@ func (b *Bridge) Command() {
 				return
 			}
 			text := fmt.Sprintf("Список каналов хоста %s\n", b.in.Config.HostRelay)
-			if len(b.in.Config.ChannelDs) > 0 {
-				for _, d := range b.in.Config.ChannelDs {
-					text = text + "[DS]" + d.AliasName + " (" + d.CorpChannelName + ")\n"
+			if len(b.in.Config.Channel) > 0 {
+				for t, channels := range b.in.Config.Channel {
+					for _, d := range channels {
+						tt := strings.ToUpper(t)
+						text = fmt.Sprintf("%s[%s]%s (%s)\n", text, tt, d.AliasName, d.CorpChannelName)
+						//text = text + "["+tt+"]" + d.AliasName + " (" + d.CorpChannelName + ")\n"
+					}
 				}
 			}
-			if len(b.in.Config.ChannelTg) > 0 {
-				for _, d := range b.in.Config.ChannelTg {
-					text = text + "[TG]" + d.AliasName + " (" + d.CorpChannelName + ")\n"
-				}
-			}
+			//if len(b.in.Config.ChannelTg) > 0 {
+			//	for _, d := range b.in.Config.ChannelTg {
+			//		text = text + "[TG]" + d.AliasName + " (" + d.CorpChannelName + ")\n"
+			//	}
+			//}
 			go b.ifTipDelSend(text)
 			return
 		}
@@ -55,6 +59,8 @@ func (b *Bridge) Command() {
 				channelGood, _ = b.CacheCheckChannelConfigDS(b.in.ChatId)
 			} else if b.in.Tip == "tg" {
 				channelGood, _ = b.CacheCheckChannelConfigTg(b.in.ChatId)
+			} else if b.in.Tip == "wa" {
+				channelGood, _ = b.CacheCheckChannelConfigWA(b.in.ChatId)
 			}
 			if good && !channelGood {
 				channelName := b.in.Config.HostRelay
@@ -74,23 +80,23 @@ func (b *Bridge) Command() {
 			}
 			return
 		}
-		if arg[0] == "role" && b.in.Tip == "tg" {
-			role := arg[1]
-			name := arg[2]
-			conf := b.in.Config
-			for i, tg := range conf.ChannelTg {
-				if tg.ChannelId == b.in.ChatId {
-					if conf.ChannelTg[i].MappingRoles == nil {
-						conf.ChannelTg[i].MappingRoles = make(map[string]string)
-					}
-					conf.ChannelTg[i].MappingRoles[role] += name + " "
-				}
+		//if arg[0] == "role" && b.in.Tip == "tg" {
+		//	role := arg[1]
+		//	name := arg[2]
+		//	conf := b.in.Config
+		//	for i, tg := range conf.Channel["tg"] {
+		//		if tg.ChannelId == b.in.ChatId {
+		//			if conf.ChannelTg[i].MappingRoles == nil {
+		//				conf.ChannelTg[i].MappingRoles = make(map[string]string)
+		//			}
+		//			conf.ChannelTg[i].MappingRoles[role] += name + " "
+		//		}
+		//
+		//	}
+		//	b.storage.UpdateBridgeChat(*conf)
+		//	fmt.Printf("update config %+v\n", conf.ChannelTg)
 
-			}
-			b.storage.UpdateBridgeChat(*conf)
-			fmt.Printf("update config %+v\n", conf.ChannelTg)
-
-		}
+		//}
 		//if arg[0] == "мапинг" {
 		//	mentionPatternTg := `@(\w+)`
 		//	mentionPatternDs := `<@(\w+)>`

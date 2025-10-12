@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"telegram/models"
 	"time"
 	"unicode"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 const nickname = "Для того что бы БОТ мог Вас индентифицировать, создайте уникальный НикНей в настройках. Вы можете использовать a-z, 0-9 и символы подчеркивания. Минимальная длина - 5 символов."
@@ -52,9 +53,10 @@ func (t *Telegram) DelMessageSecond(chatid string, idSendMessage string, second 
 	}
 	tu := int(time.Now().UTC().Unix())
 	t.Storage.Db.TimerInsert(models.Timer{
-		Tgmesid:  strconv.Itoa(id),
-		Tgchatid: chatid,
-		Timed:    tu + second,
+		Tip:    "tg",
+		ChatId: chatid,
+		MesId:  strconv.Itoa(id),
+		Timed:  tu + second,
 	})
 	return nil
 }

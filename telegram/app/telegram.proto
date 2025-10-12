@@ -97,7 +97,8 @@ message SendBridgeArrayMessagesRequest {
   repeated string channelID = 3;
   repeated FileInfo extra = 4;
   string avatar = 5;
-  BridgeMessageReply reply = 6;
+  map<string, string> reply_map= 6;
+  BridgeMessageReply reply = 7;
 }
 message FileInfo {
   string name = 1;

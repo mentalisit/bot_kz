@@ -5,10 +5,11 @@ import (
 	grpc_server "bridge/grpc-server"
 	"bridge/logic"
 	"bridge/storage"
-	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/mentalisit/logger"
 )
 
 func main() {

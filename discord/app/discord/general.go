@@ -3,8 +3,9 @@ package DiscordClient
 import (
 	"discord/models"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 //lang ok
@@ -82,9 +83,10 @@ func (d *Discord) DeleteMessage(chatid, mesid string) {
 func (d *Discord) DeleteMesageSecond(chatid, mesid string, second int) {
 	tu := int(time.Now().UTC().Unix())
 	d.storage.Db.TimerInsert(models.Timer{
-		Dsmesid:  mesid,
-		Dschatid: chatid,
-		Timed:    tu + second,
+		Tip:    "ds",
+		ChatId: chatid,
+		MesId:  mesid,
+		Timed:  tu + second,
 	})
 }
 

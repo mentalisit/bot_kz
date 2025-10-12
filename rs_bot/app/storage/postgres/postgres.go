@@ -2,11 +2,12 @@ package postgres
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mentalisit/logger"
 	"rs/config"
 	"rs/pkg/clientDB/postgresLocal"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/mentalisit/logger"
 )
 
 type Db struct {
@@ -119,19 +120,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS kzbot.timer(
-    id       bigserial primary key,
-    dsmesid  text,
-    dschatid text,
-    tgmesid  text,
-    tgchatid text,
-    timed    bigint
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
+
 	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS kzbot.users(
     id      bigserial primary key,
@@ -236,6 +225,19 @@ func (d *Db) createTable() {
 		name text NOT NULL DEFAULT '',
 		level    integer NOT NULL DEFAULT 0,
 		points   integer NOT NULL DEFAULT 0
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
+
+	_, err = d.db.Exec(ctx,
+		`CREATE TABLE IF NOT EXISTS rs_bot.timer(
+    id       bigserial primary key,
+    tip  text,
+    chatId text,
+    mesId  text,
+    timed    bigint
 	);`)
 	if err != nil {
 		d.log.ErrorErr(err)

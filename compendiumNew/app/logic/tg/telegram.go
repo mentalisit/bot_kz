@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
 )
@@ -20,7 +21,7 @@ func NewClient(log *logger.Logger) *Client {
 		log.ErrorErr(err)
 		return nil
 	}
-	fmt.Println("connect to grpc discord ok")
+	fmt.Println("connect to grpc telegram ok")
 	return &Client{
 		conn:   conn,
 		client: NewTelegramServiceClient(conn),

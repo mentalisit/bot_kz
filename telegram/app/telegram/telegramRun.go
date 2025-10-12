@@ -2,22 +2,22 @@ package telegram
 
 import (
 	"fmt"
+
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 
-	//tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
-	"github.com/mentalisit/logger"
 	"strconv"
 	"telegram/models"
 	"telegram/storage"
 	"telegram/telegram/restapi"
 	"time"
+
+	"github.com/mentalisit/logger"
 )
 
 type Telegram struct {
 	t                      *tgbotapi.BotAPI
 	log                    *logger.Logger
-	bridgeConfig           []models.BridgeConfig
+	bridgeConfig           []models.Bridge2Config
 	bridgeConfigUpdateTime int64
 	Storage                *storage.Storage
 	api                    *restapi.Recover
@@ -57,12 +57,12 @@ func (t *Telegram) DeleteMessageTimer() {
 	for {
 		select {
 		case <-ticker.C:
-			mes := t.Storage.Db.TimerReadMessage()
+			mes := t.Storage.Db.TimerReadMessage("tg")
 			if len(mes) > 0 {
 				for _, m := range mes {
-					if m.Tgmesid != "" {
-						mid, _ := strconv.Atoi(m.Tgmesid)
-						_ = t.DelMessage(m.Tgchatid, mid)
+					if m.MesId != "" {
+						mid, _ := strconv.Atoi(m.MesId)
+						_ = t.DelMessage(m.ChatId, mid)
 						t.Storage.Db.TimerDeleteMessage(m)
 					}
 				}

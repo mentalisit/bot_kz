@@ -4,8 +4,10 @@ import (
 	"compendium/logic/dictionary"
 	"compendium/logic/ds"
 	"compendium/logic/tg"
+	"compendium/logic/wa"
 	"compendium/models"
 	"compendium/storage"
+
 	"github.com/mentalisit/logger"
 )
 
@@ -22,6 +24,7 @@ type Hs struct {
 	moron      map[models.IncomingMessage]int
 	ds         *ds.Client
 	tg         *tg.Client
+	wa         *wa.Client
 }
 
 func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storage.Storage) *Hs {
@@ -38,6 +41,7 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 		moron:      map[models.IncomingMessage]int{},
 		ds:         ds.NewClient(log),
 		tg:         tg.NewClient(log),
+		wa:         wa.NewClient(log),
 	}
 	go c.inbox(m)
 	return c

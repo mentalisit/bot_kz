@@ -6,7 +6,7 @@ type PollStruct struct {
 	Options     []string          `json:"options"`
 	CreateTime  int64             `json:"createTime"`
 	UrlPoll     string            `json:"urlPoll"`
-	Config      BridgeConfig      `json:"config"`
+	Config      Bridge2Config     `json:"config"`
 	Votes       []Votes           `json:"votes"`
 	PollMessage map[string]string `json:"pollMessage"`
 }

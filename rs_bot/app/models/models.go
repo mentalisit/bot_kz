@@ -3,11 +3,12 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Identify struct {
@@ -279,7 +280,7 @@ type Module struct {
 	Rse  int
 }
 type Timer struct {
-	//Id       string `bson:"_id"`
+	Id       string `bson:"_id"`
 	Dsmesid  string `bson:"dsmesid"`
 	Dschatid string `bson:"dschatid"`
 	Tgmesid  string `bson:"tgmesid"`

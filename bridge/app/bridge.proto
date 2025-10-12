@@ -1,7 +1,32 @@
 syntax = "proto3";
 
 package bridge;
-option go_package = "server/pb;bridge";
+option go_package = "grpc-server;bridge";
+
+
+// Сообщение Bridge2Configs соответствует структуре Bridge2Configs
+message Bridge2Configs {
+  string channel_id = 1;
+  string guild_id = 2;
+  string corp_channel_name = 3;
+  string alias_name = 4;
+  map<string, string> mapping_roles = 5;
+}
+
+// Сообщение Bridge2Config соответствует структуре Bridge2Config
+message Bridge2Config {
+  int32 id = 1; // Используем int32 или int64 для целых чисел
+  string name_relay = 2;
+  string host_relay = 3;
+  repeated string role = 4; // Слайсы (Go slice) становятся repeated полями
+  message Bridge2ConfigsList {
+    repeated Bridge2Configs configs = 1;
+  }
+  map<string, Bridge2ConfigsList> channel = 5; // Вложенный map с помощью вспомогательной структуры
+  repeated string forbidden_prefixes = 6;
+}
+
+
 
 // Сообщение для FileInfo
 message FileInfo {
@@ -60,7 +85,8 @@ message ToBridgeMessage {
   repeated FileInfo extra = 8;
   string avatar = 9;
   BridgeMessageReply reply = 10;
-  BridgeConfig config = 11;
+  map<string, string> reply_map = 11;
+  Bridge2Config config = 12;
 }
 
 // Сервис для функции InboxBridge
