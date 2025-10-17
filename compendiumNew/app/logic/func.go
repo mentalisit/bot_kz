@@ -16,7 +16,7 @@ func (c *Hs) sendChat(m models.IncomingMessage, text string) {
 			return
 		}
 	} else if m.Type == "tg" {
-		_, err := c.tg.Send(m.ChannelId, text)
+		_, err := c.tg.Send(m.ChannelId, text, "")
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -37,7 +37,7 @@ func (c *Hs) sendChatTable(m models.IncomingMessage, text, table string) {
 			return
 		}
 	} else if m.Type == "tg" {
-		_, err := c.tg.Send(m.ChannelId, text+"\n"+table)
+		_, err := c.tg.Send(m.ChannelId, text+"\n"+table, "")
 		if err != nil {
 			c.log.ErrorErr(err)
 			return
@@ -60,7 +60,7 @@ func (c *Hs) sendDM(m models.IncomingMessage, text string) (string, error) {
 		}
 		return mid, nil
 	} else if m.Type == "tg" {
-		mid, err := c.tg.Send(m.DmChat, text)
+		mid, err := c.tg.Send(m.DmChat, text, "")
 		if err != nil {
 			return "", err
 		}
