@@ -33,10 +33,11 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) Send(chatId string, text string) (string, error) {
+func (c *Client) Send(chatId string, text, parseMode string) (string, error) {
 	textResponse, err := c.client.Send(context.Background(), &SendMessageRequest{
-		Text:   text,
-		ChatID: chatId,
+		Text:      text,
+		ChatID:    chatId,
+		ParseMode: parseMode,
 	})
 	if err != nil {
 		return "", err

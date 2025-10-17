@@ -47,7 +47,10 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
-	m.ParseMode = parseMode
+	if parseMode != "" {
+		m.ParseMode = parseMode
+		m.Text = escapeMarkdownV2(text)
+	}
 	tMessage, err := t.t.Send(m)
 	if err != nil {
 		fmt.Println(err)
