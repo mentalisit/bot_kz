@@ -97,6 +97,11 @@ func (t *Telegram) handleDownloadBridge(rmsg *models.ToBridgeMessage, message *t
 		size = int64(photos[len(photos)-1].FileSize)
 		FileID = photos[len(photos)-1].FileID
 		name, url = t.getDownloadInfo(FileID, "", true)
+	case message.Animation != nil:
+		size = message.Animation.FileSize
+		FileID = message.Animation.FileID
+		name, url = t.getDownloadInfo(FileID, "", true)
+
 	}
 
 	// if name is empty we didn't match a thing to download
