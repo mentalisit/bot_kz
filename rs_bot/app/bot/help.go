@@ -74,13 +74,11 @@ func (b *Bot) hhelp(in models.InMessage) {
 //	}
 
 func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.CorporationConfig {
-	text := fmt.Sprintf("%s \n\n%s",
-		b.getLanguageText(c.Country, "info_bot_delete_msg"),
-		b.getLanguageText(c.Country, "info_help_text"))
+	text := b.getLanguageText(c.Country, "info_help_text3")
 
 	mId := b.client.Ds.SendHelp(
 		c.DsChannel,
-		b.getLanguageText(c.Country, "information"),
+		b.getLanguageText(c.Country, "info_bot_delete_msg"),
 		text, c.MesidDsHelp, ifUser)
 
 	if mId == "" {
@@ -92,23 +90,20 @@ func (b *Bot) sendHelpDs(c models.CorporationConfig, ifUser bool) models.Corpora
 	return c
 }
 func (b *Bot) sendHelpTg(c models.CorporationConfig, ifUser bool) models.CorporationConfig {
-	text := fmt.Sprintf("%s\n%s ",
-		b.getLanguageText(c.Country, "information"),
-		b.getLanguageText(c.Country, "info_help_text"))
+	text := b.getLanguageText(c.Country, "info_help_text3")
 
 	if IsThisTopicTG(c.TgChannel) {
-		text = fmt.Sprintf("%s\n%s\n%s",
-			b.getLanguageText(c.Country, "information"),
+		text = fmt.Sprintf("%s\n\n%s",
 			b.getLanguageText(c.Country, "info_bot_delete_msg"),
-			b.getLanguageText(c.Country, "info_help_text"))
+			b.getLanguageText(c.Country, "info_help_text3"))
 	}
 
-	if c.TgChannel == "-1002298028181/4" {
-		text = fmt.Sprintf("%s\n%s\n%s",
-			b.getLanguageText(c.Country, "information"),
-			b.getLanguageText(c.Country, "info_bot_delete_msg"),
-			b.getLanguageText(c.Country, "info_help_text2"))
-	}
+	//if c.TgChannel == "-1002298028181/4" {
+	//	text = fmt.Sprintf("%s\n%s\n%s",
+	//		b.getLanguageText(c.Country, "information"),
+	//		b.getLanguageText(c.Country, "info_bot_delete_msg"),
+	//		b.getLanguageText(c.Country, "info_help_text2"))
+	//}
 
 	mId := b.client.Tg.SendHelp(c.TgChannel, text, c.MesidTgHelp, ifUser)
 
