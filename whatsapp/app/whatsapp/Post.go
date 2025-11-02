@@ -3,8 +3,10 @@ package wa
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
+	"os"
 	"path/filepath"
 	"whatsapp/models"
 
@@ -86,6 +88,7 @@ func (b *Whatsapp) Send(msg Message) (string, error) {
 	// ... (Остальная логика отправки текста остается без изменений)
 	var message waE2E.Message
 	text := msg.Username + msg.Text
+	MentionedJID := b.prepareGroupMentionMessage(msg.Text)
 
 	// Логика ответа (ParentID)
 	if msg.ParentID != "" {
@@ -98,8 +101,23 @@ func (b *Whatsapp) Send(msg Message) (string, error) {
 					ContextInfo: replyContext,
 				},
 			}
+			message.ExtendedTextMessage.ContextInfo.MentionedJID = MentionedJID
 			return b.sendMessage(msg, &message)
 		}
+	}
+	// Логика с упоминанием
+	if len(MentionedJID) != 0 {
+		fmt.Printf("MentionedJID: %+v\n", MentionedJID) //MentionedJID: [79103982920@s.whatsapp.net]
+		contextInfo := &waE2E.ContextInfo{
+			MentionedJID: MentionedJID,
+		}
+
+		message.ExtendedTextMessage = &waE2E.ExtendedTextMessage{
+			Text:        &text,
+			ContextInfo: contextInfo,
+		}
+		fmt.Println("sending message") //sending message
+		return b.sendMessage(msg, &message)
 	}
 
 	// Логика обычного текста
@@ -265,4 +283,65 @@ func (b *Whatsapp) PostAudioMessage(msg Message, filetype string) (string, error
 	}
 
 	return ID, err
+}
+
+func (b *Whatsapp) SendPicScoreboard(chatID, text, fileNameScoreboard string) (mid string, err error) {
+	filePath := "docker/scoreboard/" + fileNameScoreboard
+
+	// 1. Открытие файла
+	open, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer open.Close() // Гарантируем закрытие файла
+
+	// 2. Чтение всего файла в слайс байтов []byte
+	plaintext, err := io.ReadAll(open)
+	if err != nil {
+		return "", err
+	}
+
+	// 3. Определение MIME-типа
+	fileExtension := ""
+	if dotIndex := len(fileNameScoreboard) - 4; dotIndex > 0 && fileNameScoreboard[dotIndex] == '.' {
+		fileExtension = fileNameScoreboard[dotIndex:]
+	}
+
+	filetype := mime.TypeByExtension(fileExtension)
+	if filetype == "" {
+		filetype = "image/jpeg" // Значение по умолчанию
+	}
+
+	// 4. Загрузка файла (используя []byte)
+	// ❗ ИСПРАВЛЕНИЕ: Передаем слайс байтов (plaintext)
+	resp, err := b.wc.Upload(context.Background(), plaintext, whatsmeow.MediaImage)
+	if err != nil {
+		return "", err
+	}
+
+	// 5. Подготовка и отправка сообщения (без изменений в этой части)
+	var message waE2E.Message
+
+	message.ImageMessage = &waE2E.ImageMessage{
+		Mimetype:      goproto.String(filetype),
+		Caption:       goproto.String(text),
+		MediaKey:      resp.MediaKey,
+		FileEncSHA256: resp.FileEncSHA256,
+		FileSHA256:    resp.FileSHA256,
+		FileLength:    goproto.Uint64(resp.FileLength),
+		URL:           goproto.String(resp.URL),
+		DirectPath:    goproto.String(resp.DirectPath),
+		ContextInfo:   nil, // Здесь можно добавить упоминания, если нужно
+	}
+
+	groupJID, err := b.ParseJID(chatID)
+	if err != nil {
+		return "", err
+	}
+
+	ID := b.wc.GenerateMessageID()
+
+	_, err = b.wc.SendMessage(context.Background(), groupJID, &message, whatsmeow.SendRequestExtra{ID: ID})
+
+	return getMessageIdFormat(*b.wc.Store.ID, ID), err
 }

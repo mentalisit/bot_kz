@@ -1,4 +1,4 @@
-FROM golang:1.24.2-alpine3.20 AS builder
+FROM golang:1.25.3-alpine3.22 AS builder
 
 WORKDIR /usr/local/src
 RUN apk --no-cache add bash git make gcc gettext musl-dev
@@ -12,7 +12,7 @@ RUN go mod download
 RUN go build -o ./bin/whatsapp main.go
 
 
-FROM alpine:3.20 AS runner
+FROM alpine:3.22 AS runner
 
 RUN apk add --no-cache tzdata
 ENV TZ=America/Winnipeg

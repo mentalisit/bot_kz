@@ -105,6 +105,14 @@ func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArr
 	}
 	return &SendBridgeArrayMessagesResponse{MessageIds: mids}, nil
 }
+func (s *Server) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest) (*ScoreboardResponse, error) {
+	mid, err := s.wa.SendPicScoreboard(in.ChaatId, in.Text, in.FileNameScoreboard)
+	if err != nil {
+		return &ScoreboardResponse{ErrorMessage: err.Error()}, err
+	}
+	return &ScoreboardResponse{Mid: mid}, nil
+}
+
 func downloadFile(fi *models.FileInfo) error {
 	resp, err := http.Get(fi.URL)
 	if err != nil {
@@ -199,13 +207,6 @@ func parseContentDisposition(s string) (string, map[string]string, error) {
 //		}, err
 //	}
 //	return &ErrorResponse{}, nil
-//}
-//func (s *Server) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest) (*ScoreboardResponse, error) {
-//	mid, err := s.tg.SendPicScoreboard(in.ChaatId, in.Text, in.FileNameScoreboard)
-//	if err != nil {
-//		return &ScoreboardResponse{ErrorMessage: err.Error()}, err
-//	}
-//	return &ScoreboardResponse{Mid: mid}, nil
 //}
 //func (s *Server) CheckAdmin(ctx context.Context, in *CheckAdminRequest) (*FlagResponse, error) {
 //	admin := s.tg.CheckAdminTg(in.GetChatid(), in.GetName())

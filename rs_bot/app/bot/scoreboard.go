@@ -7,8 +7,8 @@ import (
 
 func (b *Bot) ReadAndSendPic(tn time.Time) {
 	nextDateStart, nextDateStop, message := b.storage.Event.ReadEventScheduleAndMessage()
-	date1 := time.Now().UTC().Format("02-01-2006")
-	date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
+	date1 := tn.Format("02-01-2006")
+	date2 := tn.Add(24 * time.Hour).Format("02-01-2006")
 	if date1 == nextDateStart || date2 == nextDateStop {
 		seconds := 600
 
@@ -54,6 +54,13 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 							} else {
 								b.client.Tg.DelMessageSecond(channel, mid, seconds)
 							}
+						} else if s == "wa" {
+							if tn.Minute() == 59 && (tn.Hour() == 5 || tn.Hour() == 11 || tn.Hour() == 17 || tn.Hour() == 23) {
+								_, err := b.client.Wa.SendPicScoreboard(channel, title, filename)
+								if err != nil {
+									b.log.ErrorErr(err)
+								}
+							}
 						}
 					}
 				} else {
@@ -66,7 +73,5 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 				time.Sleep(1 * time.Second)
 			}
 		}
-
 	}
-
 }
