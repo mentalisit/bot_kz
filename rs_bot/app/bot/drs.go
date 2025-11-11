@@ -94,7 +94,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				}()
 			}
 			b.wg.Wait()
-			b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
+			b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 			b.QueueLevel(in)
 			go b.ReadQueueLevel(in)
 		} else {
@@ -136,7 +136,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				}
 				b.wg.Wait()
 				b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username,
-					in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
+					in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 				b.QueueLevel(in)
 				go b.ReadQueueLevel(in)
 			}
@@ -207,7 +207,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 
 					b.wg.Wait()
 					go b.SendLsNotification(in, u)
-					b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
+					b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 					err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, alt, numberLevel, numberEvent, in.Config.CorpName)
 					if err != nil {
 						b.log.Error("UpdateCompliteRS " + err.Error())
@@ -256,7 +256,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					}
 					b.wg.Wait()
 					b.storage.DbFunc.InsertQueue(DsMessageId, "", in.Config.CorpName, in.Username,
-						in.UserId, in.NameMention, in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
+						in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 					b.QueueLevel(in)
 				}
 				if countQueue == 3 {
@@ -309,7 +309,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					}
 
 					b.wg.Wait()
-					b.storage.DbFunc.InsertQueue(DsMessageId, "", in.Config.CorpName, in.Username, in.UserId, in.NameMention,
+					b.storage.DbFunc.InsertQueue(DsMessageId, "", in.Config.CorpName, in.Username, in.UserId, in.GetNameMention(),
 						in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberLevel)
 					err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, "", numberLevel, 0, in.Config.CorpName)
 					if err != nil {

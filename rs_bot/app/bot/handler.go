@@ -2,10 +2,11 @@ package bot
 
 import (
 	"fmt"
-	gt "github.com/bas24/googletranslatefree"
 	"rs/models"
 	"rs/pkg/utils"
 	"strings"
+
+	gt "github.com/bas24/googletranslatefree"
 )
 
 // lang
@@ -24,7 +25,7 @@ func (b *Bot) iftipdelete(in models.InMessage) {
 	}
 }
 func (b *Bot) ifTipSendMentionText(in models.InMessage, text string) {
-	text = fmt.Sprintf("%s %s", in.NameMention, text)
+	text = fmt.Sprintf("%s %s", in.GetNameMention(), text)
 	if in.Tip == ds {
 		go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, 10)
 	} else if in.Tip == tg {

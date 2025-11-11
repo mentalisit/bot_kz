@@ -157,3 +157,18 @@ func (c *Client) SendPicScoreboard(chatID, text, fileNameScoreboard string) (mid
 	}
 	return scoreboardResponse.Mid, nil
 }
+
+func (c *Client) SendPic(chatID, text string, fileBytes []byte) (mid string, err error) {
+	res, err := c.client.SendPic(context.Background(), &SendPicRequest{
+		Chatid:     chatID,
+		Text:       text,
+		ImageBytes: fileBytes,
+	})
+	if err != nil {
+		return "", err
+	}
+	if res.ErrorMessage != "" {
+		return "", errors.New(res.ErrorMessage)
+	}
+	return res.GetMesid(), nil
+}

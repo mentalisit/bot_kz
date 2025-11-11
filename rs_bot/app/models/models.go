@@ -70,6 +70,14 @@ type InMessage struct {
 	Opt Options
 }
 
+func (i *InMessage) GetNameMention() string {
+	if i.NameMention == "@" {
+		return fmt.Sprintf("[%s](tg://user?id=%s)", i.Username, i.UserId)
+	} else {
+		return i.NameMention
+	}
+}
+
 // TypeRedStar rs or drs or solo and level
 func (i *InMessage) TypeRedStar() (DarkOrRed bool, level string) {
 	after, found := strings.CutPrefix(i.RsTypeLevel, "rs")
@@ -338,4 +346,13 @@ type MultiAccount struct {
 	CreatedAt        time.Time
 	AvatarURL        string
 	Alts             []string
+}
+type Subscribe struct {
+	Id      int64
+	Name    string
+	Lvlkz   string
+	Tip     int
+	ChatId  string
+	UserId  string
+	Mention string
 }

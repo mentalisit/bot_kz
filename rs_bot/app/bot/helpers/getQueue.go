@@ -2,12 +2,13 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
 	"regexp"
 	"rs/models"
 	"rs/storage"
 	"strconv"
 	"strings"
+
+	"github.com/mentalisit/logger"
 )
 
 const ds = "ds"
@@ -78,10 +79,6 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 	if s.Wamesid != "" {
 		name = s.Wamesid
 	}
-	//multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(s.UserId)
-	//if multiAccount != nil {
-	//	emojiReadUUID := h.storage.Postgres.EmojiReadUUID(multiAccount.UUID, ForType)
-	//}
 
 	newName := s.Name
 	if ForType == ds {
@@ -90,32 +87,78 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 		newName = s.Name
 	}
 
-	t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
-
 	if mention != nil {
 		if mention[0] {
-			newName = s.Mention
-		}
-	}
-
-	if len(t.Name) > 0 {
-		////nickName
-		//if t.Weapon != "" && s.Tip == "tg" {
-		//	newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
-		//}
-		//Alt
-		if s.Wamesid != "" {
-			newName = fmt.Sprintf("%s [%s]", newName, s.Wamesid)
-		}
-		if t.Module1 != "" {
-			if ForType == ds {
-				newName = fmt.Sprintf("%s %s %s %s %s", newName, t.Module1, t.Module2, t.Module3, t.Weapon)
-			} else if ForType == tg {
-				newName = fmt.Sprintf("%s (%s/%s/%s)", newName, t.Module1, t.Module2, t.Module3)
+			if s.Mention == "@" {
+				newName = fmt.Sprintf("[%s](tg://user?id=%s)", s.Name, s.UserId)
+			} else {
+				newName = s.Mention
 			}
 		}
-		newName = fmt.Sprintf("%s %s%s%s%s", newName, t.Em1, t.Em2, t.Em3, t.Em4)
 	}
+	if s.Wamesid != "" {
+		newName = fmt.Sprintf("%s [%s]", newName, s.Wamesid)
+	}
+
+	multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(s.UserId)
+	if multiAccount == nil {
+
+		t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
+
+		if len(t.Name) > 0 {
+			////nickName
+			//if t.Weapon != "" && s.Tip == "tg" {
+			//	newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
+			//}
+			//Alt
+
+			if t.Module1 != "" {
+				if ForType == ds {
+					newName = fmt.Sprintf("%s %s %s %s %s", newName, t.Module1, t.Module2, t.Module3, t.Weapon)
+				} else if ForType == tg {
+					newName = fmt.Sprintf("%s (%s/%s/%s)", newName, t.Module1, t.Module2, t.Module3)
+				}
+			}
+			newName = fmt.Sprintf("%s %s%s%s%s", newName, t.Em1, t.Em2, t.Em3, t.Em4)
+		}
+		return newName
+	}
+	if name == s.Name {
+		name = multiAccount.Nickname
+	}
+	module := h.storage.Postgres.ModuleReadUUID(multiAccount.UUID, name)
+	if module != nil {
+		//fmt.Printf("ModuleReadUUID %s %+v\n", name, module)
+
+		if module.Name != "" {
+			if ForType == ds {
+				gen := ""
+				if module.Gen != 0 {
+					gen = fmt.Sprintf("<:genesis:1199068748280242237> %d ", module.Gen)
+				}
+
+				enr := ""
+				if module.Enr != 0 {
+					enr = fmt.Sprintf("<:enrich:1199068793633251338> %d ", module.Enr)
+				}
+
+				rse := ""
+				if module.Rse != 0 {
+					rse = fmt.Sprintf("<:rse:1199068829511335946> %d ", module.Rse)
+				}
+
+				newName = fmt.Sprintf("%s %s %s %s", newName, gen, enr, rse)
+			} else if ForType == tg {
+				newName = fmt.Sprintf("%s (%d/%d/%d)", newName, module.Gen, module.Enr, module.Rse)
+			}
+		}
+
+	}
+	emoji := h.storage.Postgres.EmojiReadUUID(multiAccount.UUID, ForType)
+	if emoji.Tip == ForType {
+		newName = fmt.Sprintf("%s %s %s %s %s", newName, emoji.Em1, emoji.Em2, emoji.Em3, emoji.Em4)
+	}
+
 	return newName
 }
 
@@ -169,7 +212,7 @@ func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
 		multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
 		if multiAccount != nil {
 			h.ReadNameModulesUUID(in, name)
-			//return
+			return
 		}
 		name = in.Username
 	}
