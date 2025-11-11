@@ -20,25 +20,20 @@ func (t *Telegram) ChatTyping(chatId string) error {
 	_, err := t.t.Send(typingConfig)
 	return err
 }
-func (t *Telegram) SendChannelDelSecond(chatid string, text string, second int) (bool, error) {
-	chatId, threadID := t.chat(chatid)
-	m := tgbotapi.NewMessage(chatId, text)
-	m.MessageThreadID = threadID
-	tMessage, err1 := t.t.Send(m)
+func (t *Telegram) SendChannelDelSecond(chatid string, text string, parsemode string, second int) (bool, error) {
+	mId, err1 := t.SendChannel(chatid, text, parsemode)
 	if err1 != nil {
-		t.log.ErrorErr(err1)
-		t.log.Info(fmt.Sprintf("chatid '%s', text %s, second %d", chatid, text, second))
 		return false, err1
 	}
 	tu := int(time.Now().UTC().Unix())
 	t.Storage.Db.TimerInsert(models.Timer{
 		Tip:    "tg",
 		ChatId: chatid,
-		MesId:  strconv.Itoa(tMessage.MessageID),
+		MesId:  mId,
 		Timed:  tu + second,
 	})
 
-	if tMessage.MessageID != 0 {
+	if mId != "" {
 		return true, nil
 	}
 	return false, nil
@@ -47,18 +42,20 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
-	if parseMode != "" {
-		m.ParseMode = parseMode
-		m.Text = escapeMarkdownV2(text)
+	found, newText := FindTelegramMentions(text)
+	if found {
+		m.ParseMode = "MarkdownV2"
+		m.Text = newText
 	}
 	tMessage, err := t.t.Send(m)
 	if err != nil {
-		fmt.Println(err)
+		t.log.ErrorErr(err)
+		t.log.Info(fmt.Sprintf("chatid '%s', text '%s'", chatid, m.Text))
 		return "", err
 	}
 	return strconv.Itoa(tMessage.MessageID), nil
 }
-func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) error {
+func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) (string, error) {
 	chatid, threadID := t.chat(chatID)
 	msg := tgbotapi.NewPhoto(chatid, tgbotapi.FileReader{
 		Name:   "image.jpg",
@@ -68,12 +65,12 @@ func (t *Telegram) SendPic(chatID, text string, imageBytes []byte) error {
 	msg.Caption = text
 
 	// Отправляем изображение
-	_, err := t.t.Send(msg)
+	m, err := t.t.Send(msg)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return strconv.Itoa(m.MessageID), nil
 }
 func (t *Telegram) SendPicScoreboard(chatID, text, fileNameScoreboard string) (mid string, err error) {
 	chatid, threadID := t.chat(chatID)
@@ -166,7 +163,7 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string, r
 				}
 
 				switch filepath.Ext(f.Name) {
-				case ".jpg", ".jpe", ".png":
+				case ".jpg", ".jpe", ".png", ".jpeg":
 					pc := tgbotapi.NewInputMediaPhoto(fileRequestData)
 					pc.Caption = text
 					media = append(media, &pc)
@@ -280,8 +277,18 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
 	}
 
-	if !ifUser {
+	if !ifUser && config.TgChannel != "" {
 		last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
+		if last == 0 {
+			active := t.Storage.Db.ReadTelegramLastMessageActive(config.CorpName)
+			if active == 0 {
+				t.log.Info(fmt.Sprintf("удалена корпорация '%s' \n", config.CorpName))
+				_, _ = t.SendChannel(config.TgChannel, "Бот отключен, для активации бота напишите команду \n.добавить", "")
+
+				t.Storage.Db.DeleteConfigRs(config)
+				return "Бот отключен", nil
+			}
+		}
 		//
 		if last-5 < midHelpTg {
 			return midHelpTgString, nil
@@ -306,7 +313,9 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 	}
 
 	if midHelpTg != 0 {
-		go t.DelMessage(chatid, midHelpTg)
+		go func() {
+			_ = t.DelMessage(chatid, midHelpTg)
+		}()
 
 	}
 
@@ -346,38 +355,6 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 
 	return mid, nil
 }
-func escapeMarkdownV2ForHelp(text string) string {
-	var builder strings.Builder
-	specialChars := "\\_[]()~>#+-=|{}.!"
-	i := 0
-
-	for i < len(text) {
-		if i+1 < len(text) && text[i] == '*' && text[i+1] == '*' {
-			i += 2
-			continue
-		}
-		if i+1 < len(text) && text[i] == '7' && text[i+1] == '*' && text[i-1] == '*' {
-			builder.WriteString("7\\*")
-			i += 2
-			continue
-		}
-		if text[i] == '*' {
-			i++
-			continue
-		}
-
-		// Проверяем, является ли текущий символ специальным
-		if strings.ContainsRune(specialChars, rune(text[i])) {
-			builder.WriteByte('\\') // Добавляем экранирующий символ
-		}
-
-		// Добавляем текущий символ в строку результата
-		builder.WriteByte(text[i])
-		i++
-	}
-
-	return builder.String()
-}
 
 func (t *Telegram) SendPoll(m models.Request) string {
 	chatid := m.Data["chatid"]
@@ -393,7 +370,7 @@ func (t *Telegram) SendPoll(m models.Request) string {
 	chatId, ThreadID := t.chat(chatid)
 	text := fmt.Sprintf("%s\n%s\n\n[результат](%s)", title, description, url)
 
-	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2(text))
+	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2ForLink(text))
 
 	msg.MessageThreadID = ThreadID
 	msg.ParseMode = tgbotapi.ModeMarkdownV2

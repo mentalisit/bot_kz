@@ -2,7 +2,6 @@ package telegram
 
 import (
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
-	"strings"
 )
 
 func (t *Telegram) EditMessageTextKey(chatid string, editMesId int, textEdit string, lvlkz string) error {
@@ -35,7 +34,7 @@ func (t *Telegram) EditText(chatid string, editMesId int, textEdit, ParseMode st
 	chatId, _ := t.chat(chatid)
 	msg := tgbotapi.NewEditMessageText(chatId, editMesId, textEdit)
 	if ParseMode != "" {
-		msg = tgbotapi.NewEditMessageText(chatId, editMesId, escapeMarkdownV2(textEdit))
+		msg = tgbotapi.NewEditMessageText(chatId, editMesId, escapeMarkdownV2ForLink(textEdit))
 		msg.ParseMode = ParseMode
 	}
 	_, err := t.t.Send(msg)
@@ -43,67 +42,4 @@ func (t *Telegram) EditText(chatid string, editMesId int, textEdit, ParseMode st
 		return err
 	}
 	return nil
-}
-
-func escapeMarkdownV2(text string) string {
-	// Специальные символы, которые нужно экранировать в MarkdownV2
-	specialChars := "_*[]()~`>#+-=|{}.!"
-
-	// Буфер для результата
-	var builder strings.Builder
-
-	// Переменные для отслеживания состояния
-	var inLinkText bool
-	var inLinkURL bool
-	var linkTextBuffer strings.Builder
-	var linkURLBuffer strings.Builder
-
-	for i := 0; i < len(text); i++ {
-		char := text[i]
-
-		if char == '[' && !inLinkText && !inLinkURL {
-			inLinkText = true
-			builder.WriteByte(char)
-			continue
-		}
-
-		if char == ']' && inLinkText && !inLinkURL {
-			inLinkText = false
-			builder.WriteString(linkTextBuffer.String())
-			linkTextBuffer.Reset()
-			builder.WriteByte(char)
-			continue
-		}
-
-		if char == '(' && !inLinkText && !inLinkURL && i > 0 && text[i-1] == ']' {
-			inLinkURL = true
-			builder.WriteByte(char)
-			continue
-		}
-
-		if char == ')' && !inLinkText && inLinkURL {
-			inLinkURL = false
-			builder.WriteString(linkURLBuffer.String())
-			linkURLBuffer.Reset()
-			builder.WriteByte(char)
-			continue
-		}
-
-		if inLinkText {
-			linkTextBuffer.WriteByte(char)
-			continue
-		}
-
-		if inLinkURL {
-			linkURLBuffer.WriteByte(char)
-			continue
-		}
-
-		if strings.ContainsRune(specialChars, rune(char)) {
-			builder.WriteByte('\\')
-		}
-		builder.WriteByte(char)
-	}
-
-	return builder.String()
 }
