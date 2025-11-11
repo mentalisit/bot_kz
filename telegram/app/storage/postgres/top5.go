@@ -1,7 +1,5 @@
 package postgres
 
-import "fmt"
-
 func (d *Db) ReadTop5Level(corpname string) []string {
 	ctx, cancel := d.getContext()
 	defer cancel()
@@ -53,7 +51,26 @@ func (d *Db) ReadTelegramLastMessage(corpname string) int {
 	err := d.db.QueryRow(ctx, query, corpname).Scan(&mid)
 
 	if err != nil {
-		fmt.Printf("ReadTelegramLastMessage corp:%s err %+v\n", corpname, err)
+		//fmt.Printf("ReadTelegramLastMessage corp:%s err %+v\n", corpname, err)
+		return 0
+	}
+	return mid
+}
+func (d *Db) ReadTelegramLastMessageActive(corpname string) int {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	query := `
+        SELECT MAX(tgmesid) FROM kzbot.sborkz
+        WHERE corpname=$1;
+    `
+
+	var mid int
+
+	// Выполнение запроса
+	err := d.db.QueryRow(ctx, query, corpname).Scan(&mid)
+
+	if err != nil {
+		//fmt.Printf("ReadTelegramLastMessage corp:%s err %+v\n", corpname, err)
 		return 0
 	}
 	return mid

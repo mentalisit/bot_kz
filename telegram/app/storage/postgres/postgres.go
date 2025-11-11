@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"os"
+	"telegram/config"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
-	"os"
-	"telegram/config"
-	"time"
 )
 
 type Db struct {
@@ -40,9 +41,25 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		db:  pool,
 		log: log,
 	}
-
+	db.createTable()
 	return db
 }
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
+}
+func (d *Db) createTable() {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	// Создание таблиц
+	_, err := d.db.Exec(ctx,
+		`CREATE TABLE IF NOT EXISTS rs_bot.members (
+		chat_id BIGINT PRIMARY KEY,
+		data JSONB NOT NULL DEFAULT '{}',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);`)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return
+	}
 }

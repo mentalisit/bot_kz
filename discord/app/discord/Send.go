@@ -389,9 +389,9 @@ func (d *Discord) SendWebhook(text, username, chatid, Avatar string) (mesId stri
 //	}
 //}
 
-func (d *Discord) SendPic(channelID, text string, imageBytes []byte) error {
+func (d *Discord) SendPic(channelID, text string, imageBytes []byte) (string, error) {
 	// Отправляем сообщение с вложенным файлом (изображением)
-	_, err := d.S.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
+	m, err := d.S.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 		Content: text,
 		Files: []*discordgo.File{
 			{
@@ -401,10 +401,10 @@ func (d *Discord) SendPic(channelID, text string, imageBytes []byte) error {
 		},
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return m.ID, nil
 }
 
 //func (d *Discord) SendBridgeAsync(text, username string, channelID, fileURL []string, Avatar string, reply *models.BridgeMessageReply, resultChannel chan<- models.MessageIds, wg *sync.WaitGroup) {

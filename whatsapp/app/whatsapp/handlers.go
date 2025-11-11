@@ -32,7 +32,8 @@ func (b *Whatsapp) eventHandler(evt interface{}) {
 		fmt.Printf("MessageSource* %+v\n", e)
 
 	default:
-		fmt.Printf("eventHandler %+v\n", e)
+
+		//fmt.Printf("eventHandler %+v\n", e)
 
 	}
 }
@@ -96,6 +97,9 @@ func (b *Whatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *waE2E.M
 			for _, mentionedJID := range ci.MentionedJID {
 				numberAndSuffix := strings.SplitN(mentionedJID, "@", 2)
 				mention := b.getSenderNotify(types.NewJID(numberAndSuffix[0], types.DefaultUserServer))
+				if mention == "someone" {
+					mention = b.getSenderNotify(types.NewJID(numberAndSuffix[0], types.HiddenUserServer))
+				}
 				text = strings.Replace(text, "@"+numberAndSuffix[0], "@"+mention, 1)
 			}
 		}

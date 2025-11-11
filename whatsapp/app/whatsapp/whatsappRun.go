@@ -29,11 +29,16 @@ type Whatsapp struct {
 	users                  map[string]types.ContactInfo
 	userAvatars            map[string]string
 	contacts               map[types.JID]types.ContactInfo
+	mapMentionsNames       map[string]*mentionsNames
 	joinedGroups           []*types.GroupInfo
 	startedAt              time.Time
 	*sync.RWMutex
 	cfg *config.ConfigBot
 	api *restapi.Recover
+}
+type mentionsNames struct {
+	DefaultServer string
+	HiddenServer  string
 }
 
 func NewWhatsapp(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage) *Whatsapp {
@@ -44,6 +49,7 @@ func NewWhatsapp(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage)
 		Storage:                st,
 		users:                  make(map[string]types.ContactInfo),
 		userAvatars:            make(map[string]string),
+		mapMentionsNames:       make(map[string]*mentionsNames),
 		cfg:                    cfg,
 		api:                    restapi.NewRecover(log),
 	}
@@ -53,15 +59,7 @@ func NewWhatsapp(log *logger.Logger, cfg *config.ConfigBot, st *storage.Storage)
 		log.ErrorErr(err)
 		panic(err)
 	}
-	//go func() {
-	//	time.Sleep(15 * time.Second)
-	//	for i, group := range b.joinedGroups {
-	//		fmt.Printf("Group %d.%s \n", i, group.Name)
-	//		for i2, participant := range group.Participants {
-	//			fmt.Printf("%d.%+v \n", i2, participant)
-	//		}
-	//	}
-	//}()
+
 	go b.DeleteMessageTimer()
 	return b
 }
@@ -130,6 +128,7 @@ func (b *Whatsapp) Connect() error {
 
 	b.joinedGroups, err = b.wc.GetJoinedGroups(context.Background())
 	if err != nil {
+		fmt.Println(err)
 		return errors.New("failed to get list of joined groups: " + err.Error())
 	}
 
@@ -140,6 +139,14 @@ func (b *Whatsapp) Connect() error {
 		if !isGroupJid(id.String()) && id.String() != "status@broadcast" {
 			// it is user
 			b.users[id.String()] = contact
+			if b.mapMentionsNames[contact.PushName] == nil {
+				b.mapMentionsNames[contact.PushName] = &mentionsNames{}
+			}
+			if id.Server == "s.whatsapp.net" {
+				b.mapMentionsNames[contact.PushName].DefaultServer = id.String()
+			} else if id.Server == "lid" {
+				b.mapMentionsNames[contact.PushName].HiddenServer = id.String()
+			}
 		}
 	}
 

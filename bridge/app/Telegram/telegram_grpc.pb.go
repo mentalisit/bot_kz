@@ -34,6 +34,7 @@ const (
 	TelegramService_SendChannelTyping_FullMethodName       = "/tg.TelegramService/SendChannelTyping"
 	TelegramService_SendPic_FullMethodName                 = "/tg.TelegramService/SendPic"
 	TelegramService_SendBridgeArrayMessages_FullMethodName = "/tg.TelegramService/SendBridgeArrayMessages"
+	TelegramService_SendPicScoreboard_FullMethodName       = "/tg.TelegramService/SendPicScoreboard"
 )
 
 // TelegramServiceClient is the client API for TelegramService service.
@@ -55,6 +56,7 @@ type TelegramServiceClient interface {
 	SendChannelTyping(ctx context.Context, in *SendChannelTypingRequest, opts ...grpc.CallOption) (*Empty, error)
 	SendPic(ctx context.Context, in *SendPicRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
 	SendBridgeArrayMessages(ctx context.Context, in *SendBridgeArrayMessagesRequest, opts ...grpc.CallOption) (*SendBridgeArrayMessagesResponse, error)
+	SendPicScoreboard(ctx context.Context, in *ScoreboardRequest, opts ...grpc.CallOption) (*ScoreboardResponse, error)
 }
 
 type telegramServiceClient struct {
@@ -215,6 +217,16 @@ func (c *telegramServiceClient) SendBridgeArrayMessages(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *telegramServiceClient) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest, opts ...grpc.CallOption) (*ScoreboardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ScoreboardResponse)
+	err := c.cc.Invoke(ctx, TelegramService_SendPicScoreboard_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TelegramServiceServer is the server API for TelegramService service.
 // All implementations must embed UnimplementedTelegramServiceServer
 // for forward compatibility.
@@ -234,6 +246,7 @@ type TelegramServiceServer interface {
 	SendChannelTyping(context.Context, *SendChannelTypingRequest) (*Empty, error)
 	SendPic(context.Context, *SendPicRequest) (*ErrorResponse, error)
 	SendBridgeArrayMessages(context.Context, *SendBridgeArrayMessagesRequest) (*SendBridgeArrayMessagesResponse, error)
+	SendPicScoreboard(context.Context, *ScoreboardRequest) (*ScoreboardResponse, error)
 	mustEmbedUnimplementedTelegramServiceServer()
 }
 
@@ -288,6 +301,9 @@ func (UnimplementedTelegramServiceServer) SendPic(context.Context, *SendPicReque
 }
 func (UnimplementedTelegramServiceServer) SendBridgeArrayMessages(context.Context, *SendBridgeArrayMessagesRequest) (*SendBridgeArrayMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendBridgeArrayMessages not implemented")
+}
+func (UnimplementedTelegramServiceServer) SendPicScoreboard(context.Context, *ScoreboardRequest) (*ScoreboardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPicScoreboard not implemented")
 }
 func (UnimplementedTelegramServiceServer) mustEmbedUnimplementedTelegramServiceServer() {}
 func (UnimplementedTelegramServiceServer) testEmbeddedByValue()                         {}
@@ -580,6 +596,24 @@ func _TelegramService_SendBridgeArrayMessages_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TelegramService_SendPicScoreboard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScoreboardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TelegramServiceServer).SendPicScoreboard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TelegramService_SendPicScoreboard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TelegramServiceServer).SendPicScoreboard(ctx, req.(*ScoreboardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TelegramService_ServiceDesc is the grpc.ServiceDesc for TelegramService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -646,6 +680,10 @@ var TelegramService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendBridgeArrayMessages",
 			Handler:    _TelegramService_SendBridgeArrayMessages_Handler,
+		},
+		{
+			MethodName: "SendPicScoreboard",
+			Handler:    _TelegramService_SendPicScoreboard_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

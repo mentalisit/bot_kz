@@ -5,11 +5,11 @@ import (
 )
 
 func (s *Server) SendPic(ctx context.Context, req *SendPicRequest) (*ErrorResponse, error) {
-	err := s.ds.SendPic(req.Chatid, req.Text, req.ImageBytes)
+	id, err := s.ds.SendPic(req.Chatid, req.Text, req.ImageBytes)
 	if err != nil {
 		return &ErrorResponse{ErrorMessage: err.Error()}, err
 	}
-	return &ErrorResponse{}, nil
+	return &ErrorResponse{Mesid: id}, nil
 }
 
 func (s *Server) SendPoll(ctx context.Context, req *SendPollRequest) (*TextResponse, error) {

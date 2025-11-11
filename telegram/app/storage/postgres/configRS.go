@@ -132,3 +132,12 @@ func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	}
 	return cc
 }
+func (d *Db) DeleteConfigRs(c models.CorporationConfig) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	del := "delete from kzbot.config where corpname = $1"
+	_, err := d.db.Exec(ctx, del, c.CorpName)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+}

@@ -45,6 +45,22 @@ type PlayerStats struct {
 	Level  int
 }
 
+type Statistic struct {
+	EventId int // Номер ивента
+	Level   int //Уровень кз
+	Points  int //Всего очков
+	Runs    int //Количество игр
+}
+
+type BattleStats struct {
+	Name          string  `json:"name"`
+	Level         string  `json:"level"`
+	PointsSum     int     `json:"points_sum"`
+	RecordsCount  int     `json:"records_count"`
+	AveragePoints float64 `json:"average_points"`
+	Quality       float64 `json:"quality"`
+}
+
 type Participants struct {
 	PlayerID   string `json:"PlayerID"`
 	PlayerName string `json:"PlayerName"`

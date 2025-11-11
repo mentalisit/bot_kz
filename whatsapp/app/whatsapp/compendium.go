@@ -56,7 +56,7 @@ func (b *Whatsapp) filter(message *events.Message) {
 			Sender:  message.Info.Sender.String(),
 			Tip:     "wa",
 			ChatId:  g.ChannelId,
-			MesId:   message.Info.ID,
+			MesId:   getMessageIdFormat(message.Info.Sender, message.Info.ID),
 			GuildId: g.GuildId,
 			Config: &models.Bridge2Config{
 				HostRelay: g.GuildName,

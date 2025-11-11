@@ -1,9 +1,10 @@
 package postgres
 
 import (
-	"github.com/google/uuid"
 	"rs/models"
 	"rs/pkg/utils"
+
+	"github.com/google/uuid"
 )
 
 func (d *Db) ModuleReadUUID(uid uuid.UUID, name string) *models.Module {
@@ -14,6 +15,7 @@ func (d *Db) ModuleReadUUID(uid uuid.UUID, name string) *models.Module {
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
+		return nil
 	}
 	var t models.Module
 	for results.Next() {
@@ -21,6 +23,9 @@ func (d *Db) ModuleReadUUID(uid uuid.UUID, name string) *models.Module {
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
+	}
+	if t.Name == "" {
+		return nil
 	}
 	return &t
 }

@@ -82,7 +82,7 @@ func (c *Hs) sendChatPic(m models.IncomingMessage, text string, pic []byte) {
 			return
 		}
 	} else if m.Type == "tg" {
-		err := c.tg.SendPic(m.ChannelId, text, pic)
+		_, err := c.tg.SendPic(m.ChannelId, text, pic)
 		if err != nil {
 			c.log.ErrorErr(err)
 			return

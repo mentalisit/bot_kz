@@ -2,8 +2,8 @@ package dictionary
 
 func getDictionaryEnJson() []byte {
 	return []byte(`{"en":{
-"HELP_TEXT_DS": "Currently available commands are:\n '**%help**' to get current help \n'**%connect**' to connect the application\n '**%t i**' to get an image with your modules \n '**%t @name i**' to get an image with another player's modules\n'**%t name i**' to get an image with alt modules\n '**%alts add NameAlt**' to create alt for technologies\n'**%alts del NameAlt**' to delete alt\n'**%nick gameName**' to set the game name\n'**%time**' current time display\n",
-"HELP_TEXT_TG": "Currently available commands are:\n '%help' to get current help \n'%connect' to connect the application\n '%t i' to get an image with your modules \n '%t @name i' to get an image with another player's modules\n'%t name i' to get an image with alt modules\n '%alts add NameAlt' to create alt for technologies\n'%alts del NameAlt' to delete alt\n'%role create RoleName' creating a role for telegrams\n'%role delete Rolename' deleting a role for telegrams\n'%role s RoleName' for subscribing to a role\n'%role u RoleName' to delete a role subscription\n'%nick gameName' to set the game name\n'%time' current time display\n",
+"HELP_TEXT_DS": "Currently available commands are:\n '**%help**' to get current help \n'**%connect**' to connect the application\n '**%tech**' to get an image with your modules \n '**%tech @name**' to get an image with another player's modules\n'**%tech name**' to get an image with alt modules\n '**%alts add NameAlt**' to create alt for technologies\n'**%alts del NameAlt**' to delete alt\n'**%nick gameName**' to set the game name\n'**%time**' current time display\n",
+"HELP_TEXT_TG": "Currently available commands are:\n '%help' to get current help \n'%connect' to connect the application\n '%tech' to get an image with your modules \n '%tech @name' to get an image with another player's modules\n'%tech name' to get an image with alt modules\n '%alts add NameAlt' to create alt for technologies\n'%alts del NameAlt' to delete alt\n'%role create RoleName' creating a role for telegrams\n'%role delete Rolename' deleting a role for telegrams\n'%role s RoleName' for subscribing to a role\n'%role u RoleName' to delete a role subscription\n'%nick gameName' to set the game name\n'%time' current time display\n",
 "CODE_FOR_CONNECT":"Code for connecting the application to the server %s.",
 "ERROR_SEND":"%s please send me the start command in private messages, as a bot I cannot be the first to send you a private message. And then repeat the command.",
 "INSTRUCTIONS_SEND":"%s, Instructions have been sent to you via DM.",
@@ -30,6 +30,7 @@ func getDictionaryEnJson() []byte {
 "YOU_ARE_NOT_FOUND":"%s you are not found in the database, please send %%connect",
 "GAME_NAME_SET":"%s, game name set to '%s'",
 "HELP_NICKNAME":"%s, The %%nick command is used to set the name,\n'%%nick name' if the name does not contain spaces\nor\n'%%nick \"my name\"' if the name consists of several words\nexample\n'%%nick Vasya'\n'%%nick \"Vasya Ivanov\"",
-"SECRET_LINK":"Here is your permanent [secret link](%s) for server %s, do not share it with anyone."
+"SECRET_LINK":"Here is your permanent [secret link](%s) for server %s, do not share it with anyone.",
+"ErrorRequest": "Command not recognized. Use %help"
 }}`)
 }

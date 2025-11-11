@@ -25,6 +25,9 @@ func (b *Bot) AutoHelp() {
 			}
 			if s.TgChannel != "" {
 				configTemp = b.sendHelpTg(configTemp, false)
+				if configTemp.MesidTgHelp == "Бот отключен" && configTemp.DsChannel != "" {
+					b.client.Ds.Send(configTemp.DsChannel, "Бот отключен, для активации бота напишите команду \n.добавить")
+				}
 			}
 			if s != configTemp {
 				b.storage.ConfigRs.UpdateConfigRs(configTemp)

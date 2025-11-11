@@ -115,9 +115,10 @@ func addModulesLevel(dc *gg.Context) {
 	dc.DrawStringAnchored(GetLevel(615), x3, y, 0, 0.5)
 	dc.DrawStringAnchored(GetLevel(616), x4, y, 0, 0.5)
 	//drone2
-	dc.DrawStringAnchored(GetLevel(905), x5, y, 0, 0.5) ////
-	dc.DrawStringAnchored(GetLevel(906), x6, y, 0, 0.5)
-	dc.DrawStringAnchored(GetLevel(907), x7, y, 0, 0.5)
+	dc.DrawStringAnchored(GetLevel(908), x5, y, 0, 0.5)
+	dc.DrawStringAnchored(GetLevel(905), x6, y, 0, 0.5) ////
+	dc.DrawStringAnchored(GetLevel(906), x7, y, 0, 0.5)
+	dc.DrawStringAnchored(GetLevel(907), x8, y, 0, 0.5)
 	///
 	y += 70
 	//support3
@@ -133,55 +134,9 @@ func addModulesLevel(dc *gg.Context) {
 	dc.DrawStringAnchored(GetLevel(101), x5, y, 0, 0.5)
 	dc.DrawStringAnchored(GetLevel(103), x6, y, 0, 0.5)
 	dc.DrawStringAnchored(GetLevel(102), x7, y, 0, 0.5)
+	dc.DrawStringAnchored(GetLevel(701), x8, y, 0, 0.5)
 }
-func addAvatarsOld(dc *gg.Context, avatarURL string, centerX, centerY int) {
-	// Загружаем изображение аватара
-	response, err := http.Get(avatarURL)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer response.Body.Close()
 
-	// Определяем тип изображения
-	img, imgType, err := image.Decode(response.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Если это GIF, обрабатываем его иначе
-	if imgType == "gif" {
-		response, err = http.Get(avatarURL)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer response.Body.Close()
-
-		gifImg, err := gif.DecodeAll(response.Body)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		// Используем первый кадр GIF для наложения
-		img = gifImg.Image[0]
-	}
-
-	// Изменяем размер изображения аватара
-	img = resize.Resize(185, 185, img, resize.Lanczos3)
-
-	// Определяем радиус круга
-	radius := 270 / 3
-	// Рисуем круг с изображением
-	dc.ResetClip()
-	dc.DrawCircle(float64(centerX), float64(centerY), float64(radius))
-	dc.Clip()
-	dc.DrawImageAnchored(img, centerX, centerY, 0.5, 0.5)
-
-	return
-}
 func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
 	var img image.Image
 	var imgType string

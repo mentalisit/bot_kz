@@ -10,6 +10,7 @@ import (
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
+	t.SaveMember(m.Chat.ID, m.From)
 	//go t.imHere(m.Chat.ID, m.Chat)
 
 	ThreadID := m.MessageThreadID
@@ -48,11 +49,10 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 }
 
 func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.CorporationConfig, ChatId string) {
-	name := t.nickName(m.From, config.TgChannel)
 	in := models.InMessage{
 		Mtext:       m.Text,
 		Tip:         "tg",
-		Username:    name,
+		Username:    m.From.String(),
 		UserId:      strconv.FormatInt(m.From.ID, 10),
 		NameNick:    "", //нет способа извлечь ник кроме member.CustomTitle
 		NameMention: "@" + m.From.UserName,
@@ -69,9 +69,6 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 	if in.Mtext == "" && (m.IsTopicMessage && m.MessageThreadID != 0) {
 		t.DelMessageSecond(ChatId, strconv.Itoa(m.MessageID), 600)
 	}
-	if in.NameMention == "@" {
-		in.NameMention = "@@" + name
-	}
 
 	t.api.SendRsBotAppRecover(in)
 }
@@ -80,7 +77,7 @@ func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 		Text:        m.Text,
 		DmChat:      strconv.FormatInt(m.From.ID, 10),
 		Name:        m.From.String(),
-		MentionName: "@" + m.From.String(),
+		MentionName: "@" + m.From.UserName,
 		NameId:      strconv.FormatInt(m.From.ID, 10),
 		NickName:    "", //нет способа извлечь ник кроме member.CustomTitle
 		Avatar:      t.loadAvatarIsExist(m.From.ID),
@@ -192,7 +189,7 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 		Tip:         "tg",
 		Username:    m.From.String(),
 		UserId:      strconv.FormatInt(m.From.ID, 10),
-		NameMention: "@" + m.From.String(),
+		NameMention: "@" + m.From.UserName,
 		Tg: struct {
 			Mesid int
 		}{

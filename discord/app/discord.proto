@@ -247,6 +247,7 @@ message SubscrRequest {
 
 message ErrorResponse {
   string error_message = 1;
+  string mesid = 2;
 }
 
 message TextResponse {

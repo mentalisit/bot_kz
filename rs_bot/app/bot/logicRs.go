@@ -21,7 +21,7 @@ func (b *Bot) lRsPlus(in models.InMessage) (rs bool) {
 		in.SetTimeRs(arr[0][4])
 
 		if arr[0][3] == "$" {
-			in.NameMention = "$" + in.NameMention
+			in.NameMention = "$" + in.GetNameMention()
 		} else if arr[0][3] == "?" {
 			alt, _ := strconv.Atoi(arr[0][4])
 			if alt == 0 || alt > 5 {
@@ -102,24 +102,24 @@ func (b *Bot) lSubs(in models.InMessage) (bb bool) {
 		}
 	}
 
-	reAdd := regexp.MustCompile(`^(подписать)\s([3-9]|[1][0-2])\s(@\w+(\s@\w+)*)$`)
-	arrAdd := reAdd.FindAllStringSubmatch(in.Mtext, -1)
-	if len(arrAdd) > 0 {
-		adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		if adminTg {
-			bb = true
-			splitNames := strings.Split(arrAdd[0][3], " ")
-			for _, s := range splitNames {
-				in.NameMention = s
-				in.Username = s[1:]
-				in.SetLevelRsOrDrs(arrAdd[0][2])
-				go b.Subscribe(in)
-			}
-		}
-	}
+	//reAdd := regexp.MustCompile(`^(подписать)\s([3-9]|[1][0-2])\s(@\w+(\s@\w+)*)$`)
+	//arrAdd := reAdd.FindAllStringSubmatch(in.Mtext, -1)
+	//if len(arrAdd) > 0 {
+	//	adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+	//	if err != nil {
+	//		b.log.ErrorErr(err)
+	//	}
+	//	if adminTg {
+	//		bb = true
+	//		splitNames := strings.Split(arrAdd[0][3], " ")
+	//		for _, s := range splitNames {
+	//			in.NameMention = s
+	//			in.Username = s[1:]
+	//			in.SetLevelRsOrDrs(arrAdd[0][2])
+	//			go b.Subscribe(in)
+	//		}
+	//	}
+	//}
 
 	switch subs {
 	case "+":

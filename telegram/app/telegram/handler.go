@@ -2,10 +2,11 @@ package telegram
 
 import (
 	"fmt"
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"strconv"
 	"strings"
 	"telegram/models"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
@@ -13,16 +14,18 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 	if _, err := t.t.Request(callback); err != nil {
 		t.log.ErrorErr(err)
 	}
+
+	t.SaveMember(cb.Message.Chat.ID, cb.From)
+
 	ChatId := strconv.FormatInt(cb.Message.Chat.ID, 10) + fmt.Sprintf("/%d", cb.Message.MessageThreadID)
 	ok, config := t.checkChannelConfigTG(ChatId)
 	if ok {
-		name := t.nickName(cb.From, ChatId)
 		in := models.InMessage{
 			Mtext:       cb.Data,
 			Tip:         "tg",
-			Username:    name,
+			Username:    cb.From.String(),
 			UserId:      strconv.FormatInt(cb.From.ID, 10),
-			NameMention: "@" + name,
+			NameMention: "@" + cb.From.UserName,
 			Tg: struct {
 				Mesid int
 			}{
@@ -60,8 +63,8 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 	if m.Text == "/start" {
 		_, err := t.t.Send(tgbotapi.NewMessage(m.From.ID,
-			"Возможность писать сообщения в личку активирована /"+
-				" The ability to write private messages is activated"))
+			"Возможность писать сообщения в личку активирована, дальнейшее взаимодействие только с чата корпорации.  %помощь/"+
+				" The ability to write private messages is activated, further interaction only through the corporate chat. %help"))
 		if err != nil {
 			t.log.ErrorErr(err)
 			return
@@ -89,7 +92,7 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 			Tip:         "tgDM",
 			Username:    m.From.String(),
 			UserId:      strconv.FormatInt(m.From.ID, 10),
-			NameMention: "@" + m.From.String(),
+			NameMention: "@" + m.From.UserName,
 			Tg: struct {
 				Mesid int
 			}{
@@ -138,20 +141,30 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 //}
 
 func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
+	t.SaveMember(member.Chat.ID, member.NewChatMember.User)
+
 	ChatId := strconv.FormatInt(member.Chat.ID, 10) + "/0"
 	if member.NewChatMember.Status == "member" {
-		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s мне нужны права админа для коректной работы", member.From.UserName), 60)
+		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s мне нужны права админа для коректной работы", member.From.UserName), "", 60)
 	} else if member.NewChatMember.Status == "administrator" {
-		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s спасибо ... я готов к работе \nАктивируй нужный режим бота,\n если сложности пиши мне @Mentalisit", member.From.UserName), 60)
+		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s спасибо ... я готов к работе \nАктивируй нужный режим бота,\n если сложности пиши мне @Mentalisit", member.From.UserName), "", 60)
 	}
 }
 
 func (t *Telegram) chatMember(chMember *tgbotapi.ChatMemberUpdated) {
+	// Если участник вышел или был удален
+	if chMember.NewChatMember.Status == "left" || chMember.NewChatMember.Status == "kicked" {
+		delete(t.chatMembers[chMember.Chat.ID], chMember.NewChatMember.User.ID)
+	} else {
+		// Обновляем информацию
+		t.SaveMember(chMember.Chat.ID, chMember.NewChatMember.User)
+	}
+
 	if chMember.NewChatMember.IsMember {
 		ChatId := strconv.FormatInt(chMember.Chat.ID, 10) + "/0"
 		t.SendChannelDelSecond(ChatId,
 			fmt.Sprintf("%s Добро пожаловать в наш чат ", chMember.NewChatMember.User.FirstName),
-			60)
+			"", 60)
 	}
 
 }

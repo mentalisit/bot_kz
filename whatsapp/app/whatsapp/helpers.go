@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -98,13 +99,13 @@ func (b *Whatsapp) getSenderNameFromJID(senderJid types.JID) string {
 func (b *Whatsapp) GetGroupMemberNames(groupJID types.JID) (defaultName string) {
 	defaultName = "Someone"
 	// Запрашиваем информацию о группе у сервера WhatsApp
-	groupInfo, err := b.wc.GetGroupInfo(groupJID)
+	groupInfo, err := b.wc.GetGroupInfo(context.Background(), groupJID)
 	if err != nil {
 		fmt.Printf("Ошибка при получении информации о группе: %v\n", err)
 		return
 	}
 
-	fmt.Printf("Имя группы: %s\n", groupInfo.Name)
+	//fmt.Printf("Имя группы: %s\n", groupInfo.Name)
 
 	// 2. Извлечение имен участников
 	for _, participant := range groupInfo.Participants {
@@ -114,21 +115,18 @@ func (b *Whatsapp) GetGroupMemberNames(groupJID types.JID) (defaultName string) 
 		// Отображаемое имя (nickname), которое пользователь установил для этой группы,
 		// или имя из его профиля, видимое вашему клиенту.
 		displayName := participant.DisplayName //.PushName
-		fmt.Println("displayName ", displayName)
 
 		// Если PushName пуст, попробуйте использовать Name
 		if displayName == "" {
 			displayName = participant.JID.User //.Name
 		}
-		fmt.Println("displayName ", displayName)
 
 		// Если и то, и другое пусто, используем JID
 		if displayName == "" {
 			displayName = jid.String()
 		}
-		fmt.Println("displayName ", displayName)
 
-		fmt.Printf("Участник: %s (JID: %s)\n", displayName, jid.String())
+		//fmt.Printf("Участник: %s (JID: %s)\n", displayName, jid.String())
 		return displayName
 	}
 	return ""
@@ -158,7 +156,7 @@ func (b *Whatsapp) getSenderNotify(senderJid types.JID) string {
 func (b *Whatsapp) GetProfilePicThumb(jid string) (*types.ProfilePictureInfo, error) {
 	pjid, _ := b.ParseJID(jid)
 
-	info, err := b.wc.GetProfilePictureInfo(pjid, &whatsmeow.GetProfilePictureParams{
+	info, err := b.wc.GetProfilePictureInfo(context.Background(), pjid, &whatsmeow.GetProfilePictureParams{
 		Preview: true,
 	})
 	if err != nil {
@@ -247,6 +245,9 @@ func (b *Whatsapp) getParentIdFromCtx(ci *waE2E.ContextInfo) string {
 
 func getMessageIdFormat(jid types.JID, messageID string) string {
 	// we're crafting our own JID str as AD JID format messes with how stuff looks on a webclient
+	//if jid.String() == "79991399754@s.whatsapp.net" {
+	//	jid, _ = types.ParseJID("85178361896964@lid")
+	//}
 	jidStr := fmt.Sprintf("%s@%s", jid.User, jid.Server)
 	return fmt.Sprintf("%s/%s", jidStr, messageID)
 }
@@ -280,7 +281,7 @@ func (b *Whatsapp) getGroupCommunity(info types.MessageInfo) GroupData {
 	}
 
 	getProfilePicture := func(groupJID types.JID, isCommunity bool) string {
-		profilePicInfo, err := b.wc.GetProfilePictureInfo(groupJID, &whatsmeow.GetProfilePictureParams{
+		profilePicInfo, err := b.wc.GetProfilePictureInfo(context.Background(), groupJID, &whatsmeow.GetProfilePictureParams{
 			// false (или nil, если это указатель) обычно означает получение полного изображения
 			Preview:     false,
 			ExistingID:  "", // Оставляем пустым
@@ -298,7 +299,7 @@ func (b *Whatsapp) getGroupCommunity(info types.MessageInfo) GroupData {
 
 	if info.IsGroup {
 		// Запрашиваем полную информацию о группе
-		infoGroup, err := b.wc.GetGroupInfo(info.Chat)
+		infoGroup, err := b.wc.GetGroupInfo(context.Background(), info.Chat)
 		if err != nil {
 			fmt.Println(fmt.Errorf("не удалось получить GroupInfo для %s: %w", info.Chat.String(), err))
 		} else if infoGroup != nil {
@@ -306,7 +307,7 @@ func (b *Whatsapp) getGroupCommunity(info types.MessageInfo) GroupData {
 			var isCommunity bool
 
 			if infoGroup.LinkedParentJID.String() != "" {
-				communityInfo, err := b.wc.GetGroupInfo(infoGroup.LinkedParentJID)
+				communityInfo, err := b.wc.GetGroupInfo(context.Background(), infoGroup.LinkedParentJID)
 				if err == nil {
 					isCommunity = true
 					g.GuildName = communityInfo.Name
@@ -396,4 +397,61 @@ func (b *Whatsapp) ParseJID(chatId string) (types.JID, error) {
 		return types.ParseJID(split[1])
 	}
 	return types.ParseJID(chatId)
+}
+
+func (b *Whatsapp) getJIDForName(name string) (types.JID, bool) {
+	if b.mapMentionsNames[name] != nil {
+		if b.mapMentionsNames[name].HiddenServer != "" {
+			jid, err := types.ParseJID(b.mapMentionsNames[name].HiddenServer)
+			if err == nil {
+				return jid, true
+			}
+		} else if b.mapMentionsNames[name].DefaultServer == "" {
+			jid, err := types.ParseJID(b.mapMentionsNames[name].DefaultServer)
+			if err == nil {
+				return jid, true
+			}
+		}
+	}
+	return types.JID{}, false
+}
+func (b *Whatsapp) prepareGroupMentionMessage(originalText string) (mentionedJIDs []string) {
+	re := regexp.MustCompile(`@([a-zA-Zа-яА-Я0-9_]+)`)
+	matches := re.FindAllStringSubmatch(originalText, -1)
+
+	for _, match := range matches {
+		// match[0] - "@ИмяУчастника"
+		// match[1] - "ИмяУчастника" (захваченная группа)
+		name := match[1]
+
+		jid, found := b.getJIDForName(name) // Используйте вашу функцию сопоставления
+		if found {
+			mentionedJIDs = append(mentionedJIDs, jid.String())
+			// Важно: Текст сообщения должен содержать *отображаемое* имя,
+			// а не сам JID. WhatsApp выделит имя, соответствующее JID.
+			// Если вы хотите, чтобы в сообщении был виден JID, вам нужно
+			// отредактировать originalText, но обычно лучше оставить `@ИмяУчастника`.
+		}
+	}
+
+	return mentionedJIDs
+}
+func (b *Whatsapp) getJidDefaultServer(jidDefaultServer string) string {
+	//if jidDefaultServer == "79991399754@s.whatsapp.net" {
+	//	return jidDefaultServer
+	//}
+	for _, names := range b.mapMentionsNames {
+		if names.DefaultServer == jidDefaultServer {
+			return names.HiddenServer
+		}
+	}
+	jid, err := b.ParseJID(jidDefaultServer)
+	if err != nil {
+		return jidDefaultServer
+	}
+	pn, err := b.wc.Store.LIDs.GetLIDForPN(context.Background(), jid)
+	if err != nil {
+		return jidDefaultServer
+	}
+	return pn.String()
 }

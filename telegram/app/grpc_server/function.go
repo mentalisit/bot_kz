@@ -52,13 +52,13 @@ func (s *Server) EditMessageTextKey(ctx context.Context, in *EditMessageTextKeyR
 	return &ErrorResponse{}, nil
 }
 func (s *Server) SendPic(ctx context.Context, in *SendPicRequest) (*ErrorResponse, error) {
-	err := s.tg.SendPic(in.GetChatid(), in.GetText(), in.GetImageBytes())
+	id, err := s.tg.SendPic(in.GetChatid(), in.GetText(), in.GetImageBytes())
 	if err != nil {
 		return &ErrorResponse{
 			ErrorMessage: err.Error(),
 		}, err
 	}
-	return &ErrorResponse{}, nil
+	return &ErrorResponse{Mesid: id}, nil
 }
 func (s *Server) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest) (*ScoreboardResponse, error) {
 	mid, err := s.tg.SendPicScoreboard(in.ChaatId, in.Text, in.FileNameScoreboard)
@@ -72,7 +72,7 @@ func (s *Server) CheckAdmin(ctx context.Context, in *CheckAdminRequest) (*FlagRe
 	return &FlagResponse{Flag: admin}, nil
 }
 func (s *Server) SendChannelDelSecond(ctx context.Context, in *SendMessageRequest) (*FlagResponse, error) {
-	send, err := s.tg.SendChannelDelSecond(in.GetChatID(), in.GetText(), int(in.GetSecond()))
+	send, err := s.tg.SendChannelDelSecond(in.GetChatID(), in.GetText(), in.GetParseMode(), int(in.GetSecond()))
 	return &FlagResponse{Flag: send}, err
 }
 func (s *Server) GetAvatarUrl(ctx context.Context, in *GetAvatarUrlRequest) (*TextResponse, error) {

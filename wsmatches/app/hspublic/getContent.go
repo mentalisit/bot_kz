@@ -99,6 +99,7 @@ func (h *HS) GetContentAll() []models.Content {
 		err = xml.Unmarshal(xmlData, &listBucketResult)
 		if err != nil {
 			h.log.Error(fmt.Sprintln("Ошибка при парсинге XML:", err))
+			h.log.InfoStruct("xmlData", string(xmlData))
 		}
 
 		if listBucketResult.NextMarker != "" {

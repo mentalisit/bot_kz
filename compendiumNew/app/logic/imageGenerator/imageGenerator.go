@@ -2,15 +2,20 @@ package imageGenerator
 
 import (
 	"fmt"
-	"github.com/fogleman/gg"
 	"image/color"
 	"log"
+	"math/rand"
+	"time"
+
+	"github.com/fogleman/gg"
 )
 
 func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech map[int][2]int) []byte {
 	user = tech
-	// Открываем изображение
-	im, err := gg.LoadPNG("docker/compendium/original2.png")
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(20) + 1
+
+	im, err := gg.LoadPNG(fmt.Sprintf("docker/compendium/template/%d.png", randomNumber))
 	if err != nil {
 		fmt.Println(err)
 	}

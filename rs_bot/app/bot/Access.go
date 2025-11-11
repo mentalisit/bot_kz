@@ -40,6 +40,9 @@ func (b *Bot) accessChat(in models.InMessage) {
 			if b.logicScoreboardSetting(in) {
 				return
 			}
+			if b.EventStatistic(in) {
+				return
+			}
 		}
 	}
 }

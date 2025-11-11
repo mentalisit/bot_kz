@@ -27,6 +27,7 @@ message TextResponse {
 }
 message ErrorResponse {
   string error_message = 1;
+  string mesid = 2;
 }
 message FlagResponse{
   bool flag = 1;

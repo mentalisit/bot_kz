@@ -26,6 +26,9 @@ func (b *Bridge) logicSendMessage() {
 
 	if len(b.in.ReplyMap) > 0 {
 		replyMap, err := b.storage.GetMapByLinkedID(b.in.ReplyMap)
+		if len(replyMap) == 0 || err != nil {
+			replyMap, err = b.storage.GetMapByLinkedID(ReplaceParticipantJIDForMap(b.in.ReplyMap))
+		}
 		if err == nil {
 			toMessenger.ReplyMap = replyMap
 			flag = true

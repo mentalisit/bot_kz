@@ -1,6 +1,7 @@
 package wa
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"whatsapp/models"
@@ -50,8 +51,16 @@ func (b *Whatsapp) handleBridgeProtocolMessage(messageInfo types.MessageInfo, ms
 	}
 	if pr.GetType() == waE2E.ProtocolMessage_MESSAGE_EDIT {
 		if pr.GetKey() != nil && pr.GetEditedMessage() != nil {
+			em := pr.GetEditedMessage()
+			text := em.GetConversation()
+			if text == "" && pr.GetEditedMessage().GetExtendedTextMessage() != nil {
+				text = pr.GetEditedMessage().GetExtendedTextMessage().GetText()
+			}
+			if text == "" {
+				b.log.InfoStruct("get message Edit ", pr.GetEditedMessage())
+			}
 			rmsg := models.ToBridgeMessage{
-				Text:   pr.GetEditedMessage().GetConversation(),
+				Text:   text,
 				Sender: b.getSenderName(messageInfo),
 				Tip:    "wae",
 				ChatId: pr.GetKey().GetRemoteJID(),
@@ -127,7 +136,13 @@ func (b *Whatsapp) handleBridgeTextMessage(messageInfo types.MessageInfo, msg *w
 		return
 	}
 
-	var text string
+	var text, replyId string
+
+	contextInfo := getContextInfo(msg)
+	if contextInfo != nil {
+		hjid := b.getJidDefaultServer(contextInfo.GetParticipant())
+		replyId = fmt.Sprintf("%s/%s", hjid, contextInfo.GetStanzaID())
+	}
 
 	if msg.GetExtendedTextMessage() == nil {
 		text = msg.GetConversation()
@@ -144,6 +159,9 @@ func (b *Whatsapp) handleBridgeTextMessage(messageInfo types.MessageInfo, msg *w
 			for _, mentionedJID := range ci.MentionedJID {
 				numberAndSuffix := strings.SplitN(mentionedJID, "@", 2)
 				mention := b.getSenderNotify(types.NewJID(numberAndSuffix[0], types.DefaultUserServer))
+				if mention == "someone" {
+					mention = b.getSenderNotify(types.NewJID(numberAndSuffix[0], types.HiddenUserServer))
+				}
 				text = strings.Replace(text, "@"+numberAndSuffix[0], "@"+mention, 1)
 			}
 		}
@@ -159,6 +177,10 @@ func (b *Whatsapp) handleBridgeTextMessage(messageInfo types.MessageInfo, msg *w
 		TimestampUnix: messageInfo.Timestamp.Unix(),
 		Reply:         nil,
 		Config:        conf,
+	}
+	if replyId != "" {
+		rmsg.ReplyMap = make(map[string]string)
+		rmsg.ReplyMap[channel.String()] = replyId
 	}
 
 	if fileInfo != nil {
@@ -301,9 +323,56 @@ func (b *Whatsapp) DeleteMessage(ChatId, mId string) error {
 	extendedMsgID, _ := b.parseMessageID(mId)
 	ID := extendedMsgID.MessageID
 
-	_, err := b.wc.RevokeMessage(groupJID, ID)
+	_, err := b.wc.RevokeMessage(context.Background(), groupJID, ID)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+func getContextInfo(msg *waE2E.Message) *waE2E.ContextInfo {
+	if msg == nil {
+		return nil
+	}
+
+	// 1. Текстовые сообщения (наиболее распространенный тип для цитат/упоминаний)
+	if x := msg.GetExtendedTextMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+
+	// 2. Медиа-сообщения (могут быть отправлены с цитатой или упоминанием)
+	if x := msg.GetImageMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetVideoMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetDocumentMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetAudioMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetStickerMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+
+	// 3. Сообщения, связанные со статусом/местоположением/контактами
+	if x := msg.GetLocationMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetLiveLocationMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetContactMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	if x := msg.GetContactsArrayMessage(); x != nil {
+		return x.GetContextInfo()
+	}
+	//if x := msg.GetProtocolMessage(); x != nil {
+	//	return x.GetContextInfo()
+	//}
+	// ... и другие типы, если необходимо
+
 	return nil
 }

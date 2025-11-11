@@ -50,20 +50,20 @@ func (c *Client) Send(chatId string, text, parseMode string) (string, error) {
 	}
 	return textResponse.GetText(), nil
 }
-func (c *Client) SendPic(channelId string, text string, pic []byte) error {
-	er, err := c.client.SendPic(context.Background(), &SendPicRequest{
+func (c *Client) SendPic(channelId string, text string, pic []byte) (string, error) {
+	a, err := c.client.SendPic(context.Background(), &SendPicRequest{
 		Chatid:     channelId,
 		Text:       text,
 		ImageBytes: pic,
 	})
 	if err != nil {
 		c.log.ErrorErr(err)
-		return err
+		return "", err
 	}
-	if er.GetErrorMessage() != "" {
-		return errors.New(er.GetErrorMessage())
+	if a.GetErrorMessage() != "" {
+		return "", errors.New(a.GetErrorMessage())
 	}
-	return nil
+	return a.GetMesid(), nil
 
 }
 func (c *Client) DeleteMessage(ChatId string, messageID string) error {

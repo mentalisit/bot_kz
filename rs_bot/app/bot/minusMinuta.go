@@ -75,7 +75,7 @@ func (b *Bot) MinusMin() {
 					}
 
 					if t.Timedown == 3 {
-						text := in.NameMention + b.getText(in, "info_time_almost_up")
+						text := in.GetNameMention() + b.getText(in, "info_time_almost_up")
 						if in.Tip == ds {
 							mID := b.client.Ds.SendEmbedTime(in.Config.DsChannel, text)
 							go b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, mID, 180)

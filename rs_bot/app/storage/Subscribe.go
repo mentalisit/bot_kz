@@ -1,8 +1,10 @@
 package storage
 
+import "rs/models"
+
 type Subscribe interface {
-	SubscribePing(nameMention, lvlkz string, tipPing int, TgChannel string) string
-	CheckSubscribe(name, lvlkz string, TgChannel string, tipPing int) int
-	Subscribe(name, nameMention, lvlkz string, tipPing int, TgChannel string)
-	Unsubscribe(name, lvlkz string, TgChannel string, tipPing int)
+	SubscribePing(s models.Subscribe) (subscribes []models.Subscribe)
+	CheckSubscribe(s models.Subscribe) int
+	Subscribe(s models.Subscribe)
+	Unsubscribe(s models.Subscribe)
 }

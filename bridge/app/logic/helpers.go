@@ -162,3 +162,25 @@ func (b *Bridge) GetSenderName() string {
 	}
 	return fmt.Sprintf("%s ([%s]%s)", b.in.Sender, strings.ToUpper(b.in.Tip), AliasName)
 }
+
+func ReplaceParticipantJIDForMap(data map[string]string) map[string]string {
+	separator := "/"
+
+	updatedData := make(map[string]string)
+	for chatJID, valueString := range data {
+		parts := strings.Split(valueString, separator)
+		if len(parts) < 2 {
+			updatedData[chatJID] = valueString // Если формат не соответствует ожидаемому, оставляем строку как есть.
+			continue
+		}
+		currentJIDPart := parts[0] // Это JID, который нужно заменить (например, 85178361896964@lid)
+		if strings.Contains(currentJIDPart, "85178361896964@lid") {
+			newVal := "79991399754@s.whatsapp.net" + separator + parts[1]
+			updatedData[chatJID] = newVal
+		} else {
+			updatedData[chatJID] = valueString
+		}
+	}
+
+	return updatedData
+}

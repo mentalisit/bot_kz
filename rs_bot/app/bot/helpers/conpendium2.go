@@ -80,18 +80,17 @@ func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextend
 		return
 	}
 
-	if len(technicalData) == 1 {
-		rsextender = technicalData[0].Tech[603][0]
-		enrich = technicalData[0].Tech[503][0]
-		genesis = technicalData[0].Tech[508][0]
-	}
-
 	for _, datum := range technicalData {
 		if strings.ToLower(datum.Name) == strings.ToLower(name) {
 			rsextender = datum.Tech[603][0]
 			enrich = datum.Tech[503][0]
 			genesis = datum.Tech[508][0]
 		}
+	}
+	if rsextender == 0 && enrich == 0 && genesis == 0 && len(technicalData) != 0 {
+		rsextender = technicalData[0].Tech[603][0]
+		enrich = technicalData[0].Tech[503][0]
+		genesis = technicalData[0].Tech[508][0]
 	}
 
 	return

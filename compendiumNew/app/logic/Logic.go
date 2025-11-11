@@ -46,6 +46,7 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	} else if c.setGameName(m) {
 	} else if c.removeMember(m) {
 	} else {
-		c.log.Info(fmt.Sprintf("else Corp:%s %+v\n", m.MultiGuild.GuildName, m))
+		c.sendChat(m, c.getText(m, "ErrorRequest"))
+		fmt.Printf("else Corp:%s %+v\n", m.MultiGuild.GuildName, m)
 	}
 }
