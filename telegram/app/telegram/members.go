@@ -3,31 +3,44 @@ package telegram
 import (
 	"fmt"
 	"strings"
+	"telegram/models"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
-func (t *Telegram) SaveMember(chatID int64, user *tgbotapi.User) {
+func (t *Telegram) SaveMember(c *tgbotapi.Chat, user *tgbotapi.User) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	if t.chatMembers[chatID] == nil {
-		t.chatMembers[chatID] = make(map[int64]tgbotapi.User)
+	chat := models.Chat{
+		ChatID:   c.ID,
+		ChatName: c.Title,
+	}
+
+	for ch, _ := range t.ChatMembers {
+		if ch.ChatID == chat.ChatID && ch.ChatName != chat.ChatName {
+			ch.ChatName = chat.ChatName
+		}
+	}
+	if t.ChatMembers[&chat] == nil {
+		t.ChatMembers[&chat] = make(map[int64]tgbotapi.User)
 	}
 
 	// Обновляем информацию об участнике
-	t.chatMembers[chatID][user.ID] = *user
+	t.ChatMembers[&chat][user.ID] = *user
 }
 
 // Функция для получения всех отслеженных участников чата
-func (t *Telegram) GetChatMembers(chatID int64) []tgbotapi.User {
+func (t *Telegram) GetChatMembers(c *tgbotapi.Chat) []tgbotapi.User {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
 	var members []tgbotapi.User
-	if chatMembers, exists := t.chatMembers[chatID]; exists {
-		for _, user := range chatMembers {
-			members = append(members, user)
+	for chat, m := range t.ChatMembers {
+		if chat.ChatID == c.ID {
+			for _, user := range m {
+				members = append(members, user)
+			}
 		}
 	}
 
@@ -35,12 +48,12 @@ func (t *Telegram) GetChatMembers(chatID int64) []tgbotapi.User {
 }
 
 // Функция для упоминания всех участников
-func (t *Telegram) MentionAllMembers(chatID int64, originalMessage *tgbotapi.Message) {
+func (t *Telegram) MentionAllMembers(c *tgbotapi.Chat, originalMessage *tgbotapi.Message) {
 	if originalMessage.From.UserName != "mentalisit" {
 		return
 	}
 	// Получаем отслеженных участников
-	trackedMembers := t.GetChatMembers(chatID)
+	trackedMembers := t.GetChatMembers(c)
 
 	var mentions []string
 	mentionedUsers := make(map[int64]bool)
@@ -54,9 +67,9 @@ func (t *Telegram) MentionAllMembers(chatID int64, originalMessage *tgbotapi.Mes
 
 	// Формируем сообщение
 	mentionText := "🔔 Упоминание всех участников:\n" + strings.Join(mentions, " ")
-	fullMessage := fmt.Sprintf("%s\n\n%s", mentionText, originalMessage.Text)
+	fullMessage := fmt.Sprintf("%s\n\n%s %s", mentionText, originalMessage.From.String(), originalMessage.Text)
 
-	msg := tgbotapi.NewMessage(chatID, fullMessage)
+	msg := tgbotapi.NewMessage(c.ID, fullMessage)
 	msg.ParseMode = "MarkdownV2"
 
 	// Отправляем сообщение
@@ -67,7 +80,7 @@ func (t *Telegram) MentionAllMembers(chatID int64, originalMessage *tgbotapi.Mes
 
 	// Удаляем оригинальное сообщение
 	if originalMessage.MessageID != 0 {
-		deleteMsg := tgbotapi.NewDeleteMessage(chatID, originalMessage.MessageID)
+		deleteMsg := tgbotapi.NewDeleteMessage(c.ID, originalMessage.MessageID)
 		t.t.Send(deleteMsg)
 	}
 }

@@ -25,7 +25,7 @@ type Telegram struct {
 	Storage                *storage.Storage
 	api                    *restapi.Recover
 	usernameMap            map[string]int
-	chatMembers            map[int64]map[int64]tgbotapi.User // chatID -> userID -> User
+	ChatMembers            map[*models.Chat]map[int64]tgbotapi.User // chatID & ChatName-> userID -> User
 	mu                     sync.RWMutex
 	webApp                 *webapp.WebApp
 	roles                  *roles.Manager
@@ -49,7 +49,7 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		Storage:     st,
 		api:         restapi.NewRecover(log),
 		usernameMap: make(map[string]int),
-		chatMembers: make(map[int64]map[int64]tgbotapi.User),
+		ChatMembers: make(map[*models.Chat]map[int64]tgbotapi.User),
 		roles:       rolesManager,
 		webApp:      webApp,
 	}
@@ -63,13 +63,13 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 	go t.update()
 	go t.DeleteMessageTimer()
 	go func() {
-		t.chatMembers = t.Storage.Db.ReadAllMembers()
-		ticker := time.NewTicker(1 * time.Hour)
+		t.ChatMembers = t.Storage.Db.ReadAllMembers()
+		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ticker.C:
-				t.Storage.Db.UpsertChatData(t.chatMembers)
+				t.Storage.Db.UpsertChatData(t.ChatMembers)
 			}
 		}
 	}()

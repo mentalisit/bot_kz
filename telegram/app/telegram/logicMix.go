@@ -10,7 +10,7 @@ import (
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
-	t.SaveMember(m.Chat.ID, m.From)
+	t.SaveMember(&m.Chat, m.From)
 	//go t.imHere(m.Chat.ID, m.Chat)
 
 	ThreadID := m.MessageThreadID
@@ -25,7 +25,7 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	//}
 
 	if m.Text == "@all" {
-		t.MentionAllMembers(m.Chat.ID, m)
+		t.MentionAllMembers(&m.Chat, m)
 	}
 	if m.Text == "roles" {
 		t.SendWebAppButtonSmart(m.Chat.ID)

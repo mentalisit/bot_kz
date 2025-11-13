@@ -16,7 +16,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 		t.log.ErrorErr(err)
 	}
 
-	t.SaveMember(cb.Message.Chat.ID, cb.From)
+	t.SaveMember(&cb.Message.Chat, cb.From)
 
 	ChatId := strconv.FormatInt(cb.Message.Chat.ID, 10) + fmt.Sprintf("/%d", cb.Message.MessageThreadID)
 	ok, config := t.checkChannelConfigTG(ChatId)
@@ -119,7 +119,7 @@ func (t *Telegram) ifCommand(m *tgbotapi.Message) {
 }
 
 func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
-	t.SaveMember(member.Chat.ID, member.NewChatMember.User)
+	t.SaveMember(&member.Chat, member.NewChatMember.User)
 
 	ChatId := strconv.FormatInt(member.Chat.ID, 10) + "/0"
 	if member.NewChatMember.Status == "member" {
@@ -132,10 +132,14 @@ func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
 func (t *Telegram) chatMember(chMember *tgbotapi.ChatMemberUpdated) {
 	// Если участник вышел или был удален
 	if chMember.NewChatMember.Status == "left" || chMember.NewChatMember.Status == "kicked" {
-		delete(t.chatMembers[chMember.Chat.ID], chMember.NewChatMember.User.ID)
+		chat := &models.Chat{
+			ChatID:   chMember.Chat.ID,
+			ChatName: chMember.Chat.Title,
+		}
+		delete(t.ChatMembers[chat], chMember.NewChatMember.User.ID)
 	} else {
 		// Обновляем информацию
-		t.SaveMember(chMember.Chat.ID, chMember.NewChatMember.User)
+		t.SaveMember(&chMember.Chat, chMember.NewChatMember.User)
 	}
 
 	if chMember.NewChatMember.IsMember {

@@ -52,9 +52,11 @@ func (d *Db) createTable() {
 	defer cancel()
 	// Создание таблиц
 	_, err := d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS rs_bot.members (
+		`CREATE TABLE IF NOT EXISTS rs_bot.chat_members (
 		chat_id BIGINT PRIMARY KEY,
+		chat_name text NOT NULL DEFAULT '',
 		data JSONB NOT NULL DEFAULT '{}',
+		roles JSONB NOT NULL DEFAULT '{}',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)

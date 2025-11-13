@@ -39,7 +39,7 @@ func (t *Telegram) update() {
 	}
 }
 func (t *Telegram) updateMessage(m *tgbotapi.Message) {
-	fmt.Printf("text: %s\n", m.Text)
+	fmt.Printf("text: %s\n", m.Text) //todo need remove
 	switch m.Text {
 	case "/start":
 		t.handleStartCommand(m)

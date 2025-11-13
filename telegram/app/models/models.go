@@ -21,3 +21,7 @@ type Timer struct {
 	MesId  string `bson:"mesId"`
 	Timed  int    `bson:"timed"`
 }
+type Chat struct {
+	ChatID   int64  `json:"chat_id"`
+	ChatName string `json:"chat_name"`
+}
