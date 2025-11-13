@@ -3,6 +3,8 @@ package telegram
 import (
 	"fmt"
 	"sync"
+	"telegram/telegram/roles"
+	"telegram/telegram/webapp"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 
@@ -25,6 +27,8 @@ type Telegram struct {
 	usernameMap            map[string]int
 	chatMembers            map[int64]map[int64]tgbotapi.User // chatID -> userID -> User
 	mu                     sync.RWMutex
+	webApp                 *webapp.WebApp
+	roles                  *roles.Manager
 }
 
 func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegram {
@@ -33,6 +37,12 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		log.ErrorErr(err)
 		return nil
 	}
+	// Создаем менеджер ролей
+	rolesManager := roles.NewManager()
+
+	// Создаем Web App и передаем менеджер ролей
+	webApp := webapp.NewWebApp(botApi, rolesManager)
+
 	t := &Telegram{
 		log:         log,
 		t:           botApi,
@@ -40,9 +50,14 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		api:         restapi.NewRecover(log),
 		usernameMap: make(map[string]int),
 		chatMembers: make(map[int64]map[int64]tgbotapi.User),
+		roles:       rolesManager,
+		webApp:      webApp,
 	}
 
-	fmt.Println(t.t.Self.UserName)
+	fmt.Printf("Authorized on account %s\n", t.t.Self.UserName)
+
+	// Запускаем Web App сервер
+	go t.webApp.Start()
 
 	//t.loadConfig()
 	go t.update()

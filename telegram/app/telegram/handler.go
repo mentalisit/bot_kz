@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"telegram/models"
@@ -61,15 +62,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 }
 
 func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
-	if m.Text == "/start" {
-		_, err := t.t.Send(tgbotapi.NewMessage(m.From.ID,
-			"Возможность писать сообщения в личку активирована, дальнейшее взаимодействие только с чата корпорации.  %помощь/"+
-				" The ability to write private messages is activated, further interaction only through the corporate chat. %help"))
-		if err != nil {
-			t.log.ErrorErr(err)
-			return
-		}
-	} else if m.Text == ".паника" {
+	if m.Text == ".паника" {
 		t.log.Panic(".паника " + m.From.String())
 	} else if strings.HasPrefix(m.Text, "%") {
 		i := models.IncomingMessage{
@@ -108,37 +101,22 @@ func (t *Telegram) ifPrivatMesage(m *tgbotapi.Message) {
 
 }
 
-//func (t *Telegram) updatesComand(c *tgbotapi.Message) {
-//	ChatId := strconv.FormatInt(c.Chat.ID, 10) + fmt.Sprintf("/%d", c.MessageThreadID)
-//	if c.Command() == "chatid" {
-//		t.SendChannelDelSecond(ChatId, ChatId, 20)
-//	}
-//	ok, config := t.checkChannelConfigTG(ChatId)
-//	if ok {
-//		MessageID := strconv.Itoa(c.MessageID)
-//		switch c.Command() {
-//		case "help":
-//			t.help(config.TgChannel, MessageID)
-//		case "helpqueue":
-//			t.helpQueue(config.TgChannel, MessageID)
-//		case "helpnotification":
-//			t.helpNotification(config.TgChannel, MessageID)
-//		case "helpevent":
-//			t.helpEvent(config.TgChannel, MessageID)
-//		case "helptop":
-//			t.helpTop(config.TgChannel, MessageID)
-//		case "helpicon":
-//			t.helpIcon(config.TgChannel, MessageID)
-//		}
-//	} else {
-//		switch c.Command() {
-//		case "help":
-//			t.SendChannelDelSecond(ChatId, "Активируйте бота командой \n.add", 60)
-//		default:
-//			t.SendChannelDelSecond(ChatId, "Вам не доступна данная команда \n /help", 60)
-//		}
-//	}
-//}
+func (t *Telegram) ifCommand(m *tgbotapi.Message) {
+	switch m.Text {
+	case "start":
+		if m.CommandArguments() == "open_roles" {
+			t.SendWebAppButtonSmart(m.Chat.ID)
+		} else {
+			_, err := t.t.Send(tgbotapi.NewMessage(m.From.ID,
+				"Возможность писать сообщения в личку активирована, дальнейшее взаимодействие только с чата корпорации.  %помощь/"+
+					" The ability to write private messages is activated, further interaction only through the corporate chat. %help"))
+			if err != nil {
+				t.log.ErrorErr(err)
+				return
+			}
+		}
+	}
+}
 
 func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
 	t.SaveMember(member.Chat.ID, member.NewChatMember.User)
@@ -178,4 +156,106 @@ func (t *Telegram) handlePoll(message *tgbotapi.Message) {
 		}
 		message.Text = text
 	}
+}
+
+func (t *Telegram) handleInlineQuery(inlineQuery *tgbotapi.InlineQuery) {
+	fmt.Printf("Inline Query от %s: %s\n",
+		inlineQuery.From.UserName,
+		inlineQuery.Query)
+
+	// Query - это текст после @username_бота
+	userQuery := inlineQuery.Query
+	fmt.Printf("Пользователь ищет: '%s'\n", userQuery)
+
+	// Создаем результаты для инлайн-режима
+	var results []interface{}
+	if userQuery == "" {
+		article := tgbotapi.NewInlineQueryResultArticle(
+			"1",
+			"Создать роль",
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "ну тут понятно"
+		results = append(results, article)
+
+		article = tgbotapi.NewInlineQueryResultArticle(
+			"2",
+			"Удалить роль",
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "и тут тоже"
+		results = append(results, article)
+
+		article = tgbotapi.NewInlineQueryResultArticle(
+			"3",
+			"Подписаться на роль",
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "для пинга "
+		results = append(results, article)
+		article = tgbotapi.NewInlineQueryResultArticle(
+			"4",
+			"Отписаться от роли",
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "ну и иди нахрен"
+		results = append(results, article)
+		article = tgbotapi.NewInlineQueryResultArticle(
+			"5",
+			"Список ролей ",
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "ну если надо"
+		results = append(results, article)
+	}
+
+	if userQuery != "" {
+		// Пример: создаем текстовый результат
+		article := tgbotapi.NewInlineQueryResultArticle(
+			"1",
+			"Результат для: "+userQuery,
+			"Вы искали: "+userQuery,
+		)
+		article.Description = "Описание результата"
+		results = append(results, article)
+	}
+
+	// Отправляем результаты
+	inlineConfig := tgbotapi.InlineConfig{
+		InlineQueryID: inlineQuery.ID,
+		Results:       results,
+		CacheTime:     0,
+	}
+
+	_, err := t.t.Request(inlineConfig)
+	if err != nil {
+		log.Println("Ошибка отправки инлайн-результатов:", err)
+	}
+}
+
+func (t *Telegram) handleChosenInlineResult(result *tgbotapi.ChosenInlineResult) {
+	fmt.Printf("Пользователь выбрал результат:\n")
+	fmt.Printf("ID результата: %s\n", result.ResultID)
+	fmt.Printf("Запрос: %s\n", result.Query)
+	fmt.Printf("Пользователь: %s (ID: %d)\n",
+		result.From.UserName, result.From.ID)
+
+	// Обрабатываем выбор в зависимости от ID результата
+	switch result.ResultID {
+	case "weather_moscow":
+		fmt.Println("✅ Пользователь выбрал погоду в Москве")
+		// Здесь можно отправить уведомление, сохранить в БД и т.д.
+
+	case "weather_spb":
+		fmt.Println("✅ Пользователь выбрал погоду в СПб")
+
+	case "weather_sochi":
+		fmt.Println("✅ Пользователь выбрал погоду в Сочи")
+
+	default:
+		fmt.Printf("❌ Неизвестный выбор: %s\n", result.ResultID)
+	}
+
+	// Дополнительная информация
+	fmt.Printf("Inline Message ID: %s\n", result.InlineMessageID)
 }

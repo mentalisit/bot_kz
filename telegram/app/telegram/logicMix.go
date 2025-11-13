@@ -24,6 +24,13 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	//	t.log.Info(m.From.LanguageCode)
 	//}
 
+	if m.Text == "@all" {
+		t.MentionAllMembers(m.Chat.ID, m)
+	}
+	if m.Text == "roles" {
+		t.SendWebAppButtonSmart(m.Chat.ID)
+	}
+
 	if strings.HasPrefix(m.Text, ".") {
 		go t.ifPrefixPoint(m)
 		return

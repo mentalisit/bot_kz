@@ -49,8 +49,10 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	}
 	tMessage, err := t.t.Send(m)
 	if err != nil {
-		t.log.ErrorErr(err)
-		t.log.Info(fmt.Sprintf("chatid '%s', text '%s'", chatid, m.Text))
+		if err.Error() != tgbotapi.ErrAPIForbidden {
+			t.log.ErrorErr(err)
+			t.log.Info(fmt.Sprintf("chatid '%s', text '%s'", chatid, m.Text))
+		}
 		return "", err
 	}
 	return strconv.Itoa(tMessage.MessageID), nil
