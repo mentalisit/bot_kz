@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
@@ -132,11 +133,7 @@ func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
 func (t *Telegram) chatMember(chMember *tgbotapi.ChatMemberUpdated) {
 	// Если участник вышел или был удален
 	if chMember.NewChatMember.Status == "left" || chMember.NewChatMember.Status == "kicked" {
-		chat := &models.Chat{
-			ChatID:   chMember.Chat.ID,
-			ChatName: chMember.Chat.Title,
-		}
-		delete(t.ChatMembers[chat], chMember.NewChatMember.User.ID)
+		_ = t.Storage.Db.RemoveUserFromChat(context.Background(), chMember.Chat.ID, chMember.NewChatMember.User.ID)
 	} else {
 		// Обновляем информацию
 		t.SaveMember(&chMember.Chat, chMember.NewChatMember.User)

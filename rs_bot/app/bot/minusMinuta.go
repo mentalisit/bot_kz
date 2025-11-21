@@ -83,6 +83,7 @@ func (b *Bot) MinusMin() {
 							mID := b.client.Tg.SendEmbedTime(in.Config.TgChannel, text)
 							go b.client.Tg.DelMessageSecond(in.Config.TgChannel, strconv.Itoa(mID), 180)
 						}
+						go b.ReadQueueLevel(in, 180)
 					} else if t.Timedown == 0 || t.Timedown < -1 || t.Timedown < 0 {
 						b.RsMinus(in)
 					}
@@ -134,7 +135,7 @@ func (b *Bot) MinusMinMessageUpdate() {
 
 }
 
-func (b *Bot) ReadQueueLevel(in models.InMessage) {
+func (b *Bot) ReadQueueLevel(in models.InMessage, second int) {
 	ch := utils.WaitForMessage("ReadQueueLevel")
 	defer close(ch)
 	text, err := b.otherQueue.ReadingQueueByLevel(in.RsTypeLevel, in.Config.CorpName)
@@ -144,6 +145,6 @@ func (b *Bot) ReadQueueLevel(in models.InMessage) {
 	}
 
 	if text != "" {
-		b.ifTipSendTextDelSecond(in, text, 30)
+		b.ifTipSendTextDelSecond(in, text, second)
 	}
 }

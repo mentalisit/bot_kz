@@ -46,6 +46,7 @@ func getDictionaryUaJson() []byte {
 "info_forced_start_available":"Примусовий старт доступний учасникам черги.",
 "was_launched_incomplete":"була запущена не повною",
 "info_max_queue_time":"максимальний час у черзі обмежений на 180 хвилин\n  твій час",
+"current_time_is_enough":"Поточного часу достатньо! Хочеш більше пиши вручну",
 "scan_db":"Сканую базу даних",
 "no_history":"Історія не знайдена",
 "form_list":"Формую список ",

@@ -35,6 +35,8 @@ const (
 	TelegramService_SendPic_FullMethodName                 = "/tg.TelegramService/SendPic"
 	TelegramService_SendBridgeArrayMessages_FullMethodName = "/tg.TelegramService/SendBridgeArrayMessages"
 	TelegramService_SendPicScoreboard_FullMethodName       = "/tg.TelegramService/SendPicScoreboard"
+	TelegramService_Subscribe_FullMethodName               = "/tg.TelegramService/Subscribe"
+	TelegramService_Unsubscribe_FullMethodName             = "/tg.TelegramService/Unsubscribe"
 )
 
 // TelegramServiceClient is the client API for TelegramService service.
@@ -57,6 +59,8 @@ type TelegramServiceClient interface {
 	SendPic(ctx context.Context, in *SendPicRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
 	SendBridgeArrayMessages(ctx context.Context, in *SendBridgeArrayMessagesRequest, opts ...grpc.CallOption) (*SendBridgeArrayMessagesResponse, error)
 	SendPicScoreboard(ctx context.Context, in *ScoreboardRequest, opts ...grpc.CallOption) (*ScoreboardResponse, error)
+	Subscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error)
+	Unsubscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error)
 }
 
 type telegramServiceClient struct {
@@ -227,6 +231,26 @@ func (c *telegramServiceClient) SendPicScoreboard(ctx context.Context, in *Score
 	return out, nil
 }
 
+func (c *telegramServiceClient) Subscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IntResponse)
+	err := c.cc.Invoke(ctx, TelegramService_Subscribe_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *telegramServiceClient) Unsubscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IntResponse)
+	err := c.cc.Invoke(ctx, TelegramService_Unsubscribe_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TelegramServiceServer is the server API for TelegramService service.
 // All implementations must embed UnimplementedTelegramServiceServer
 // for forward compatibility.
@@ -247,6 +271,8 @@ type TelegramServiceServer interface {
 	SendPic(context.Context, *SendPicRequest) (*ErrorResponse, error)
 	SendBridgeArrayMessages(context.Context, *SendBridgeArrayMessagesRequest) (*SendBridgeArrayMessagesResponse, error)
 	SendPicScoreboard(context.Context, *ScoreboardRequest) (*ScoreboardResponse, error)
+	Subscribe(context.Context, *SubscrRequest) (*IntResponse, error)
+	Unsubscribe(context.Context, *SubscrRequest) (*IntResponse, error)
 	mustEmbedUnimplementedTelegramServiceServer()
 }
 
@@ -304,6 +330,12 @@ func (UnimplementedTelegramServiceServer) SendBridgeArrayMessages(context.Contex
 }
 func (UnimplementedTelegramServiceServer) SendPicScoreboard(context.Context, *ScoreboardRequest) (*ScoreboardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendPicScoreboard not implemented")
+}
+func (UnimplementedTelegramServiceServer) Subscribe(context.Context, *SubscrRequest) (*IntResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (UnimplementedTelegramServiceServer) Unsubscribe(context.Context, *SubscrRequest) (*IntResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
 }
 func (UnimplementedTelegramServiceServer) mustEmbedUnimplementedTelegramServiceServer() {}
 func (UnimplementedTelegramServiceServer) testEmbeddedByValue()                         {}
@@ -614,6 +646,42 @@ func _TelegramService_SendPicScoreboard_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TelegramService_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscrRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TelegramServiceServer).Subscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TelegramService_Subscribe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TelegramServiceServer).Subscribe(ctx, req.(*SubscrRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TelegramService_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscrRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TelegramServiceServer).Unsubscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TelegramService_Unsubscribe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TelegramServiceServer).Unsubscribe(ctx, req.(*SubscrRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TelegramService_ServiceDesc is the grpc.ServiceDesc for TelegramService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -684,6 +752,14 @@ var TelegramService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendPicScoreboard",
 			Handler:    _TelegramService_SendPicScoreboard_Handler,
+		},
+		{
+			MethodName: "Subscribe",
+			Handler:    _TelegramService_Subscribe_Handler,
+		},
+		{
+			MethodName: "Unsubscribe",
+			Handler:    _TelegramService_Unsubscribe_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,9 +1,9 @@
 package models
 
-type Button struct {
-	Text string
-	Data string
-}
+//type Button struct {
+//	Text string
+//	Data string
+//}
 
 //type Timer struct {
 //	//Id       string `bson:"_id"`
@@ -20,8 +20,4 @@ type Timer struct {
 	ChatId string `bson:"chatId"`
 	MesId  string `bson:"mesId"`
 	Timed  int    `bson:"timed"`
-}
-type Chat struct {
-	ChatID   int64  `json:"chat_id"`
-	ChatName string `json:"chat_name"`
 }

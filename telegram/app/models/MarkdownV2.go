@@ -1,4 +1,4 @@
-package telegram
+package models
 
 import (
 	"fmt"
@@ -59,7 +59,7 @@ func FindTelegramMentions(text string) (found bool, newText string) {
 	return true, result.String()
 }
 
-func escapeMarkdownV2ForLink(text string) string {
+func EscapeMarkdownV2ForLink(text string) string {
 	// Специальные символы, которые нужно экранировать в MarkdownV2
 	specialChars := "_*[]()~`>#+-=|{}.!"
 
@@ -122,7 +122,7 @@ func escapeMarkdownV2ForLink(text string) string {
 	return builder.String()
 }
 
-func escapeMarkdownV2ForHelp(text string) string {
+func EscapeMarkdownV2ForHelp(text string) string {
 	var builder strings.Builder
 	specialChars := "\\_[]()~>#+-=|{}.!"
 	i := 0

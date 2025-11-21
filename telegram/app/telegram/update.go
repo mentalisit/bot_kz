@@ -39,7 +39,6 @@ func (t *Telegram) update() {
 	}
 }
 func (t *Telegram) updateMessage(m *tgbotapi.Message) {
-	fmt.Printf("text: %s\n", m.Text) //todo need remove
 	switch m.Text {
 	case "/start":
 		t.handleStartCommand(m)
@@ -51,7 +50,7 @@ func (t *Telegram) updateMessage(m *tgbotapi.Message) {
 		//	t.SendWelcomeMessage(m.Chat.ID)
 		//}
 	case "/webapp", "/roles":
-		t.webApp.RemoveReplyKeyboard(m.Chat.ID)
+		//t.webApp.RemoveReplyKeyboard(m.Chat.ID)
 		t.SendWebAppButtonSmart(m.Chat.ID)
 	case "/chatroles":
 		// Специальная команда для управления ролями в текущем чате
@@ -76,7 +75,9 @@ func (t *Telegram) SendWelcomeMessage(chatID int64) {
 }
 
 func (t *Telegram) SendWebAppButtonSmart(chatID int64) {
-	t.webApp.SendWebAppButtonSmart(chatID)
+	//t.webApp.SendWebAppButtonSmart(chatID)
+	fmt.Println("SendWebAppButtonSmart")
+
 }
 
 func (t *Telegram) handleStartCommand(message *tgbotapi.Message) {

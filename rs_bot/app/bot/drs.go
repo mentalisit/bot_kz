@@ -96,7 +96,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 			b.wg.Wait()
 			b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 			b.QueueLevel(in)
-			go b.ReadQueueLevel(in)
+			go b.ReadQueueLevel(in, 30)
 		} else {
 			u = b.storage.DbFunc.ReadAll(in.RsTypeLevel, in.Config.CorpName)
 			if u.User1.Dsmesid != "" {
@@ -138,7 +138,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username,
 					in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 				b.QueueLevel(in)
-				go b.ReadQueueLevel(in)
+				go b.ReadQueueLevel(in, 30)
 			}
 			if darkOrRed {
 				if countQueue == 2 {
@@ -331,9 +331,9 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 				}
 			}
 		}
-		if darkOrRed {
-			go b.CheckSubscribe(in)
-		}
+		//if darkOrRed {
+		//	go b.CheckSubscribe(in)
+		//}
 
 	}
 }

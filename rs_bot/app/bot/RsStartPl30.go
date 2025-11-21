@@ -185,9 +185,12 @@ func (b *Bot) Pl30(in models.InMessage) {
 		text = in.GetNameMention() + b.getText(in, "you_out_of_queue")
 	} else if countName > 0 {
 		timedown := b.storage.DbFunc.P30Pl(in.RsTypeLevel, in.Config.CorpName, in.UserId)
-		if timedown >= 150 {
-			text = fmt.Sprintf("%s %s %d %s",
-				in.GetNameMention(), b.getText(in, "info_max_queue_time"), timedown, b.getText(in, "min"))
+		if timedown >= 30 {
+			text = fmt.Sprintf("%s %s",
+				in.GetNameMention(), b.getText(in, "current_time_is_enough"))
+			//else if timedown >= 150 {
+			//	text = fmt.Sprintf("%s %s %d %s",
+			//		in.GetNameMention(), b.getText(in, "info_max_queue_time"), timedown, b.getText(in, "min"))
 		} else {
 			text = in.GetNameMention() + b.getText(in, "timer_updated")
 			b.storage.DbFunc.UpdateTimedown(in.RsTypeLevel, in.Config.CorpName, in.UserId)

@@ -2,9 +2,7 @@ package telegram
 
 import (
 	"fmt"
-	"sync"
-	"telegram/telegram/roles"
-	"telegram/telegram/webapp"
+	"net/http"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 
@@ -24,11 +22,8 @@ type Telegram struct {
 	bridgeConfigUpdateTime int64
 	Storage                *storage.Storage
 	api                    *restapi.Recover
-	usernameMap            map[string]int
-	ChatMembers            map[*models.Chat]map[int64]tgbotapi.User // chatID & ChatName-> userID -> User
-	mu                     sync.RWMutex
-	webApp                 *webapp.WebApp
-	roles                  *roles.Manager
+	//usernameMap            map[string]int
+	server *http.Server
 }
 
 func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegram {
@@ -37,42 +32,22 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 		log.ErrorErr(err)
 		return nil
 	}
-	// Создаем менеджер ролей
-	rolesManager := roles.NewManager()
-
-	// Создаем Web App и передаем менеджер ролей
-	webApp := webapp.NewWebApp(botApi, rolesManager)
 
 	t := &Telegram{
-		log:         log,
-		t:           botApi,
-		Storage:     st,
-		api:         restapi.NewRecover(log),
-		usernameMap: make(map[string]int),
-		ChatMembers: make(map[*models.Chat]map[int64]tgbotapi.User),
-		roles:       rolesManager,
-		webApp:      webApp,
+		log:     log,
+		t:       botApi,
+		Storage: st,
+		api:     restapi.NewRecover(log),
+		//usernameMap: make(map[string]int),
 	}
 
 	fmt.Printf("Authorized on account %s\n", t.t.Self.UserName)
 
-	// Запускаем Web App сервер
-	go t.webApp.Start()
+	go t.StartWebApp("8080")
 
 	//t.loadConfig()
 	go t.update()
 	go t.DeleteMessageTimer()
-	go func() {
-		t.ChatMembers = t.Storage.Db.ReadAllMembers()
-		ticker := time.NewTicker(5 * time.Minute)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				t.Storage.Db.UpsertChatData(t.ChatMembers)
-			}
-		}
-	}()
 	return t
 }
 

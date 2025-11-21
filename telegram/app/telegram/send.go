@@ -2,9 +2,11 @@ package telegram
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"telegram/models"
@@ -21,6 +23,9 @@ func (t *Telegram) ChatTyping(chatId string) error {
 	return err
 }
 func (t *Telegram) SendChannelDelSecond(chatid string, text string, parsemode string, second int) (bool, error) {
+	if strings.HasPrefix(text, "MENTION: UserId") {
+		return t.SendChannelDelSecondRsMention(chatid, text, parsemode, second)
+	}
 	mId, err1 := t.SendChannel(chatid, text, parsemode)
 	if err1 != nil {
 		return false, err1
@@ -42,16 +47,38 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
-	found, newText := FindTelegramMentions(text)
-	if found {
+	found, newText := models.FindTelegramMentions(text)
+	if found || parseMode == "MarkdownV2" {
 		m.ParseMode = "MarkdownV2"
 		m.Text = newText
 	}
 	tMessage, err := t.t.Send(m)
 	if err != nil {
 		if err.Error() != tgbotapi.ErrAPIForbidden {
-			t.log.ErrorErr(err)
-			t.log.Info(fmt.Sprintf("chatid '%s', text '%s'", chatid, m.Text))
+			fmt.Println(err)
+			//t.log.ErrorErr(err)
+			fmt.Printf("chatid '%s', text '%s'", chatid, m.Text)
+		}
+		return "", err
+	}
+	return strconv.Itoa(tMessage.MessageID), nil
+}
+func (t *Telegram) SendChannelReply(chatid, text, parseMode string, replyId int) (string, error) {
+	chatId, threadID := t.chat(chatid)
+	m := tgbotapi.NewMessage(chatId, text)
+	m.MessageThreadID = threadID
+	m.ReplyParameters.MessageID = replyId
+	found, newText := models.FindTelegramMentions(text)
+	if found || parseMode == "MarkdownV2" {
+		m.ParseMode = "MarkdownV2"
+		m.Text = newText
+	}
+	tMessage, err := t.t.Send(m)
+	if err != nil {
+		if err.Error() != tgbotapi.ErrAPIForbidden {
+			fmt.Println(err)
+			//t.log.ErrorErr(err)
+			fmt.Printf("chatid '%s', text '%s'", chatid, m.Text)
 		}
 		return "", err
 	}
@@ -133,6 +160,36 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 				}
 				messageIds = append(messageIds, messageData)
 			}
+
+			re := regexp.MustCompile(`@&\S+`)
+			mentions := re.FindAllString(m.Text, -1)
+			if len(mentions) > 0 {
+				roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), chatId)
+				if roles != nil {
+					us := make(map[string][]models.User)
+					for _, mention := range mentions {
+						for _, role := range roles {
+							if role.Name == mention[2:] {
+
+								users, _ := t.Storage.Db.GetChatUsers(context.Background(), chatId)
+								for _, user := range users {
+									_, exists := user.Roles[role.ID]
+									if exists {
+										if us[role.Name] == nil {
+											us[role.Name] = []models.User{}
+										}
+										us[role.Name] = append(us[role.Name], user)
+									}
+								}
+							}
+						}
+					}
+					if len(us) > 0 {
+						t.MentionMembersRoles(chat, tMessage.MessageID, us)
+					}
+				}
+			}
+
 			if strings.Contains(in.Text, "@&Русь") || strings.Contains(in.Text, "@everyone") {
 				pinConfig := tgbotapi.NewPinChatMessage(chatId, tMessage.MessageID, false)
 				_, _ = t.t.Send(pinConfig)
@@ -338,7 +395,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 		}
 	}
 
-	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2ForHelp(text))
+	msg := tgbotapi.NewMessage(chatId, models.EscapeMarkdownV2ForHelp(text))
 
 	msg.MessageThreadID = ThreadID
 	msg.ParseMode = tgbotapi.ModeMarkdownV2
@@ -372,7 +429,7 @@ func (t *Telegram) SendPoll(m models.Request) string {
 	chatId, ThreadID := t.chat(chatid)
 	text := fmt.Sprintf("%s\n%s\n\n[результат](%s)", title, description, url)
 
-	msg := tgbotapi.NewMessage(chatId, escapeMarkdownV2ForLink(text))
+	msg := tgbotapi.NewMessage(chatId, models.EscapeMarkdownV2ForLink(text))
 
 	msg.MessageThreadID = ThreadID
 	msg.ParseMode = tgbotapi.ModeMarkdownV2

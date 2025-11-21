@@ -2,10 +2,11 @@ package otherQueue
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
 	"rs/models"
 	"strconv"
 	"strings"
+
+	"github.com/mentalisit/logger"
 )
 
 type OtherQ struct {
@@ -74,6 +75,7 @@ func deleteChannelName(Corpname string) string {
 
 	return Corpname
 }
+
 func (o *OtherQ) NeedRemoveOtherQueue(ss []string) {
 	uId, err := GetUseridTumcha()
 	if err != nil {
@@ -82,8 +84,9 @@ func (o *OtherQ) NeedRemoveOtherQueue(ss []string) {
 	}
 	if len(ss) > 0 {
 		for _, s := range ss {
+			parseInt, _ := strconv.ParseInt(s, 10, 64)
 			for _, i := range uId {
-				if strconv.FormatInt(i, 10) == s {
+				if parseInt == i {
 					o.log.InfoStruct("NeedRemoveOtherQueue", s)
 				}
 			}

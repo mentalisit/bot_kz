@@ -64,4 +64,5 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
+	d.CreateTables(context.Background())
 }

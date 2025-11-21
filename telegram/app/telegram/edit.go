@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"telegram/models"
+
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
@@ -34,7 +36,7 @@ func (t *Telegram) EditText(chatid string, editMesId int, textEdit, ParseMode st
 	chatId, _ := t.chat(chatid)
 	msg := tgbotapi.NewEditMessageText(chatId, editMesId, textEdit)
 	if ParseMode != "" {
-		msg = tgbotapi.NewEditMessageText(chatId, editMesId, escapeMarkdownV2ForLink(textEdit))
+		msg = tgbotapi.NewEditMessageText(chatId, editMesId, models.EscapeMarkdownV2ForLink(textEdit))
 		msg.ParseMode = ParseMode
 	}
 	_, err := t.t.Send(msg)

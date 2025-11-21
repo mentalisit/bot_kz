@@ -3,9 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"queue/rsbotbd/GetDataSborkz"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) ReadAllQueue(c *gin.Context) {
@@ -54,7 +55,7 @@ func (s *Server) Left(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// Пробуем десериализовать как []DataCaprican
+	// Пробуем десериализовать
 	var m []int64
 	err := json.Unmarshal(rawData, &m)
 	if err == nil {
@@ -81,7 +82,8 @@ func (s *Server) Left(c *gin.Context) {
 
 func (s *Server) ReadQueueTumcha(c *gin.Context) {
 	s.PrintGoroutine()
-	namesIds := GetDataSborkz.ReadQueueTumchaNameIds()
+	namesIds := GetDataSborkz.ReadQueueTumchaNameIds() //namesIds []int64
+	fmt.Printf("namesIds: %+v\n", namesIds)
 	if len(namesIds) == 0 {
 		c.JSON(http.StatusNoContent, "nil")
 		return

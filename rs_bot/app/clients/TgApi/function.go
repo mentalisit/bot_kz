@@ -87,6 +87,17 @@ func (c *Client) SendChannelDelSecond(chatId, text string, second int) {
 		return
 	}
 }
+func (c *Client) SendChannelDelSecondRsMention(chatId, text string, second int) bool {
+	flag, err := c.client.SendChannelDelSecond(context.Background(), &SendMessageRequest{
+		Text:   text,
+		ChatID: chatId,
+		Second: int32(second),
+	})
+	if err != nil {
+		return false
+	}
+	return flag.Flag
+}
 func (c *Client) SendChannel(chatId string, text string) int {
 	response, err := c.client.Send(context.Background(), &SendMessageRequest{
 		Text:   text,
@@ -171,4 +182,31 @@ func (c *Client) SendPic(chatID, text string, fileBytes []byte) (mid string, err
 		return "", errors.New(res.ErrorMessage)
 	}
 	return res.GetMesid(), nil
+}
+
+func (c *Client) Subscribe(userId string, rolesArg string, guildid string) int {
+	req := &SubscrRequest{
+		Nameid:   userId,
+		ArgRoles: rolesArg,
+		Guildid:  guildid,
+	}
+	ir, err := c.client.Subscribe(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return -1
+	}
+	return int(ir.Result)
+}
+func (c *Client) Unsubscribe(userId string, rolesArg string, guildid string) int {
+	req := &SubscrRequest{
+		Nameid:   userId,
+		ArgRoles: rolesArg,
+		Guildid:  guildid,
+	}
+	ir, err := c.client.Unsubscribe(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return -1
+	}
+	return int(ir.Result)
 }

@@ -46,6 +46,7 @@ func getDictionaryEnJson() []byte {
 "info_forced_start_available":"Forced start is available for queue members.",
 "was_launched_incomplete":"was launched incomplete",
 "info_max_queue_time":"the maximum time in the queue is limited to 180 minutes\n  your time",
+"current_time_is_enough":"The current time is enough! If you want more, write by hand.",
 "scan_db":"Scanning the database",
 "no_history":" History not found ",
 "form_list":"Forming a list ",

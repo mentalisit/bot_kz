@@ -20,6 +20,8 @@ service TelegramService {
   rpc SendPic(SendPicRequest) returns (ErrorResponse);
   rpc SendBridgeArrayMessages(SendBridgeArrayMessagesRequest) returns (SendBridgeArrayMessagesResponse);
   rpc SendPicScoreboard(ScoreboardRequest) returns (ScoreboardResponse);
+  rpc Subscribe(SubscrRequest) returns (IntResponse);
+  rpc Unsubscribe(SubscrRequest) returns (IntResponse);
 }
 
 message TextResponse {
@@ -80,6 +82,11 @@ message SendHelpRequest {
   string text = 2;
   string oldMidHelps = 3;
   bool ifUser = 4;
+}
+message SubscrRequest {
+  string nameid = 1;
+  string argRoles = 2;
+  string guildid = 3;
 }
 message IntResponse {
   int32 result = 1;

@@ -17,21 +17,21 @@ import (
 
 const nickname = "Для того что бы БОТ мог Вас индентифицировать, создайте уникальный НикНейм в настройках. Вы можете использовать a-z, 0-9 и символы подчеркивания. Минимальная длина - 5 символов."
 
-func (t *Telegram) nickName(u *tgbotapi.User, channel string) string {
-	if u.UserName == "" {
-		if t.usernameMap[u.String()] == 0 {
-			t.SendChannelDelSecond(channel, nickname, "", 60)
-			t.usernameMap[u.String()] = 1
-		} else if t.usernameMap[u.String()]%5 == 0 {
-			t.SendChannelDelSecond(channel, nickname, "", 60)
-			t.usernameMap[u.String()] += 1
-		} else {
-			t.usernameMap[u.String()] += 1
-		}
-		return ""
-	}
-	return u.String()
-}
+//func (t *Telegram) nickName(u *tgbotapi.User, channel string) string {
+//	if u.UserName == "" {
+//		if t.usernameMap[u.String()] == 0 {
+//			t.SendChannelDelSecond(channel, nickname, "", 60)
+//			t.usernameMap[u.String()] = 1
+//		} else if t.usernameMap[u.String()]%5 == 0 {
+//			t.SendChannelDelSecond(channel, nickname, "", 60)
+//			t.usernameMap[u.String()] += 1
+//		} else {
+//			t.usernameMap[u.String()] += 1
+//		}
+//		return ""
+//	}
+//	return u.String()
+//}
 
 func (t *Telegram) chat(chatid string) (chatId int64, threadID int) {
 	a := strings.SplitN(chatid, "/", 2)

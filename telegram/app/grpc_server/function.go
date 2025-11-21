@@ -155,6 +155,20 @@ func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArr
 	}
 	return &SendBridgeArrayMessagesResponse{MessageIds: mids}, nil
 }
+func (s *Server) Unsubscribe(ctx context.Context, req *SubscrRequest) (*IntResponse, error) {
+	userID, _ := strconv.ParseInt(req.Nameid, 10, 64)
+	guild := strings.Split(req.GetGuildid(), "/")
+	guildID, _ := strconv.ParseInt(guild[0], 10, 64)
+	code := s.tg.Unsubscribe(userID, req.ArgRoles, guildID)
+	return &IntResponse{Result: int32(code)}, nil
+}
+func (s *Server) Subscribe(ctx context.Context, req *SubscrRequest) (*IntResponse, error) {
+	userID, _ := strconv.ParseInt(req.Nameid, 10, 64)
+	guild := strings.Split(req.GetGuildid(), "/")
+	guildID, _ := strconv.ParseInt(guild[0], 10, 64)
+	code := s.tg.Subscribe(userID, req.ArgRoles, guildID)
+	return &IntResponse{Result: int32(code)}, nil
+}
 
 func downloadFile(fi *models.FileInfo) error {
 	resp, err := http.Get(fi.URL)
