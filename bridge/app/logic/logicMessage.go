@@ -54,6 +54,12 @@ func (b *Bridge) logicSendMessage() {
 				GetRandomColor(), ExtractUppercase(b.in.Sender))
 		}
 		toDs.ChannelId = chatIdsDS
+		if toDs.ReplyMap == nil {
+			toDs.ReplyMap = make(map[string]string)
+		}
+		for _, configs := range b.in.Config.Channel["ds"] {
+			toDs.ReplyMap["guild-"+configs.ChannelId] = configs.GuildId
+		}
 		go b.discord.SendBridgeArrayMessage(resultChannelDs, &wg, toDs)
 	}
 

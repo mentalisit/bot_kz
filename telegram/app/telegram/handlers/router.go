@@ -26,6 +26,7 @@ func SetupRouter(storage *storage.Storage, bot *tgbotapi.BotAPI) http.Handler {
 	// Chat routes
 	api.HandleFunc("/chat/{chatId}/roles", handler.GetChatRoles).Methods("GET")
 	api.HandleFunc("/chat/{chatId}/roles", handler.CreateRole).Methods("POST")
+	api.HandleFunc("/chat/{chatId}/roles/{roleId}", handler.UpdateRole).Methods("PUT")
 	api.HandleFunc("/chat/{chatId}/roles/{roleId}", handler.DeleteRole).Methods("DELETE")
 	api.HandleFunc("/chat/{chatId}/roles/{roleId}/join", handler.JoinRole).Methods("POST")
 	api.HandleFunc("/chat/{chatId}/roles/{roleId}/leave", handler.LeaveRole).Methods("POST")

@@ -182,14 +182,16 @@ func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]
 func (d *Db) RemoveUserFromChat(ctx context.Context, chatID, userID int64) error {
 	query := `DELETE FROM telegram.chat_members WHERE chat_id = $1 AND user_id = $2`
 
-	result, err := d.db.Exec(ctx, query, chatID, userID)
+	_, err := d.db.Exec(ctx, query, chatID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to remove user from chat: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
-		return fmt.Errorf("user not found in chat")
-	}
+	query = `DELETE FROM telegram.chat_permissions WHERE chat_id = $1 AND user_id = $2`
+	_, _ = d.db.Exec(ctx, query, chatID, userID)
+
+	query = `DELETE FROM telegram.user_roles WHERE chat_id = $1 AND user_id = $2`
+	_, _ = d.db.Exec(ctx, query, chatID, userID)
 
 	return nil
 }

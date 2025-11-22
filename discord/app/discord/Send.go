@@ -8,6 +8,8 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -515,8 +517,25 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 	var message []models.MessageIds
 
 	for _, channelId := range in.ChannelId {
+		text := in.Text
+		if strings.Contains(text, "@") {
+			re := regexp.MustCompile(`@\S+`)
+			mentions := re.FindAllString(text, -1)
+			if len(mentions) > 0 && in.ReplyMap["guild-"+channelId] != "" {
+				roles, _ := d.S.GuildRoles(in.ReplyMap["guild-"+channelId])
+				if roles != nil {
+					rolesMap := makeRolesMap(roles)
+					for _, mention := range mentions {
+						roleName := strings.ToLower(mention[1:])
+						if rolesMap[roleName] != "" {
+							text = strings.ReplaceAll(text, mention, rolesMap[roleName])
+						}
+					}
+				}
+			}
+		}
 		params := &discordgo.WebhookParams{
-			Content:   d.re.replaceNameForDiscord(in.Text),
+			Content:   d.re.replaceNameForDiscord(text),
 			Username:  in.Sender,
 			AvatarURL: in.Avatar,
 			Files:     []*discordgo.File{},
@@ -557,7 +576,7 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 		}
 		if in.ReplyMap[channelId] != "" && len(in.Extra) == 0 {
 			replyId := in.ReplyMap[channelId]
-			text := fmt.Sprintf("%s:\n%s", in.Sender, in.Text)
+			text = fmt.Sprintf("%s:\n%s", in.Sender, text)
 			sendReply, err := d.S.ChannelMessageSendReply(channelId, text, &discordgo.MessageReference{
 				MessageID: replyId,
 				ChannelID: channelId,
@@ -703,4 +722,31 @@ func (d *Discord) AddButtonPoll(createTime string, option []string) []discordgo.
 			Components: components,
 		},
 	}
+}
+func makeRolesMap(st []*discordgo.Role) map[string]string {
+	rolesMap := make(map[string]string)
+
+	for _, role := range st {
+		// Добавляем оригинальное название
+		rolesMap[strings.ToLower(role.Name)] = role.Mention()
+
+		// Создаем варианты с заменой
+		name := strings.ToLower(role.Name)
+		mention := role.Mention()
+
+		if strings.Contains(name, "ткз") {
+			rolesMap[strings.ReplaceAll(name, "ткз", "drs")] = mention
+			rolesMap[strings.ReplaceAll(name, "ткз", "тчз")] = mention
+		}
+		if strings.Contains(name, "drs") {
+			rolesMap[strings.ReplaceAll(name, "drs", "ткз")] = mention
+			rolesMap[strings.ReplaceAll(name, "drs", "тчз")] = mention
+		}
+		if strings.Contains(name, "тчз") {
+			rolesMap[strings.ReplaceAll(name, "тчз", "ткз")] = mention
+			rolesMap[strings.ReplaceAll(name, "тчз", "drs")] = mention
+		}
+	}
+
+	return rolesMap
 }

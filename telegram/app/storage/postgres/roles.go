@@ -182,6 +182,31 @@ func (d *Db) DeleteRole(ctx context.Context, roleID, chatID int64) error {
 	return nil
 }
 
+// UpdateRoleName обновляет название роли
+func (d *Db) UpdateRoleName(ctx context.Context, roleID, chatID int64, newName string) error {
+	var currentName string
+	checkQuery := `SELECT name FROM telegram.roles WHERE id = $1 AND chat_id = $2`
+	if err := d.db.QueryRow(ctx, checkQuery, roleID, chatID).Scan(&currentName); err != nil {
+		return fmt.Errorf("failed to find role: %w", err)
+	}
+
+	if currentName == "all" {
+		return fmt.Errorf("cannot rename system role 'all'")
+	}
+
+	query := `UPDATE telegram.roles SET name = $1 WHERE id = $2 AND chat_id = $3`
+	result, err := d.db.Exec(ctx, query, newName, roleID, chatID)
+	if err != nil {
+		return fmt.Errorf("failed to update role name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("role not found or access denied")
+	}
+
+	return nil
+}
+
 // GetRoleName возвращает название роли по ID
 func (d *Db) GetRoleName(ctx context.Context, roleID int64, roleName *string) error {
 	query := `SELECT name FROM telegram.roles WHERE id = $1`

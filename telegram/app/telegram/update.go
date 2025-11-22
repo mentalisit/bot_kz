@@ -3,6 +3,7 @@ package telegram
 import (
 	//tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +14,24 @@ import (
 func (t *Telegram) update() {
 	ut := tgbotapi.NewUpdate(0)
 	ut.Timeout = 60
+	// Полный список возможных значений для AllowedUpdates:
+	allowedUpdates := []string{
+		"message",              // новые сообщения
+		"edited_message",       // редактированные сообщения
+		"channel_post",         // посты в каналах
+		"edited_channel_post",  // редактированные посты в каналах
+		"inline_query",         // инлайн-запросы
+		"chosen_inline_result", // выбранные инлайн-результаты
+		"callback_query",       // callback-кнопки
+		"shipping_query",       // запросы доставки
+		"pre_checkout_query",   // предварительные проверки оплаты
+		"poll",                 // опросы
+		"poll_answer",          // ответы на опросы
+		"my_chat_member",       // изменения статуса бота
+		"chat_member",          // изменения статуса участников
+		"chat_join_request",    // запросы на вступление в чат
+	}
+	ut.AllowedUpdates = allowedUpdates
 	updates := t.t.GetUpdatesChan(ut)
 
 	for update := range updates {
@@ -61,6 +80,8 @@ func (t *Telegram) updateMessage(m *tgbotapi.Message) {
 		t.ifCommand(m)
 	} else if m.Chat.IsPrivate() { //если пишут боту в личку
 		t.ifPrivatMesage(m)
+	} else if m.LeftChatMember != nil {
+		_ = t.Storage.Db.RemoveUserFromChat(context.Background(), m.Chat.ID, m.LeftChatMember.ID)
 	} else { //остальные сообщения
 		t.logicMix(m, false)
 	}

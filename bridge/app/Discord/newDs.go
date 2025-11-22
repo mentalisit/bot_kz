@@ -78,6 +78,7 @@ func (c *Client) sendBridgeArrayMessages(inMessenger models.BridgeSendToMessenge
 		Username:  inMessenger.Sender,
 		ChannelID: inMessenger.ChannelId,
 		Avatar:    inMessenger.Avatar,
+		ReplyMap:  inMessenger.ReplyMap,
 	}
 	if len(inMessenger.Extra) > 0 {
 		for _, i := range inMessenger.Extra {

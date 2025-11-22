@@ -139,10 +139,10 @@ func (t *Telegram) chatMember(chMember *tgbotapi.ChatMemberUpdated) {
 		t.SaveMember(&chMember.Chat, chMember.NewChatMember.User)
 	}
 
-	if chMember.NewChatMember.IsMember {
+	if chMember.NewChatMember.Status == "member" {
 		ChatId := strconv.FormatInt(chMember.Chat.ID, 10) + "/0"
 		t.SendChannelDelSecond(ChatId,
-			fmt.Sprintf("%s Добро пожаловать в наш чат ", chMember.NewChatMember.User.FirstName),
+			fmt.Sprintf("%s Добро пожаловать в наш чат ", chMember.NewChatMember.User.String()),
 			"", 60)
 	}
 

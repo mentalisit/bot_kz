@@ -196,6 +196,77 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateRole обновляет имя роли
+func (h *WebAppHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chatIDStr := vars["chatId"]
+	roleIDStr := vars["roleId"]
+	userIDStr := r.URL.Query().Get("user_id")
+
+	if userIDStr == "" {
+		h.sendError(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	chatID, err := strconv.ParseInt(chatIDStr, 10, 64)
+	if err != nil {
+		h.sendError(w, "invalid chat_id", http.StatusBadRequest)
+		return
+	}
+
+	roleID, err := strconv.ParseInt(roleIDStr, 10, 64)
+	if err != nil {
+		h.sendError(w, "invalid role_id", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		h.sendError(w, "invalid user_id", http.StatusBadRequest)
+		return
+	}
+
+	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, userID)
+	if err != nil {
+		log.Printf("Error checking admin status: %v", err)
+		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if !isAdmin {
+		h.sendError(w, "admin rights required", http.StatusForbidden)
+		return
+	}
+
+	var req models.CreateRoleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.sendError(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	newName := req.Name
+	if newName == "" {
+		h.sendError(w, "role name is required", http.StatusBadRequest)
+		return
+	}
+
+	if len(newName) > 100 {
+		h.sendError(w, "role name too long", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.storage.Db.UpdateRoleName(r.Context(), roleID, chatID, newName); err != nil {
+		log.Printf("Error updating role: %v", err)
+		h.sendError(w, "failed to update role", http.StatusInternalServerError)
+		return
+	}
+
+	h.sendJSON(w, models.SuccessResponse{
+		Message: "Role updated successfully",
+		Success: true,
+	})
+}
+
 // DeleteRole удаляет роль
 func (h *WebAppHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

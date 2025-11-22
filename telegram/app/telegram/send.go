@@ -146,6 +146,9 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 				messageIds = append(messageIds, messageData)
 			}
 		} else {
+			if strings.Contains(in.Text, "@&") {
+				in.Text = strings.ReplaceAll(in.Text, "&", "")
+			}
 
 			m := tgbotapi.NewMessage(chatId, in.Text)
 			m.MessageThreadID = threadID
@@ -161,29 +164,31 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 				messageIds = append(messageIds, messageData)
 			}
 
-			re := regexp.MustCompile(`@&\S+`)
+			re := regexp.MustCompile(`@\S+`)
 			mentions := re.FindAllString(m.Text, -1)
 			if len(mentions) > 0 {
 				roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), chatId)
 				if roles != nil {
+					rolesMap, rolesId := makeRolesMap(roles)
 					us := make(map[string][]models.User)
-					for _, mention := range mentions {
-						for _, role := range roles {
-							if role.Name == mention[2:] {
+					users, _ := t.Storage.Db.GetChatUsers(context.Background(), chatId)
 
-								users, _ := t.Storage.Db.GetChatUsers(context.Background(), chatId)
-								for _, user := range users {
-									_, exists := user.Roles[role.ID]
-									if exists {
-										if us[role.Name] == nil {
-											us[role.Name] = []models.User{}
-										}
-										us[role.Name] = append(us[role.Name], user)
+					for _, mention := range mentions {
+						roleName := strings.ToLower(mention[1:]) // убираем только "@" и регистр
+
+						if roleID, exists := rolesMap[roleName]; exists {
+							for _, user := range users {
+								if _, hasRole := user.Roles[roleID]; hasRole {
+									roleDisplayName := rolesId[roleID]
+									if us[roleDisplayName] == nil {
+										us[roleDisplayName] = []models.User{}
 									}
+									us[roleDisplayName] = append(us[roleDisplayName], user)
 								}
 							}
 						}
 					}
+
 					if len(us) > 0 {
 						t.MentionMembersRoles(chat, tMessage.MessageID, us)
 					}
@@ -493,3 +498,33 @@ const (
 	emFour = "4️⃣"
 	emFive = "5️⃣"
 )
+
+func makeRolesMap(st []models.Role) (map[string]int64, map[int64]string) {
+	rolesMap := make(map[string]int64)
+	rolesId := make(map[int64]string)
+
+	for _, role := range st {
+		// Добавляем оригинальное название
+		rolesMap[strings.ToLower(role.Name)] = role.ID
+		rolesId[role.ID] = role.Name
+
+		// Создаем варианты с заменой
+		name := strings.ToLower(role.Name)
+		mention := role.ID
+
+		if strings.Contains(name, "ткз") {
+			rolesMap[strings.ReplaceAll(name, "ткз", "drs")] = mention
+			rolesMap[strings.ReplaceAll(name, "ткз", "тчз")] = mention
+		}
+		if strings.Contains(name, "drs") {
+			rolesMap[strings.ReplaceAll(name, "drs", "ткз")] = mention
+			rolesMap[strings.ReplaceAll(name, "drs", "тчз")] = mention
+		}
+		if strings.Contains(name, "тчз") {
+			rolesMap[strings.ReplaceAll(name, "тчз", "ткз")] = mention
+			rolesMap[strings.ReplaceAll(name, "тчз", "drs")] = mention
+		}
+	}
+
+	return rolesMap, rolesId
+}
