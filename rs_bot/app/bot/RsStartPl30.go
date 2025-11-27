@@ -173,7 +173,7 @@ func (b *Bot) RsStart(in models.InMessage) {
 
 			user, UserIdTg := u.GetAllUserId()
 			go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
-			go b.elseChat(user)
+			go b.ElseChat(user)
 		}
 	}
 }

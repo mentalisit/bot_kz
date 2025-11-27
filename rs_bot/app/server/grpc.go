@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mentalisit/logger"
-	"google.golang.org/grpc"
 	"net"
 	"rs/bot"
 	"rs/models"
 	servprof "rs/server/serv"
 	"strconv"
+
+	"github.com/mentalisit/logger"
+	"google.golang.org/grpc"
 )
 
 type Server struct {
@@ -145,5 +146,10 @@ func (s *Server) LogicRs(ctx context.Context, i *InMessage) (*Empty, error) {
 	}
 
 	s.b.Inbox <- in
+	return &Empty{}, nil
+}
+func (s *Server) OtherQueue(ctx context.Context, i *Other) (*Empty, error) {
+	fmt.Println(i.GetUsersIds())
+	s.b.ElseChat(i.GetUsersIds())
 	return &Empty{}, nil
 }

@@ -1,13 +1,14 @@
 package otherQueue
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"rs/models"
 	"time"
 )
@@ -151,48 +152,34 @@ func GetUseridTumcha() ([]int64, error) {
 	return result, nil
 }
 
-// SendSborkzData отправляет POST запрос на https://123bot.ru/rssoyuzbot/Json/sborkz.php с userid
-func SendSborkzData(userid string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+func SendUserIDRSSOYUZ(userID int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	url := "https://123bot.ru/rssoyuzbot/Json/sborkz.php"
+	baseURL := "https://123bot.ru/rssoyuzbot/Json/queue.php"
 
-	// Создание структуры с только userid
-	data := map[string]string{
-		"userid": userid,
-	}
+	params := url.Values{}
+	params.Add("userid", fmt.Sprintf("%d", userID))
 
-	// Сериализация данных в JSON
-	jsonData, err := json.Marshal(data)
+	fullURL := baseURL + "?" + params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
 	if err != nil {
-		return fmt.Errorf("ошибка при сериализации данных: %w", err)
+		return fmt.Errorf("ошибка создания запроса: %v", err)
 	}
 
-	// Создание POST запроса
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("ошибка при создании запроса: %w", err)
+		return fmt.Errorf("ошибка отправки запроса: %v", err)
 	}
+	defer resp.Body.Close()
 
-	// Установка заголовков
-	req.Header.Set("Content-Type", "application/json")
-
-	// Выполнение запроса
-	response, err := http.DefaultClient.Do(req)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("время ожидания запроса истекло")
-		}
-		return fmt.Errorf("ошибка при выполнении запроса: %w", err)
-	}
-	defer response.Body.Close()
-
-	// Проверка кода ответа
-	if response.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(response.Body)
-		return fmt.Errorf("неправильный статус код: %d, ответ: %s", response.StatusCode, string(body))
+		return fmt.Errorf("ошибка чтения ответа: %v", err)
 	}
 
+	fmt.Printf("Статус: %d, Ответ: %s\n", resp.StatusCode, string(body))
 	return nil
 }

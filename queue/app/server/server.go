@@ -2,21 +2,23 @@ package server
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
 	"net/http"
 	"queue/config"
 	"queue/kzbotdb"
 	"queue/rsbotbd"
+	"queue/server/rs_bot"
 	"runtime"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/mentalisit/logger"
 )
 
 type Server struct {
 	log   *logger.Logger
 	queue *rsbotbd.Queue
 	kzbot *kzbotdb.Db
-	ai    *Gemini
+	rs    *rs_bot.Client
 }
 
 func NewServer(log *logger.Logger, cfg *config.ConfigBot) *Server {
@@ -24,7 +26,7 @@ func NewServer(log *logger.Logger, cfg *config.ConfigBot) *Server {
 		log:   log,
 		queue: rsbotbd.NewQueue(log),
 		kzbot: kzbotdb.NewDb(log, cfg),
-		ai:    NewGemini(log),
+		rs:    rs_bot.NewClient(log),
 	}
 	go func() {
 		err := s.runServer()
@@ -70,7 +72,6 @@ func (s *Server) runServerApi() error {
 
 	router.GET("/queue", s.ReadAllQueue)
 	router.GET("/api/readsouzbot", s.ReadQueueTumcha)
-	router.POST("/ai", s.GeminiAI)
 
 	fmt.Println("Running port:" + port)
 	err := router.Run(":" + port)

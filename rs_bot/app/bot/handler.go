@@ -56,8 +56,8 @@ func (b *Bot) checkAdmin(in models.InMessage) bool {
 	return admin
 }
 
-func (b *Bot) elseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
-	ch := utils.WaitForMessage("SendChannelDelSecond")
+func (b *Bot) ElseChat(user []string) { //проверяем всех игроков этой очереди на присутствие в других очередях или корпорациях
+	ch := utils.WaitForMessage("ElseChat")
 	defer close(ch)
 	user = utils.RemoveDuplicates(user)
 	for _, u := range user {

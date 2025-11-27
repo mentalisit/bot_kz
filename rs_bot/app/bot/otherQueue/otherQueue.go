@@ -3,6 +3,7 @@ package otherQueue
 import (
 	"fmt"
 	"rs/models"
+	"rs/pkg/utils"
 	"strconv"
 	"strings"
 
@@ -82,12 +83,19 @@ func (o *OtherQ) NeedRemoveOtherQueue(ss []string) {
 		fmt.Println(err)
 		return
 	}
+	uId = utils.RemoveDuplicates(uId)
+	ss = utils.RemoveDuplicates(ss)
 	if len(ss) > 0 {
 		for _, s := range ss {
 			parseInt, _ := strconv.ParseInt(s, 10, 64)
 			for _, i := range uId {
 				if parseInt == i {
-					o.log.InfoStruct("NeedRemoveOtherQueue", s)
+					err = SendUserIDRSSOYUZ(parseInt)
+					if err != nil {
+						o.log.ErrorErr(err)
+					}
+
+					//o.log.InfoStruct("NeedRemoveOtherQueue", s)
 				}
 			}
 		}

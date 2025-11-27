@@ -1,5 +1,6 @@
 package server
 
+import "C"
 import (
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,10 @@ func (s *Server) ReadAllQueueActive0(c *gin.Context) {
 }
 
 func (s *Server) Left(c *gin.Context) {
-	s.PrintGoroutine()
+	type NameID struct {
+		NameID string `json:"nameid"`
+	}
+
 	var rawData json.RawMessage
 
 	// Читаем тело запроса как необработанные JSON-данные
@@ -56,28 +60,33 @@ func (s *Server) Left(c *gin.Context) {
 		return
 	}
 	// Пробуем десериализовать
-	var m []int64
-	err := json.Unmarshal(rawData, &m)
-	if err == nil {
-		c.JSON(http.StatusOK, "OK")
-		s.log.InfoStruct("Left", m)
-		return
-	}
+	var nameIDs []NameID
+	var namesIds []string
 
-	if len(rawData) > 4 {
-		// просто выводим полученные данные как есть
-		var otherData interface{}
-		if err := json.Unmarshal(rawData, &otherData); err == nil {
-			s.log.InfoStruct("	Received other data", otherData)
-			c.JSON(http.StatusOK, "OK")
-			return
+	err := json.Unmarshal(rawData, &nameIDs)
+	if err != nil {
+		err = json.Unmarshal(rawData, &namesIds)
+		if err != nil {
+			var id string
+			err = json.Unmarshal(rawData, &id)
+			if err != nil {
+				s.log.ErrorErr(err)
+				s.log.InfoStruct("Left", string(rawData))
+				fmt.Println("Error parsing JSON:", err)
+
+			}
+			namesIds = append(namesIds, id)
+		}
+	} else {
+		for _, nameID := range nameIDs {
+			namesIds = append(namesIds, nameID.NameID)
 		}
 	}
-	fmt.Println(len(rawData))
-	fmt.Println(string(rawData))
-	// Если ничего не удалось разобрать, выводим ошибку
-	s.log.Error("Не удалось разобрать данные")
-	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+
+	if len(namesIds) > 0 {
+		fmt.Println("Left ", namesIds)
+		s.rs.SendOtherQueue(namesIds)
+	}
 }
 
 func (s *Server) ReadQueueTumcha(c *gin.Context) {

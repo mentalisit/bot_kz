@@ -224,7 +224,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					//проверка есть ли игрок в других чатах
 					user, UserIdTg := u.GetAllUserId()
 					go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
-					go b.elseChat(user)
+					go b.ElseChat(user)
 				}
 			}
 
@@ -327,7 +327,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					//проверка есть ли игрок в других чатах
 					user, UserIdTg := u.GetAllUserId()
 					go b.otherQueue.NeedRemoveOtherQueue(UserIdTg)
-					go b.elseChat(user)
+					go b.ElseChat(user)
 				}
 			}
 		}

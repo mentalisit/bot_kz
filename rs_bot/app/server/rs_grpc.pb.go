@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LogicService_LogicRs_FullMethodName = "/rs.LogicService/LogicRs"
+	LogicService_LogicRs_FullMethodName    = "/rs.LogicService/LogicRs"
+	LogicService_OtherQueue_FullMethodName = "/rs.LogicService/OtherQueue"
 )
 
 // LogicServiceClient is the client API for LogicService service.
@@ -29,6 +30,7 @@ const (
 // Определение сервиса и функции LogicRs
 type LogicServiceClient interface {
 	LogicRs(ctx context.Context, in *InMessage, opts ...grpc.CallOption) (*Empty, error)
+	OtherQueue(ctx context.Context, in *Other, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type logicServiceClient struct {
@@ -49,6 +51,16 @@ func (c *logicServiceClient) LogicRs(ctx context.Context, in *InMessage, opts ..
 	return out, nil
 }
 
+func (c *logicServiceClient) OtherQueue(ctx context.Context, in *Other, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, LogicService_OtherQueue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LogicServiceServer is the server API for LogicService service.
 // All implementations must embed UnimplementedLogicServiceServer
 // for forward compatibility.
@@ -56,6 +68,7 @@ func (c *logicServiceClient) LogicRs(ctx context.Context, in *InMessage, opts ..
 // Определение сервиса и функции LogicRs
 type LogicServiceServer interface {
 	LogicRs(context.Context, *InMessage) (*Empty, error)
+	OtherQueue(context.Context, *Other) (*Empty, error)
 	mustEmbedUnimplementedLogicServiceServer()
 }
 
@@ -68,6 +81,9 @@ type UnimplementedLogicServiceServer struct{}
 
 func (UnimplementedLogicServiceServer) LogicRs(context.Context, *InMessage) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogicRs not implemented")
+}
+func (UnimplementedLogicServiceServer) OtherQueue(context.Context, *Other) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OtherQueue not implemented")
 }
 func (UnimplementedLogicServiceServer) mustEmbedUnimplementedLogicServiceServer() {}
 func (UnimplementedLogicServiceServer) testEmbeddedByValue()                      {}
@@ -108,6 +124,24 @@ func _LogicService_LogicRs_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LogicService_OtherQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Other)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LogicServiceServer).OtherQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LogicService_OtherQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LogicServiceServer).OtherQueue(ctx, req.(*Other))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LogicService_ServiceDesc is the grpc.ServiceDesc for LogicService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +152,10 @@ var LogicService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LogicRs",
 			Handler:    _LogicService_LogicRs_Handler,
+		},
+		{
+			MethodName: "OtherQueue",
+			Handler:    _LogicService_OtherQueue_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

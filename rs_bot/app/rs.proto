@@ -60,8 +60,11 @@ message Option {
 // Определение сервиса и функции LogicRs
 service LogicService {
   rpc LogicRs(InMessage) returns (Empty);
+  rpc OtherQueue(other) returns (Empty);
 }
-
+message other {
+  repeated string UsersIds = 1;
+}
 
 // Пустое сообщение для ответов, не требующих данных
 message Empty {}
