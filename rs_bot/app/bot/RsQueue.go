@@ -133,7 +133,6 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 
 	} else if count == 3 {
 		if !darkStar {
-			b.log.InfoStruct("QUEUE LEVEL 141 ", u)
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {

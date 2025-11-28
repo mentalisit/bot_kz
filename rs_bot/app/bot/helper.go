@@ -84,7 +84,7 @@ func (b *Bot) getMap(in models.InMessage, numberLevel int) map[string]string {
 		n["lvlkz"] = n["levelRs"]
 
 		if err != nil {
-			b.log.Info(fmt.Sprintf("RoleToIdPing lvl %s CorpName %s err: %+v", level, in.Config.CorpName, err))
+			fmt.Printf("RoleToIdPing lvl %s CorpName %s err: %+v\n", level, in.Config.CorpName, err)
 		}
 	}
 
