@@ -4,6 +4,8 @@ import (
 	"compendium/config"
 	"compendium/storage/postgres"
 	"compendium/storage/postgres/multi"
+	postgresv2 "compendium/storage/postgres/postgresV2"
+
 	"github.com/mentalisit/logger"
 	"go.uber.org/zap"
 )
@@ -13,6 +15,7 @@ type Storage struct {
 	debug bool
 	DB    *postgres.Db
 	Multi *multi.Db
+	DBv2  *postgresv2.Db
 }
 
 func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
@@ -21,6 +24,7 @@ func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
 	s := &Storage{
 		DB:    local,
 		Multi: local.Multi,
+		DBv2:  postgresv2.NewDb(log, cfg),
 	}
 
 	//go s.loadDbArray()

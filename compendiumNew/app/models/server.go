@@ -16,6 +16,11 @@ type Code struct {
 	Timestamp int64
 	Identity  Identity
 }
+type CodeV2 struct {
+	Code      string
+	Timestamp int64
+	Identity  IdentityV2
+}
 
 //type IdentityGET struct {
 //	User  User    `json:"user"`
@@ -102,11 +107,6 @@ type CorpMember struct {
 	AfkWhen      int            `json:"afkWhen"`     // Unix Epoch when user returns
 	MultiAccount *MultiAccount
 	MultiGuild   *MultiAccountGuild
-}
-
-type CorpRole struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
 }
 
 type WsKill struct {

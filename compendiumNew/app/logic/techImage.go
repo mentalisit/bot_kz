@@ -67,7 +67,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	if len(mBytes) == 0 {
 		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId, m.MultiGuild.GuildId())
 		if err != nil {
-			c.log.Error(fmt.Sprintf("TechGet %s err %+v", m.Name, err))
+			c.log.Error(fmt.Sprintf("TechGet %s from %s err %+v", m.Name, m.MultiGuild.GuildName, err))
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return
 		}

@@ -4,13 +4,16 @@ import (
 	"compendium/models"
 	"compendium/storage"
 	"compendium/storage/postgres/multi"
+	postgresv2 "compendium/storage/postgres/postgresV2"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mentalisit/logger"
-	"google.golang.org/grpc"
 	"net"
 	"strings"
+	"time"
+
+	"github.com/mentalisit/logger"
+	"google.golang.org/grpc"
 )
 
 type Server struct {
@@ -19,6 +22,8 @@ type Server struct {
 	In  chan models.IncomingMessage
 	LogicServiceServer
 	Multi *multi.Db
+	DBv2  *postgresv2.Db
+	st    *storage.Storage
 }
 
 func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
@@ -33,6 +38,8 @@ func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
 		db:    st.DB,
 		In:    make(chan models.IncomingMessage, 10),
 		Multi: st.Multi,
+		DBv2:  st.DBv2,
+		st:    st,
 	}
 
 	RegisterLogicServiceServer(s, serv)
@@ -57,11 +64,11 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		NickName:    req.NickName,
 		Avatar:      req.Avatar,
 		ChannelId:   req.ChannelId,
-		//GuildId:     req.GuildId,
-		//GuildName:   req.GuildName,
-		//GuildAvatar: req.GuildAvatar,
-		Type:     req.Type,
-		Language: req.Language,
+		GuildId:     req.GuildId,
+		GuildName:   req.GuildName,
+		GuildAvatar: req.GuildAvatar,
+		Type:        req.Type,
+		Language:    req.Language,
 	}
 	if req.GuildId == "" {
 		req.GuildId = "DM"
@@ -88,6 +95,43 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		}
 	}
 	in.MultiGuild = guild
+
+	//v2
+	in.Acc, _ = s.DBv2.FindMultiAccountByUserId(req.NameId)
+	if in.Acc == nil || in.Acc.Nickname == "" {
+		oldAcc, _ := s.st.DB.Multi.FindMultiAccountByUserId(req.NameId)
+		if oldAcc == nil {
+			Acc, err := s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
+			if err != nil {
+				s.log.ErrorErr(err)
+			}
+			in.Acc = Acc
+		} else {
+			in.Acc, _ = s.DBv2.CreateMultiAccountFull(*oldAcc)
+		}
+	}
+	if in.Acc.AvatarURL != req.Avatar {
+		in.Acc, _ = s.DBv2.UpdateMultiAccountAvatarUrl(*in.Acc)
+	}
+	guild2, err := s.DBv2.GuildGetChatId(req.GuildId)
+	if err != nil {
+		_ = s.DBv2.GuildInsert(models.MultiAccountGuildV2{
+			GuildName: req.GuildName,
+			Channels: map[string]string{
+				req.Type: req.GuildId,
+			},
+			AvatarUrl: req.GuildAvatar,
+		})
+		time.Sleep(1 * time.Second)
+		guild2, _ = s.DBv2.GuildGetChatId(req.GuildId)
+	} else if guild2.AvatarUrl != req.GuildAvatar {
+		guild2.AvatarUrl = req.GuildAvatar
+		err = s.DBv2.GuildUpdateAvatar(*guild2)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+	}
+	in.Guild = guild2
 
 	s.In <- in
 	return &Empty{}, nil

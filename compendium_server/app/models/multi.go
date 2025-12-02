@@ -2,8 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/google/uuid"
+	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type MultiAccount struct {
@@ -32,6 +34,10 @@ func (m *MultiAccount) GetTextUsername() string {
 		text = text + "Whatsapp UserName: " + m.WhatsappUsername + "\n"
 	}
 	return text
+}
+func (m *MultiAccount) GetTelegramChatId() int64 {
+	parseInt, _ := strconv.ParseInt(m.TelegramID, 10, 64)
+	return parseInt
 }
 
 type AccountLinkCode struct {

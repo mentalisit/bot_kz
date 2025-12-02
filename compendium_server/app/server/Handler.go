@@ -4,10 +4,12 @@ import (
 	"compendium_s/models"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
@@ -60,8 +62,9 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
 		return
 	}
+	mGuild := c.Query("corpId")
 
-	cacheKey := token + ":" + roleId
+	cacheKey := token + ":" + roleId + ":" + mGuild
 
 	// Проверяем кэш
 	s.cacheMutex.Lock()
@@ -77,7 +80,79 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 	// Кэш отсутствует или устарел — получаем заново
 	i := s.GetTokenIdentity(token)
 	if i != nil {
-		result := s.GetCorpData(i, roleId)
+		var result *models.CorpData
+		if mGuild != "" {
+			// Получаем данные по конкретному ID корпорации
+			var guild *models.Guild
+
+			// Сначала пытаемся найти как multi-гильдию (UUID)
+			if gid, err := uuid.Parse(mGuild); err == nil {
+				multiGuild, err := s.multi.GuildGet(&gid)
+				if err == nil && multiGuild != nil {
+					guild = &models.Guild{
+						ID:   multiGuild.GId.String(),
+						Name: multiGuild.GuildName,
+						URL:  multiGuild.AvatarUrl,
+						Type: "mg",
+					}
+				}
+			}
+
+			// Если не нашли как multi-гильдию, ищем в обычных гильдиях
+			if guild == nil {
+				var err error
+				guild, err = s.db.GuildGet(mGuild)
+				if err != nil {
+					s.log.ErrorErr(err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get guild"})
+					return
+				}
+			}
+
+			if guild == nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "guild not found"})
+				return
+			}
+
+			// Создаем временный Identity с выбранной гильдией
+			tempIdentity := &models.Identity{
+				User:         i.User,
+				Token:        i.Token,
+				MultiAccount: i.MultiAccount,
+				MultiGuild:   nil, // Очищаем MultiGuild для новой гильдии
+			}
+
+			// Для выбранной корпорации всегда используем MultiGuild логику
+			// Создаем MultiAccountGuild из найденной гильдии
+			var multiGuild *models.MultiAccountGuild
+			if gid, err := uuid.Parse(mGuild); err == nil {
+				// corpId - это UUID, пробуем найти существующую multi-гильдию
+				multiGuild, _ = s.multi.GuildGet(&gid)
+			}
+
+			if multiGuild == nil {
+				// Создаем MultiAccountGuild из обычной гильдии
+				if parsedGid, err := uuid.Parse(guild.ID); err == nil {
+					multiGuild = &models.MultiAccountGuild{
+						GId:       parsedGid,
+						GuildName: guild.Name,
+						AvatarUrl: guild.URL,
+						Channels:  []string{}, // Пустой массив каналов
+					}
+				}
+			}
+
+			if multiGuild != nil {
+				tempIdentity.MultiGuild = multiGuild
+			} else {
+				// Fallback на обычную Guild если не удалось создать MultiAccountGuild
+				tempIdentity.Guild = *guild
+			}
+
+			result = s.GetCorpDataInternal(tempIdentity, roleId, false)
+		} else {
+			result = s.GetCorpDataInternal(i, roleId, true)
+		}
 
 		// Сохраняем в кэш
 		s.cacheMutex.Lock()
@@ -276,4 +351,37 @@ func (s *Server) api(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, memb)
+}
+
+func (s *Server) CheckUserCorporationsHandler(c *gin.Context) {
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	c.Header("Access-Control-Allow-Headers", "Authorization")
+
+	token := c.GetHeader("authorization")
+	if token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
+		return
+	}
+
+	// Получаем информацию о пользователе по токену
+	i := s.GetTokenIdentity(token)
+	if i == nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+		return
+	}
+	fmt.Printf("		corp User %+v\n", i.User)
+	// Получаем список корпораций пользователя
+	corporations, err := s.db.UserCorporationsGet(i)
+	if err != nil {
+		s.log.ErrorErr(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
+		return
+	}
+	fmt.Printf("		corp Corps %+v\n", corporations)
+
+	c.JSON(http.StatusOK, gin.H{
+		"user":         i.User,
+		"corporations": corporations,
+	})
 }

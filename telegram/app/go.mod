@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	github.com/OvyFlash/telegram-bot-api v0.0.0-20251112155921-e82db5fd534b
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.7.6

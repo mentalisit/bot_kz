@@ -1,8 +1,10 @@
 package server
 
 import (
+	"compendium_s/config"
 	"compendium_s/models"
 	"compendium_s/server/getCountry"
+	"compendium_s/server/serverV2"
 	"compendium_s/storage"
 	"compendium_s/storage/postgres/multi"
 	"fmt"
@@ -25,6 +27,7 @@ type Server struct {
 	keyFile    string
 	cacheReq   map[string]cacheEntry
 	cacheMutex sync.Mutex
+	v2Server   *serverV2.ServerV2
 }
 
 type cacheEntry struct {
@@ -32,7 +35,8 @@ type cacheEntry struct {
 	timestamp time.Time // Когда сохранили
 }
 
-func NewServer(log *logger.Logger, st *storage.Storage) *Server {
+func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Server {
+
 	s := &Server{
 		log:      log,
 		db:       st.DB,
@@ -42,6 +46,7 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 		certFile: "docker/cert/RSA-cert.pem",
 		keyFile:  "docker/cert/RSA-privkey.pem",
 		cacheReq: make(map[string]cacheEntry),
+		v2Server: serverV2.NewServerV2(log, st.DBv2),
 	}
 
 	go s.RunServer()
@@ -53,8 +58,11 @@ func (s *Server) RunServer() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
+	s.v2Server.RegisterV2Routes(router)
+
 	router.Use(gin.LoggerWithFormatter(s.CustomLogFormatter))
 
+	// Регистрируем маршруты V1
 	router.OPTIONS("/compendium/applink/identities", s.Check)
 	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
 
@@ -69,6 +77,9 @@ func (s *Server) RunServer() {
 
 	router.OPTIONS("/compendium/applink/refresh", s.Check)
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
+
+	router.OPTIONS("/compendium/user/corporations", s.Check)
+	router.GET("/compendium/user/corporations", s.CheckUserCorporationsHandler)
 
 	router.GET("/links", s.links)
 
@@ -102,6 +113,7 @@ type db interface {
 	CodeGet(code string) (*models.Code, error)
 	CodeAllGet() []models.Code
 	CodeDelete(code string)
+	UserCorporationsGet(identity *models.Identity) ([]models.Guild, error)
 }
 
 func (s *Server) PrintGoroutine() {
@@ -121,7 +133,7 @@ func (s *Server) PrintGoroutine() {
 }
 func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 	if param.Method == "OPTIONS" {
-		return fmt.Sprintf("")
+		return ""
 	}
 	var statusColor, methodColor, resetColor string
 	if param.IsOutputColor() {

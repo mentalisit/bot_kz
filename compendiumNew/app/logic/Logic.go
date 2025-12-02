@@ -8,6 +8,11 @@ import (
 )
 
 func (c *Hs) logic(m models.IncomingMessage) {
+	if strings.HasPrefix(m.Text, "%%%") {
+		m.Text, _ = strings.CutPrefix(m.Text, "%%")
+		c.newLogic.Logic(m)
+		return
+	}
 	c.PrintGoroutine()
 
 	if strings.Contains(m.Type, "DM") && !strings.HasPrefix(m.Text, "%") {

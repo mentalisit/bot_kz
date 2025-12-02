@@ -7,6 +7,10 @@ import (
 )
 
 func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData {
+	return s.GetCorpDataInternal(i, roleId, true)
+}
+
+func (s *Server) GetCorpDataInternal(i *models.Identity, roleId string, allowTogether bool) *models.CorpData {
 	c := models.CorpData{}
 	c.Members = []models.CorpMember{}
 
@@ -16,9 +20,11 @@ func (s *Server) GetCorpData(i *models.Identity, roleId string) *models.CorpData
 
 	fmt.Println("GetCorpData use old")
 
-	together := s.GetCorpDataIfTogether(i, roleId)
-	if together != nil {
-		return together
+	if allowTogether {
+		together := s.GetCorpDataIfTogether(i, roleId)
+		if together != nil {
+			return together
+		}
 	}
 	if i.Guild.Type == "ds" {
 		s.roles.LoadGuild(i.Guild.ID)

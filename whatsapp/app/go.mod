@@ -9,7 +9,7 @@ require (
 	github.com/mdp/qrterminal v1.0.1
 	github.com/mentalisit/logger v0.0.0-20241208232400-90177fa09c6f
 	go.mau.fi/util v0.9.3
-	go.mau.fi/whatsmeow v0.0.0-20251120135021-071293c6b9f0
+	go.mau.fi/whatsmeow v0.0.0-20251127132918-b9ac3d51d746
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 	modernc.org/sqlite v1.40.1

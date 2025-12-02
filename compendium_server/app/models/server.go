@@ -118,12 +118,6 @@ type CorpMember struct {
 	Multi       *MultiAccount
 }
 
-type CorpRole struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	TypeRole string
-}
-
 //type WsKill struct {
 //	GuildId      string
 //	ChatId       string

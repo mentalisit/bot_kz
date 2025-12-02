@@ -15,6 +15,17 @@ func SetupRouter(storage *storage.Storage, bot *tgbotapi.BotAPI) http.Handler {
 
 	// API routes
 	api := router.PathPrefix("/api").Subrouter()
+
+	// Discord OAuth routes
+	router.HandleFunc("/auth/discord", handler.AuthDiscord).Methods("GET")
+	router.HandleFunc("/auth/callback/discord", handler.AuthDiscordCallback).Methods("GET")
+	router.HandleFunc("/auth/link", handler.AuthLinkPage).Methods("GET")
+
+	// API для отправки данных авторизации
+	api.HandleFunc("/auth/link", handler.SubmitAuthData).Methods("POST")
+
+	// API для проверки Discord данных пользователя
+	api.HandleFunc("/auth/check-discord", handler.CheckDiscordData).Methods("GET")
 	// В разделе Chat routes добавьте:
 	api.HandleFunc("/chat/{chatId}/roles/{roleId}/members", handler.GetRoleMembers).Methods("GET")
 

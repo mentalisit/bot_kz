@@ -14,6 +14,7 @@ func (b *Bot) SubscribePing(in models.InMessage) {
 	if flag {
 		return
 	}
+	b.log.Info(fmt.Sprintf("SubscribePing %+v\n", in))
 
 	subscribes := b.storage.Subscribe.SubscribePing(models.Subscribe{
 		Name:    in.Username,

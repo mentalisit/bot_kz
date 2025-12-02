@@ -13,9 +13,7 @@ import (
 const urlLink = "https://mentalisit.github.io/HadesSpace/"
 
 func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
-	if helperCommand(m.Text, "connect") ||
-		helperCommand(m.Text, "подключить") ||
-		helperCommand(m.Text, "підключити") {
+	if helperCommand(m.Text, "connect") || helperCommand(m.Text, "подключить") || helperCommand(m.Text, "підключити") {
 		conn = true
 	}
 	if !conn {

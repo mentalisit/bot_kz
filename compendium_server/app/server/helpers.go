@@ -3,9 +3,10 @@ package server
 import (
 	"compendium_s/models"
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
@@ -18,9 +19,11 @@ func (s *Server) GetTokenIdentity(token string) *models.Identity {
 			multiAccount, _ := s.multi.FindMultiAccountUUID(uid)
 			if multiAccount != nil {
 				i.User = models.User{
+					ID:        multiAccount.UUID.String(),
 					Username:  multiAccount.Nickname,
 					AvatarURL: multiAccount.AvatarURL,
 					Alts:      multiAccount.Alts,
+					GameName:  multiAccount.Nickname,
 				}
 			}
 			i.MultiAccount = multiAccount
