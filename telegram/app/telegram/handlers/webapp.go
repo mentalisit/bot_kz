@@ -2,16 +2,21 @@ package handlers
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"telegram/models"
 	"telegram/storage"
 	"time"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -21,9 +26,25 @@ type WebAppHandler struct {
 }
 
 func NewWebAppHandler(storage *storage.Storage, bot *tgbotapi.BotAPI) *WebAppHandler {
-	return &WebAppHandler{
+	h := &WebAppHandler{
 		storage: storage,
 		bot:     bot,
+	}
+	h.loadConfig()
+	return h
+}
+
+var DiscordOAuthConfig = models.OAuthConfig{}
+
+func (h *WebAppHandler) loadConfig() {
+	// Discord OAuth конфигурация
+	DiscordOAuthConfig = models.OAuthConfig{
+		DiscordClientID:     h.storage.Conf.DiscordClientID,
+		DiscordClientSecret: h.storage.Conf.DiscordClientSecret,
+		DiscordRedirectURI:  "https://webapp.mentalisit.myds.me/auth/callback/discord",
+		DiscordAuthURL:      "https://discord.com/api/oauth2/authorize",
+		DiscordTokenURL:     "https://discord.com/api/oauth2/token",
+		DiscordUserURL:      "https://discord.com/api/users/@me",
 	}
 }
 
@@ -582,4 +603,603 @@ func (h *WebAppHandler) GetRoleMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.sendJSON(w, roleUsers)
+}
+
+// authDiscord перенаправляет на Discord OAuth
+func (h *WebAppHandler) AuthDiscord(w http.ResponseWriter, r *http.Request) {
+	// Получаем Telegram initData из параметров запроса
+	initData := r.URL.Query().Get("init_data")
+	if initData == "" {
+		initData = r.Header.Get("X-Telegram-Init-Data")
+	}
+
+	// Создаем state с включенными Telegram данными
+	stateData := map[string]string{
+		"id":       uuid.New().String(),
+		"initData": initData,
+	}
+	stateJSON, _ := json.Marshal(stateData)
+	state := base64.StdEncoding.EncodeToString(stateJSON)
+
+	discordOAuthURL := fmt.Sprintf(
+		"%s?client_id=%s&redirect_uri=%s&response_type=code&scope=identify&state=%s",
+		DiscordOAuthConfig.DiscordAuthURL,
+		DiscordOAuthConfig.DiscordClientID,
+		url.QueryEscape(DiscordOAuthConfig.DiscordRedirectURI),
+		state,
+	)
+
+	http.Redirect(w, r, discordOAuthURL, http.StatusFound)
+}
+
+// authDiscordCallback обрабатывает callback от Discord OAuth
+func (h *WebAppHandler) AuthDiscordCallback(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+
+	if code == "" {
+		log.Printf("No authorization code received from Discord")
+		http.Error(w, "Не получен authorization code", http.StatusBadRequest)
+		return
+	}
+
+	// Извлекаем Telegram данные из state
+	var telegramInitData string
+	if state != "" {
+		stateData, err := base64.StdEncoding.DecodeString(state)
+		if err == nil {
+			var stateMap map[string]string
+			if json.Unmarshal(stateData, &stateMap) == nil {
+				telegramInitData = stateMap["initData"]
+			}
+		}
+	}
+
+	// Обмениваем code на access token
+	tokenResp, err := h.exchangeDiscordCode(code)
+	if err != nil {
+		log.Printf("Failed to exchange Discord code: %v", err)
+		http.Error(w, "Ошибка авторизации Discord", http.StatusInternalServerError)
+		return
+	}
+
+	// Получаем информацию о пользователе
+	userResp, err := h.getDiscordUser(tokenResp.AccessToken)
+	if err != nil {
+		log.Printf("Failed to get Discord user info: %v", err)
+		http.Error(w, "Не удалось получить информацию о пользователе", http.StatusInternalServerError)
+		return
+	}
+
+	// Создаем токен для фронтенда
+	token := fmt.Sprintf("discord_%s", userResp.ID)
+
+	// Формируем URL для редиректа с данными Discord и Telegram
+	params := url.Values{}
+	params.Set("discord_token", token)
+	params.Set("discord_id", userResp.ID)
+	params.Set("discord_name", userResp.Username)
+
+	if telegramInitData != "" {
+		params.Set("telegram_init_data", telegramInitData)
+	}
+
+	redirectURL := "/auth/link?" + params.Encode()
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+// exchangeDiscordCode обменивает authorization code на access token
+func (h *WebAppHandler) exchangeDiscordCode(code string) (*models.DiscordTokenResponse, error) {
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
+	data.Set("redirect_uri", DiscordOAuthConfig.DiscordRedirectURI)
+	data.Set("client_id", DiscordOAuthConfig.DiscordClientID)
+	data.Set("client_secret", DiscordOAuthConfig.DiscordClientSecret)
+
+	req, err := http.NewRequest("POST", DiscordOAuthConfig.DiscordTokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("не удалось создать запрос: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось обменять code на token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("ошибка Discord API [%d]: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp models.DiscordTokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, fmt.Errorf("не удалось декодировать ответ: %w", err)
+	}
+
+	return &tokenResp, nil
+}
+
+// getDiscordUser получает информацию о пользователе Discord
+func (h *WebAppHandler) getDiscordUser(accessToken string) (*models.DiscordUserResponse, error) {
+	req, err := http.NewRequest("GET", DiscordOAuthConfig.DiscordUserURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось создать запрос: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("не удалось получить информацию о пользователе: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("ошибка Discord User API [%d]: %s", resp.StatusCode, string(body))
+	}
+
+	var userResp models.DiscordUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
+		return nil, fmt.Errorf("не удалось декодировать ответ: %w", err)
+	}
+
+	return &userResp, nil
+}
+
+// AuthLinkPage показывает страницу с информацией об авторизации Discord
+func (h *WebAppHandler) AuthLinkPage(w http.ResponseWriter, r *http.Request) {
+	// Получаем параметры из URL
+	discordToken := r.URL.Query().Get("discord_token")
+	discordID := r.URL.Query().Get("discord_id")
+	discordName := r.URL.Query().Get("discord_name")
+	telegramInitData := r.URL.Query().Get("telegram_init_data")
+
+	// Парсим Telegram initData для получения информации о пользователе
+	var telegramUser map[string]interface{}
+	var telegramUserID int64
+	var telegramUsername string
+	var telegramFirstName string
+	var telegramLastName string
+
+	if telegramInitData != "" {
+		// initData имеет формат: user={json}&chat_instance=...&...
+		// Нужно правильно декодировать URL и извлечь JSON пользователя
+
+		// Сначала декодируем URL
+		decodedInitData, err := url.QueryUnescape(telegramInitData)
+		if err != nil {
+			log.Printf("Failed to decode telegram initData: %v", err)
+		} else {
+			// Ищем user= в декодированных данных
+			if strings.Contains(decodedInitData, "user=") {
+				// Разбираем параметры
+				params := strings.Split(decodedInitData, "&")
+				for _, param := range params {
+					if strings.HasPrefix(param, "user=") {
+						userJSON := strings.TrimPrefix(param, "user=")
+
+						// Декодируем JSON пользователя (может быть двойное кодирование)
+						userJSON, err = url.QueryUnescape(userJSON)
+						if err != nil {
+							log.Printf("Failed to decode user JSON: %v", err)
+							continue
+						}
+
+						// Парсим JSON
+						if json.Unmarshal([]byte(userJSON), &telegramUser) == nil {
+							if id, ok := telegramUser["id"].(float64); ok {
+								telegramUserID = int64(id)
+							}
+							if username, ok := telegramUser["username"].(string); ok {
+								telegramUsername = username
+							}
+							if firstName, ok := telegramUser["first_name"].(string); ok {
+								telegramFirstName = firstName
+							}
+							if lastName, ok := telegramUser["last_name"].(string); ok {
+								telegramLastName = lastName
+							}
+						} else {
+							log.Printf("Failed to parse user JSON: %s", userJSON)
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// Формируем HTML форму для ввода основного никнейма
+	html := `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord авторизация</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #5865F2, #7289DA);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .data-display {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #00ff88;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #00ff88;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .btn {
+            background: #00ff88;
+            color: #5865F2;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+        .status.error {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Финальный шаг авторизации</h1>
+
+        <div class="data-display">`
+
+	if discordID != "" {
+		html += fmt.Sprintf("discord_id=%s<br>", discordID)
+	}
+	if discordName != "" {
+		html += fmt.Sprintf("discord_name=%s<br>", discordName)
+	}
+
+	if telegramUserID != 0 {
+		html += "<br>"
+		html += fmt.Sprintf("telegram_id=%d<br>", telegramUserID)
+		if telegramFirstName != "" {
+			html += fmt.Sprintf("first_name=%s<br>", telegramFirstName)
+		}
+		if telegramLastName != "" {
+			html += fmt.Sprintf("last_name=%s<br>", telegramLastName)
+		}
+		if telegramUsername != "" {
+			html += fmt.Sprintf("username=%s<br>", telegramUsername)
+		}
+	}
+
+	html += `</div>
+
+        <form id="nicknameForm">
+            <div class="form-group">
+                <label for="mainNickname">Основной никнейм:</label>
+                <input type="text" id="mainNickname" name="main_nickname"
+                       placeholder="Введите ваш основной никнейм" required>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">Отправить данные</button>
+        </form>
+
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+            console.log('Telegram WebApp initialized');
+        } else {
+            console.log('Not in Telegram WebApp environment');
+        }
+
+        const form = document.getElementById('nicknameForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const mainNickname = document.getElementById('mainNickname').value.trim();
+            if (!mainNickname) {
+                showStatus('Пожалуйста, введите основной никнейм', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправка...';
+
+            try {
+                const response = await fetch('/api/auth/link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        discord_id: '` + discordID + `',
+                        discord_name: '` + discordName + `',
+                        discord_token: '` + discordToken + `',
+                        telegram_id: ` + fmt.Sprintf("%d", telegramUserID) + `,
+                        first_name: '` + telegramFirstName + `',
+                        last_name: '` + telegramLastName + `',
+                        username: '` + telegramUsername + `',
+                        main_nickname: mainNickname
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Данные успешно отправлены! Перенаправление в редактор ролей...', 'success');
+                    console.log('Data sent successfully, will redirect to main page');
+
+
+                    // Перенаправление на главную страницу через 2 секунды
+                    setTimeout(() => {
+                        returnToMainPage();
+                    }, 2000);
+
+                    // Запасной вариант - перенаправление на главную через 5 секунд
+                    setTimeout(() => {
+                        console.log('Fallback: redirecting to main page');
+                        window.location.href = 'https://webapp.mentalisit.myds.me/';
+                    }, 5000);
+                } else {
+                    const error = await response.text();
+                    showStatus('❌ Ошибка: ' + error, 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Ошибка сети: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить данные';
+            }
+        });
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + type;
+            statusMessage.style.display = 'block';
+        }
+
+        function returnToMainPage() {
+            console.log('Returning to main page...');
+
+            if (window.Telegram && window.Telegram.WebApp) {
+                try {
+                    // Сначала попробуем отправить данные боту
+                    if (typeof window.Telegram.WebApp.sendData === 'function') {
+                        window.Telegram.WebApp.sendData(JSON.stringify({
+                            action: 'auth_complete',
+                            discord_id: '` + discordID + `',
+                            telegram_id: ` + fmt.Sprintf("%d", telegramUserID) + `,
+                            main_nickname: 'submitted'
+                        }));
+                        console.log('Data sent to bot');
+                    }
+
+                    // Через небольшую задержку перенаправляем на главную страницу
+                    setTimeout(() => {
+                        window.location.href = 'https://webapp.mentalisit.myds.me/';
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Error sending data:', error);
+                    // Если не получилось отправить данные, просто перенаправляем
+                    window.location.href = '/';
+                }
+            } else {
+                // Для тестирования вне Telegram - перенаправление на главную
+                console.log('Not in Telegram WebApp, redirecting to main page');
+                window.location.href = 'https://webapp.mentalisit.myds.me/';
+            }
+        }
+
+        function closeWebApp() {
+            returnToMainPage();
+        }
+    </script>
+</body>
+</html>`
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
+}
+
+// SubmitAuthData обрабатывает отправку данных авторизации с основным никнеймом
+func (h *WebAppHandler) SubmitAuthData(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		DiscordID    string `json:"discord_id"`
+		DiscordName  string `json:"discord_name"`
+		DiscordToken string `json:"discord_token"`
+		TelegramID   int64  `json:"telegram_id"`
+		FirstName    string `json:"first_name"`
+		LastName     string `json:"last_name"`
+		Username     string `json:"username"`
+		MainNickname string `json:"main_nickname"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		log.Printf("Failed to decode auth data: %v", err)
+		http.Error(w, "Неверный формат данных", http.StatusBadRequest)
+		return
+	}
+
+	telegramIDStr := fmt.Sprintf("%d", data.TelegramID)
+
+	// Проверяем, существует ли уже аккаунт для этого Telegram пользователя
+	existingAccount, err := h.storage.Db.FindMultiAccountByTelegramID(telegramIDStr)
+	if err != nil {
+		log.Printf("Error checking existing account: %v", err)
+		http.Error(w, "Ошибка базы данных", http.StatusInternalServerError)
+		return
+	}
+
+	var account *models.MultiAccount
+
+	if existingAccount != nil {
+		// Обновляем существующий аккаунт Discord данными
+		existingAccount.DiscordID = data.DiscordID
+		existingAccount.DiscordUsername = data.DiscordName
+		existingAccount.Nickname = data.MainNickname
+
+		updatedAccount, err := h.storage.Db.UpdateMultiAccount(*existingAccount)
+		if err != nil {
+			log.Printf("Error updating account: %v", err)
+			http.Error(w, "Ошибка обновления аккаунта", http.StatusInternalServerError)
+			return
+		}
+		account = updatedAccount
+	} else {
+		// Создаем новый аккаунт
+		newAccount := models.MultiAccount{
+			UUID:             uuid.New(),
+			Nickname:         data.MainNickname,
+			TelegramID:       telegramIDStr,
+			TelegramUsername: data.Username,
+			DiscordID:        data.DiscordID,
+			DiscordUsername:  data.DiscordName,
+			AvatarURL:        "",
+			Alts:             []string{},
+		}
+
+		createdAccount, err := h.storage.Db.CreateMultiAccount(newAccount)
+		if err != nil {
+			log.Printf("Error creating account: %v", err)
+			http.Error(w, "Ошибка создания аккаунта", http.StatusInternalServerError)
+			return
+		}
+		account = createdAccount
+	}
+
+	// Отправляем успешный ответ
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "success",
+		"message": "Данные успешно сохранены. Возврат в редактор ролей...",
+		"uuid":    account.UUID.String(),
+	})
+}
+
+// CheckDiscordData проверяет, есть ли у Telegram пользователя Discord данные
+func (h *WebAppHandler) CheckDiscordData(w http.ResponseWriter, r *http.Request) {
+	telegramIDStr := r.URL.Query().Get("telegram_id")
+	if telegramIDStr == "" {
+		http.Error(w, "Не указан telegram_id", http.StatusBadRequest)
+		return
+	}
+
+	// Ищем аккаунт в базе данных по Telegram ID
+	account, err := h.storage.Db.FindMultiAccountByTelegramID(telegramIDStr)
+	if err != nil {
+		log.Printf("Error finding multi account by telegram ID %s: %v", telegramIDStr, err)
+		http.Error(w, "Ошибка базы данных", http.StatusInternalServerError)
+		return
+	}
+
+	var discordData map[string]interface{}
+
+	if account != nil && account.DiscordID != "" {
+		// Discord аккаунт найден
+		discordData = map[string]interface{}{
+			"has_discord":  true,
+			"discord_id":   account.DiscordID,
+			"discord_name": account.DiscordUsername,
+			"nickname":     account.Nickname,
+			"uuid":         account.UUID.String(),
+		}
+		// Добавляем аватар только если есть ссылка
+		if account.AvatarURL != "" {
+			discordData["avatar"] = account.AvatarURL
+		}
+	} else {
+		// Discord аккаунт не найден
+		discordData = map[string]interface{}{
+			"has_discord": false,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(discordData)
 }

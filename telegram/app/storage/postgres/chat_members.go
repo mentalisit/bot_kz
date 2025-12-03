@@ -275,3 +275,52 @@ func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models.User, er
 
 	return admins, nil
 }
+
+// GetRolesUsers возвращает пользователей чата с определенной ролью
+func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]models.User, error) {
+	query := `
+		SELECT
+			cm.user_id,
+			cm.first_name,
+			cm.last_name,
+			cm.user_name,
+			cm.is_admin
+		FROM telegram.chat_members cm
+		JOIN telegram.user_roles ur ON cm.user_id = ur.user_id
+		WHERE cm.chat_id = $1 AND ur.role_id = $2 AND ur.chat_id = $1
+		ORDER BY cm.is_admin DESC, cm.first_name, cm.last_name
+	`
+
+	rows, err := d.db.Query(ctx, query, chatID, roleId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query role users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(
+			&user.ID,
+			&user.FirstName,
+			&user.LastName,
+			&user.UserName,
+			&user.IsAdmin,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+
+		// Инициализируем карту ролей и добавляем текущую роль
+		user.Roles = make(map[int64]bool)
+		user.Roles[roleId] = true
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return users, nil
+}

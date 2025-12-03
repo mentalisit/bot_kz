@@ -37,7 +37,7 @@ func (u *User) GetUserName() string {
 
 func (u *User) FormatMention() string {
 	if u.UserName != "" {
-		return "@" + EscapeMarkdownV2(u.UserName)
+		return "@" + u.UserName
 	}
 	return fmt.Sprintf("[%s](tg://user?id=%d)", EscapeMarkdownV2(u.GetUserName()), u.ID)
 }

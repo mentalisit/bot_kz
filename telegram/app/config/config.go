@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
 	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type ConfigBot struct {
@@ -23,6 +24,8 @@ type ConfigBot struct {
 		Username string `yaml:"username" env-default:"root"`
 		Password string `yaml:"password" env-default:"root"`
 	} `yaml:"postgress"`
+	DiscordClientID     string `yaml:"discordClientID"`
+	DiscordClientSecret string `yaml:"discordClientSecret"`
 }
 
 var Instance *ConfigBot

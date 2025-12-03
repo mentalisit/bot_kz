@@ -30,13 +30,13 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 	if roleId == 0 {
 		return false, nil
 	}
-	users, _ := t.Storage.Db.GetChatUsers(context.Background(), chat)
+	users, _ := t.Storage.Db.GetRolesUsers(context.Background(), chat, roleId)
 	if len(users) == 0 {
 		return false, nil
 	}
 	var u []models.User
 	for _, user := range users {
-		if user.ID != userID && user.Roles[roleId] {
+		if user.ID != userID {
 			u = append(u, user)
 		}
 	}
@@ -98,16 +98,9 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 				for _, mention := range mentions {
 					for _, role := range roles {
 						if role.Name == mention[1:] {
-
-							users, _ := t.Storage.Db.GetChatUsers(context.Background(), m.Chat.ID)
-							for _, user := range users {
-								_, exists := user.Roles[role.ID]
-								if exists {
-									if us[role.Name] == nil {
-										us[role.Name] = []models.User{}
-									}
-									us[role.Name] = append(us[role.Name], user)
-								}
+							users, _ := t.Storage.Db.GetRolesUsers(context.Background(), m.Chat.ID, role.ID)
+							if len(users) > 0 {
+								us[role.Name] = users
 							}
 						}
 					}
