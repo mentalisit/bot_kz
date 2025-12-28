@@ -11,6 +11,12 @@ type Chat struct {
 	ChatID   int64  `json:"chat_id"`
 	ChatName string `json:"chat_name"`
 }
+type CompendiumCorpMember struct {
+	UserID      string `json:"user_id"`
+	Username    string `json:"username"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
+	TableSource string `json:"table_source"` // "my_compendium", "compendium", "hs_compendium"
+}
 
 type User struct {
 	ID        int64  `json:"id"`

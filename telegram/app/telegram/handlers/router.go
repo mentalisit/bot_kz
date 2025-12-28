@@ -46,6 +46,10 @@ func SetupRouter(storage *storage.Storage, bot *tgbotapi.BotAPI, log *logger.Log
 	api.HandleFunc("/chat/{chatId}/users/{userId}/roles/{roleId}", handler.SetUserRole).Methods("POST", "DELETE")
 	api.HandleFunc("/chat/{chatId}/permissions", handler.GetUserPermissions).Methods("GET")
 
+	// Corporation routes
+	api.HandleFunc("/chat/{chatId}/corp-members", handler.GetCorpMembers).Methods("GET")
+	api.HandleFunc("/chat/{chatId}/corp-members/{userId}", handler.RemoveCorpMember).Methods("DELETE")
+
 	// Serve static files (frontend)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./docker/templates/")))
 

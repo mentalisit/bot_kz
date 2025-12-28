@@ -379,3 +379,246 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 
 	return nil
 }
+
+// GetCorpMembersMyCompendium возвращает участников корпорации из my_compendium
+func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]models.CompendiumCorpMember, error) {
+	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+	// Находим всех участников корпорации
+	corpMembersQuery := `SELECT cm.uid, ma.nickname, ma.avatarurl
+		FROM my_compendium.corpmember cm
+		JOIN my_compendium.multi_accounts ma ON cm.uid = ma.uuid
+		WHERE $1 = ANY(cm.guildIds)`
+
+	rows, err := d.db.Query(ctx, corpMembersQuery, gid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query corp members: %w", err)
+	}
+	defer rows.Close()
+
+	var users []models.CompendiumCorpMember
+	for rows.Next() {
+		var user models.CompendiumCorpMember
+		var userUUID uuid.UUID
+		if err := rows.Scan(&userUUID, &user.Username, &user.AvatarURL); err != nil {
+			return nil, fmt.Errorf("failed to scan corp member: %w", err)
+		}
+
+		user.UserID = userUUID.String()
+		user.TableSource = "my_compendium"
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating corp members rows: %w", err)
+	}
+
+	return users, nil
+}
+
+// GetCorpMembersCompendium возвращает участников корпорации из Compendium
+func (d *Db) GetCorpMembersCompendium(ctx context.Context, chatID int64) ([]models.CompendiumCorpMember, error) {
+	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Находим всех участников корпорации
+	corpMembersQuery := `SELECT cm.uid, ma.nickname, ma.avatarurl
+		FROM compendium.corpmember cm
+		JOIN compendium.multi_accounts ma ON cm.uid = ma.uuid
+		WHERE $1 = ANY(cm.guildIds)`
+
+	rows, err := d.db.Query(ctx, corpMembersQuery, gid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query corp members: %w", err)
+	}
+	defer rows.Close()
+
+	var users []models.CompendiumCorpMember
+	for rows.Next() {
+		var user models.CompendiumCorpMember
+		var userUUID uuid.UUID
+		if err := rows.Scan(&userUUID, &user.Username, &user.AvatarURL); err != nil {
+			return nil, fmt.Errorf("failed to scan corp member: %w", err)
+		}
+
+		user.UserID = userUUID.String()
+		user.TableSource = "compendium"
+		user.Username = "(MA) " + user.Username
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating corp members rows: %w", err)
+	}
+
+	return users, nil
+}
+
+// GetCorpMembersHSCompendium возвращает участников корпорации из hs_compendium
+func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]models.CompendiumCorpMember, error) {
+	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+	guildId := gid.String()
+
+	sel := "SELECT username,userid,avatarurl FROM hs_compendium.corpmember WHERE guildid = $1"
+	results, err := d.db.Query(ctx, sel, guildId)
+	defer results.Close()
+	if err != nil {
+		return nil, err
+	}
+	var mm []models.CompendiumCorpMember
+	for results.Next() {
+		var t models.CompendiumCorpMember
+		err = results.Scan(&t.Username, &t.UserID, &t.AvatarURL)
+		if err != nil {
+			return nil, err
+		}
+		t.TableSource = "hs_compendium"
+		t.Username = changeName(t)
+		mm = append(mm, t)
+	}
+	return mm, nil
+}
+func changeName(m models.CompendiumCorpMember) string {
+	if len(m.UserID) < 13 {
+		return "(TG) " + m.Username
+	} else if len(m.UserID) > 16 {
+		return "(DS) " + m.Username
+	}
+	return m.Username
+}
+
+func (d *Db) GetGildUUIDMyCompendium(ctx context.Context, chatID int64) (gid *uuid.UUID, err error) {
+	guildQuery := `SELECT gid FROM my_compendium.guilds WHERE EXISTS (
+		SELECT 1 FROM jsonb_object_keys(channels) AS k
+		CROSS JOIN jsonb_array_elements_text(channels->k) AS v
+		WHERE v = $1
+	)`
+	err = d.db.QueryRow(ctx, guildQuery, strconv.FormatInt(chatID, 10)).Scan(&gid)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("guild not found for chat %d", chatID)
+		}
+		return nil, fmt.Errorf("failed to find guild: %w", err)
+	}
+	return gid, nil
+}
+
+// RemoveCorpMemberMyCompendium удаляет участника из корпорации my_compendium
+func (d *Db) RemoveCorpMemberMyCompendium(ctx context.Context, chatID int64, userID string) error {
+	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+	if err != nil {
+		return err
+	}
+
+	// Конвертируем userID из строки в UUID
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	// Получаем текущие guildIds для этого участника
+	var currentGuilds []uuid.UUID
+	guildsQuery := `SELECT guildIds FROM my_compendium.corpmember WHERE uid = $1`
+	err = d.db.QueryRow(ctx, guildsQuery, userUUID).Scan(&currentGuilds)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("corp member not found for uid %s", userID)
+		}
+		return fmt.Errorf("failed to get current guilds: %w", err)
+	}
+
+	// Удаляем gid из массива guildIds
+	var newGuilds []uuid.UUID
+	for _, guild := range currentGuilds {
+		if guild != *gid {
+			newGuilds = append(newGuilds, guild)
+		}
+	}
+
+	// Если после удаления не осталось гильдий, удаляем запись целиком
+	if len(newGuilds) == 0 {
+		deleteQuery := `DELETE FROM my_compendium.corpmember WHERE uid = $1`
+		_, err = d.db.Exec(ctx, deleteQuery, userUUID)
+		if err != nil {
+			return fmt.Errorf("failed to delete corp member: %w", err)
+		}
+	} else {
+		// Обновляем запись с оставшимися гильдиями
+		updateQuery := `UPDATE my_compendium.corpmember SET guildIds = $1 WHERE uid = $2`
+		_, err = d.db.Exec(ctx, updateQuery, newGuilds, userUUID)
+		if err != nil {
+			return fmt.Errorf("failed to update corp member: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveCorpMemberCompendium удаляет участника из корпорации Compendium
+func (d *Db) RemoveCorpMemberCompendium(ctx context.Context, chatID int64, userID string) error {
+	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+	if err != nil {
+		return err
+	}
+
+	// Конвертируем userID из строки в UUID
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	// Получаем текущие guildIds для этого участника
+	var currentGuilds []uuid.UUID
+	guildsQuery := `SELECT guildIds FROM compendium.corpmember WHERE uid = $1`
+	err = d.db.QueryRow(ctx, guildsQuery, userUUID).Scan(&currentGuilds)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("corp member not found for uid %s", userID)
+		}
+		return fmt.Errorf("failed to get current guilds: %w", err)
+	}
+
+	// Удаляем gid из массива guildIds
+	var newGuilds []uuid.UUID
+	for _, guild := range currentGuilds {
+		if guild != *gid {
+			newGuilds = append(newGuilds, guild)
+		}
+	}
+
+	// Если после удаления не осталось гильдий, удаляем запись целиком
+	if len(newGuilds) == 0 {
+		deleteQuery := `DELETE FROM compendium.corpmember WHERE uid = $1`
+		_, err = d.db.Exec(ctx, deleteQuery, userUUID)
+		if err != nil {
+			return fmt.Errorf("failed to delete corp member: %w", err)
+		}
+	} else {
+		// Обновляем запись с оставшимися гильдиями
+		updateQuery := `UPDATE compendium.corpmember SET guildIds = $1 WHERE uid = $2`
+		_, err = d.db.Exec(ctx, updateQuery, newGuilds, userUUID)
+		if err != nil {
+			return fmt.Errorf("failed to update corp member: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// RemoveCorpMemberHSCompendium удаляет участника из корпорации hs_compendium
+func (d *Db) RemoveCorpMemberHSCompendium(ctx context.Context, chatID int64, userID string) error {
+	deleteQuery := `DELETE FROM hs_compendium.corpmember WHERE uid = $1 and guildid = $2`
+	_, err := d.db.Exec(ctx, deleteQuery, userID, chatID)
+	if err != nil {
+		return fmt.Errorf("failed to delete corp member: %w", err)
+	}
+	return nil
+}
