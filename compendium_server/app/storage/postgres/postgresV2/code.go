@@ -1,7 +1,7 @@
 package postgresv2
 
 import (
-	"compendium/models"
+	"compendium_s/models"
 	"encoding/json"
 )
 
@@ -35,4 +35,11 @@ func (d *Db) CodeGet(code string) (*models.Code, error) {
 		return nil, err
 	}
 	return &u, nil
+}
+func (d *Db) CodeDelete(code string) {
+	del := "delete from my_compendium.codes where code = $1"
+	_, err := d.db.Exec(del, code)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
 }

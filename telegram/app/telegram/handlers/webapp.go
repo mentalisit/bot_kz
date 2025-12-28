@@ -18,17 +18,20 @@ import (
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/mentalisit/logger"
 )
 
 type WebAppHandler struct {
 	storage *storage.Storage
 	bot     *tgbotapi.BotAPI
+	log     *logger.Logger
 }
 
-func NewWebAppHandler(storage *storage.Storage, bot *tgbotapi.BotAPI) *WebAppHandler {
+func NewWebAppHandler(storage *storage.Storage, bot *tgbotapi.BotAPI, log *logger.Logger) *WebAppHandler {
 	h := &WebAppHandler{
 		storage: storage,
 		bot:     bot,
+		log:     log,
 	}
 	h.loadConfig()
 	return h
@@ -1124,6 +1127,8 @@ func (h *WebAppHandler) SubmitAuthData(w http.ResponseWriter, r *http.Request) {
 		existingAccount.DiscordUsername = data.DiscordName
 		existingAccount.Nickname = data.MainNickname
 
+		h.log.InfoStruct("*existingAccount ", *existingAccount)
+
 		updatedAccount, err := h.storage.Db.UpdateMultiAccount(*existingAccount)
 		if err != nil {
 			log.Printf("Error updating account: %v", err)
@@ -1145,6 +1150,7 @@ func (h *WebAppHandler) SubmitAuthData(w http.ResponseWriter, r *http.Request) {
 		}
 
 		createdAccount, err := h.storage.Db.CreateMultiAccount(newAccount)
+		h.log.InfoStruct("CreateMultiAccount ", createdAccount)
 		if err != nil {
 			log.Printf("Error creating account: %v", err)
 			http.Error(w, "Ошибка создания аккаунта", http.StatusInternalServerError)

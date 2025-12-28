@@ -6,10 +6,11 @@ import (
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"github.com/gorilla/mux"
+	"github.com/mentalisit/logger"
 )
 
-func SetupRouter(storage *storage.Storage, bot *tgbotapi.BotAPI) http.Handler {
-	handler := NewWebAppHandler(storage, bot)
+func SetupRouter(storage *storage.Storage, bot *tgbotapi.BotAPI, log *logger.Logger) http.Handler {
+	handler := NewWebAppHandler(storage, bot, log)
 
 	router := mux.NewRouter()
 

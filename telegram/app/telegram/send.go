@@ -250,6 +250,10 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string, r
 						return "", err
 					}
 					return strconv.Itoa(res.MessageID), nil
+				case ".webp":
+					dc := tgbotapi.NewInputMediaDocument(fileRequestData)
+					dc.Caption = text
+					media = append(media, &dc)
 				default:
 					dc := tgbotapi.NewInputMediaDocument(fileRequestData)
 					dc.Caption = text
@@ -281,6 +285,24 @@ func (t *Telegram) sendFileExtra(extra []models.FileInfo, text, chatID string, r
 			}
 			messages, err := t.t.SendMediaGroup(mg)
 			if err != nil {
+				// If the error indicates a sticker being sent as photo, retry as documents
+				if strings.Contains(err.Error(), "can't use file of type Sticker as Photo") {
+					t.log.Info("Retrying failed photo send as documents due to sticker detection")
+					// Convert all photos in the media group to documents
+					for i, m := range media {
+						if pc, ok := m.(*tgbotapi.InputMediaPhoto); ok {
+							dc := tgbotapi.NewInputMediaDocument(pc.Media)
+							dc.Caption = pc.Caption
+							media[i] = &dc
+						}
+					}
+					// Retry with documents
+					messages, retryErr := t.t.SendMediaGroup(mg)
+					if retryErr != nil {
+						return "", err // Return original error
+					}
+					return strconv.Itoa(messages[0].MessageID), nil
+				}
 				return "", err
 			}
 			// return first message id

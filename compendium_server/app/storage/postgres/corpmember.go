@@ -73,11 +73,49 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 				member.LocalTime = t12
 				member.LocalTime24 = t24
 			}
+			member.UserId = t.UserId + "/" + member.Name
 			mm = append(mm, member)
 		}
 	}
 	return mm, nil
 }
+
+func (d *Db) CorpMemberRead(userid string) ([]models.CorpMember, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	sel := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1"
+	results, err := d.db.Query(ctx, sel, userid)
+	defer results.Close()
+	if err != nil {
+		return nil, err
+	}
+	var mm []models.CorpMember
+	for results.Next() {
+		var t models.CorpMember
+		var id int
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+
+		getAll, errGet := d.TechGetAll(t)
+		if errGet != nil {
+			d.log.InfoStruct("TechGetAll(t)", t)
+			return nil, errGet
+		}
+		user, erru := d.UsersGetByUserId(t.UserId)
+		if erru != nil {
+			d.log.InfoStruct("UsersGetByUserId", t)
+			d.log.ErrorErr(erru)
+		}
+
+		for _, member := range getAll {
+			if user != nil && member.Name == user.Username && user.GameName != "" {
+				member.Name = user.GameName
+			}
+			mm = append(mm, member)
+		}
+	}
+	return mm, nil
+}
+
 func getTimeStrings(offset int) (string, string) {
 	// Получаем текущее время в UTC
 	now := time.Now().UTC()

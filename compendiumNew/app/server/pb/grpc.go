@@ -3,22 +3,23 @@ package pb
 import (
 	"compendium/models"
 	"compendium/storage"
+	"compendium/storage/postgres"
 	"compendium/storage/postgres/multi"
-	postgresv2 "compendium/storage/postgres/postgresV2"
+	"compendium/storage/postgres/postgresV2"
 	"context"
 	"errors"
 	"fmt"
 	"net"
 	"strings"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/mentalisit/logger"
 	"google.golang.org/grpc"
 )
 
 type Server struct {
 	log *logger.Logger
-	db  db
+	db  *postgres.Db
 	In  chan models.IncomingMessage
 	LogicServiceServer
 	Multi *multi.Db
@@ -38,7 +39,7 @@ func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
 		db:    st.DB,
 		In:    make(chan models.IncomingMessage, 10),
 		Multi: st.Multi,
-		DBv2:  st.DBv2,
+		DBv2:  st.V2,
 		st:    st,
 	}
 
@@ -76,62 +77,81 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		in.ChannelId = in.DmChat
 		in.Type = in.Type[:2]
 	}
-	guild, _ := s.Multi.GuildGet(req.GuildId)
-	if guild == nil {
-		err := s.Multi.GuildInsert(models.MultiAccountGuild{
-			GuildName: req.GuildName,
-			Channels:  []string{req.GuildId},
-			AvatarUrl: req.GuildAvatar,
-		})
-		if err != nil {
-			s.log.ErrorErr(err)
+
+	multiAccount, _ := s.db.Multi.FindMultiAccountByUserId(in.NameId)
+	if multiAccount != nil && multiAccount.TelegramID != "" && multiAccount.DiscordID != "" {
+		if in.Avatar != "" {
+			if multiAccount.AvatarURL != in.Avatar {
+				multiAccount.AvatarURL = in.Avatar
+				_, _ = s.db.Multi.UpdateMultiAccountAvatarUrl(*multiAccount)
+			}
 		}
-		guild, _ = s.Multi.GuildGet(req.GuildId)
-	} else if guild.AvatarUrl != req.GuildAvatar {
-		guild.AvatarUrl = req.GuildAvatar
-		err := s.Multi.GuildUpdateAvatar(*guild)
-		if err != nil {
-			s.log.ErrorErr(err)
-		}
+		in.MultiAccount = multiAccount
 	}
-	in.MultiGuild = guild
 
 	//v2
-	in.Acc, _ = s.DBv2.FindMultiAccountByUserId(req.NameId)
-	if in.Acc == nil || in.Acc.Nickname == "" {
+	in.MAcc, _ = s.DBv2.FindMultiAccountByUserId(req.NameId)
+	fmt.Printf("FindMultiAccountByUserId %s\n", req.NameId)
+	if in.MAcc == nil || in.MAcc.Nickname == "" {
 		oldAcc, _ := s.st.DB.Multi.FindMultiAccountByUserId(req.NameId)
-		if oldAcc == nil {
-			Acc, err := s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
-			if err != nil {
-				s.log.ErrorErr(err)
+		user, _ := s.db.UsersGetByUserId(req.NameId)
+		if oldAcc == nil && user != nil {
+			oldAcc = &models.MultiAccount{
+				UUID:      uuid.New(),
+				Nickname:  user.GameName,
+				AvatarURL: user.AvatarURL,
+				Alts:      user.Alts,
 			}
-			in.Acc = Acc
+			if oldAcc.Nickname == "" {
+				oldAcc.Nickname = user.Username
+			}
+			//if req.Type
+			switch req.Type {
+			case "ds":
+				oldAcc.DiscordID = user.ID
+				oldAcc.DiscordUsername = user.Username
+			case "tg":
+				oldAcc.TelegramID = user.ID
+				oldAcc.TelegramUsername = user.Username
+			case "wa":
+				oldAcc.WhatsappID = user.ID
+				oldAcc.WhatsappUsername = user.Username
+			}
+		}
+		if oldAcc != nil {
+			//копируем
+			in.MAcc, _ = s.DBv2.CreateMultiAccountFull(*oldAcc)
 		} else {
-			in.Acc, _ = s.DBv2.CreateMultiAccountFull(*oldAcc)
+			// Создаем новый аккаунт
+			in.MAcc, _ = s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
 		}
 	}
-	if in.Acc.AvatarURL != req.Avatar {
-		in.Acc, _ = s.DBv2.UpdateMultiAccountAvatarUrl(*in.Acc)
+	if in.MAcc.AvatarURL != req.Avatar {
+		in.MAcc.AvatarURL = req.Avatar
+		in.MAcc, _ = s.DBv2.UpdateMultiAccountAvatarUrl(*in.MAcc)
+
 	}
+	fmt.Printf("in.ma %+v\n", in.MAcc)
 	guild2, err := s.DBv2.GuildGetChatId(req.GuildId)
-	if err != nil {
-		_ = s.DBv2.GuildInsert(models.MultiAccountGuildV2{
+	if err != nil && guild2 == nil {
+		g := models.MultiAccountGuildV2{
 			GuildName: req.GuildName,
-			Channels: map[string]string{
-				req.Type: req.GuildId,
-			},
+			Channels:  make(map[string][]string),
 			AvatarUrl: req.GuildAvatar,
-		})
-		time.Sleep(1 * time.Second)
-		guild2, _ = s.DBv2.GuildGetChatId(req.GuildId)
-	} else if guild2.AvatarUrl != req.GuildAvatar {
+		}
+		g.Channels[req.Type] = append(g.Channels[req.Type], req.GuildId)
+		guild2, err = s.DBv2.GuildInsert(g)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+	} else if guild2 != nil && guild2.AvatarUrl != req.GuildAvatar {
 		guild2.AvatarUrl = req.GuildAvatar
 		err = s.DBv2.GuildUpdateAvatar(*guild2)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
 	}
-	in.Guild = guild2
+	in.MGuild = guild2
 
 	s.In <- in
 	return &Empty{}, nil
@@ -158,7 +178,6 @@ func (s *Server) CorpMembersApiRead(ctx context.Context, req *ReqCorpMembersApiR
 			Name:        m.Name,
 			UserId:      m.UserId,
 			GuildId:     m.GuildId,
-			Avatar:      m.Avatar,
 			AvatarUrl:   m.AvatarUrl,
 			LocalTime:   m.LocalTime,
 			LocalTime24: m.LocalTime24,
@@ -172,8 +191,8 @@ func (s *Server) CorpMembersApiRead(ctx context.Context, req *ReqCorpMembersApiR
 		for i, ints := range m.Tech {
 
 			cm.Tech[int32(i)].Tech = append(cm.Tech[int32(i)].Tech, &TechLevel{
-				Ts:    int64(ints[0]),
-				Level: int32(ints[1]),
+				Ts:    ints.Ts,
+				Level: int32(ints.Level),
 			})
 		}
 
@@ -191,15 +210,15 @@ func (s *Server) ApiGetUserAlts(ctx context.Context, req *ReqApiGetUserAlts) (*R
 	return &ResApiGetUserAlts{Alts: read.Alts}, nil
 }
 
-type db interface {
-	CorpMembersRead(guildid string) ([]models.CorpMember, error)
-	CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error)
-	GuildRolesRead(guildid string) ([]models.CorpRole, error)
-	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
-	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
-	UsersGetByUserId(userid string) (*models.User, error)
-	GuildGet(guildid string) (*models.Guild, error)
-	TechGet(username, userid, guildid string) ([]byte, error)
-	TechUpdate(username, userid, guildid string, tech []byte) error
-	CodeGet(code string) (*models.Code, error)
-}
+//type db interface {
+//	CorpMembersRead(guildid string) ([]models.CorpMember, error)
+//	CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error)
+//	GuildRolesRead(guildid string) ([]models.CorpRole, error)
+//	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
+//	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
+//	UsersGetByUserId(userid string) (*models.User, error)
+//	//GuildGet(guildid string) (*models.Guild, error)
+//	TechGet(username, userid, guildid string) ([]byte, error)
+//	TechUpdate(username, userid, guildid string, tech []byte) error
+//	CodeGet(code string) (*models.Code, error)
+//}

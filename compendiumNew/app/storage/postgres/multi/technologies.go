@@ -4,6 +4,7 @@ import (
 	"compendium/models"
 	"encoding/json"
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -70,10 +71,10 @@ func (d *Db) TechnologiesGetAllCorpMember(cm models.CorpMember) ([]models.CorpMe
 	var acm []models.CorpMember
 	sel := "SELECT username,tech FROM compendium.technologies WHERE uid = $1"
 	q, err := d.db.Query(ctx, sel, cm.MultiAccount.UUID)
-	defer q.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer q.Close()
 
 	for q.Next() {
 		var ncm models.CorpMember
@@ -84,17 +85,18 @@ func (d *Db) TechnologiesGetAllCorpMember(cm models.CorpMember) ([]models.CorpMe
 			return acm, err
 		}
 
-		var techl models.TechLevels
-		err = json.Unmarshal(tech, &techl)
+		//var techl models.TechLevels
+		err = json.Unmarshal(tech, &ncm.Tech)
 		if err != nil {
 			return acm, err
 		}
-		if len(techl) > 0 {
-			ncm.Tech = make(map[int][2]int)
-			for i, level := range techl {
-				ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
-			}
-		}
+		//if len(techl) > 0 {
+		//	ncm.Tech = make(models.TechLevels)
+		//	for i, level := range techl {
+		//		ncm.Tech[i] = level
+		//		ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
+		//	}
+		//}
 		acm = append(acm, ncm)
 	}
 	if err = q.Err(); err != nil { // Проверка ошибок после завершения итерации

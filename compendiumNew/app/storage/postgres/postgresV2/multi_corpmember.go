@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 // Multi-corp member methods
@@ -15,7 +16,7 @@ func (d *Db) CorpMemberByUId(uid uuid.UUID) (*models.MultiAccountCorpMember, err
 
 	query := `SELECT uid, guildIds, timeZona, zonaOffset, afkFor FROM my_compendium.corpMember WHERE uid = $1`
 	err := d.db.QueryRow(query, uid).Scan(
-		&corpMember.Uid, &guildIds, &corpMember.TimeZona, &corpMember.ZonaOffset, &corpMember.AfkFor,
+		&corpMember.Uid, pq.Array(&guildIds), &corpMember.TimeZona, &corpMember.ZonaOffset, &corpMember.AfkFor,
 	)
 	if err != nil {
 		return nil, err
@@ -36,7 +37,7 @@ func (d *Db) CorpMemberByUId(uid uuid.UUID) (*models.MultiAccountCorpMember, err
 
 func (d *Db) CorpMembersReadMulti(gid *uuid.UUID) ([]models.CorpMemberV2, error) {
 	query := `
-		SELECT ma.uuid, ma.nickname, ma.discord_id, ma.telegram_id, ma.whatsapp_id,
+		SELECT ma.uuid, ma.nickname, ma.discord_id, ma.telegram_id, ma.whatsapp_id, ma.avatarurl,
 			   cm.timeZona, cm.zonaOffset, cm.afkFor
 		FROM my_compendium.corpMember cm
 		JOIN my_compendium.multi_accounts ma ON cm.uid = ma.uuid
@@ -62,7 +63,7 @@ func (d *Db) CorpMembersReadMulti(gid *uuid.UUID) ([]models.CorpMemberV2, error)
 		member.Multi = &models.MultiAccount{}
 
 		err := rows.Scan(
-			&memberUUID, &nickname, &discordID, &telegramID, &whatsappID,
+			&memberUUID, &nickname, &discordID, &telegramID, &whatsappID, &member.AvatarUrl,
 			&member.TimeZone, &member.ZoneOffset, &member.AfkFor,
 		)
 		if err != nil {
@@ -105,7 +106,7 @@ func (d *Db) CorpMemberInsert(corpMember models.MultiAccountCorpMember) error {
 		INSERT INTO my_compendium.corpMember (uid, guildIds, timeZona, zonaOffset, afkFor)
 		VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := d.db.Exec(query, corpMember.Uid, corpMember.GuildIds, corpMember.TimeZona, corpMember.ZonaOffset, corpMember.AfkFor)
+	_, err := d.db.Exec(query, corpMember.Uid, pq.Array(corpMember.GuildIds), corpMember.TimeZona, corpMember.ZonaOffset, corpMember.AfkFor)
 	if err != nil {
 		d.log.ErrorErr(fmt.Errorf("failed to insert corp member: %w", err))
 		return err
@@ -120,7 +121,7 @@ func (d *Db) CorpMemberUpdate(corpMember models.MultiAccountCorpMember) error {
 		SET guildIds = $2, timeZona = $3, zonaOffset = $4, afkFor = $5
 		WHERE uid = $1`
 
-	_, err := d.db.Exec(query, corpMember.Uid, corpMember.GuildIds, corpMember.TimeZona, corpMember.ZonaOffset, corpMember.AfkFor)
+	_, err := d.db.Exec(query, corpMember.Uid, pq.Array(corpMember.GuildIds), corpMember.TimeZona, corpMember.ZonaOffset, corpMember.AfkFor)
 	if err != nil {
 		d.log.ErrorErr(fmt.Errorf("failed to update corp member: %w", err))
 		return err

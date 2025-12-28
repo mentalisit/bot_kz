@@ -224,18 +224,18 @@ func (b *Bot) lEvent(in models.InMessage) (bb bool) {
 	//	}
 	//	go b.EventPoints(in, numkz, points)
 	//}
-	switch in.Mtext {
-	case "Ивент старт":
-		go b.EventStart(in)
-		bb = true
-	case "event add corp":
-		go b.EventPreStart(in)
-		bb = true
-
-	case "Ивент стоп":
-		go b.EventStop(in)
-		bb = true
-	}
+	//switch in.Mtext {
+	//case "Ивент старт":
+	//	go b.EventStart(in)
+	//	bb = true
+	//case "event add corp":
+	//	go b.EventPreStart(in)
+	//	bb = true
+	//
+	//case "Ивент стоп":
+	//	go b.EventStop(in)
+	//	bb = true
+	//}
 	return bb
 }
 

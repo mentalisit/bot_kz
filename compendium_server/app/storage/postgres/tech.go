@@ -8,12 +8,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
+func (d *Db) TechInsert(username, userid string, tech []byte) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, guildid, userid, username).Scan(&count)
+	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
+	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -27,19 +27,19 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 			tech, _ = json.Marshal(techEmpty)
 		}
 		insert := `INSERT INTO hs_compendium.tech(username, userid, guildid, tech) VALUES ($1,$2,$3,$4)`
-		_, err = d.db.Exec(ctx, insert, username, userid, guildid, tech)
+		_, err = d.db.Exec(ctx, insert, username, userid, "all", tech)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
+func (d *Db) TechGet(username, userid string) ([]byte, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
-	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, userid, guildid, username).Scan(&tech)
+	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
+	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&tech)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return nil, err
@@ -47,30 +47,18 @@ func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
 	}
 	return tech, nil
 }
-func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	var tech []byte
-	var userid string
-	sel := "SELECT userid,tech FROM hs_compendium.tech WHERE guildid = $1 AND username = $2"
-	err := d.db.QueryRow(ctx, sel, guildid, username).Scan(&userid, &tech)
-	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			return nil, "", err
-		}
-	}
-	return tech, userid, nil
-}
+
 func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var acm []models.CorpMember
-	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
-	q, err := d.db.Query(ctx, sel, cm.UserId, cm.GuildId)
-	defer q.Close()
+	acmMap := make(map[string]models.CorpMember)
+	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1"
+	q, err := d.db.Query(ctx, sel, cm.UserId)
 	if err != nil {
 		return acm, err
 	}
+	defer q.Close()
 	for q.Next() {
 		var ncm models.CorpMember
 		ncm = cm
@@ -90,26 +78,35 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 			return nil, err
 		}
 		if len(techl) > 0 {
-			m := make(map[int][2]int)
+			m := make(models.TechLevels)
 			for i, level := range techl {
-				m[i] = [2]int{level.Level, int(level.Ts)}
+				m[i] = level
 			}
 			ncm.Tech = m
 		}
-		acm = append(acm, ncm)
+
+		if acmMap[ncm.Name].Name == "" {
+			acmMap[ncm.Name] = ncm
+		} else {
+			acmMap[ncm.Name] = compare(acmMap[ncm.Name], ncm)
+		}
+	}
+	for _, member := range acmMap {
+		acm = append(acm, member)
 	}
 	return acm, nil
 }
-func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
+
+func (d *Db) TechUpdate(username, userid string, tech []byte) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3 and guildid = $4`
-	updresult, err := d.db.Exec(ctx, upd, tech, username, userid, guildid)
+	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3`
+	updresult, err := d.db.Exec(ctx, upd, tech, username, userid)
 	if err != nil {
 		return err
 	}
 	if updresult.RowsAffected() == 0 {
-		err = d.TechInsert(username, userid, guildid, tech)
+		err = d.TechInsert(username, userid, tech)
 		if err != nil {
 			d.log.ErrorErr(err)
 			return err
@@ -117,38 +114,28 @@ func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
 	}
 	return nil
 }
-func (d *Db) TechDelete(username, userid, guildid string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, guildid, userid, username).Scan(&count)
-	if err != nil {
-		return err
+
+func compare(cm1, cm2 models.CorpMember) models.CorpMember {
+	var cm models.CorpMember
+	cm = cm1
+	if cm2.ZoneOffset != 0 {
+		cm.ZoneOffset = cm2.ZoneOffset
 	}
-	if count > 0 {
-		del := "delete from hs_compendium.tech where username = $1 and userid = $2 and guildid = $3"
-		_, err = d.db.Exec(ctx, del, username, userid, guildid)
-		if err != nil {
-			return err
+	if cm2.TimeZone != "" {
+		cm.TimeZone = cm2.TimeZone
+	}
+	if cm2.AfkFor != "" {
+		cm.AfkFor = cm2.AfkFor
+	}
+	cm.Tech = make(models.TechLevels)
+	for i, level := range cm1.Tech {
+		if cm2.Tech[i].Ts == level.Ts {
+			cm.Tech[i] = level
+		} else if cm2.Tech[i].Ts > level.Ts {
+			cm.Tech[i] = cm2.Tech[i]
+		} else if cm2.Tech[i].Ts < level.Ts {
+			cm.Tech[i] = level
 		}
 	}
-	return nil
+	return cm
 }
-
-//func (d *Db) Unsubscribe(ctx context.Context, name, lvlkz string, TgChannel string, tipPing int) {
-//	del := "delete from kzbot.subscribe where name = $1 AND lvlkz = $2 AND chatid = $3 AND tip = $4"
-//	_, err := d.db.Exec(ctx, del, name, lvlkz, TgChannel, tipPing)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//	}
-//}
-//func (d *Db) TechGetCount(userid, guildid string) (int, error) {
-//	var count int
-//	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2"
-//	err := d.db.QueryRow(context.Background(), sel, guildid, userid).Scan(&count)
-//	if err != nil {
-//		return 0, err
-//	}
-//	return count, nil
-//}

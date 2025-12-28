@@ -3,8 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"telegram/models"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -193,6 +195,11 @@ func (d *Db) RemoveUserFromChat(ctx context.Context, chatID, userID int64) error
 	query = `DELETE FROM telegram.user_roles WHERE chat_id = $1 AND user_id = $2`
 	_, _ = d.db.Exec(ctx, query, chatID, userID)
 
+	err = d.FindCorpMemberAndRemoveByUserId(strconv.FormatInt(userID, 10), strconv.FormatInt(chatID, 10))
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
 	return nil
 }
 
@@ -323,4 +330,52 @@ func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]m
 	}
 
 	return users, nil
+}
+
+func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
+
+	//получаем мультиюзера по юзерАйди
+	var uid uuid.UUID
+	query := `SELECT uuid  FROM my_compendium.multi_accounts WHERE telegram_id = $1`
+	err := d.db.QueryRow(context.Background(), query, userid).Scan(&uid)
+	if err != nil {
+		return err
+	}
+
+	//получаем список корпораций мультиюзера
+	var guilds []uuid.UUID
+	query = `SELECT guildIds FROM my_compendium.corpMember WHERE uid = $1`
+	err = d.db.QueryRow(context.Background(), query, uid).Scan(&guilds)
+	if err != nil {
+		return err
+	}
+
+	//получаем айди корпорации
+	var gid uuid.UUID
+	query = `SELECT gid FROM my_compendium.guilds WHERE EXISTS (
+		    SELECT 1 FROM jsonb_object_keys(channels) AS k
+		    CROSS JOIN jsonb_array_elements_text(channels->k) AS v
+		    WHERE v = $1
+		)`
+	err = d.db.QueryRow(context.Background(), query, channelId).Scan(&gid)
+	if err != nil {
+		return err
+	}
+
+	var newGuilds []uuid.UUID
+	for _, guild := range guilds {
+		if guild != gid {
+			newGuilds = append(newGuilds, guild)
+		}
+	}
+
+	//update
+	query = `UPDATE my_compendium.corpMember SET guildIds = $1 WHERE uid = $2`
+	_, err = d.db.Exec(context.Background(), query, newGuilds, uid)
+	if err != nil {
+		d.log.ErrorErr(fmt.Errorf("failed to update corp member: %w", err))
+		return err
+	}
+
+	return nil
 }

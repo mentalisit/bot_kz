@@ -2,6 +2,7 @@ package imageGenerator
 
 import (
 	"bytes"
+	"compendium/models"
 	"fmt"
 	"image"
 	"image/gif"
@@ -16,13 +17,11 @@ import (
 	"github.com/nfnt/resize"
 )
 
-var user map[int][2]int
+var user models.TechLevels
 
 func GetLevel(i int) string {
-	l := user[i]
-	if l[0] > 0 {
-		level := strconv.Itoa(l[0])
-		return level
+	if user[i].Level > 0 {
+		return strconv.Itoa(user[i].Level)
 	}
 	return ""
 }

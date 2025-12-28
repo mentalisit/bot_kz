@@ -28,7 +28,7 @@ func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
 		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
+		&acc.AvatarURL, pq.Array(&acc.Alts),
 	)
 	if err != nil {
 		return nil, err
@@ -42,6 +42,9 @@ func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 	}
 	if whatsappID.Valid {
 		acc.WhatsappID = whatsappID.String
+	}
+	if acc.UUID.String() == "00000000-0000-0000-0000-000000000000" {
+		return nil, errors.New("invalid UUID")
 	}
 
 	return &acc, nil
@@ -62,7 +65,7 @@ func (d *Db) FindMultiAccountUUID(uid uuid.UUID) (*models.MultiAccount, error) {
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
 		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
+		&acc.AvatarURL, pq.Array(&acc.Alts),
 	)
 	if err != nil {
 		return nil, err
@@ -95,7 +98,7 @@ func (d *Db) FindMultiAccountByUserId(userid string) (*models.MultiAccount, erro
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
 		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
+		&acc.AvatarURL, pq.Array(&acc.Alts),
 	)
 	if err != nil {
 		return nil, err
@@ -178,16 +181,29 @@ func (d *Db) LinkTelegramToAccount(uuid string, telegramID, telegramUsername str
 	return nil
 }
 
-// CreateMultiAccountFull создает новый аккаунт со всеми данными
+// CreateMultiAccountFull создает новый аккаунт или обновляет существующий со всеми данными
 func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount, error) {
+	if m.UUID.String() == "00000000-0000-0000-0000-000000000000" {
+		m.UUID = uuid.New()
+	}
 	query := `
-		INSERT INTO my_compendium.multi_accounts (
+		INSERT INTO my_compendium.multi_accounts (uuid,
 			nickname, telegram_id, telegram_username,
 			discord_id, discord_username, whatsapp_id, whatsapp_username,
 			avatarUrl, alts
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)` + returningMultiAccount
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		ON CONFLICT (uuid) DO UPDATE SET
+			nickname = EXCLUDED.nickname,
+			telegram_id = EXCLUDED.telegram_id,
+			telegram_username = EXCLUDED.telegram_username,
+			discord_id = EXCLUDED.discord_id,
+			discord_username = EXCLUDED.discord_username,
+			whatsapp_id = EXCLUDED.whatsapp_id,
+			whatsapp_username = EXCLUDED.whatsapp_username,
+			avatarUrl = EXCLUDED.avatarUrl,
+			alts = EXCLUDED.alts` + returningMultiAccount
 
-	row := d.db.QueryRow(query,
+	row := d.db.QueryRow(query, m.UUID,
 		m.Nickname, m.TelegramID, m.TelegramUsername,
 		m.DiscordID, m.DiscordUsername, m.WhatsappID, m.WhatsappUsername,
 		m.AvatarURL, pq.Array(m.Alts), // Конвертируем []string в PostgreSQL массив

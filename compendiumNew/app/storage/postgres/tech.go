@@ -4,15 +4,16 @@ import (
 	"compendium/models"
 	"encoding/json"
 	"errors"
+
 	"github.com/jackc/pgx/v5"
 )
 
-func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
+func (d *Db) TechInsert(username, userid string, tech []byte) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, guildid, userid, username).Scan(&count)
+	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
+	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -26,7 +27,7 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 			tech, _ = json.Marshal(techEmpty)
 		}
 		insert := `INSERT INTO hs_compendium.tech(username, userid, guildid, tech) VALUES ($1,$2,$3,$4)`
-		_, err = d.db.Exec(ctx, insert, username, userid, guildid, tech)
+		_, err = d.db.Exec(ctx, insert, username, userid, "all", tech)
 		if err != nil {
 			return err
 		}
@@ -34,24 +35,25 @@ func (d *Db) TechInsert(username, userid, guildid string, tech []byte) error {
 	return nil
 }
 
-func (d *Db) TechGet(username, userid, guildid string) ([]byte, error) {
+func (d *Db) TechGet(username, userid string) ([]byte, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
-	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, userid, guildid, username).Scan(&tech)
+	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
+	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&tech)
 	if err != nil {
 		return nil, err
 	}
 	return tech, nil
 }
-func (d *Db) TechGetName(username, guildid string) ([]byte, string, error) {
+
+func (d *Db) TechGetName(username string) ([]byte, string, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var tech []byte
 	var userid string
-	sel := "SELECT userid,tech FROM hs_compendium.tech WHERE guildid = $1 AND username = $2"
-	err := d.db.QueryRow(ctx, sel, guildid, username).Scan(&userid, &tech)
+	sel := "SELECT userid,tech FROM hs_compendium.tech WHERE username = $1"
+	err := d.db.QueryRow(ctx, sel, username).Scan(&userid, &tech)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return nil, "", err
@@ -64,13 +66,13 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var acm []models.CorpMember
-	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1 AND guildid = $2"
-	q, err := d.db.Query(ctx, sel, cm.UserId, cm.GuildId)
+	acmMap := make(map[string]models.CorpMember)
+	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1"
+	q, err := d.db.Query(ctx, sel, cm.UserId)
 	defer q.Close()
 	if err != nil {
-		return nil, err
+		return acm, err
 	}
-
 	for q.Next() {
 		var ncm models.CorpMember
 		ncm = cm
@@ -80,55 +82,47 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 			return nil, err
 		}
 
+		if cm.Name != ncm.Name {
+			ncm.UserId = ncm.UserId + "/" + ncm.Name
+		}
+
 		var techl models.TechLevels
 		err = json.Unmarshal(tech, &techl)
 		if err != nil {
 			return nil, err
 		}
 		if len(techl) > 0 {
-			ncm.Tech = make(map[int][2]int)
+			m := make(models.TechLevels)
 			for i, level := range techl {
-				ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
+				m[i] = level
 			}
+			ncm.Tech = m
 		}
-		acm = append(acm, ncm)
+
+		if acmMap[ncm.Name].Name == "" {
+			acmMap[ncm.Name] = ncm
+		} else {
+			acmMap[ncm.Name] = compareCM(acmMap[ncm.Name], ncm)
+		}
 	}
-	if err = q.Err(); err != nil { // Проверка ошибок после завершения итерации
-		return nil, err
+	for _, member := range acmMap {
+		acm = append(acm, member)
 	}
 	return acm, nil
 }
 
-func (d *Db) TechUpdate(username, userid, guildid string, tech []byte) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	upd := `update hs_compendium.tech set tech = $1 where username = $2 and userid = $3 and guildid = $4`
-	updresult, err := d.db.Exec(ctx, upd, tech, username, userid, guildid)
-	if err != nil {
-		return err
-	}
-	if updresult.RowsAffected() == 0 {
-		//err = d.TechInsert(username, userid, guildid, tech)
-		//if err != nil {
-		//	d.log.ErrorErr(err)
-		//	return err
-		//}
-	}
-	return nil
-}
-
-func (d *Db) TechDelete(username, userid, guildid string) error {
+func (d *Db) TechDelete(username, userid string) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2 AND username = $3"
-	err := d.db.QueryRow(ctx, sel, guildid, userid, username).Scan(&count)
+	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
+	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&count)
 	if err != nil {
 		return err
 	}
 	if count > 0 {
-		del := "delete from hs_compendium.tech where username = $1 and userid = $2 and guildid = $3"
-		_, err = d.db.Exec(ctx, del, username, userid, guildid)
+		del := "delete from hs_compendium.tech where username = $1 and userid = $2"
+		_, err = d.db.Exec(ctx, del, username, userid)
 		if err != nil {
 			return err
 		}
@@ -136,12 +130,12 @@ func (d *Db) TechDelete(username, userid, guildid string) error {
 	return nil
 }
 
-func (d *Db) TechGetCount(userid, guildid string) (int, error) {
+func (d *Db) TechGetCount(userid string) (int, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var count int
-	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE guildid = $1 AND userid = $2"
-	err := d.db.QueryRow(ctx, sel, guildid, userid).Scan(&count)
+	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1"
+	err := d.db.QueryRow(ctx, sel, userid).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -172,4 +166,20 @@ func (d *Db) TechGetAllUserId(userid string) ([]models.TechTable, error) {
 		return nil, err
 	}
 	return acm, nil
+}
+
+func compareCM(cm1, cm2 models.CorpMember) models.CorpMember {
+	var cm models.CorpMember
+	cm = cm1
+	cm.Tech = make(models.TechLevels)
+	for i, level := range cm1.Tech {
+		if cm2.Tech[i].Ts == level.Ts {
+			cm.Tech[i] = level
+		} else if cm2.Tech[i].Ts > level.Ts {
+			cm.Tech[i] = cm2.Tech[i]
+		} else if cm2.Tech[i].Ts < level.Ts {
+			cm.Tech[i] = level
+		}
+	}
+	return cm
 }

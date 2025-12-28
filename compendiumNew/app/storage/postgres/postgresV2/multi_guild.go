@@ -2,19 +2,45 @@ package postgresv2
 
 import (
 	"compendium/models"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
 )
 
-func (d *Db) GuildInsert(u models.MultiAccountGuildV2) error {
-	insert := `INSERT INTO my_compendium.guilds(guildName,channels,avatarUrl) VALUES ($1,$2,$3)`
-	_, err := d.db.Exec(insert, u.GuildName, u.ChannelsBytes(), u.AvatarUrl)
+const returningGuilds = `
+		RETURNING gid, guildname, channels, avatarUrl`
+
+func scanGuilds(row *sql.Row) (*models.MultiAccountGuildV2, error) {
+	var g models.MultiAccountGuildV2
+	var channelsData []byte
+
+	err := row.Scan(&g.GId, &g.GuildName, &channelsData, &g.AvatarUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	// Convert JSONB to map[string][]string
+	g.Channels = make(map[string][]string)
+	if len(channelsData) > 0 {
+		err = json.Unmarshal(channelsData, &g.Channels)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &g, nil
+}
+func (d *Db) GuildInsert(u models.MultiAccountGuildV2) (*models.MultiAccountGuildV2, error) {
+	insert := `INSERT INTO my_compendium.guilds(guildName,channels,avatarUrl) VALUES ($1,$2,$3)` + returningGuilds
+	row := d.db.QueryRow(insert, u.GuildName, u.ChannelsBytes(), u.AvatarUrl)
+	return scanGuilds(row)
+}
+func (d *Db) GuildInsertFull(u models.MultiAccountGuildV2) (*models.MultiAccountGuildV2, error) {
+	insert := `INSERT INTO my_compendium.guilds(gid, guildName,channels,avatarUrl) 
+				VALUES ($1,$2,$3,$4)` + returningGuilds
+	row := d.db.QueryRow(insert, u.GId, u.GuildName, u.ChannelsBytes(), u.AvatarUrl)
+	return scanGuilds(row)
 }
 
 func (d *Db) GuildUpdateAvatar(u models.MultiAccountGuildV2) error {
@@ -43,28 +69,9 @@ func (d *Db) GuildUpdateChannels(u models.MultiAccountGuildV2) error {
 }
 
 func (d *Db) GuildGet(gid *uuid.UUID) (*models.MultiAccountGuildV2, error) {
-	var guild models.MultiAccountGuildV2
-	var channelsData []byte
-
 	query := `SELECT gid, GuildName, Channels, AvatarUrl FROM my_compendium.guilds WHERE gid = $1`
-	err := d.db.QueryRow(query, gid).Scan(
-		&guild.GId, &guild.GuildName, &channelsData, &guild.AvatarUrl,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert JSONB to map[string]string
-	guild.Channels = make(map[string]string)
-	if len(channelsData) > 0 {
-		err = json.Unmarshal(channelsData, &guild.Channels)
-		if err != nil {
-			d.log.ErrorErr(err)
-			return nil, err
-		}
-	}
-
-	return &guild, nil
+	row := d.db.QueryRow(query, gid)
+	return scanGuilds(row)
 }
 
 func (d *Db) GuildGetById(guild string) (*models.MultiAccountGuildV2, error) {
@@ -75,28 +82,14 @@ func (d *Db) GuildGetById(guild string) (*models.MultiAccountGuildV2, error) {
 }
 
 func (d *Db) GuildGetChatId(ChatId string) (*models.MultiAccountGuildV2, error) {
-	var guild models.MultiAccountGuildV2
-	var channelsData []byte
-
-	query := `SELECT gid, GuildName, Channels, AvatarUrl FROM my_compendium.guilds WHERE Channels ? $1`
-	err := d.db.QueryRow(query, ChatId).Scan(
-		&guild.GId, &guild.GuildName, &channelsData, &guild.AvatarUrl,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert JSONB to map[string]string
-	guild.Channels = make(map[string]string)
-	if len(channelsData) > 0 {
-		err = json.Unmarshal(channelsData, &guild.Channels)
-		if err != nil {
-			d.log.ErrorErr(err)
-			return nil, err
-		}
-	}
-
-	return &guild, nil
+	query := `SELECT gid, GuildName, Channels, AvatarUrl FROM my_compendium.guilds
+		WHERE EXISTS (
+		    SELECT 1 FROM jsonb_object_keys(channels) AS k
+		    CROSS JOIN jsonb_array_elements_text(channels->k) AS v
+		    WHERE v = $1
+		)`
+	row := d.db.QueryRow(query, ChatId)
+	return scanGuilds(row)
 }
 
 // GetChatRoles возвращает роли определенного чата

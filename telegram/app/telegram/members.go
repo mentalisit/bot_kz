@@ -41,43 +41,58 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 		}
 	}
 	var mId string
-	if len(u) > 0 {
-		var mentions []string
-
-		for _, member := range u {
-			mentions = append(mentions, member.FormatMention())
-		}
-
-		mentionText := strings.Join(mentions, " ")
+	send := func(mention []string, parseMode bool) {
+		mentionText := strings.Join(mention, " ")
 		fullMessage := fmt.Sprintf("🔔 %s\n%s", RsTypeLevel, mentionText)
 		m := tgbotapi.NewMessage(chat, fullMessage)
+		if parseMode {
+			m.ParseMode = "MarkdownV2"
+			m.Text = fmt.Sprintf("🔔 %s без никнейма\n%s", RsTypeLevel, mentionText)
+		}
 		m.MessageThreadID = threadID
-		_, newText := models.FindTelegramMentions(fullMessage)
-		m.ParseMode = "MarkdownV2"
-		m.Text = newText
 		tMessage, err := t.t.Send(m)
 		if err != nil {
 			if err.Error() != tgbotapi.ErrAPIForbidden {
-				fmt.Println(err)
-				fmt.Printf("chatid '%s', text '%s'", chatid, m.Text)
+				t.log.ErrorErr(err)
+				t.log.Info(fmt.Sprintf("chatid '%s', text '%s'", chatid, m.Text))
 			}
-			return false, err
 		}
 		mId = strconv.Itoa(tMessage.MessageID)
+		tu := int(time.Now().UTC().Unix())
+		t.Storage.Db.TimerInsert(models.Timer{
+			Tip:    "tg",
+			ChatId: chatid,
+			MesId:  mId,
+			Timed:  tu + second,
+		})
 	}
-	tu := int(time.Now().UTC().Unix())
-	t.Storage.Db.TimerInsert(models.Timer{
-		Tip:    "tg",
-		ChatId: chatid,
-		MesId:  mId,
-		Timed:  tu + second,
-	})
+	if len(u) > 0 {
+		var mentions []string
+		var mentionsWithoutNickName []string
+
+		for _, member := range u {
+			if member.UserName != "" {
+				mentions = append(mentions, member.FormatMention())
+			} else {
+				mentionsWithoutNickName = append(mentionsWithoutNickName, member.FormatMention())
+			}
+
+		}
+
+		if len(mentions) > 0 {
+			send(mentions, false)
+		}
+		if len(mentionsWithoutNickName) > 0 {
+			send(mentionsWithoutNickName, true)
+		}
+	}
 
 	if mId != "" {
 		return true, nil
 	}
 	return false, nil
 }
+
 func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 	if edit {
 		//todo need create logic if edit
@@ -96,11 +111,18 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 			if roles != nil {
 				us := make(map[string][]models.User)
 				for _, mention := range mentions {
-					for _, role := range roles {
-						if role.Name == mention[1:] {
-							users, _ := t.Storage.Db.GetRolesUsers(context.Background(), m.Chat.ID, role.ID)
-							if len(users) > 0 {
-								us[role.Name] = users
+					if mention[1:] == "all" && t.CheckAdminTg(ChatId, m.From.UserName) {
+						users, _ := t.Storage.Db.GetChatUsers(context.Background(), m.Chat.ID)
+						if len(users) > 0 {
+							us["all"] = users
+						}
+					} else {
+						for _, role := range roles {
+							if role.Name == mention[1:] {
+								users, _ := t.Storage.Db.GetRolesUsers(context.Background(), m.Chat.ID, role.ID)
+								if len(users) > 0 {
+									us[role.Name] = users
+								}
 							}
 						}
 					}
@@ -114,47 +136,87 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 }
 
 // Функция для упоминания участников по ролям
-func (t *Telegram) MentionMembersRoles(ChatId string, replyId int, trackedMembers map[string][]models.User) {
+func (t *Telegram) MentionMembersRoles1(ChatId string, replyId int, trackedMembers map[string][]models.User) {
 	text := ""
+	text2 := ""
 	for roleName, users := range trackedMembers {
 		if len(users) == 0 {
 			continue
 		}
+
 		var mentions []string
+		var mentionsWithoutNickName []string
+
 		for _, member := range users {
-			mentions = append(mentions, member.FormatMention())
+			if member.UserName != "" {
+				mentions = append(mentions, member.FormatMention())
+			} else {
+				mentionsWithoutNickName = append(mentionsWithoutNickName, member.FormatMention())
+			}
 		}
-		// Формируем сообщение
-		mentionText := strings.Join(mentions, " ")
-		text = fmt.Sprintf("%s\n%s\n%s\n", text, roleName, mentionText)
-	}
 
-	_, _ = t.SendChannelReply(ChatId, text, "MarkdownV2", replyId)
+		if len(mentions) > 0 {
+			// Формируем сообщение
+			mentionText := strings.Join(mentions, " ")
+			text = fmt.Sprintf("%s\n%s\n%s\n", text, roleName, mentionText)
+		}
+		if len(mentionsWithoutNickName) > 0 {
+			mentionText := strings.Join(mentionsWithoutNickName, " ")
+			text2 = fmt.Sprintf("%s\n%s\n%s\n", text2, roleName, mentionText)
+		}
+	}
+	if text != "" {
+		_, _ = t.SendChannelReply(ChatId, text, "", replyId)
+	}
+	if text2 != "" {
+		_, _ = t.SendChannelReply(ChatId, text2, "MarkdownV2", replyId)
+	}
 }
-
-// Функция для упоминания участников
-func (t *Telegram) MentionMembers(or *tgbotapi.Message, trackedMembers []models.User) {
-	var mentions []string
-
-	for _, member := range trackedMembers {
-		mentions = append(mentions, member.FormatMention())
+func (t *Telegram) MentionMembersRoles(ChatId string, replyId int, trackedMembers map[string][]models.User) {
+	if len(trackedMembers) == 0 {
+		return
 	}
 
-	u := models.User{}
-	u.TgUser(or.From)
+	var roles []string
+	mentions := make(map[string]struct{})
+	mentionsNoNick := make(map[string]struct{})
 
-	// Формируем сообщение
-	mentionText := strings.Join(mentions, " ")
-
-	ThreadID := or.MessageThreadID
-	if !or.IsTopicMessage && ThreadID != 0 {
-		ThreadID = 0
+	for roleName, users := range trackedMembers {
+		roles = append(roles, roleName)
+		for _, member := range users {
+			mention := member.FormatMention()
+			if member.UserName != "" {
+				mentions[mention] = struct{}{}
+			} else {
+				mentionsNoNick[mention] = struct{}{}
+			}
+		}
 	}
-	ChatId := strconv.FormatInt(or.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
 
-	_, _ = t.SendChannelReply(ChatId, mentionText, "MarkdownV2", or.MessageID)
+	textRoles := strings.Join(roles, " ")
+
+	// Обработка обычных упоминаний
+	if len(mentions) > 0 {
+		text := fmt.Sprintf("%s\n\n", textRoles)
+		//mList := make([]string, 0, len(mentions))
+		for m := range mentions {
+			text = fmt.Sprintf("%s %s", text, m)
+			//mList = append(mList, m)
+		}
+		//text := textRoles + "\n" + strings.Join(mList, " ") + "\n"
+		_, _ = t.SendChannelReply(ChatId, text, "", replyId)
+	}
+
+	// Обработка упоминаний без ника (MarkdownV2)
+	if len(mentionsNoNick) > 0 {
+		mListNoNick := make([]string, 0, len(mentionsNoNick))
+		for m := range mentionsNoNick {
+			mListNoNick = append(mListNoNick, m)
+		}
+		text2 := textRoles + "\n" + strings.Join(mListNoNick, " ") + "\n"
+		_, _ = t.SendChannelReply(ChatId, text2, "MarkdownV2", replyId)
+	}
 }
-
 func (t *Telegram) Unsubscribe(userId int64, argRoles string, guildId int64) int {
 	roleId, err := t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
 	if err != nil {

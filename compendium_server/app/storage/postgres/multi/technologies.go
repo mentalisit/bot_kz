@@ -4,6 +4,7 @@ import (
 	"compendium_s/models"
 	"encoding/json"
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -90,10 +91,15 @@ func (d *Db) TechnologiesGetAllCorpMember(cm models.CorpMember, UId uuid.UUID) (
 			return acm, err
 		}
 		if len(techl) > 0 {
-			ncm.Tech = make(map[int][2]int)
+			//ncm.Tech = make(map[int][2]int)
+			//for i, level := range techl {
+			//	ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
+			//}
+			ncm.Tech = make(models.TechLevels)
 			for i, level := range techl {
-				ncm.Tech[i] = [2]int{level.Level, int(level.Ts)}
+				ncm.Tech[i] = level
 			}
+			ncm.UserId = ncm.UserId + "/" + ncm.Name
 		}
 		acm = append(acm, ncm)
 	}
@@ -101,6 +107,37 @@ func (d *Db) TechnologiesGetAllCorpMember(cm models.CorpMember, UId uuid.UUID) (
 		return nil, err
 	}
 	return acm, nil
+}
+
+func (d *Db) TechnologiesGetMember(UId uuid.UUID) []models.Technology {
+	ctx, cancel := d.getContext()
+	defer cancel()
+	var tt []models.Technology
+	sel := "SELECT username,tech FROM compendium.technologies WHERE uid = $1"
+	q, err := d.db.Query(ctx, sel, UId)
+	defer q.Close()
+	if err != nil {
+		d.log.ErrorErr(err)
+		return nil
+	}
+
+	for q.Next() {
+		var t models.Technology
+		var tech []byte
+		err = q.Scan(&t.Name, &tech)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return nil
+		}
+
+		err = json.Unmarshal(tech, &t.Tech)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return nil
+		}
+		tt = append(tt, t)
+	}
+	return tt
 }
 
 func (d *Db) TechnologiesUpdate(uid uuid.UUID, username string, tech []byte) error {

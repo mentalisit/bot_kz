@@ -40,17 +40,10 @@ func (m *MultiAccount) GetTelegramChatId() int64 {
 	return parseInt
 }
 
-type AccountLinkCode struct {
-	Code      string
-	UUID      uuid.UUID
-	ExpiresAt time.Time
-	CreatedAt time.Time
-}
-
-type MultiAccountGuild struct {
+type MultiAccountGuildV2 struct {
 	GId       uuid.UUID
 	GuildName string
-	Channels  []string
+	Channels  map[string][]string
 	AvatarUrl string
 }
 
@@ -60,4 +53,9 @@ type MultiAccountCorpMember struct {
 	TimeZona   string
 	ZonaOffset int
 	AfkFor     string
+}
+type Moving struct {
+	MAcc       MultiAccount
+	Tech       []Technology
+	CorpMember MultiAccountCorpMember
 }

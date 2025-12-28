@@ -1,13 +1,15 @@
 package multi
 
 import (
+	"compendium_s/models"
 	"context"
-	"fmt"
+	"time"
+
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
-	"time"
 )
 
 type Db struct {
@@ -81,18 +83,6 @@ func (d *Db) createTable() {
 		return
 	}
 
-	// Создание таблицы guilds
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.guilds (
-	   gid  uuid primary key DEFAULT gen_random_uuid(),
-	   GuildName   TEXT NOT NULL DEFAULT '',
-	   Channels  TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-	   AvatarUrl   TEXT NOT NULL DEFAULT ''
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guilds:", err)
-		return
-	}
-
 	// Создание таблицы corpmember
 	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.corpMember (
 	   uid uuid REFERENCES compendium.multi_accounts(uuid) ON DELETE CASCADE,
@@ -106,55 +96,27 @@ func (d *Db) createTable() {
 		return
 	}
 
-	//// Создание таблицы list_users
-	//_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.list_users (
-	//   uid uuid references compendium.multi_accounts(uuid) on delete cascade,
-	//   guildId 	 TEXT,
-	//   token   TEXT primary key
-	//
-	//)`)
-	//if err != nil {
-	//	d.log.ErrorErr(err)
-	//	return
-	//}
-	//
-	//// Создание таблицы userroles
-	//_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.userRoles (
-	//   id           bigserial primary key,
-	//   guildId      TEXT,
-	//   role         TEXT,
-	//   username     TEXT,
-	//   uid uuid references compendium.multi_accounts(uuid) on delete cascade
-	//)`)
-	//if err != nil {
-	//	d.log.ErrorErr(err)
-	//	return
-	//}
-	//
-	//// Создание таблицы guildroles
-	//_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.guildRoles (
-	//   id           bigserial primary key,
-	//   guildId      TEXT,
-	//   role         TEXT
-	//)`)
-	//if err != nil {
-	//	d.log.ErrorErr(err)
-	//	return
-	//}
-	//
-	//// Создание таблицы wskill
-	//_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS compendium.wsKill (
-	//id           bigserial primary key,
-	//guildId 	 TEXT,
-	//chatId 	     TEXT,
-	//username     TEXT,
-	//mention      TEXT,
-	//shipName     TEXT,
-	//timestampEnd BIGSERIAL
-	//)`)
-	//if err != nil {
-	//	d.log.ErrorErr(err)
-	//	return
-	//}
+}
 
+func (d *Db) DeleteOldClient(uid uuid.UUID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	del := "delete from compendium.corpmember where uid = $1"
+	_, _ = d.db.Exec(ctx, del, uid)
+	del = "delete from compendium.multi_accounts where uuid = $1"
+	_, _ = d.db.Exec(ctx, del, uid)
+	del = "delete from compendium.technologies where uid = $1"
+	_, _ = d.db.Exec(ctx, del, uid)
+}
+func (d *Db) SearchOldData(i models.Identity) (m models.Moving) {
+	account, _ := d.FindMultiAccountUUID(i.MAccount.UUID)
+	if account != nil {
+		m.MAcc = *account
+	}
+	corpMember, _ := d.CorpMemberByUId(i.MAccount.UUID)
+	if corpMember != nil {
+		m.CorpMember = *corpMember
+	}
+	m.Tech = d.TechnologiesGetMember(i.MAccount.UUID)
+	return m
 }

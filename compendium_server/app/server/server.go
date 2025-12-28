@@ -4,9 +4,9 @@ import (
 	"compendium_s/config"
 	"compendium_s/models"
 	"compendium_s/server/getCountry"
-	"compendium_s/server/serverV2"
 	"compendium_s/storage"
 	"compendium_s/storage/postgres/multi"
+	postgresv2 "compendium_s/storage/postgres/postgresV2"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -20,6 +20,7 @@ import (
 type Server struct {
 	log        *logger.Logger
 	db         db
+	dbV2       *postgresv2.Db
 	multi      *multi.Db
 	roles      *Roles
 	cache      *getCountry.Cache
@@ -27,12 +28,6 @@ type Server struct {
 	keyFile    string
 	cacheReq   map[string]cacheEntry
 	cacheMutex sync.Mutex
-	v2Server   *serverV2.ServerV2
-}
-
-type cacheEntry struct {
-	data      any       // Сами данные, которые отправляем
-	timestamp time.Time // Когда сохранили
 }
 
 func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Server {
@@ -41,12 +36,12 @@ func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 		log:      log,
 		db:       st.DB,
 		multi:    st.DB.Multi,
+		dbV2:     st.DBv2,
 		roles:    NewRoles(log),
 		cache:    getCountry.NewCache(),
 		certFile: "docker/cert/RSA-cert.pem",
 		keyFile:  "docker/cert/RSA-privkey.pem",
 		cacheReq: make(map[string]cacheEntry),
-		v2Server: serverV2.NewServerV2(log, st.DBv2),
 	}
 
 	go s.RunServer()
@@ -58,27 +53,20 @@ func (s *Server) RunServer() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
-	s.v2Server.RegisterV2Routes(router)
+	router.Use(CORSMiddleware())
 
 	router.Use(gin.LoggerWithFormatter(s.CustomLogFormatter))
 
-	// Регистрируем маршруты V1
-	router.OPTIONS("/compendium/applink/identities", s.Check)
 	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
 
-	router.OPTIONS("/compendium/applink/connect", s.Check)
 	router.POST("/compendium/applink/connect", s.CheckConnectHandler)
 
-	router.OPTIONS("/compendium/cmd/syncTech/:mode", s.Check)
 	router.POST("/compendium/cmd/syncTech/:mode", s.CheckSyncTechHandler)
 
-	router.OPTIONS("/compendium/cmd/corpdata", s.Check)
 	router.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler)
 
-	router.OPTIONS("/compendium/applink/refresh", s.Check)
 	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
 
-	router.OPTIONS("/compendium/user/corporations", s.Check)
 	router.GET("/compendium/user/corporations", s.CheckUserCorporationsHandler)
 
 	router.GET("/links", s.links)
@@ -91,7 +79,6 @@ func (s *Server) RunServer() {
 
 	router.GET("/health", HealthCheckHandler)
 
-	fmt.Println("Running port:" + port)
 	err := router.RunTLS(":"+port, s.certFile, s.keyFile)
 	if err != nil {
 		s.log.ErrorErr(err)
@@ -107,13 +94,16 @@ type db interface {
 	ListUserGetByMatch(ttoken string) string
 	ListUserUpdateToken(tokenOld, tokenNew string) error
 	UsersGetByUserId(userid string) (*models.User, error)
-	GuildGet(guildid string) (*models.Guild, error)
-	TechGet(username, userid, guildid string) ([]byte, error)
-	TechUpdate(username, userid, guildid string, tech []byte) error
+	//GuildGet(guildid string) (*models.Guild, error)
+	TechGet(username, userid string) ([]byte, error)
+	TechUpdate(username, userid string, tech []byte) error
 	CodeGet(code string) (*models.Code, error)
 	CodeAllGet() []models.Code
 	CodeDelete(code string)
 	UserCorporationsGet(identity *models.Identity) ([]models.Guild, error)
+	CorpMemberRead(userid string) ([]models.CorpMember, error)
+	DeleteOldClient(userid string)
+	SearchOldData(i models.Identity) (m models.Moving)
 }
 
 func (s *Server) PrintGoroutine() {
@@ -150,7 +140,7 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 	if err != nil {
 		fmt.Println(err)
 	}
-	addr := fmt.Sprintf("%s:%s", param.ClientIP, country)
+	addr := fmt.Sprintf("%s", country) //param.ClientIP, country)
 
 	return fmt.Sprintf("[GIN]%v|%s %3d %s|%13v|%15s|%s%-3s%s|%#v\n%s",
 		param.TimeStamp.Format("2006/01/02-15:04:05"),
@@ -167,7 +157,30 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 func HealthCheckHandler(c *gin.Context) {
 	// Если все проверки пройдены успешно
 	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Service is healthy",
+		"status":    "success",
+		"message":   "Service is healthy",
+		"timestamp": time.Now().Unix(),
+		"cors":      "enabled",
 	})
+}
+
+// CORSMiddleware Выносим CORS в middleware
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Добавляем CORS заголовки
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Header("Access-Control-Allow-Headers",
+			"Authorization, Content-Type, X-Sync-Mode, "+
+				"X-Alt-Name, X-Corp-ID, X-Role-ID, Accept, Origin, X-Requested-With")
+		c.Header("Access-Control-Allow-Credentials", "false")
+
+		// Обрабатываем preflight OPTIONS запросы
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	}
 }

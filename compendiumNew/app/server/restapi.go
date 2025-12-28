@@ -3,9 +3,10 @@ package server
 import (
 	"compendium/models"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) RunServerRestApi() {
@@ -56,10 +57,6 @@ func (s *Server) api(c *gin.Context) {
 	if userid == "" || guildid == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userid and guildid must not be empty"})
 		return
-	}
-	multiAccountGuild, err := s.multi.GuildGet(guildid)
-	if err == nil {
-		guildid = multiAccountGuild.GuildId()
 	}
 	read, err := s.db.CorpMembersApiRead(guildid, userid)
 	if len(read) == 0 || read == nil || err != nil {

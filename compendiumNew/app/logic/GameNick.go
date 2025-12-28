@@ -20,7 +20,15 @@ func (c *Hs) setGameName(m models.IncomingMessage) bool {
 			} else if matches[3] == "" && matches[2] != "" {
 				gameName = matches[2]
 			}
-			if m.MultiAccount != nil {
+			if m.MAcc != nil {
+				oldNick := m.MAcc.Nickname
+				if oldNick != gameName {
+					err := c.db.V2.UpdateNickname(m.MAcc.UUID, oldNick, gameName)
+					if err != nil {
+						c.log.ErrorErr(err)
+					}
+				}
+			} else if m.MultiAccount != nil {
 				_ = c.db.Multi.TechnologiesUpdateUsername(m.MultiAccount.UUID, m.MultiAccount.Nickname, gameName)
 				m.MultiAccount.Nickname = gameName
 				_, err := c.db.Multi.UpdateMultiAccountNickname(*m.MultiAccount)

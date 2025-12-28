@@ -1,7 +1,6 @@
 package logic
 
 import (
-	"compendium/logic/NewLogic"
 	"compendium/logic/dictionary"
 	"compendium/logic/ds"
 	"compendium/logic/tg"
@@ -17,8 +16,6 @@ type Hs struct {
 	db         *storage.Storage
 	corpMember CorpMember
 	tech       Tech
-	//guilds     Guilds
-	//listUser   ListUser
 	users      Users
 	guildsRole GuildRoles
 	Dict       *dictionary.Dictionary
@@ -26,7 +23,6 @@ type Hs struct {
 	ds         *ds.Client
 	tg         *tg.Client
 	wa         *wa.Client
-	newLogic   *NewLogic.HsLogic
 }
 
 func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storage.Storage) *Hs {
@@ -35,8 +31,6 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 		db:         db,
 		corpMember: db.DB,
 		tech:       db.DB,
-		//guilds:     db.DB,
-		//listUser:   db.DB,
 		users:      db.DB,
 		guildsRole: db.DB,
 		Dict:       dictionary.NewDictionary(log),
@@ -44,7 +38,6 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 		ds:         ds.NewClient(log),
 		tg:         tg.NewClient(log),
 		wa:         wa.NewClient(log),
-		newLogic:   NewLogic.NewCompendiumLogic(log, m, db),
 	}
 	go c.inbox(m)
 	return c

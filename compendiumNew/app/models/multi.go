@@ -2,8 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/google/uuid"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type MultiAccount struct {
@@ -52,8 +54,21 @@ func (m *MultiAccountGuild) GuildId() string {
 	if m == nil {
 		return ""
 	}
-
 	return m.GId.String()
+}
+
+func (m *MultiAccountGuild) GetMapChannel() map[string][]string {
+	channels := make(map[string][]string)
+	for _, channel := range m.Channels {
+		if strings.Contains(channel, "@") {
+			channels["wa"] = append(channels["wa"], channel)
+		} else if strings.HasPrefix(channel, "-100") {
+			channels["tg"] = append(channels["tg"], channel)
+		} else {
+			channels["ds"] = append(channels["ds"], channel)
+		}
+	}
+	return channels
 }
 
 type MultiAccountCorpMember struct {
@@ -62,4 +77,13 @@ type MultiAccountCorpMember struct {
 	TimeZona   string
 	ZonaOffset int
 	AfkFor     string
+}
+
+func (m *MultiAccountCorpMember) Exist(gid uuid.UUID) bool {
+	for _, id := range m.GuildIds {
+		if id == gid {
+			return true
+		}
+	}
+	return false
 }

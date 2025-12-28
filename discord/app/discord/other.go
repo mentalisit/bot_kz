@@ -221,7 +221,7 @@ func (d *Discord) dmChannel(AuthorID string) (chatidDM string) {
 func (d *Discord) GetRoles(guildId string) []models.CorpRole {
 	roles, err := d.S.GuildRoles(guildId)
 	if err != nil {
-		d.log.ErrorErr(err)
+		d.log.Error("guildid " + guildId + " " + err.Error())
 		return nil
 	}
 	var guildRole []models.CorpRole

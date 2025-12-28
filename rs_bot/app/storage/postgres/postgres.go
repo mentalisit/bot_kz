@@ -165,7 +165,7 @@ func (d *Db) createTable() {
 
 	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS rs_bot.emoji(
-    uid uuid references compendium.multi_accounts(uuid) on delete cascade,
+    uid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
     tip     text,
     em1     text,
 	em2     text,

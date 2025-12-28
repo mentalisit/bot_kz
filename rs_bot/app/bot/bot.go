@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
 	"rs/bot/helpers"
 	"rs/bot/otherQueue"
 	"rs/clients"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mentalisit/logger"
 )
 
 const (
@@ -128,7 +129,7 @@ func (b *Bot) LogicRs(in models.InMessage) {
 		} else if b.lSubs(in) {
 		} else if b.lQueue(in) {
 		} else if b.lRsStart(in) {
-		} else if b.lEvent(in) {
+			//} else if b.lEvent(in) {
 		} else if b.lTop(in) {
 		} else if b.lEmoji(in) {
 		} else if b.logicIfText(in) {

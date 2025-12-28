@@ -6,16 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization")
 	code := c.GetHeader("authorization")
 
 	// Проверка наличия кода в запросе и его длины
@@ -34,9 +29,6 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
 	token := c.GetHeader("authorization")
 
 	// Локальная проверка
@@ -52,138 +44,36 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckCorpDataHandler(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization")
-
-	token := c.GetHeader("authorization")
-	roleId := c.Query("roleId")
-	if token == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
+	token, roleId, mGuild, err := extractAndValidateCheckHeaders(c)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		s.log.ErrorErr(err)
 		return
 	}
-	mGuild := c.Query("corpId")
-
 	cacheKey := token + ":" + roleId + ":" + mGuild
 
-	// Проверяем кэш
-	s.cacheMutex.Lock()
-	entry, exists := s.cacheReq[cacheKey]
-	if exists && time.Since(entry.timestamp) <= 2*time.Second {
-		// Есть свежий кэш, возвращаем
-		s.cacheMutex.Unlock()
-		c.JSON(http.StatusOK, entry.data)
+	if data, ok := s.getFreshCache(cacheKey); ok {
+		c.JSON(http.StatusOK, data)
 		return
 	}
-	s.cacheMutex.Unlock()
-
-	// Кэш отсутствует или устарел — получаем заново
-	i := s.GetTokenIdentity(token)
-	if i != nil {
-		var result *models.CorpData
-		if mGuild != "" {
-			// Получаем данные по конкретному ID корпорации
-			var guild *models.Guild
-
-			// Сначала пытаемся найти как multi-гильдию (UUID)
-			if gid, err := uuid.Parse(mGuild); err == nil {
-				multiGuild, err := s.multi.GuildGet(&gid)
-				if err == nil && multiGuild != nil {
-					guild = &models.Guild{
-						ID:   multiGuild.GId.String(),
-						Name: multiGuild.GuildName,
-						URL:  multiGuild.AvatarUrl,
-						Type: "mg",
-					}
-				}
-			}
-
-			// Если не нашли как multi-гильдию, ищем в обычных гильдиях
-			if guild == nil {
-				var err error
-				guild, err = s.db.GuildGet(mGuild)
-				if err != nil {
-					s.log.ErrorErr(err)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get guild"})
-					return
-				}
-			}
-
-			if guild == nil {
-				c.JSON(http.StatusNotFound, gin.H{"error": "guild not found"})
-				return
-			}
-
-			// Создаем временный Identity с выбранной гильдией
-			tempIdentity := &models.Identity{
-				User:         i.User,
-				Token:        i.Token,
-				MultiAccount: i.MultiAccount,
-				MultiGuild:   nil, // Очищаем MultiGuild для новой гильдии
-			}
-
-			// Для выбранной корпорации всегда используем MultiGuild логику
-			// Создаем MultiAccountGuild из найденной гильдии
-			var multiGuild *models.MultiAccountGuild
-			if gid, err := uuid.Parse(mGuild); err == nil {
-				// corpId - это UUID, пробуем найти существующую multi-гильдию
-				multiGuild, _ = s.multi.GuildGet(&gid)
-			}
-
-			if multiGuild == nil {
-				// Создаем MultiAccountGuild из обычной гильдии
-				if parsedGid, err := uuid.Parse(guild.ID); err == nil {
-					multiGuild = &models.MultiAccountGuild{
-						GId:       parsedGid,
-						GuildName: guild.Name,
-						AvatarUrl: guild.URL,
-						Channels:  []string{}, // Пустой массив каналов
-					}
-				}
-			}
-
-			if multiGuild != nil {
-				tempIdentity.MultiGuild = multiGuild
-			} else {
-				// Fallback на обычную Guild если не удалось создать MultiAccountGuild
-				tempIdentity.Guild = *guild
-			}
-
-			result = s.GetCorpDataInternal(tempIdentity, roleId, false)
-		} else {
-			result = s.GetCorpDataInternal(i, roleId, true)
-		}
-
-		// Сохраняем в кэш
-		s.cacheMutex.Lock()
-		s.cacheReq[cacheKey] = cacheEntry{
-			data:      result,
-			timestamp: time.Now(),
-		}
-		s.cacheMutex.Unlock()
-
-		c.JSON(http.StatusOK, result)
+	result, status, err := s.fetchCorpData(token, roleId, mGuild)
+	if err != nil {
+		s.log.ErrorErr(err)
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+	s.setCache(cacheKey, result)
+	c.JSON(http.StatusOK, result)
 }
 
 func (s *Server) CheckRefreshHandler(c *gin.Context) {
-	s.PrintGoroutine()
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
-
 	token := c.GetHeader("authorization")
 	if token == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
 		return
 	}
 
-	token = s.refreshToken(token)
-
-	i := s.GetTokenIdentity(token)
+	i := s.refreshToken2(token)
 	if i != nil {
 		if i.User.GameName != "" {
 			i.User.Username = i.User.GameName
@@ -195,27 +85,65 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization, content-type")
-
 	mode := c.Param("mode")
 	twin := c.DefaultQuery("twin", "")
 	token := c.GetHeader("authorization")
+	if strings.HasPrefix(token, "my_compendium_") {
+		i2 := s.GetTokenIdentity(token)
+		if i2 != nil && i2.MAccount.Nickname != "" {
+			if mode == "" {
+				mode = c.GetHeader("X-Sync-Mode")
+			}
+			if twin == "" {
+				twin = c.GetHeader("X-Alt-Name")
+			}
+
+			userName := i2.MAccount.Nickname
+			if twin != "" && twin != "default" {
+				userName = twin
+			}
+
+			sd := models.SyncData{
+				TechLevels: models.TechLevels{},
+				Ver:        2,
+				InSync:     1,
+			}
+
+			if mode == "get" {
+				techLevels, err := s.dbV2.TechnologiesGet(i2.MAccount.UUID, userName)
+				if err == nil && techLevels != nil {
+					sd.TechLevels = *techLevels
+				}
+				c.JSON(http.StatusOK, sd)
+			} else if mode == "sync" {
+				if bindErr := c.BindJSON(&sd); bindErr != nil {
+					fmt.Println(bindErr)
+					c.JSON(400, gin.H{"error": bindErr.Error()})
+					return
+				}
+				updateErr := s.dbV2.TechnologiesUpdate(i2.MAccount.UUID, userName, sd.TechLevels)
+				if updateErr != nil {
+					s.log.ErrorErr(updateErr)
+				}
+				c.JSON(http.StatusOK, sd)
+			}
+
+			return
+		}
+	}
 
 	i := s.GetTokenIdentity(token)
-
 	if i == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 		return
 	}
-	if i.MultiAccount != nil && i.MultiGuild != nil {
+	if i.MultiAccount != nil && i.MGuild != nil {
 		s.SyncTechMulti(c, i, mode, twin)
 		return
 	}
 	userId := i.User.ID
 	userName := i.User.Username
-	guildId := i.MultiGuild.GId.String()
+	//guildId := i.MultiGuild.GId.String()
 	if twin != "" && twin != "default" {
 		userName = twin
 	}
@@ -231,7 +159,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			Ver:        1,
 			InSync:     1,
 		}
-		techBytes, err := s.db.TechGet(userName, userId, guildId)
+		techBytes, err := s.db.TechGet(userName, userId)
 		if err == nil && len(techBytes) > 0 {
 			sd.TechLevels = sd.TechLevels.ConvertToTech(techBytes)
 		}
@@ -244,11 +172,27 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+
+		//read old tech
+		techBytes, _ := s.db.TechGet(userName, userId)
+		m := make(map[int]models.TechLevel)
+		err := json.Unmarshal(techBytes, &m)
+		//comparison of data by date
+		for id, l := range data.TechLevels {
+			if m[id].Ts > l.Ts {
+				//ignore data
+				text := fmt.Sprintf("%s %s module %d data old %d new %d Ok>\n",
+					i.User.Username, i.Guild.Name, id, m[id].Ts, l.Ts)
+				s.log.Info(text)
+				data.TechLevels[id] = m[id]
+			}
+		}
+
 		bytes, err := json.Marshal(data.TechLevels)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
-		err = s.db.TechUpdate(userName, userId, i.MultiGuild.GId.String(), bytes)
+		err = s.db.TechUpdate(userName, userId, bytes)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
@@ -256,6 +200,52 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		// Используйте переменную data с полученными данными
 		c.JSON(http.StatusOK, data)
 	}
+}
+
+func (s *Server) CheckUserCorporationsHandler(c *gin.Context) {
+	token := c.GetHeader("authorization")
+	if token == "" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
+		return
+	}
+
+	// Получаем информацию о пользователе по токену
+	i := s.GetTokenIdentity(token)
+	if strings.HasPrefix(token, "my_compendium_") {
+		if i != nil && i.MAccount.Nickname != "" {
+			// Получаем список корпораций пользователя
+			corporations, err := s.dbV2.UserCorporationsGet(i)
+			if err != nil {
+				s.log.ErrorErr(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"user":         i.MAccount,
+				"corporations": corporations,
+			})
+			return
+		}
+	}
+
+	if i != nil {
+		// Получаем список корпораций пользователя
+		corporations, err := s.db.UserCorporationsGet(i)
+		if err != nil {
+			s.log.ErrorErr(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"user":         i.User,
+			"corporations": corporations,
+		})
+		return
+	}
+
+	c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
 }
 
 func (s *Server) links(c *gin.Context) {
@@ -351,37 +341,4 @@ func (s *Server) api(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, memb)
-}
-
-func (s *Server) CheckUserCorporationsHandler(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	c.Header("Access-Control-Allow-Headers", "Authorization")
-
-	token := c.GetHeader("authorization")
-	if token == "" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
-		return
-	}
-
-	// Получаем информацию о пользователе по токену
-	i := s.GetTokenIdentity(token)
-	if i == nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
-		return
-	}
-	fmt.Printf("		corp User %+v\n", i.User)
-	// Получаем список корпораций пользователя
-	corporations, err := s.db.UserCorporationsGet(i)
-	if err != nil {
-		s.log.ErrorErr(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
-		return
-	}
-	fmt.Printf("		corp Corps %+v\n", corporations)
-
-	c.JSON(http.StatusOK, gin.H{
-		"user":         i.User,
-		"corporations": corporations,
-	})
 }

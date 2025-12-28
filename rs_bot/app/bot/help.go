@@ -15,7 +15,7 @@ func (b *Bot) AutoHelp() {
 		go b.client.Ds.CleanRsBotOtherMessage()
 	}
 	if mtime == "00:00" {
-		go b.EventAutoStart()
+		//go b.EventAutoStart()
 	}
 	if tm.Minute() == 0 {
 		for _, s := range b.storage.ConfigRs.ReadConfigRs() {

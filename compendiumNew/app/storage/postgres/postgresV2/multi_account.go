@@ -29,7 +29,7 @@ func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
 		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
+		&acc.AvatarURL, pq.Array(&acc.Alts),
 	)
 	if err != nil {
 		return nil, err
@@ -43,6 +43,9 @@ func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 	}
 	if whatsappID.Valid {
 		acc.WhatsappID = whatsappID.String
+	}
+	if acc.UUID.String() == "00000000-0000-0000-0000-000000000000" {
+		return nil, errors.New("invalid UUID")
 	}
 
 	return &acc, nil
@@ -82,6 +85,22 @@ func (d *Db) FindMultiAccountByUserId(userid string) (*models.MultiAccount, erro
 	}
 	return acc, nil
 }
+func (d *Db) FindMultiAccountByUserName(userName string) (*models.MultiAccount, error) {
+	query := `SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username,
+			  whatsapp_id, whatsapp_username, created_at, avatarUrl, alts
+			  FROM my_compendium.multi_accounts WHERE nickname = $1 OR $1 = ANY(alts) OR telegram_username = $1 OR discord_username = $1 OR whatsapp_username = $1`
+
+	row := d.db.QueryRow(query, userName)
+	acc, err := scanMultiAccount(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		d.log.ErrorErr(err)
+		return nil, err
+	}
+	return acc, nil
+}
 
 func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username string) (*models.MultiAccount, error) {
 	var query string
@@ -110,6 +129,16 @@ func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username str
 		d.log.ErrorErr(err)
 		return nil, err
 	}
+	if acc.UUID.String() == "00000000-0000-0000-0000-000000000000" {
+		acc.UUID = uuid.New()
+		query = `
+			UPDATE my_compendium.multi_accounts
+			SET uuid = $1 
+			WHERE nickname = $2` + returningMultiAccount
+		row = d.db.QueryRow(query, acc.UUID, acc.Nickname)
+		return scanMultiAccount(row)
+	}
+
 	return acc, nil
 }
 
@@ -148,23 +177,6 @@ func (d *Db) UpdateMultiAccountInfo(uid uuid.UUID, platform, id, username string
 	return acc, nil
 }
 
-func (d *Db) UpdateMultiAccountNickname(m models.MultiAccount) (*models.MultiAccount, error) {
-	const query = `
-		UPDATE my_compendium.multi_accounts
-		SET nickname = $1
-		WHERE uuid = $2` + returningMultiAccount
-
-	row := d.db.QueryRow(query, m.Nickname, m.UUID)
-
-	acc, err := scanMultiAccount(row)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return acc, nil
-}
-
 func (d *Db) UpdateMultiAccountAlts(m models.MultiAccount) (*models.MultiAccount, error) {
 	const query = `
 		UPDATE my_compendium.multi_accounts
@@ -193,6 +205,35 @@ func (d *Db) UpdateMultiAccountAvatarUrl(m models.MultiAccount) (*models.MultiAc
 	acc, err := scanMultiAccount(row)
 
 	if err != nil {
+		d.log.ErrorErr(err)
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+// UpdateMultiAccount обновляет все поля мульти-аккаунта
+func (d *Db) UpdateMultiAccount(m models.MultiAccount) (*models.MultiAccount, error) {
+	query := `
+		UPDATE my_compendium.multi_accounts
+		SET nickname = $1,
+		    telegram_id = $2, telegram_username = $3,
+		    discord_id = $4, discord_username = $5,
+		    whatsapp_id = $6, whatsapp_username = $7,
+		    avatarUrl = $8, alts = $9
+		WHERE uuid = $10` + returningMultiAccount
+
+	row := d.db.QueryRow(query,
+		m.Nickname,
+		m.TelegramID, m.TelegramUsername,
+		m.DiscordID, m.DiscordUsername,
+		m.WhatsappID, m.WhatsappUsername,
+		m.AvatarURL, pq.Array(m.Alts),
+		m.UUID,
+	)
+
+	acc, err := scanMultiAccount(row)
+	if err != nil {
 		return nil, err
 	}
 
@@ -200,14 +241,27 @@ func (d *Db) UpdateMultiAccountAvatarUrl(m models.MultiAccount) (*models.MultiAc
 }
 
 func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount, error) {
+	if m.UUID.String() == "00000000-0000-0000-0000-000000000000" {
+		m.UUID = uuid.New()
+	}
 	query := `
-		INSERT INTO my_compendium.multi_accounts (
+		INSERT INTO my_compendium.multi_accounts (uuid,
 			nickname, telegram_id, telegram_username,
 			discord_id, discord_username, whatsapp_id, whatsapp_username,
 			avatarUrl, alts
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)` + returningMultiAccount
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		ON CONFLICT (uuid) DO UPDATE SET
+			nickname = EXCLUDED.nickname,
+			telegram_id = EXCLUDED.telegram_id,
+			telegram_username = EXCLUDED.telegram_username,
+			discord_id = EXCLUDED.discord_id,
+			discord_username = EXCLUDED.discord_username,
+			whatsapp_id = EXCLUDED.whatsapp_id,
+			whatsapp_username = EXCLUDED.whatsapp_username,
+			avatarUrl = EXCLUDED.avatarUrl,
+			alts = EXCLUDED.alts` + returningMultiAccount
 
-	row := d.db.QueryRow(query,
+	row := d.db.QueryRow(query, m.UUID,
 		m.Nickname, m.TelegramID, m.TelegramUsername,
 		m.DiscordID, m.DiscordUsername, m.WhatsappID, m.WhatsappUsername,
 		m.AvatarURL, pq.Array(m.Alts),

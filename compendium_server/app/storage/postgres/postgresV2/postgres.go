@@ -87,10 +87,27 @@ func (d *Db) createTable() {
 	technologiesTable := `CREATE TABLE IF NOT EXISTS my_compendium.technologies (
 		uid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
 		username text,
-		tech jsonb
+		tech jsonb,
+		UNIQUE(uid, username)
 		)`
 	if _, err := d.db.Exec(technologiesTable); err != nil {
 		d.log.ErrorErr(fmt.Errorf("failed to create technologies table: %w", err))
+		return
+	}
+
+	// Add unique constraint to existing table if it doesn't exist
+	addConstraintQuery := `DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM pg_constraint
+			WHERE conname = 'technologies_uid_username_key'
+			AND conrelid = 'my_compendium.technologies'::regclass
+		) THEN
+			ALTER TABLE my_compendium.technologies ADD CONSTRAINT technologies_uid_username_key UNIQUE (uid, username);
+		END IF;
+	END $$;`
+	if _, err := d.db.Exec(addConstraintQuery); err != nil {
+		d.log.ErrorErr(fmt.Errorf("failed to add unique constraint to technologies table: %w", err))
 		return
 	}
 
@@ -112,10 +129,27 @@ func (d *Db) createTable() {
 		guildIds UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
 		timeZona TEXT NOT NULL DEFAULT '',
 		zonaOffset INTEGER NOT NULL DEFAULT 0,
-		afkFor TEXT NOT NULL DEFAULT ''
+		afkFor TEXT NOT NULL DEFAULT '',
+		UNIQUE(uid)
 	)`
 	if _, err := d.db.Exec(corpMemberTable); err != nil {
 		d.log.ErrorErr(fmt.Errorf("failed to create corpMember table: %w", err))
+		return
+	}
+
+	// Add unique constraint to existing table if it doesn't exist
+	addCorpMemberConstraintQuery := `DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM pg_constraint
+			WHERE conname = 'corpmember_uid_key'
+			AND conrelid = 'my_compendium.corpmember'::regclass
+		) THEN
+			ALTER TABLE my_compendium.corpmember ADD CONSTRAINT corpmember_uid_key UNIQUE (uid);
+		END IF;
+	END $$;`
+	if _, err := d.db.Exec(addCorpMemberConstraintQuery); err != nil {
+		d.log.ErrorErr(fmt.Errorf("failed to add unique constraint to corpmember table: %w", err))
 		return
 	}
 }

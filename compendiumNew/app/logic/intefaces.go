@@ -14,11 +14,11 @@ type CorpMember interface {
 }
 
 type Tech interface {
-	TechInsert(username, userid, guildid string, tech []byte) error
-	TechGet(username, userid, guildid string) ([]byte, error)
-	TechUpdate(username, userid, guildid string, tech []byte) error
-	TechDelete(username, userid, guildid string) error
-	TechGetName(username, guildid string) ([]byte, string, error)
+	TechInsert(username, userid string, tech []byte) error
+	TechGet(username, userid string) ([]byte, error)
+	//TechUpdate(username, userid string, tech []byte) error
+	TechDelete(username, userid string) error
+	TechGetName(username string) ([]byte, string, error)
 	TechGetAllUserId(userid string) ([]models.TechTable, error)
 }
 
@@ -52,13 +52,13 @@ type Users interface {
 }
 
 type GuildRoles interface {
-	GuildRoleCreate(guildid string, RoleName string) error
-	GuildRoleExist(guildid string, RoleName string) bool
-	GuildRoleDelete(guildid string, RoleName string) error
-	GuildRolesRead(guildid string) ([]models.CorpRole, error)
-	GuildRolesSubscribe(guildid, RoleName, userName, userid string) error
-	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
-	GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error
-	GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid string) error
+	//GuildRoleCreate(guildid string, RoleName string) error
+	//GuildRoleExist(guildid string, RoleName string) bool
+	//GuildRoleDelete(guildid string, RoleName string) error
+	//GuildRolesRead(guildid string) ([]models.CorpRole, error)
+	//GuildRolesSubscribe(guildid, RoleName, userName, userid string) error
+	//GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
+	//GuildRolesDeleteSubscribe(guildid, RoleName, userid string) error
+	//GuildRolesDeleteSubscribeUser(guildid, RoleName, userName, userid string) error
 	//GuildRolesReadSubscribeUsers(guildid, RoleName string) ([]string, error)
 }

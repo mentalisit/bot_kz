@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (c *Hs) wskill(m models.IncomingMessage) bool {
+func (c *Hs) wsKill(m models.IncomingMessage) bool {
 	after, found := strings.CutPrefix(m.Text, "%wskill")
 	if !found {
 		after, found = strings.CutPrefix(m.Text, "%бзоткат")
@@ -20,7 +20,7 @@ func (c *Hs) wskill(m models.IncomingMessage) bool {
 	re := regexp.MustCompile(`(\S+|@\S+|<@\d+>)(\s+)?(\S+)?`)
 	matches := re.FindStringSubmatch(after)
 	if len(matches) == 0 || len(after) < 3 {
-		c.wskillList(m)
+		c.wsLillList(m)
 		return true
 	}
 	name := matches[1]
@@ -28,14 +28,15 @@ func (c *Hs) wskill(m models.IncomingMessage) bool {
 	afterMatches := re.FindStringIndex(after)
 	endIndex := afterMatches[1]
 	textAfterMatch := after[endIndex:]
-	c.wskillNameShip(m, name, ship, textAfterMatch)
+	c.wsKillNameShip(m, name, ship, textAfterMatch)
 	return true
 }
-func (c *Hs) wskillList(m models.IncomingMessage) {
-	ws, err := c.db.DB.WsKillReadByGuildId(m.MultiGuild.GuildId())
+
+func (c *Hs) wsLillList(m models.IncomingMessage) {
+	ws, err := c.db.V2.WsKillReadByGuildId(m.MGuild.GuildId())
 	if err != nil {
 		c.log.ErrorErr(err)
-		c.log.InfoStruct("MultiGuild", m.MultiGuild)
+		c.log.InfoStruct("MultiGuild", m.MGuild.GuildId())
 		return
 	}
 	if len(ws) > 0 {
@@ -55,7 +56,7 @@ func (c *Hs) wskillList(m models.IncomingMessage) {
 }
 
 // todo translate
-func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText string) {
+func (c *Hs) wsKillNameShip(m models.IncomingMessage, name, ship, afterText string) {
 	if name == "" || ship == "" {
 		text := fmt.Sprintf("%s, The wskill command accepts any of the following formats: `wskill name ship`, `wskill name ship <time>`, or `wskill name ship delete`.", m.MentionName)
 		c.sendChat(m, text)
@@ -65,8 +66,8 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		now := time.Now().UTC()
 		add := now.Add(18 * time.Hour)
 		timestamp := add.Unix()
-		wskill := models.WsKill{
-			GuildId:      m.MultiGuild.GuildId(),
+		wsKill := models.WsKill{
+			GuildId:      m.MGuild.GuildId(),
 			ChatId:       m.ChannelId,
 			UserName:     c.getNameText(name),
 			Mention:      name,
@@ -74,27 +75,11 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 			TimestampEnd: timestamp,
 			Language:     m.Language,
 		}
-		//getMultiGuild, err := c.db.Multi.GuildGet(m.GuildId)
-		//count, _ := c.guilds.GuildGetCountByGuildId(m.GuildId)
-		//if count == 0 {
-		//	err := c.guilds.GuildInsert(models.Guild{
-		//		URL:  m.GuildAvatar,
-		//		ID:   m.GuildId,
-		//		Name: m.GuildName,
-		//		Type: m.Type,
-		//	})
-		//	if err != nil {
-		//		c.log.ErrorErr(err)
-		//	}
-		//}
-		//if err != nil && getMultiGuild==nil{
-		//	c.log.InfoStruct("MultiGuild", getMultiGuild)
-		//}
 
-		err := c.db.DB.WsKillInsert(wskill)
+		err := c.db.V2.WsKillInsert(wsKill)
 		if err != nil {
 			c.log.ErrorErr(err)
-			c.log.InfoStruct("WsKillInsert", wskill)
+			c.log.InfoStruct("WsKillInsert", wsKill)
 			return
 		} else {
 			addLocal := add.In(c.getTimeLocation(m.NameId))
@@ -107,17 +92,17 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		matches := re.FindStringSubmatch(afterText)
 		if len(matches) > 0 {
 			if matches[1] == "delete" {
-				wskill := models.WsKill{
-					GuildId:  m.MultiGuild.GuildId(),
+				wsKill := models.WsKill{
+					GuildId:  m.MGuild.GuildId(),
 					UserName: c.getNameText(name),
 					ShipName: ship,
 				}
-				err := c.db.DB.WsKillDelete(wskill)
+				err := c.db.V2.WsKillDelete(wsKill)
 				text := fmt.Sprintf("%s, %s %s Kill ", m.MentionName, m.Name, ship)
 				if err != nil {
 					c.sendChat(m, text+"Not Found")
 					c.log.ErrorErr(err)
-					c.log.InfoStruct("WsKillDelete", wskill)
+					c.log.InfoStruct("WsKillDelete", wsKill)
 				} else {
 					c.sendChat(m, text+"Removed")
 				}
@@ -146,8 +131,8 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 				timeMinute := timeHour.Add(time.Duration(minute) * time.Minute)
 				timestamp := timeMinute.Unix()
 
-				wskill := models.WsKill{
-					GuildId:      m.MultiGuild.GuildId(),
+				wsKill := models.WsKill{
+					GuildId:      m.MGuild.GuildId(),
 					ChatId:       m.ChannelId,
 					UserName:     c.getNameText(name),
 					Mention:      name,
@@ -155,10 +140,10 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 					TimestampEnd: timestamp,
 					Language:     m.Language,
 				}
-				err := c.db.DB.WsKillInsert(wskill)
+				err := c.db.V2.WsKillInsert(wsKill)
 				if err != nil {
 					c.log.ErrorErr(err)
-					c.log.InfoStruct("WsKillInsert", wskill)
+					c.log.InfoStruct("WsKillInsert", wsKill)
 					return
 				} else {
 					addLocal := timeMinute.In(c.getTimeLocation(m.NameId))
@@ -173,11 +158,11 @@ func (c *Hs) wskillNameShip(m models.IncomingMessage, name, ship, afterText stri
 		if len(matches) > 0 {
 			Hour := matches[1]
 			Minute := matches[2]
-			c.wskillDeadIn(m, Hour, Minute, name, ship)
+			c.wsKillDeadIn(m, Hour, Minute, name, ship)
 		}
 	}
 }
-func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship string) {
+func (c *Hs) wsKillDeadIn(m models.IncomingMessage, hour, minute, name, ship string) {
 	// Парсинг времени
 	layout := "3pm"
 	t, err := time.Parse(layout, hour)
@@ -196,8 +181,8 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 	now := time.Now().In(location)
 	parsedTime := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), minutes, 0, 0, location)
 
-	wskill := models.WsKill{
-		GuildId:      m.MultiGuild.GuildId(),
+	wsKill := models.WsKill{
+		GuildId:      m.MGuild.GuildId(),
 		ChatId:       m.ChannelId,
 		UserName:     c.getNameText(name),
 		Mention:      name,
@@ -205,10 +190,10 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 		TimestampEnd: parsedTime.Unix(),
 		Language:     m.Language,
 	}
-	err = c.db.DB.WsKillInsert(wskill)
+	err = c.db.V2.WsKillInsert(wsKill)
 	if err != nil {
 		c.log.ErrorErr(err)
-		c.log.InfoStruct("WsKillInsert", wskill)
+		c.log.InfoStruct("WsKillInsert", wsKill)
 	} else {
 		text := fmt.Sprintf(c.getText(m, "IS_DUE_TO_RETURN"),
 			m.MentionName, name, ship, parsedTime.Format("15:04:05 -07:00"), c.timeUntil(m, parsedTime.Unix()))
@@ -217,9 +202,9 @@ func (c *Hs) wskillDeadIn(m models.IncomingMessage, hour, minute, name, ship str
 }
 
 func (c *Hs) getTimeLocation(userid string) *time.Location {
-	mem, errt := c.corpMember.CorpMemberByUserId(userid)
-	if errt != nil {
-		c.log.ErrorErr(errt)
+	mem, err := c.corpMember.CorpMemberByUserId(userid)
+	if err != nil {
+		c.log.ErrorErr(err)
 		return time.UTC
 	}
 	if mem.TimeZone == "" && mem.ZoneOffset == 0 {
@@ -250,11 +235,12 @@ func (c *Hs) timeUntil(m models.IncomingMessage, wstimestamp int64) string {
 	// Форматируем строку в формате "17h 10m 45s"
 	return fmt.Sprintf(c.getText(m, "H_M_S"), hours, minutes, seconds)
 }
+
 func (c *Hs) wsKillTimer() {
 	for {
 		now := time.Now().UTC()
 		if now.Second() == 0 {
-			all, err := c.db.DB.WsKillReadAll()
+			all, err := c.db.V2.WsKillReadAll()
 			if err != nil {
 				c.log.ErrorErr(err)
 				return
@@ -263,13 +249,6 @@ func (c *Hs) wsKillTimer() {
 				for _, kill := range all {
 					h, m := getTimeLeft(kill.TimestampEnd)
 					if h == 0 && (m == 15 || m == 0) {
-						//parse, _ := uuid.Parse(kill.GuildId)
-						//guild, errs := c.db.Multi.GuildGetUUID(parse)
-						//if errs != nil {
-						//	c.log.ErrorErr(errs)
-						//	c.log.InfoStruct("kill. ", kill)
-						//	continue
-						//}
 						in := models.IncomingMessage{
 							ChannelId: kill.ChatId,
 							Type:      "guild.Type", //todo need refactor logic
@@ -280,7 +259,7 @@ func (c *Hs) wsKillTimer() {
 								kill.Mention, kill.ShipName)
 							c.sendChat(in, text)
 						} else if m == 0 {
-							err = c.db.DB.WsKillDelete(kill)
+							err = c.db.V2.WsKillDelete(kill)
 							if err != nil {
 								c.log.ErrorErr(err)
 								c.log.InfoStruct("WsKillDelete", kill)
@@ -294,14 +273,12 @@ func (c *Hs) wsKillTimer() {
 				}
 			}
 			time.Sleep(20 * time.Second)
-		} else if now.Hour() == 23 && now.Minute() == 45 && now.Second() == 30 {
-			//go c.updateAvatars()
-			time.Sleep(time.Second)
 		} else {
 			time.Sleep(time.Second)
 		}
 	}
 }
+
 func getTimeLeft(timestamp int64) (int, int) {
 	now := time.Now().UTC()
 	ws := time.Unix(timestamp, 0)
@@ -319,10 +296,15 @@ func getTimeLeft(timestamp int64) (int, int) {
 	minutes := int(duration.Minutes()) % 60
 	return hours, minutes
 }
+
 func (c *Hs) getNameText(name string) string {
 	re := regexp.MustCompile(`<@(\d+)>`)
 	matches := re.FindStringSubmatch(name)
 	if len(matches) > 0 {
+		mAcc, err := c.db.V2.FindMultiAccountByUserId(matches[1])
+		if err == nil && mAcc != nil && mAcc.DiscordID == matches[1] {
+			return mAcc.Nickname
+		}
 		user, err := c.users.UsersGetByUserId(matches[1])
 		if err != nil {
 			return name

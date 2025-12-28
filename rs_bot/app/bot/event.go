@@ -24,82 +24,82 @@ const myNick = "mentalisit"
 //	return text, numE
 //}
 
-func (b *Bot) EventStart(in models.InMessage) {
-	b.iftipdelete(in)
-	//проверяем, есть ли активный ивент
-	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
-	text := b.getText(in, "info_event_started")
-	if event1 > 0 {
-		b.ifTipSendTextDelSecond(in, b.getText(in, "event_mode_enabled"), 10)
-	} else {
-		var timeDeletemessage = 172800
-		if in.Tip == ds {
-			if in.Username == myNick || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel) {
-				b.storage.Event.EventStartInsert(in.Config.CorpName)
-				if in.Config.TgChannel != "" {
-					b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, timeDeletemessage)
-				}
-				b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, timeDeletemessage)
-
-			} else {
-				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, "Error permission", 30)
-			}
-		} else if in.Tip == tg {
-			adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
-			if err != nil {
-				b.log.ErrorErr(err)
-			}
-			if adminTg || in.Username == myNick {
-				b.storage.Event.EventStartInsert(in.Config.CorpName)
-				if in.Config.DsChannel != "" {
-					b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, timeDeletemessage)
-				}
-				b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, timeDeletemessage)
-			} else {
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, "Error permission", 30)
-			}
-		} else {
-			text = b.getText(in, "info_event_starting")
-			b.ifTipSendTextDelSecond(in, text, 60)
-		}
-	}
-}
-func (b *Bot) EventStop(in models.InMessage) {
-	b.iftipdelete(in)
-	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
-	eventStop := b.getText(in, "event_stopped")
-	eventNull := b.getText(in, "info_event_not_active")
-	if in.Tip == "ds" {
-		if in.Username == myNick || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel) {
-			if event1 > 0 {
-				b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
-				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventStop, 60)
-			} else {
-				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventNull, 10)
-			}
-		} else {
-			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, "Error permission", 30)
-		}
-	} else if in.Tip == tg {
-		adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
-		if err != nil {
-			b.log.ErrorErr(err)
-		}
-		if in.Username == myNick || adminTg {
-			if event1 > 0 {
-				b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventStop, 60)
-			} else {
-				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventNull, 10)
-			}
-		} else {
-			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, "Error permission", 30)
-		}
-	} else {
-		text := b.getText(in, "info_event_starting")
-		b.ifTipSendTextDelSecond(in, text, 20)
-	}
-}
+//func (b *Bot) EventStart(in models.InMessage) {
+//	b.iftipdelete(in)
+//	//проверяем, есть ли активный ивент
+//	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
+//	text := b.getText(in, "info_event_started")
+//	if event1 > 0 {
+//		b.ifTipSendTextDelSecond(in, b.getText(in, "event_mode_enabled"), 10)
+//	} else {
+//		var timeDeletemessage = 172800
+//		if in.Tip == ds {
+//			if in.Username == myNick || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel) {
+//				b.storage.Event.EventStartInsert(in.Config.CorpName)
+//				if in.Config.TgChannel != "" {
+//					b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, timeDeletemessage)
+//				}
+//				b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, timeDeletemessage)
+//
+//			} else {
+//				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, "Error permission", 30)
+//			}
+//		} else if in.Tip == tg {
+//			adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+//			if err != nil {
+//				b.log.ErrorErr(err)
+//			}
+//			if adminTg || in.Username == myNick {
+//				b.storage.Event.EventStartInsert(in.Config.CorpName)
+//				if in.Config.DsChannel != "" {
+//					b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, text, timeDeletemessage)
+//				}
+//				b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, timeDeletemessage)
+//			} else {
+//				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, "Error permission", 30)
+//			}
+//		} else {
+//			text = b.getText(in, "info_event_starting")
+//			b.ifTipSendTextDelSecond(in, text, 60)
+//		}
+//	}
+//}
+//func (b *Bot) EventStop(in models.InMessage) {
+//	b.iftipdelete(in)
+//	event1 := b.storage.Event.NumActiveEvent(in.Config.CorpName)
+//	eventStop := b.getText(in, "event_stopped")
+//	eventNull := b.getText(in, "info_event_not_active")
+//	if in.Tip == "ds" {
+//		if in.Username == myNick || b.client.Ds.CheckAdmin(in.UserId, in.Config.DsChannel) {
+//			if event1 > 0 {
+//				b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
+//				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventStop, 60)
+//			} else {
+//				go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, eventNull, 10)
+//			}
+//		} else {
+//			go b.client.Ds.SendChannelDelSecond(in.Config.DsChannel, "Error permission", 30)
+//		}
+//	} else if in.Tip == tg {
+//		adminTg, err := b.client.Tg.CheckAdminTg(in.Config.TgChannel, in.Username)
+//		if err != nil {
+//			b.log.ErrorErr(err)
+//		}
+//		if in.Username == myNick || adminTg {
+//			if event1 > 0 {
+//				b.storage.Event.UpdateActiveEvent0(in.Config.CorpName, event1)
+//				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventStop, 60)
+//			} else {
+//				go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, eventNull, 10)
+//			}
+//		} else {
+//			go b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, "Error permission", 30)
+//		}
+//	} else {
+//		text := b.getText(in, "info_event_starting")
+//		b.ifTipSendTextDelSecond(in, text, 20)
+//	}
+//}
 
 //func (b *Bot) EventPoints(in models.InMessage, numKZ, points int) {
 //	if points > 99999 {
@@ -180,9 +180,9 @@ func (b *Bot) EventStop(in models.InMessage) {
 
 // new
 
-func (b *Bot) EventPreStart(in models.InMessage) {
-	b.storage.Event.EventInsertPreStart(in.Config.CorpName, -1)
-}
+//func (b *Bot) EventPreStart(in models.InMessage) {
+//	b.storage.Event.EventInsertPreStart(in.Config.CorpName, -1)
+//}
 
 func (b *Bot) EventAutoStart() {
 	date := time.Now().UTC().Format("02-01-2006")

@@ -3,8 +3,9 @@ package postgres
 import (
 	"compendium/models"
 	"encoding/json"
-	"github.com/jackc/pgx/v5"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
@@ -22,7 +23,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 		_ = d.db.QueryRow(ctx, selCount, cm.MultiGuild.GuildId(), cm.UserId).Scan(&count)
 		if count == 0 {
 			insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-			_, err := d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.MultiGuild.GuildId(), cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
+			_, err := d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.MultiGuild.GuildId(), "", cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
 			if err != nil {
 				return err
 			}
@@ -35,7 +36,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	}
 
 	if len(cm.GuildId) < 24 {
-		count, _ = d.TechGetCount(cm.UserId, cm.GuildId)
+		count, _ = d.TechGetCount(cm.UserId)
 		if count != 0 {
 			upd := `update hs_compendium.tech set guildid = $1 where userid = $2 and guildid = $3`
 			_, _ = d.db.Exec(ctx, upd, cm.MultiGuild.GuildId(), cm.UserId, cm.GuildId)
@@ -43,7 +44,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 		}
 	}
 
-	err = d.TechInsert(cm.Name, cm.UserId, cm.MultiGuild.GuildId(), techBytes)
+	err = d.TechInsert(cm.Name, cm.UserId, techBytes)
 	if err != nil {
 		return err
 	}
@@ -62,8 +63,9 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 	for results.Next() {
 		var t models.CorpMember
 		var id int
+		var garbich string
 		//ttt := make(map[int]models.TechLevel)
-		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &garbich, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
 
 		getAll, errGet := d.TechGetAll(t)
 		if errGet != nil {
@@ -110,7 +112,8 @@ func (d *Db) CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, er
 	for results.Next() {
 		var t models.CorpMember
 		var id int
-		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+		var garbich string
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &garbich, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
 
 		mm, err = d.TechGetAll(t)
 		if err != nil {
@@ -154,8 +157,9 @@ func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
 	defer cancel()
 	var u models.CorpMember
 	var id int
+	var garbich string
 	selectUser := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1 "
-	err := d.db.QueryRow(ctx, selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &u.Avatar, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
+	err := d.db.QueryRow(ctx, selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &garbich, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
 	if err != nil {
 		return nil, err
 	}
@@ -216,10 +220,11 @@ func (d *Db) CorpMembersReadByUserId(UserId string) ([]models.CorpMember, error)
 		return nil, err
 	}
 	var mm []models.CorpMember
+	var garbich string
 	for results.Next() {
 		var t models.CorpMember
 		var id int
-		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &t.Avatar, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
+		err = results.Scan(&id, &t.Name, &t.UserId, &t.GuildId, &garbich, &t.AvatarUrl, &t.TimeZone, &t.ZoneOffset, &t.AfkFor)
 
 		mm = append(mm, t)
 	}

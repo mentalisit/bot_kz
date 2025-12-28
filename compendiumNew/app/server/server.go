@@ -4,13 +4,15 @@ import (
 	"compendium/models"
 	"compendium/server/pb"
 	"compendium/storage"
+	"compendium/storage/postgres"
 	"compendium/storage/postgres/multi"
+
 	"github.com/mentalisit/logger"
 )
 
 type Server struct {
 	log   *logger.Logger
-	db    db
+	db    *postgres.Db
 	multi multi.Db
 	In    chan models.IncomingMessage
 }
@@ -28,15 +30,15 @@ func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 	return s
 }
 
-type db interface {
-	CorpMembersRead(guildid string) ([]models.CorpMember, error)
-	CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error)
-	GuildRolesRead(guildid string) ([]models.CorpRole, error)
-	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
-	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
-	UsersGetByUserId(userid string) (*models.User, error)
-	GuildGet(guildid string) (*models.Guild, error)
-	TechGet(username, userid, guildid string) ([]byte, error)
-	TechUpdate(username, userid, guildid string, tech []byte) error
-	CodeGet(code string) (*models.Code, error)
-}
+//type db interface {
+//	CorpMembersRead(guildid string) ([]models.CorpMember, error)
+//	CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error)
+//	GuildRolesRead(guildid string) ([]models.CorpRole, error)
+//	GuildRolesExistSubscribe(guildid, RoleName, userid string) bool
+//	ListUserGetUserIdAndGuildId(token string) (userid string, guildid string, err error)
+//	UsersGetByUserId(userid string) (*models.User, error)
+//	//GuildGet(guildid string) (*models.Guild, error)
+//	TechGet(username, userid, guildid string) ([]byte, error)
+//	TechUpdate(username, userid, guildid string, tech []byte) error
+//	CodeGet(code string) (*models.Code, error)
+//}

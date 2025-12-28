@@ -2,26 +2,12 @@ package server
 
 import (
 	"compendium_s/config"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"time"
 )
-
-func GenerateToken() string {
-	// Вычисляем необходимый размер байт для указанной длины токена
-	tokenBytes := make([]byte, 174)
-	_, err := rand.Read(tokenBytes)
-	if err != nil {
-		return ""
-	}
-
-	// Кодируем байты в строку base64
-	token := base64.URLEncoding.EncodeToString(tokenBytes)
-	return token
-}
 
 func parseToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
@@ -45,17 +31,29 @@ func GetTokenData(tokenString string) (uid, gid uuid.UUID, err error) {
 	if err != nil {
 		return
 	}
-	uid, _ = uuid.Parse(mapClaims["uuid"].(string))
-	gid, _ = uuid.Parse(mapClaims["gid"].(string))
+	printClaims := func() {
+		for s, a := range mapClaims {
+			fmt.Printf("mapClaims: %s: %+v\n", s, a)
+		}
+	}
+	uid, err = uuid.Parse(mapClaims["uuid"].(string))
+	if err != nil {
+		printClaims()
+		return
+	}
+	gid, err = uuid.Parse(mapClaims["gid"].(string))
+	if err != nil {
+		printClaims()
+		return
+	}
 
 	return uid, gid, nil
 }
 
-func JWTGenerateToken(uid uuid.UUID, GId uuid.UUID, NickName string) (string, error) {
+func JWTGenerateToken(uid uuid.UUID, gid uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"uuid": uid,
-		"gid":  GId,
-		"nick": NickName,
+		"gid":  gid,
 		"exp":  time.Now().AddDate(1, 0, 0).Unix(), // токен на год
 	}
 

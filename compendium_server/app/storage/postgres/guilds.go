@@ -1,9 +1,5 @@
 package postgres
 
-import (
-	"compendium_s/models"
-)
-
 //func (d *Db) GuildInsert(u models.Guild) error {
 //	count, err := d.GuildGetCountByGuildId(u.ID)
 //	if err != nil {
@@ -24,18 +20,18 @@ import (
 //	return nil
 //}
 
-func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	var u models.Guild
-	var id int
-	selectGuild := "SELECT * FROM hs_compendium.guilds WHERE guildid = $1 "
-	err := d.db.QueryRow(ctx, selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
-	if err != nil {
-		return nil, err
-	}
-	return &u, nil
-}
+//func (d *Db) GuildGet(guildid string) (*models.Guild, error) {
+//	ctx, cancel := d.getContext()
+//	defer cancel()
+//	var u models.Guild
+//	var id int
+//	selectGuild := "SELECT * FROM hs_compendium.guilds WHERE guildid = $1 "
+//	err := d.db.QueryRow(ctx, selectGuild, guildid).Scan(&id, &u.URL, &u.ID, &u.Name, &u.Icon, &u.Type)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return &u, nil
+//}
 
 //func (d *Db) GuildGetCountByGuildId(guildid string) (int, error) {
 //	var count int

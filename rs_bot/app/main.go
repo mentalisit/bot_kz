@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/mentalisit/logger"
 	"os/signal"
 	"rs/bot"
 	"rs/clients"
@@ -12,6 +11,8 @@ import (
 	"rs/storage"
 	"syscall"
 	"time"
+
+	"github.com/mentalisit/logger"
 )
 
 func main() {

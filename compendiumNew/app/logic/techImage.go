@@ -12,26 +12,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (c *Hs) BytesToTechLevel(b []byte) (map[int]models.TechLevel, models.TechLevelArray) {
-	var m map[int]models.TechLevel
-	m = make(map[int]models.TechLevel)
-	err := json.Unmarshal(b, &m)
-	if err != nil {
-		fmt.Println(err)
-		m[701] = models.TechLevel{
-			Ts:    0,
-			Level: 0,
-		}
-	}
-	var mi = make(models.TechLevelArray)
-	for i, le := range m {
-		mi[i] = [2]int{le.Level}
-	}
-	return m, mi
-}
-
 func (c *Hs) sendPic(m models.IncomingMessage, userAvatar, guildAvatar, picName, guildName string, mBytes []byte) {
-	_, mt := c.BytesToTechLevel(mBytes)
+	var mt models.TechLevels
+	err := json.Unmarshal(mBytes, &mt)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
 	userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, mt)
 	c.sendChatPic(m, "", userPic)
 }
@@ -46,10 +32,22 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 
 	var mBytes []byte
 	picName := m.Name
-	guildName := m.MultiGuild.GuildName
-	guildAvatar := m.MultiGuild.AvatarUrl
+	guildName := m.MGuild.GuildName
+	guildAvatar := m.MGuild.AvatarUrl
 	userAvatar := m.Avatar
 
+	if m.MAcc != nil {
+		techLevels, err := c.db.V2.TechnologiesGet(m.MAcc.UUID, m.MAcc.Nickname)
+		if err == nil && techLevels != nil {
+			picName = m.MAcc.Nickname
+			guildAvatar = m.MGuild.AvatarUrl
+			guildName = m.MGuild.GuildName
+			userAvatar = m.MAcc.AvatarURL
+			userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, *techLevels)
+			c.sendChatPic(m, "", userPic)
+			return
+		}
+	}
 	if m.MultiAccount != nil {
 		mBytesTech, err := c.db.Multi.TechnologiesGet(m.MultiAccount.UUID, m.MultiAccount.Nickname)
 		if err != nil {
@@ -63,11 +61,10 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 			picName = m.MultiAccount.Nickname
 		}
 	}
-
 	if len(mBytes) == 0 {
-		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId, m.MultiGuild.GuildId())
+		mBytesTech, err := c.tech.TechGet(m.Name, m.NameId)
 		if err != nil {
-			c.log.Error(fmt.Sprintf("TechGet %s from %s err %+v", m.Name, m.MultiGuild.GuildName, err))
+			c.log.Error(fmt.Sprintf("TechGet %s from %s err %+v", m.Name, m.MGuild.GuildName, err))
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return
 		}
@@ -110,8 +107,8 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 		var mBytes []byte
 		picName := ""
 		userAvatar := ""
-		guildName := m.MultiGuild.GuildName
-		guildAvatar := m.MultiGuild.AvatarUrl
+		guildName := m.MGuild.GuildName
+		guildAvatar := m.MGuild.AvatarUrl
 
 		var err error
 		userID := ""
@@ -127,6 +124,48 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				userID = matchesNew[1] // Если Discord ID найден, он здесь
 			} else if matchesNew[2] != "" {
 				userName = matchesNew[2] // Если Telegram username найден, он здесь
+			}
+		}
+
+		if userName != "" {
+			m.MAcc, err = c.db.V2.FindMultiAccountByUserName(userName)
+			if err == nil && m.MAcc != nil {
+				if m.MAcc.Nickname != userName &&
+					(m.MAcc.TelegramUsername == userName ||
+						m.MAcc.WhatsappUsername == userName ||
+						m.MAcc.DiscordUsername == userName) {
+					userName = m.MAcc.Nickname
+				}
+				corpMember, err := c.db.V2.CorpMemberByUId(m.MAcc.UUID)
+				if err == nil && corpMember != nil && corpMember.Exist(m.MGuild.GId) {
+					techLevels, err := c.db.V2.TechnologiesGet(m.MAcc.UUID, userName)
+					if err == nil && techLevels != nil {
+						picName = userName
+						guildAvatar = m.MGuild.AvatarUrl
+						guildName = m.MGuild.GuildName
+						userAvatar = m.MAcc.AvatarURL
+						userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, *techLevels)
+						c.sendChatPic(m, "", userPic)
+						return true
+					}
+				}
+			}
+		} else if userID != "" {
+			m.MAcc, err = c.db.V2.FindMultiAccountByUserId(userID)
+			if err == nil && m.MAcc != nil {
+				corpMember, err := c.db.V2.CorpMemberByUId(m.MAcc.UUID)
+				if err == nil && corpMember != nil && corpMember.Exist(m.MGuild.GId) {
+					techLevels, err := c.db.V2.TechnologiesGet(m.MAcc.UUID, m.MAcc.Nickname)
+					if err == nil && techLevels != nil {
+						picName = m.MAcc.Nickname
+						guildAvatar = m.MGuild.AvatarUrl
+						guildName = m.MGuild.GuildName
+						userAvatar = m.MAcc.AvatarURL
+						userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, *techLevels)
+						c.sendChatPic(m, "", userPic)
+						return true
+					}
+				}
 			}
 		}
 
@@ -163,7 +202,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 				return true
 			}
-			techBytes, err := c.tech.TechGet(user.Username, user.ID, m.MultiGuild.GuildId())
+			techBytes, err := c.tech.TechGet(user.Username, user.ID)
 			if err != nil {
 				c.log.Error(fmt.Sprintf("TechGet %s err %+v", m.Name, err))
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
@@ -193,6 +232,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 	reNew := regexp.MustCompile(`^(?:[tт] +(\S+(?: +\S+)?) +[iиі]|tech +(\S+(?: +\S+)?)|техи +(\S+(?: +\S+)?))$`)
 
 	userName := ""
+	var err error
 	match := reNew.FindStringSubmatch(after)
 
 	if len(match) > 1 {
@@ -215,8 +255,22 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 		var mBytes []byte
 		picName := userName
 		userAvatar := ""
-		guildName := m.MultiGuild.GuildName
-		guildAvatar := m.MultiGuild.AvatarUrl
+		guildName := m.MGuild.GuildName
+		guildAvatar := m.MGuild.AvatarUrl
+
+		m.MAcc, err = c.db.V2.FindMultiAccountByUserName(userName)
+		if err == nil && m.MAcc != nil {
+			techLevels, err := c.db.V2.TechnologiesGet(m.MAcc.UUID, userName)
+			if err == nil && techLevels != nil {
+				picName = userName
+				guildAvatar = m.MGuild.AvatarUrl
+				guildName = m.MGuild.GuildName
+				userAvatar = m.MAcc.AvatarURL
+				userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, *techLevels)
+				c.sendChatPic(m, "", userPic)
+				return true
+			}
+		}
 
 		multiAccount, _ := c.db.Multi.FindMultiAccountByUsername(userName)
 		if multiAccount != nil {
@@ -227,7 +281,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 			}
 		}
 		if multiAccount == nil {
-			techBytes, userID, err := c.tech.TechGetName(userName, m.MultiGuild.GId.String())
+			techBytes, userID, err := c.tech.TechGetName(userName)
 			if err != nil || userID == "" {
 				usersGetNick, _ := c.users.UsersFindByGameName(userName)
 				if len(usersGetNick) > 1 {
@@ -235,7 +289,7 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 				}
 				if usersGetNick != nil && len(usersGetNick) > 0 {
 					for _, userGetNick := range usersGetNick {
-						techBytes, userID, err = c.tech.TechGetName(userGetNick.Username, m.MultiGuild.GuildId())
+						techBytes, userID, err = c.tech.TechGetName(userGetNick.Username)
 						if userID != "" || techBytes != nil {
 							break
 						}

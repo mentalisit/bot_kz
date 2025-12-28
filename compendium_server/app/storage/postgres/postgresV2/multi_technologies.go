@@ -38,10 +38,31 @@ func (d *Db) TechnologiesUpdate(uid uuid.UUID, username string, tech models.Tech
 	query := `
 		INSERT INTO my_compendium.technologies (uid, username, tech)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (uid) DO UPDATE SET
+		ON CONFLICT (uid,username) DO UPDATE SET
 			username = EXCLUDED.username,
 			tech = EXCLUDED.tech
 	`
 	_, err = d.db.Exec(query, uid, username, techData)
 	return err
+}
+func (d *Db) TechnologiesGetUser(uid uuid.UUID) []models.Technology {
+	var members []models.Technology
+	query := `SELECT tech,username FROM my_compendium.technologies WHERE uid = $1`
+	rows, _ := d.db.Query(query, uid)
+	defer rows.Close()
+	for rows.Next() {
+		var techMember models.Technology
+		var tech []byte
+		err := rows.Scan(&tech, &techMember.Name)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+		err = json.Unmarshal(tech, &techMember.Tech)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+
+		members = append(members, techMember)
+	}
+	return members
 }

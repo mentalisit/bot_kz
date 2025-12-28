@@ -10,23 +10,45 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-type techLevelArray map[int][2]int
+// type techLevelArray map[int][2]int
+type TechLevels map[int]TechLevel
+type TechLevel struct {
+	Ts    int64 `json:"ts"`
+	Level int   `json:"level"`
+}
 
 type corpMember struct {
-	Name        string         `json:"name"`
-	UserId      string         `json:"userId"`
-	GuildId     string         `json:"guildId"`
-	Avatar      string         `json:"avatar"`
-	Tech        techLevelArray `json:"tech"`
-	AvatarUrl   string         `json:"avatarUrl"`
-	LocalTime   string         `json:"localTime"`
-	LocalTime24 string         `json:"localTime24"`
-	TimeZone    string         `json:"timeZone"`
-	ZoneOffset  int            `json:"zoneOffset"`
-	AfkFor      string         `json:"afkFor"`
-	AfkWhen     int            `json:"afkWhen"`
+	Name         string     `json:"name"`
+	UserId       string     `json:"userId"`
+	GuildId      string     `json:"guildId"`
+	Avatar       string     `json:"avatar"`
+	Tech         TechLevels `json:"tech"`
+	AvatarUrl    string     `json:"avatarUrl"`
+	LocalTime    string     `json:"localTime"`
+	LocalTime24  string     `json:"localTime24"`
+	TimeZone     string     `json:"timeZone"`
+	ZoneOffset   int        `json:"zoneOffset"`
+	AfkFor       string     `json:"afkFor"`
+	AfkWhen      int        `json:"afkWhen"`
+	MultiAccount *MultiAccount
+	MAcc         *MultiAccount
+}
+type MultiAccount struct {
+	UUID             uuid.UUID
+	Nickname         string
+	TelegramID       string
+	TelegramUsername string
+	DiscordID        string
+	DiscordUsername  string
+	WhatsappID       string
+	WhatsappUsername string
+	CreatedAt        time.Time
+	AvatarURL        string
+	Alts             []string
 }
 
 func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextender int) {
@@ -80,17 +102,27 @@ func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextend
 		return
 	}
 
+	if technicalData[0].MultiAccount != nil {
+		ma := technicalData[0].MultiAccount
+		if (ma.DiscordID == userID && ma.DiscordUsername == name) ||
+			(ma.TelegramID == userID && ma.TelegramUsername == name) ||
+			(ma.WhatsappID == userID && ma.WhatsappUsername == name) {
+			name = ma.Nickname
+		}
+
+	}
+
 	for _, datum := range technicalData {
 		if strings.ToLower(datum.Name) == strings.ToLower(name) {
-			rsextender = datum.Tech[603][0]
-			enrich = datum.Tech[503][0]
-			genesis = datum.Tech[508][0]
+			rsextender = datum.Tech[603].Level
+			enrich = datum.Tech[503].Level
+			genesis = datum.Tech[508].Level
 		}
 	}
 	if rsextender == 0 && enrich == 0 && genesis == 0 && len(technicalData) != 0 {
-		rsextender = technicalData[0].Tech[603][0]
-		enrich = technicalData[0].Tech[503][0]
-		genesis = technicalData[0].Tech[508][0]
+		rsextender = technicalData[0].Tech[603].Level
+		enrich = technicalData[0].Tech[503].Level
+		genesis = technicalData[0].Tech[508].Level
 	}
 
 	return

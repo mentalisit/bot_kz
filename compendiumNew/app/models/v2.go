@@ -9,11 +9,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// MultiAccountGuildV2 - версия для V2 с Channels как map[string]string
+// MultiAccountGuildV2 - версия для V2 с Channels как map[string][]string
 type MultiAccountGuildV2 struct {
 	GId       uuid.UUID
 	GuildName string
-	Channels  map[string]string
+	Channels  map[string][]string
 	AvatarUrl string
 }
 
@@ -21,32 +21,26 @@ func (m *MultiAccountGuildV2) ChannelsBytes() []byte {
 	channelsBytes, _ := json.Marshal(m.Channels)
 	return channelsBytes
 }
-
-// IdentityV2 - версия для V2 с MultiAccountGuildV2
-type IdentityV2 struct {
-	Token        string        `json:"token"`
-	MultiAccount *MultiAccount `json:"multiAccount"`
-	GuildId      string        `json:"guild_id"`
-}
-
-func (i *IdentityV2) GetGuildUUID() *uuid.UUID {
-	gid, _ := uuid.Parse(i.GuildId)
-	return &gid
+func (m *MultiAccountGuildV2) GuildId() string {
+	if m == nil {
+		return ""
+	}
+	return m.GId.String()
 }
 
 type CorpMemberV2 struct {
-	Name        string         `json:"name"`
-	UserUUID    string         `json:"userUuid"`
-	GuildUUID   string         `json:"guildUuid"`
-	Avatar      string         `json:"avatar"`
-	Tech        TechLevelArray `json:"tech"`
-	AvatarUrl   string         `json:"avatarUrl"`
-	LocalTime   string         `json:"localTime"`   //localTime:"07:52 PM"
-	LocalTime24 string         `json:"localTime24"` //localTime24:"19:52"
-	TimeZone    string         `json:"timeZone"`    //timeZone:"UTC-5"
-	ZoneOffset  int            `json:"zoneOffset"`  //zoneOffset:-300
-	AfkFor      string         `json:"afkFor"`      // readable afk duration
-	AfkWhen     int            `json:"afkWhen"`     // Unix Epoch when user returns
+	Name        string     `json:"name"`
+	UserUUID    string     `json:"userUuid"`
+	GuildUUID   string     `json:"guildUuid"`
+	Avatar      string     `json:"avatar"`
+	Tech        TechLevels `json:"tech"`
+	AvatarUrl   string     `json:"avatarUrl"`
+	LocalTime   string     `json:"localTime"`   //localTime:"07:52 PM"
+	LocalTime24 string     `json:"localTime24"` //localTime24:"19:52"
+	TimeZone    string     `json:"timeZone"`    //timeZone:"UTC-5"
+	ZoneOffset  int        `json:"zoneOffset"`  //zoneOffset:-300
+	AfkFor      string     `json:"afkFor"`      // readable afk duration
+	AfkWhen     int        `json:"afkWhen"`     // Unix Epoch when user returns
 	Multi       *MultiAccount
 }
 

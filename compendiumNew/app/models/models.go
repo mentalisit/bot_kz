@@ -16,7 +16,7 @@ type IncomingMessage struct {
 	Type         string
 	Language     string
 	MultiAccount *MultiAccount
-	MultiGuild   *MultiAccountGuild
-	Acc          *MultiAccount
-	Guild        *MultiAccountGuildV2
+	//MultiGuild   *MultiAccountGuild
+	MAcc   *MultiAccount
+	MGuild *MultiAccountGuildV2
 }

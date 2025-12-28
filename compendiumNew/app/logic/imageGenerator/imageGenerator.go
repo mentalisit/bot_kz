@@ -1,6 +1,7 @@
 package imageGenerator
 
 import (
+	"compendium/models"
 	"fmt"
 	"image/color"
 	"log"
@@ -10,7 +11,7 @@ import (
 	"github.com/fogleman/gg"
 )
 
-func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech map[int][2]int) []byte {
+func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech models.TechLevels) []byte {
 	user = tech
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(20) + 1

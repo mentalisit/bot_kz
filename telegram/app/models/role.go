@@ -41,6 +41,9 @@ func (u *User) FormatMention() string {
 	}
 	return fmt.Sprintf("[%s](tg://user?id=%d)", EscapeMarkdownV2(u.GetUserName()), u.ID)
 }
+func (u *User) FormatMentionAll() string {
+	return fmt.Sprintf("[%s](tg://user?id=%d)", EscapeMarkdownV2(u.GetUserName()), u.ID)
+}
 
 func (u *User) TgUser(user *tgbotapi.User) {
 	u.ID = user.ID

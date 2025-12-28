@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"compendium/models"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -26,7 +27,7 @@ func (d *Db) UsersInsert(u models.User) error {
 		}
 	} else {
 		insert := `INSERT INTO hs_compendium.users(userid, username, discriminator, avatar, avatarurl, alts,gamename) VALUES ($1,$2,$3,$4,$5,$6,$7)`
-		_, err = d.db.Exec(ctx, insert, u.ID, u.Username, u.Discriminator, u.Avatar, u.AvatarURL, u.Alts, u.GameName)
+		_, err = d.db.Exec(ctx, insert, u.ID, u.Username, "", "", u.AvatarURL, u.Alts, u.GameName)
 		if err != nil {
 			return err
 		}
@@ -37,9 +38,8 @@ func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.User
-	var id int
-	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
-	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, &u.Alts, &u.GameName)
+	selectUser := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE userid = $1"
+	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&u.ID, &u.Username, &u.AvatarURL, &u.Alts, &u.GameName)
 	if err != nil {
 		return nil, pgx.ErrNoRows
 	}
@@ -49,9 +49,8 @@ func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var u models.User
-	var id int
-	selectUser := "SELECT * FROM hs_compendium.users WHERE username = $1 "
-	err := d.db.QueryRow(ctx, selectUser, username).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, &u.Alts, &u.GameName)
+	selectUser := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE username = $1 "
+	err := d.db.QueryRow(ctx, selectUser, username).Scan(&u.ID, &u.Username, &u.AvatarURL, &u.Alts, &u.GameName)
 	if err != nil {
 		return nil, err
 	}
@@ -61,16 +60,15 @@ func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var users []models.User
-	selectUsers := "SELECT * FROM hs_compendium.users WHERE gamename = $1 "
+	selectUsers := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE gamename = $1 "
 	results, err := d.db.Query(ctx, selectUsers, gameName)
-	defer results.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer results.Close()
 	for results.Next() {
 		var t models.User
-		var id int
-		err = results.Scan(&id, &t.ID, &t.Username, &t.Discriminator, &t.Avatar, &t.AvatarURL, &t.Alts, &t.GameName)
+		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, &t.Alts, &t.GameName)
 
 		if err != nil {
 			return nil, err
@@ -106,16 +104,15 @@ func (d *Db) UsersGetAll() ([]models.User, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	var users []models.User
-	selectUsers := "SELECT * FROM hs_compendium.users "
+	selectUsers := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users "
 	results, err := d.db.Query(ctx, selectUsers)
-	defer results.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer results.Close()
 	for results.Next() {
 		var t models.User
-		var id int
-		err = results.Scan(&id, &t.ID, &t.Username, &t.Discriminator, &t.Avatar, &t.AvatarURL, &t.Alts, &t.GameName)
+		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, &t.Alts, &t.GameName)
 
 		if err != nil {
 			return nil, err

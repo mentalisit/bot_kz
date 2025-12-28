@@ -13,7 +13,7 @@ import (
 
 // StartWebApp запускает веб-сервер для веб-приложения
 func (t *Telegram) StartWebApp(port string) {
-	router := handlers.SetupRouter(t.Storage, t.t)
+	router := handlers.SetupRouter(t.Storage, t.t, t.log)
 
 	t.server = &http.Server{
 		Addr:    ":" + port,

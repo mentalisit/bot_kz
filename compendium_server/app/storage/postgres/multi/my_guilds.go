@@ -1,20 +1,20 @@
-package postgresv2
+package multi
 
 import (
 	"compendium_s/models"
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
 )
 
-// Multi-guild methods
-func (d *Db) GuildGet(gid uuid.UUID) (*models.MultiAccountGuildV2, error) {
+func (d *Db) GuildGetV2(gid *uuid.UUID) (*models.MultiAccountGuildV2, error) {
 	var guild models.MultiAccountGuildV2
 	var channelsData []byte
 
 	query := `SELECT gid, GuildName, Channels, AvatarUrl FROM my_compendium.guilds WHERE gid = $1`
-	err := d.db.QueryRow(query, gid).Scan(
+	err := d.db.QueryRow(context.Background(), query, gid).Scan(
 		&guild.GId, &guild.GuildName, &channelsData, &guild.AvatarUrl,
 	)
 	if err != nil {
@@ -34,44 +34,18 @@ func (d *Db) GuildGet(gid uuid.UUID) (*models.MultiAccountGuildV2, error) {
 	return &guild, nil
 }
 
-func (d *Db) GuildGetById(guildid string) (*models.MultiAccountGuildV2, error) {
+func (d *Db) GuildGetByIdV2(guildid string) (*models.MultiAccountGuildV2, error) {
 	if gid, err := uuid.Parse(guildid); err == nil {
-		return d.GuildGet(gid)
+		return d.GuildGetV2(&gid)
 	}
-
-	return d.GuildGetChannel(guildid)
-}
-
-func (d *Db) GuildGetChannel(channel string) (*models.MultiAccountGuildV2, error) {
-	var guild models.MultiAccountGuildV2
-	var channelsData []byte
-
-	query := `SELECT gid, GuildName, Channels, AvatarUrl FROM my_compendium.guilds WHERE $1 = ANY(channels)`
-	err := d.db.QueryRow(query, channel).Scan(
-		&guild.GId, &guild.GuildName, &channelsData, &guild.AvatarUrl,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert JSONB to map[string]string
-	guild.Channels = make(map[string][]string)
-	if len(channelsData) > 0 {
-		err = json.Unmarshal(channelsData, &guild.Channels)
-		if err != nil {
-			d.log.ErrorErr(err)
-			return nil, err
-		}
-	}
-
-	return &guild, nil
+	return nil, nil
 }
 
 // GetChatRoles возвращает роли определенного чата
 func (d *Db) GetChatsRoles(chatID int64) ([]models.CorpRole, error) {
 	query := `SELECT id, name FROM telegram.roles WHERE chat_id = $1`
 
-	rows, err := d.db.Query(query, chatID)
+	rows, err := d.db.Query(context.Background(), query, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chats roles: %w", err)
 	}
@@ -99,7 +73,7 @@ func (d *Db) IsUserSubscribedToRole(userID, roleID int64) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM telegram.user_roles WHERE user_id = $1 AND role_id = $2)`
 
 	var isSubscribed bool
-	err := d.db.QueryRow(query, userID, roleID).Scan(&isSubscribed)
+	err := d.db.QueryRow(context.Background(), query, userID, roleID).Scan(&isSubscribed)
 	if err != nil {
 		return false, fmt.Errorf("failed to check user role subscription: %w", err)
 	}

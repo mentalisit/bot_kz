@@ -36,8 +36,8 @@ func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
 	defer cancel()
 	var u models.User
 	var id int
-	selectUser := "SELECT * FROM hs_compendium.users WHERE userid = $1 "
-	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.Discriminator, &u.Avatar, &u.AvatarURL, &u.Alts, &u.GameName)
+	selectUser := "SELECT id, userid, username, avatarurl, alts, gamename FROM hs_compendium.users WHERE userid = $1 "
+	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&id, &u.ID, &u.Username, &u.AvatarURL, &u.Alts, &u.GameName)
 	if err != nil {
 		return nil, err
 	}

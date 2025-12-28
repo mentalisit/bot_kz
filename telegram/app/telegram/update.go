@@ -50,8 +50,8 @@ func (t *Telegram) update() {
 		} else if update.ChatMember != nil {
 			t.chatMember(update.ChatMember)
 		} else if update.ChatJoinRequest != nil {
-
-			t.log.InfoStruct("ChatJoinRequest", update.ChatJoinRequest)
+			t.log.Info(fmt.Sprintf("ChatJoinRequest Chat %s From @%s\n",
+				update.ChatJoinRequest.Chat.Title, update.ChatJoinRequest.From.String()))
 		} else {
 			fmt.Printf("else %+v \n", update)
 		}
@@ -61,13 +61,6 @@ func (t *Telegram) updateMessage(m *tgbotapi.Message) {
 	switch m.Text {
 	case "/start":
 		t.handleStartCommand(m)
-		//// Обрабатываем глубокие ссылки из групп
-		//if m.CommandArguments() == "roles" {
-		//	// Пользователь перешел по ссылке из группы - сразу открываем Web App
-		//	t.SendWebAppButtonSmart(m.Chat.ID)
-		//} else {
-		//	t.SendWelcomeMessage(m.Chat.ID)
-		//}
 	case "/webapp", "/roles":
 		//t.webApp.RemoveReplyKeyboard(m.Chat.ID)
 		t.SendWebAppButtonSmart(m.Chat.ID)
@@ -85,14 +78,6 @@ func (t *Telegram) updateMessage(m *tgbotapi.Message) {
 	} else { //остальные сообщения
 		t.logicMix(m, false)
 	}
-}
-func (t *Telegram) SendWelcomeMessage(chatID int64) {
-	msg := tgbotapi.NewMessage(chatID,
-		`🎭 Добро пожаловать!
-
-Используйте команду /roles для открытия Web App управления ролями.`)
-
-	t.t.Send(msg)
 }
 
 func (t *Telegram) SendWebAppButtonSmart(chatID int64) {
@@ -120,8 +105,6 @@ func (t *Telegram) handleStartCommand(message *tgbotapi.Message) {
 		}
 	}
 
-	// Обычное приветствие
-	t.SendWelcomeMessage(message.Chat.ID)
 }
 
 // Открывает Web App для группы через глубокую ссылку

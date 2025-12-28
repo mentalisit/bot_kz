@@ -5,12 +5,13 @@ import (
 	"compendium/storage/postgres/multi"
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
-	"os"
-	"time"
 )
 
 type Db struct {
@@ -70,19 +71,6 @@ func (d *Db) createTable() {
 		return
 	}
 
-	// Создание таблицы guilds
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guilds (
-	   id bigserial primary key,
-	   url   TEXT,
-	   guildid    TEXT,
-	   name  TEXT,
-	   icon  TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guilds:", err)
-		return
-	}
-
 	// Создание таблицы list_users
 	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.list_users (
 	   id bigserial primary key,
@@ -134,17 +122,6 @@ func (d *Db) createTable() {
 	)`)
 	if err != nil {
 		fmt.Println("Ошибка при создании таблицы userroles:", err)
-		return
-	}
-
-	// Создание таблицы guildroles
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guildroles (
-	   id           bigserial primary key,
-	   guildid      TEXT,
-	   role         TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guildroles:", err)
 		return
 	}
 
