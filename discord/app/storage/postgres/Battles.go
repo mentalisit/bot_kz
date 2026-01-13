@@ -28,15 +28,16 @@ func (d *Db) BattlesInsert(b models.Battles) error {
 	}
 	return nil
 }
+
 func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	query := `
 		SELECT name,
-		       SUM(points) AS total_points, 
+		       SUM(points) AS total_points,
 		       COUNT(*) AS runs,
-		       MAX(level) AS max_level		
-		FROM rs_bot.battles 
+		       MAX(level) AS max_level
+		FROM rs_bot.battles
 		where eventid=$1 AND corporation=$2
 		GROUP BY name;
 	`
@@ -62,16 +63,17 @@ func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, er
 
 	return stats, nil
 }
-func (d *Db) BattlesUpdate(b models.Battles) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	sqlUpd := "update rs_bot.battles set points = $1 where name = $2 AND level = $3 AND eventid = $4 AND corporation = $5"
-	_, err := d.db.Exec(ctx, sqlUpd, b.Points, b.Name, b.Level, b.EventId, b.CorpName)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+
+//func (d *Db) BattlesUpdate(b models.Battles) error {
+//	ctx, cancel := d.getContext()
+//	defer cancel()
+//	sqlUpd := "update rs_bot.battles set points = $1 where name = $2 AND level = $3 AND eventid = $4 AND corporation = $5"
+//	_, err := d.db.Exec(ctx, sqlUpd, b.Points, b.Name, b.Level, b.EventId, b.CorpName)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func (d *Db) BattlesTopInsert(b models.BattlesTop) error {
 	topGet, _ := d.BattlesTopGet(b)

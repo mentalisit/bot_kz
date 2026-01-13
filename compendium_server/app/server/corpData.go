@@ -51,6 +51,7 @@ func (s *Server) fetchCorpData(token, roleId, mGuild string) (any, int, error) {
 	i := s.GetTokenIdentity(token)
 	if strings.HasPrefix(token, "my_compendium_") {
 		if i != nil && i.MAccount != nil && i.MAccount.Nickname != "" {
+			fmt.Printf("fetchCorpData corporation %s Name %s\n", i.Guild.Name, i.User.Username)
 			i.MGuild, _ = s.dbV2.GuildGetById(mGuild)
 			result := s.GetCorpDataV2Internal(i, roleId)
 			return result, http.StatusOK, nil
@@ -97,10 +98,10 @@ func (s *Server) fetchSpecificCorpData(i *models.Identity, roleId, mGuild string
 
 	// Создаем временный Identity
 	tempIdentity := &models.Identity{
-		User:         i.User,
-		Token:        i.Token,
-		MultiAccount: i.MultiAccount,
-		MGuild:       multiGuild, // Используем найденный mGuild
+		User:     i.User,
+		Token:    i.Token,
+		MAccount: i.MAccount,
+		MGuild:   multiGuild, // Используем найденный mGuild
 	}
 
 	// Вызываем финальную внутреннюю логику
@@ -132,7 +133,6 @@ func (s *Server) GetCorpDataV2Internal(i *models.Identity, roleId string) *model
 	cOld := s.GetCorpDataMultiGuild(i, roleId)
 	if cOld != nil {
 		members = append(members, cOld.Members...)
-		appendRolesByType(cOld.Roles, "")
 	}
 
 	guildDs, guildTg, guildWa := getCorpsTypeIdV2(i.MGuild)

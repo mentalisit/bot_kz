@@ -2,7 +2,6 @@ package server
 
 import (
 	"compendium_s/models"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -27,9 +26,9 @@ func (s *Server) SyncTechMulti(c *gin.Context, i *models.Identity, mode, twin st
 			Ver:        2,
 			InSync:     1,
 		}
-		techBytes, err := s.multi.TechnologiesGet(i.MultiAccount.UUID, userName)
-		if err == nil && len(techBytes) > 0 {
-			sd.TechLevels = sd.TechLevels.ConvertToTech(techBytes)
+		TechLevels, err := s.dbV2.TechnologiesGet(i.MAccount.UUID, userName)
+		if err == nil && TechLevels != nil && len(*TechLevels) > 0 {
+			sd.TechLevels = *TechLevels
 		}
 		c.JSON(http.StatusOK, sd)
 	} else if mode == "sync" {
@@ -40,11 +39,7 @@ func (s *Server) SyncTechMulti(c *gin.Context, i *models.Identity, mode, twin st
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		bytes, err := json.Marshal(data.TechLevels)
-		if err != nil {
-			s.log.ErrorErr(err)
-		}
-		err = s.multi.TechnologiesUpdate(i.MultiAccount.UUID, userName, bytes)
+		err := s.dbV2.TechnologiesUpdate(i.MAccount.UUID, userName, data.TechLevels)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
@@ -104,15 +99,6 @@ func (s *Server) GetCorpDataMultiGuild(i *models.Identity, roleId string) *model
 	c := models.CorpData{}
 	c.Initialization()
 	var members []models.CorpMember
-
-	memberMulti, _ := s.multi.CorpMembersRead(i.MGuild.GId)
-	if len(memberMulti) != 0 {
-		c.AppendEveryone("ma")
-		for _, member := range memberMulti {
-			member.Name = fmt.Sprintf("(%s) %s", strings.ToUpper(member.TypeAccount), member.Name)
-			members = append(members, member)
-		}
-	}
 
 	cm, _ := s.db.CorpMembersRead(i.MGuild.GId.String())
 	cm = corpMemberDetectType(cm)

@@ -3,6 +3,8 @@ package logic
 import (
 	ds "bridge/Discord"
 	tg "bridge/Telegram"
+	"bridge/config"
+	"bridge/matrix"
 	"bridge/models"
 	"bridge/storage"
 	wa "bridge/whatsapp"
@@ -22,15 +24,17 @@ type Bridge struct {
 	telegram *tg.Client
 	storage  BridgeConfig
 	whatsapp *wa.Client
+	matrix   *matrix.Matrix
 }
 
-func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
+func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Bridge {
 	bridge := &Bridge{
 		log:      log,
 		configs:  make(map[string]models.Bridge2Config),
 		discord:  ds.NewClient(log),
 		telegram: tg.NewClient(log),
 		whatsapp: wa.NewClient(log),
+		matrix:   matrix.RunMatrixBridge(cfg),
 		storage:  st.DB,
 	}
 	bridge.LoadConfig()

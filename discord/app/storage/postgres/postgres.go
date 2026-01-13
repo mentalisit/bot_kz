@@ -4,19 +4,21 @@ import (
 	"context"
 	"discord/config"
 	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
-	"log/slog"
-	"os"
-	"time"
 )
 
 type Db struct {
 	db  Client
 	log *logger.Logger
 }
+
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
@@ -44,6 +46,11 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	}
 
 	go db.createTable()
+
+	//go func() {
+	//	time.Sleep(5 * time.Second)
+	//	db.BattlesCheckNames()
+	//}()
 
 	return db
 }

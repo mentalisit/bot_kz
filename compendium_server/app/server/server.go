@@ -5,7 +5,7 @@ import (
 	"compendium_s/models"
 	"compendium_s/server/getCountry"
 	"compendium_s/storage"
-	"compendium_s/storage/postgres/multi"
+	"compendium_s/storage/postgres"
 	postgresv2 "compendium_s/storage/postgres/postgresV2"
 	"fmt"
 	"net/http"
@@ -19,9 +19,8 @@ import (
 
 type Server struct {
 	log        *logger.Logger
-	db         db
+	db         *postgres.Db
 	dbV2       *postgresv2.Db
-	multi      *multi.Db
 	roles      *Roles
 	cache      *getCountry.Cache
 	certFile   string
@@ -35,7 +34,6 @@ func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 	s := &Server{
 		log:      log,
 		db:       st.DB,
-		multi:    st.DB.Multi,
 		dbV2:     st.DBv2,
 		roles:    NewRoles(log),
 		cache:    getCountry.NewCache(),

@@ -7,6 +7,7 @@ import (
 	"compendium/logic/wa"
 	"compendium/models"
 	"compendium/storage"
+	postgresv2 "compendium/storage/postgres/postgresV2"
 
 	"github.com/mentalisit/logger"
 )
@@ -14,6 +15,7 @@ import (
 type Hs struct {
 	log        *logger.Logger
 	db         *storage.Storage
+	DbV2       *postgresv2.Db
 	corpMember CorpMember
 	tech       Tech
 	users      Users
@@ -29,6 +31,7 @@ func NewCompendium(log *logger.Logger, m chan models.IncomingMessage, db *storag
 	c := &Hs{
 		log:        log,
 		db:         db,
+		DbV2:       db.V2,
 		corpMember: db.DB,
 		tech:       db.DB,
 		users:      db.DB,

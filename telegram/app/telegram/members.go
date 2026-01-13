@@ -28,11 +28,13 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 	chat, threadID := t.chat(chatid)
 	roleId, _ := t.Storage.Db.GetRoleByName(context.Background(), RsTypeLevel, chat)
 	if roleId == 0 {
-		return false, nil
+		t.SendChannelDelSecond(chatid, "роль не найдена, попроси админа создать роль "+RsTypeLevel, "", 60)
+		return true, nil
 	}
 	users, _ := t.Storage.Db.GetRolesUsers(context.Background(), chat, roleId)
 	if len(users) == 0 {
-		return false, nil
+		t.SendChannelDelSecond(chatid, "не найдено желающих получать пинг на "+RsTypeLevel, "", 60)
+		return true, nil
 	}
 	var u []models.User
 	for _, user := range users {

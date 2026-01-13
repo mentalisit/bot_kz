@@ -1,7 +1,10 @@
 package postgres
 
 import (
+	"context"
 	"discord/models"
+	"fmt"
+	"time"
 )
 
 func (d *Db) ScoreboardInsertParam(p models.ScoreboardParams) {
@@ -101,10 +104,10 @@ func (d *Db) LoadNameAliases() (map[string]string, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	rows, err := d.db.Query(ctx, "SELECT alias, canonical_name FROM rs_bot.name_aliases")
-	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+	defer rows.Close()
 	m := make(map[string]string)
 	for rows.Next() {
 		var alias, canonical string
@@ -115,4 +118,22 @@ func (d *Db) LoadNameAliases() (map[string]string, error) {
 	}
 
 	return m, nil
+}
+func (d *Db) BattlesCheckNames() {
+	aliases, _ := d.LoadNameAliases()
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
+
+	for name, generalName := range aliases {
+		// Выполняем UPDATE сразу. База сама поймет, есть ли такие строки.
+		query := `UPDATE rs_bot.battles SET name = $1 WHERE name = $2`
+
+		r, err := d.db.Exec(ctx, query, generalName, name)
+		if err != nil {
+			d.log.ErrorErr(fmt.Errorf("failed to update name %s -> %s: %w", name, generalName, err))
+		}
+		if r.RowsAffected() != 0 {
+			fmt.Printf("Updated name %s -> %s\n", name, generalName)
+		}
+	}
 }

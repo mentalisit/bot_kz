@@ -12,11 +12,11 @@ func (c *Hs) removeMember(m models.IncomingMessage) bool {
 		if err != nil {
 			c.log.ErrorErr(err)
 		}
-		corpMember, err := c.db.Multi.CorpMemberByUId(m.MultiAccount.UUID)
+		corpMember, err := c.DbV2.CorpMemberByUId(m.MAcc.UUID)
 		if err == nil && corpMember != nil {
 			if corpMember.Exist(m.MGuild.GId) {
 				corpMember.GuildIds = removeGuild(corpMember.GuildIds, m.MGuild.GId)
-				err = c.db.Multi.CorpMemberUpdateGuildIds(*corpMember)
+				err = c.DbV2.CorpMemberUpdate(*corpMember)
 				if err != nil {
 					c.log.ErrorErr(err)
 				}

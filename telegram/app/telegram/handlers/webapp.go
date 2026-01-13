@@ -1231,13 +1231,6 @@ func (h *WebAppHandler) GetCorpMembers(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting corp members from my_compendium: %v", err)
 	}
 
-	// Compendium
-	if members, err := h.storage.Db.GetCorpMembersCompendium(r.Context(), chatID); err == nil {
-		allMembers = append(allMembers, members...)
-	} else {
-		log.Printf("Error getting corp members from Compendium: %v", err)
-	}
-
 	// HS Compendium
 	if members, err := h.storage.Db.GetCorpMembersHSCompendium(r.Context(), chatID); err == nil {
 		allMembers = append(allMembers, members...)
@@ -1266,14 +1259,12 @@ func (h *WebAppHandler) RemoveCorpMember(w http.ResponseWriter, r *http.Request)
 		h.sendError(w, "tableSource parameter is required", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Printf("RemoveCorpMember %s %d %s\n", tableSource, chatID, userIDStr)
 	// Выбираем функцию удаления в зависимости от источника
 	var removeErr error
 	switch tableSource {
 	case "my_compendium":
 		removeErr = h.storage.Db.RemoveCorpMemberMyCompendium(r.Context(), chatID, userIDStr)
-	case "compendium":
-		removeErr = h.storage.Db.RemoveCorpMemberCompendium(r.Context(), chatID, userIDStr)
 	case "hs_compendium":
 		removeErr = h.storage.Db.RemoveCorpMemberHSCompendium(r.Context(), chatID, userIDStr)
 	default:

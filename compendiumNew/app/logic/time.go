@@ -78,14 +78,14 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 	}
 
 	cm := models.CorpMember{
-		Name:         m.Name,
-		GuildId:      m.MGuild.GuildId(),
-		Tech:         models.TechLevels{},
-		AvatarUrl:    m.Avatar,
-		TimeZone:     timeZona,
-		ZoneOffset:   offsetInt,
-		MGuild:       m.MGuild,
-		MultiAccount: m.MultiAccount,
+		Name:       m.Name,
+		GuildId:    m.MGuild.GuildId(),
+		Tech:       models.TechLevels{},
+		AvatarUrl:  m.Avatar,
+		TimeZone:   timeZona,
+		ZoneOffset: offsetInt,
+		MGuild:     m.MGuild,
+		MAcc:       m.MAcc,
 	}
 	u := models.User{
 		Username:  m.Name,
@@ -95,8 +95,13 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 
 	if mentionName == "" {
 		var err error
-		if m.MultiAccount != nil {
-			err = c.db.Multi.CorpMemberTZUpdate(m.MultiAccount.UUID, timeZona, offsetInt)
+		if m.MAcc != nil {
+			member, err := c.DbV2.CorpMemberByUId(m.MAcc.UUID)
+			if member != nil && err == nil {
+				member.TimeZona = timeZona
+				member.ZonaOffset = offsetInt
+				err = c.db.V2.CorpMemberUpdate(*member)
+			}
 		} else {
 			err = c.corpMember.CorpMemberTZUpdate(m.NameId, m.MGuild.GuildId(), timeZona, offsetInt)
 		}
@@ -104,7 +109,7 @@ func (c *Hs) TzTimeSetTime(offset float64, mentionName string, m models.Incoming
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				cm.UserId = m.NameId
-				if m.MultiAccount == nil {
+				if m.MAcc == nil {
 					_ = c.corpMember.CorpMemberInsert(cm)
 					u.ID = m.NameId
 					_ = c.users.UsersInsert(u)
@@ -225,19 +230,19 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 			c.log.ErrorErr(err)
 		}
 		if m.MGuild != nil {
-			membersRead, _ := c.db.Multi.CorpMembersRead(m.MGuild.GId)
+			membersRead, _ := c.DbV2.CorpMembersReadMulti(&m.MGuild.GId)
 			if len(membersRead) != 0 {
 				for _, member := range membersRead {
-					accountUUID, _ := c.db.Multi.FindMultiAccountUUID(member.Uid)
+					accountUUID, _ := c.DbV2.FindMultiAccountUUID(member.MAcc.UUID)
 					if accountUUID == nil {
 						continue
 					}
 					mmember := models.CorpMember{
 						Name:       accountUUID.Nickname,
-						UserId:     member.Uid.String(),
+						UserId:     member.MAcc.UUID.String(),
 						AvatarUrl:  accountUUID.AvatarURL,
-						TimeZone:   member.TimeZona,
-						ZoneOffset: member.ZonaOffset,
+						TimeZone:   member.TimeZone,
+						ZoneOffset: member.ZoneOffset,
 						AfkFor:     member.AfkFor,
 					}
 					if mmember.TimeZone != "" {
@@ -253,8 +258,8 @@ func (c *Hs) TzGetTime(m models.IncomingMessage) bool {
 			if len(memberS) != 0 {
 				for _, member := range memberS {
 					mmember := models.CorpMember{
-						Name:       member.Multi.Nickname,
-						UserId:     member.Multi.UUID.String(),
+						Name:       member.MAcc.Nickname,
+						UserId:     member.MAcc.UUID.String(),
 						AvatarUrl:  member.AvatarUrl,
 						TimeZone:   member.TimeZone,
 						ZoneOffset: member.ZoneOffset,

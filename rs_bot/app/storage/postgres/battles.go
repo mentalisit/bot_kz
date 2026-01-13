@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"rs/models"
+	"time"
 )
 
 func (d *Db) BattlesInsert(b models.Battles) error {
@@ -104,4 +105,53 @@ func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
 	}
 
 	return stats, nil
+}
+
+func (d *Db) DeleteOldWebhooks() {
+	ctx, cancel := d.getContext()
+	defer cancel()
+
+	// Вычисляем Unix-время 7 дней назад
+	// 7 дней * 24 часа * 3600 секунд
+	sevenDaysAgo := time.Now().AddDate(0, 0, -7).Unix()
+
+	query := `DELETE FROM rs_bot.webhooks WHERE tsunix < $1`
+
+	tag, err := d.db.Exec(ctx, query, sevenDaysAgo)
+	if err != nil {
+		d.log.ErrorErr(fmt.Errorf("failed to delete old webhooks: %w", err))
+		return
+	}
+	count := tag.RowsAffected()
+	if count > 0 {
+		fmt.Printf("🧹 Удалено старых webhooks: %d\n", count)
+	}
+
+	query = `DELETE FROM rs_bot.webhook_type WHERE tsunix < $1`
+
+	tag, err = d.db.Exec(ctx, query, sevenDaysAgo)
+	if err != nil {
+		//d.log.ErrorErr(fmt.Errorf("failed to delete old rs_bot.webhook_type: %w", err))
+		return
+	}
+	count = tag.RowsAffected()
+	if count > 0 {
+		fmt.Printf("🧹 Удалено старых webhook_type: %d\n", count)
+	}
+
+	query = `
+        DELETE FROM rs_bot.message_maps 
+        WHERE created_at < now() - interval '7 days'`
+
+	tag, err = d.db.Exec(ctx, query)
+	if err != nil {
+		//d.log.ErrorErr(fmt.Errorf("failed to delete old message_maps: %w", err))
+		return
+	}
+
+	count = tag.RowsAffected()
+	if count > 0 {
+		fmt.Printf("🧹 Удалено старых карт сообщений: %d\n", count)
+	}
+
 }

@@ -3,7 +3,6 @@ package postgres
 import (
 	"compendium_s/config"
 	"compendium_s/models"
-	"compendium_s/storage/postgres/multi"
 	"context"
 	"fmt"
 	"os"
@@ -17,9 +16,8 @@ import (
 )
 
 type Db struct {
-	db    Client
-	log   *logger.Logger
-	Multi *multi.Db
+	db  Client
+	log *logger.Logger
 }
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
@@ -41,139 +39,10 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 	}
 
 	db := &Db{
-		db:    pool,
-		log:   log,
-		Multi: multi.NewDb(log, pool),
+		db:  pool,
+		log: log,
 	}
-	go db.createTable()
 	return db
-}
-func (d *Db) createTable() {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS hs_compendium")
-
-	// Создание таблицы users
-	_, err := d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.users (
-        id            bigserial primary key,
-        userid        TEXT,
-        username      TEXT,
-        discriminator TEXT,
-        avatar        TEXT,
-        avatarurl     TEXT,
-        alts text[],
-        gamename      TEXT
-    )`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы users:", err)
-		return
-	}
-
-	//// Создание таблицы guilds
-	//_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guilds (
-	//   id bigserial primary key,
-	//   url   TEXT,
-	//   guildid    TEXT,
-	//   name  TEXT,
-	//   icon  TEXT
-	//)`)
-	//if err != nil {
-	//	fmt.Println("Ошибка при создании таблицы guilds:", err)
-	//	return
-	//}
-
-	// Создание таблицы list_users
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.list_users (
-	   id bigserial primary key,
-	   token   TEXT,
-	   userid    TEXT,
-	   guildid  TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guilds:", err)
-		return
-	}
-
-	// Создание таблицы corpmember
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.corpmember (
-	id           bigserial primary key,
-	username     TEXT,
-	userid       TEXT,
-	guildid 	 TEXT,
-	avatar       TEXT,
-	avatarurl    TEXT,
-	timezona     TEXT,
-	zonaoffset   NUMERIC,
-	afkfor       TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы corpmember:", err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.tech (
-    id bigserial primary key,
-    username text,
-    userid text,
-    guildid text,
-    tech jsonb
-    )`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы tech:", err)
-		return
-	}
-
-	// Создание таблицы userroles
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.userroles (
-	   id           bigserial primary key,
-	   guildid      TEXT,
-	   role         TEXT,
-	   username     TEXT,
-	   userid       TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы userroles:", err)
-		return
-	}
-
-	// Создание таблицы guildroles
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.guildroles (
-	   id           bigserial primary key,
-	   guildid      TEXT,
-	   role         TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guildroles:", err)
-		return
-	}
-
-	// Создание таблицы wskill
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.wskill (
-	id           bigserial primary key,
-	guildid 	 TEXT,
-	chatid 	     TEXT,
-	username     TEXT,
-	mention      TEXT,
-	shipname     TEXT,
-	timestampend BIGSERIAL
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы wskill:", err)
-		return
-	}
-
-	// Создание таблицы code
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
-	id           bigserial primary key,
-	code    	 TEXT,
-	identity     jsonb,
-	timestamp 	 bigint
-                                               
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы codes:", err)
-		return
-	}
 }
 
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
@@ -188,8 +57,6 @@ func (d *Db) DeleteOldClient(userid string) {
 	del = "delete from hs_compendium.list_users where userid = $1"
 	_, _ = d.db.Exec(ctx, del, userid)
 	del = "delete from hs_compendium.tech where userid = $1"
-	_, _ = d.db.Exec(ctx, del, userid)
-	del = "delete from hs_compendium.userroles where userid = $1"
 	_, _ = d.db.Exec(ctx, del, userid)
 	del = "delete from hs_compendium.users where userid = $1"
 	_, _ = d.db.Exec(ctx, del, userid)

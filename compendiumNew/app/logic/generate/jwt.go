@@ -30,7 +30,7 @@ func JWTGenerateToken(uid uuid.UUID, GId uuid.UUID) (string, error) {
 func JWTGenerateTokenForUser(identity models.Identity) (string, error) {
 	claims := jwt.MapClaims{
 		"userId":       identity.User.ID,
-		"multiGuildId": identity.MultiGuild.GId.String(),
+		"multiGuildId": identity.MGuild.GId.String(),
 		"exp":          time.Now().AddDate(1, 0, 0).Unix(), // токен на год
 	}
 

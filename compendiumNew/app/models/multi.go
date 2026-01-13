@@ -1,25 +1,27 @@
 package models
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type MultiAccount struct {
-	UUID             uuid.UUID
-	Nickname         string
-	TelegramID       string
-	TelegramUsername string
-	DiscordID        string
-	DiscordUsername  string
-	WhatsappID       string
-	WhatsappUsername string
-	CreatedAt        time.Time
-	AvatarURL        string
-	Alts             []string
+	UUID             uuid.UUID   `db:"uuid"`
+	Nickname         string      `db:"nickname"`
+	TelegramID       string      `db:"telegram_id"`
+	TelegramUsername string      `db:"telegram_username"`
+	DiscordID        string      `db:"discord_id"`
+	DiscordUsername  string      `db:"discord_username"`
+	WhatsappID       string      `db:"whatsapp_id"`
+	WhatsappUsername string      `db:"whatsapp_username"`
+	CreatedAt        time.Time   `db:"created_at"`
+	AvatarURL        string      `db:"avatarurl"`
+	Alts             StringArray `db:"alts"`
 }
 
 func (m *MultiAccount) GetTextUsername() string {
@@ -34,13 +36,6 @@ func (m *MultiAccount) GetTextUsername() string {
 		text = text + "Whatsapp UserName: " + m.WhatsappUsername + "\n"
 	}
 	return text
-}
-
-type AccountLinkCode struct {
-	Code      string
-	UUID      uuid.UUID
-	ExpiresAt time.Time
-	CreatedAt time.Time
 }
 
 type MultiAccountGuild struct {
@@ -71,12 +66,26 @@ func (m *MultiAccountGuild) GetMapChannel() map[string][]string {
 	return channels
 }
 
+// UUIDArray позволяет sqlx автоматически работать с UUID[] в Postgres
+type UUIDArray []uuid.UUID
+
+func (a UUIDArray) Value() (driver.Value, error) {
+	if a == nil {
+		return "{}", nil
+	}
+	return pq.Array(a).Value()
+}
+
+func (a *UUIDArray) Scan(src interface{}) error {
+	return pq.Array(a).Scan(src)
+}
+
 type MultiAccountCorpMember struct {
-	Uid        uuid.UUID
-	GuildIds   []uuid.UUID
-	TimeZona   string
-	ZonaOffset int
-	AfkFor     string
+	Uid        uuid.UUID `db:"uid"`
+	GuildIds   UUIDArray `db:"guildids"`
+	TimeZona   string    `db:"timezona"`
+	ZonaOffset int       `db:"zonaoffset"`
+	AfkFor     string    `db:"afkfor"`
 }
 
 func (m *MultiAccountCorpMember) Exist(gid uuid.UUID) bool {
@@ -86,4 +95,16 @@ func (m *MultiAccountCorpMember) Exist(gid uuid.UUID) bool {
 		}
 	}
 	return false
+}
+
+type StringArray []string
+
+// Метод Scan позволяет стандартному sql.Scan понимать этот тип
+func (a *StringArray) Scan(src interface{}) error {
+	return pq.Array((*[]string)(a)).Scan(src)
+}
+
+// Метод Value позволяет передавать этот тип в запросы без pq.Array()
+func (a StringArray) Value() (driver.Value, error) {
+	return pq.Array([]string(a)).Value()
 }

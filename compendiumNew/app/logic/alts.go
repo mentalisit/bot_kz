@@ -23,8 +23,8 @@ func (c *Hs) createAlt(m models.IncomingMessage) bool {
 func (c *Hs) altsAdd(m models.IncomingMessage, altName string) bool {
 	var alts []string
 	var user models.User
-	if m.MultiAccount != nil {
-		alts = m.MultiAccount.Alts
+	if m.MAcc != nil {
+		alts = m.MAcc.Alts
 	} else {
 		u, err := c.users.UsersGetByUserId(m.NameId)
 		if err != nil {
@@ -49,14 +49,14 @@ func (c *Hs) altsAdd(m models.IncomingMessage, altName string) bool {
 		m.MAcc, _ = c.db.V2.UpdateMultiAccountAlts(*m.MAcc)
 	}
 
-	if m.MultiAccount != nil {
-		m.MultiAccount.Alts = alts
-		_, err := c.db.Multi.UpdateMultiAccountAlts(*m.MultiAccount)
+	if m.MAcc != nil {
+		m.MAcc.Alts = alts
+		_, err := c.DbV2.UpdateMultiAccountAlts(*m.MAcc)
 		if err != nil {
 			c.log.ErrorErr(err)
 		}
-		_ = c.db.Multi.TechnologiesInsert(m.MultiAccount.UUID, altName, nil)
-		c.log.Info(fmt.Sprintf("User %s alts new %+v", m.MultiAccount.Nickname, alts))
+		_ = c.DbV2.TechnologiesUpdate(m.MAcc.UUID, altName, nil)
+		c.log.Info(fmt.Sprintf("User %s alts new %+v", m.MAcc.Nickname, alts))
 	} else {
 		_ = c.tech.TechInsert(altName, m.NameId, nil)
 		user.Alts = alts
@@ -77,8 +77,8 @@ func (c *Hs) altsDel(m models.IncomingMessage, altName string) bool {
 	var u *models.User
 	var err error
 	var uAlts []string
-	if m.MultiAccount != nil {
-		uAlts = m.MultiAccount.Alts
+	if m.MAcc != nil {
+		uAlts = m.MAcc.Alts
 	} else {
 		u, err = c.users.UsersGetByUserId(m.NameId)
 		if err != nil {
@@ -95,8 +95,8 @@ func (c *Hs) altsDel(m models.IncomingMessage, altName string) bool {
 				alts = append(alts, alt)
 			} else if alt == altName {
 				c.sendChat(m, fmt.Sprintf(c.getText(m, "ALTO_REMOVED"), altName))
-				if m.MultiAccount != nil {
-					err = c.db.Multi.TechnologiesDelete(m.MultiAccount.UUID, altName)
+				if m.MAcc != nil {
+					err = c.DbV2.TechnologiesDelete(m.MAcc.UUID, altName)
 					if err != nil {
 						c.log.ErrorErr(err)
 					}
@@ -112,9 +112,9 @@ func (c *Hs) altsDel(m models.IncomingMessage, altName string) bool {
 			m.MAcc.Alts = alts
 			m.MAcc, _ = c.db.V2.UpdateMultiAccountAlts(*m.MAcc)
 		}
-		if m.MultiAccount != nil {
-			m.MultiAccount.Alts = alts
-			_, err = c.db.Multi.UpdateMultiAccountAlts(*m.MultiAccount)
+		if m.MAcc != nil {
+			m.MAcc.Alts = alts
+			_, err = c.DbV2.UpdateMultiAccountAlts(*m.MAcc)
 			if err != nil {
 				c.log.ErrorErr(err)
 			}

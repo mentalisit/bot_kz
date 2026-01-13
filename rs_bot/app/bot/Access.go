@@ -43,6 +43,10 @@ func (b *Bot) accessChat(in models.InMessage) {
 			if b.EventStatistic(in) {
 				return
 			}
+			if after == "Очистка вебхуков" {
+				b.iftipdelete(in)
+				b.storage.Battles.DeleteOldWebhooks()
+			}
 		}
 	}
 }

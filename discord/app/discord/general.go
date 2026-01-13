@@ -116,9 +116,8 @@ func (d *Discord) EditComplexButton(dsmesid, dschatid string, mapEmbed map[strin
 	})
 	if err != nil {
 		messages, _ := d.S.ChannelMessages(dschatid, 20, "", "", "")
-		for i, message := range messages {
+		for _, message := range messages {
 			if message.Author.String() == "Rs_bot#9945" {
-				fmt.Printf("1test%d message.Author.Username==\"Rs_bot#9945\"  %+v\n", i, message)
 				if len(message.Embeds) > 0 && message.Embeds[0].Title == "Очередь ТКЗ" {
 					d.DeleteMessage(message.ChannelID, message.ID)
 				} else if len(message.Embeds) == 0 {

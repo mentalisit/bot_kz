@@ -4,6 +4,7 @@ import (
 	"compendium_s/models"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,35 +14,39 @@ import (
 
 func (s *Server) GetTokenIdentity(token string) *models.Identity {
 	var i models.Identity
-	if strings.HasPrefix(token, "my_compendium_") {
-		i.Token = token
-		// удаляем префикс "my_compendium_"
-		uid, gid, err := GetTokenData(token[14:])
-		if err == nil {
-			if uid.String() == "00000000-0000-0000-0000-000000000000" {
-				s.log.Error("да ну пиздец заебал ")
-				return nil
-			}
-			i.MAccount, err = s.dbV2.FindMultiAccountUUID(uid)
-			if err != nil {
-				fmt.Println(err.Error())
-				return nil
-			}
-			i.MultiAccount = i.MAccount
-			i.User = multiToUser(i.MAccount)
+	i.Token = token
 
-			gGet, err := s.dbV2.GuildGet(gid)
-			if err != nil {
-				s.log.ErrorErr(err)
-			}
-			i.MGuild = gGet
-			i.Guild = multiToGuild(gGet)
-
-			return &i
-		}
-		s.log.ErrorErr(err)
+	if strings.HasPrefix(token, "Multi_") {
+		token = token[6:] // удаляем префикс "Multi_"
+	} else if strings.HasPrefix(token, "my_compendium_") {
+		token = token[14:] // удаляем префикс "my_compendium_"
+	} else {
+		return s.GetTokenIdentityByOldToken(token)
 	}
-	return s.GetTokenIdentityByOldToken(token)
+
+	uid, gid, err := GetTokenData(token)
+	if err == nil {
+		if uid.String() == "00000000-0000-0000-0000-000000000000" {
+			s.log.Error("да ну пиздец заебал ")
+			return nil
+		}
+		i.MAccount, err = s.dbV2.FindMultiAccountUUID(uid)
+		if err != nil || i.MAccount == nil {
+			fmt.Println(err.Error())
+			return nil
+		}
+		i.User = multiToUser(i.MAccount)
+
+		gGet, err := s.dbV2.GuildGet(gid)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+		i.MGuild = gGet
+		i.Guild = multiToGuild(gGet)
+
+		return &i
+	}
+	return nil
 }
 
 func (s *Server) CheckCode(code string) models.Identity {
@@ -101,36 +106,6 @@ func extractAndValidateCheckHeaders(c *gin.Context) (token, roleId, mGuild strin
 
 func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 	var i models.Identity
-	if strings.HasPrefix(token, "Multi_") {
-		i.Token = token
-		// удаляем префикс "Multi_"
-		uid, gid, err := GetTokenData(token[6:])
-		if err == nil {
-			multiAccount, _ := s.multi.FindMultiAccountUUID(uid)
-			if multiAccount != nil && multiAccount.UUID == uid {
-				i.MultiAccount = multiAccount
-				i.MAccount = multiAccount
-			} else {
-				mAcc, _ := s.dbV2.FindMultiAccountUUID(uid)
-				if mAcc != nil && mAcc.UUID == uid {
-					i.MAccount = mAcc
-					i.MultiAccount = mAcc
-				}
-			}
-			i.User = multiToUser(i.MAccount)
-
-			i.MGuild, _ = s.dbV2.GuildGet(gid)
-			if i.MGuild != nil {
-				i.Guild = multiToGuild(i.MGuild)
-			}
-			i.Token, _ = JWTGenerateTokenV2(i.MAccount.UUID, i.MGuild.GId)
-			go s.searchAndMove(i)
-
-			return &i
-		}
-		s.log.ErrorErr(err)
-
-	}
 	if strings.HasPrefix(token, "identity_") {
 		i.Token = token
 		userId, GID, err := GetTokenUserData(token[9:])
@@ -139,7 +114,6 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 			if mAcc != nil &&
 				(mAcc.DiscordID == userId || mAcc.TelegramID == userId || mAcc.WhatsappID == userId) {
 				i.MAccount = mAcc
-				i.MultiAccount = mAcc
 				i.User = multiToUser(mAcc)
 			} else {
 				user, err := s.db.UsersGetByUserId(userId)
@@ -171,7 +145,6 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 				if err != nil {
 					s.log.ErrorErr(err)
 				}
-				i.MultiAccount = i.MAccount
 			}
 
 			i.MGuild, _ = s.dbV2.GuildGet(GID)
@@ -192,11 +165,16 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 	if token != "" { //search in old database
 		userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
 		if err != nil {
-			token2 := s.db.ListUserGetByMatch(token)
-			userid, guildid, err = s.db.ListUserGetUserIdAndGuildId(token2)
-			if err != nil {
-				s.log.Info("get user by token: " + token + " " + err.Error())
-				return nil
+			userid, guildid, err = ParseComplexToken(token)
+			if err == nil && userid != "" && guildid != "" {
+				//найдено
+			} else {
+				token2 := s.db.ListUserGetByMatch(token)
+				userid, guildid, err = s.db.ListUserGetUserIdAndGuildId(token2)
+				if err != nil {
+					s.log.Info("get user by token: " + token + " " + err.Error())
+					return nil
+				}
 			}
 		}
 
@@ -209,12 +187,12 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 
 		ma, _ := s.dbV2.FindMultiAccountByUserId(userid)
 		if ma != nil && ma.Nickname != "" {
-			i.MultiAccount = ma
 			i.MAccount = ma
 		} else {
 			user, err := s.db.UsersGetByUserId(userid)
 			if err != nil {
 				s.log.ErrorErr(err)
+				return nil
 			}
 			ma = &models.MultiAccount{
 				Nickname:  user.GameName,
@@ -240,7 +218,6 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 			if err != nil {
 				s.log.ErrorErr(err)
 			}
-			i.MultiAccount = i.MAccount
 		}
 
 		if i.MGuild != nil && i.MAccount != nil {
@@ -270,17 +247,21 @@ func multiToGuild(g *models.MultiAccountGuildV2) models.Guild {
 	}
 }
 func (s *Server) searchAndMove(i models.Identity) {
+	if i.MAccount == nil && i.User.ID != "" {
+		id, err := s.dbV2.FindMultiAccountByUserId(i.User.ID)
+		if err != nil {
+			s.log.ErrorErr(err)
+		}
+		i.MAccount = id
+
+	}
 	if i.MGuild == nil || i.MAccount == nil {
 		s.log.InfoStruct("what ", i)
 		return
 	}
-	m1 := s.multi.SearchOldData(i)
 	m2 := s.db.SearchOldData(i)
 	var guilds map[uuid.UUID]struct{}
 	guilds = make(map[uuid.UUID]struct{})
-	for _, id := range m1.CorpMember.GuildIds {
-		guilds[id] = struct{}{}
-	}
 	for _, id := range m2.CorpMember.GuildIds {
 		guilds[id] = struct{}{}
 	}
@@ -291,30 +272,13 @@ func (s *Server) searchAndMove(i models.Identity) {
 		m.CorpMember.GuildIds = append(m.CorpMember.GuildIds, u)
 	}
 	m.CorpMember.Uid = i.MAccount.UUID
-	m.CorpMember.TimeZona = m1.CorpMember.TimeZona
 	if m.CorpMember.TimeZona == "" {
 		m.CorpMember.TimeZona = m2.CorpMember.TimeZona
 	}
-	m.CorpMember.ZonaOffset = m1.CorpMember.ZonaOffset
-	if m.CorpMember.ZonaOffset == 0 {
-		m.CorpMember.ZonaOffset = m2.CorpMember.ZonaOffset
-	}
-	m.CorpMember.AfkFor = m1.CorpMember.AfkFor
 	if m.CorpMember.AfkFor == "" {
 		m.CorpMember.AfkFor = m2.CorpMember.AfkFor
 	}
 	techMap := make(map[string]models.TechLevels)
-	for _, member := range m1.Tech {
-		if techMap[member.Name] == nil {
-			techMap[member.Name] = member.Tech
-		} else {
-			for module, data := range member.Tech {
-				if techMap[member.Name][module].Level == 0 || techMap[member.Name][module].Ts < data.Ts {
-					techMap[member.Name][module] = data
-				}
-			}
-		}
-	}
 	for _, member := range m2.Tech {
 		if techMap[member.Name] == nil {
 			techMap[member.Name] = member.Tech
@@ -336,19 +300,24 @@ func (s *Server) searchAndMove(i models.Identity) {
 
 	accountUUID, err := s.dbV2.FindMultiAccountUUID(m.MAcc.UUID)
 	if err == nil && accountUUID != nil {
-		err = s.dbV2.CorpMemberInsert(m.CorpMember)
-		if err != nil {
-			s.log.ErrorErr(err)
-		}
-		for _, tech := range m.Tech {
-			err = s.dbV2.TechnologiesUpdate(m.MAcc.UUID, tech.Name, tech.Tech)
+		if len(m.CorpMember.GuildIds) != 0 {
+			fmt.Printf("searchAndMove CorpMember %+v\n", m.CorpMember)
+			err = s.dbV2.CorpMemberInsert(m.CorpMember)
 			if err != nil {
 				s.log.ErrorErr(err)
 			}
 		}
+		if len(m.Tech) != 0 {
+			fmt.Printf("searchAndMove Technology %+v\n", m.Tech)
+			for _, tech := range m.Tech {
+				err = s.dbV2.TechnologiesUpdate(m.MAcc.UUID, tech.Name, tech.Tech)
+				if err != nil {
+					s.log.ErrorErr(err)
+				}
+			}
+		}
 	}
-	fmt.Printf("searchAndMove complete %+v\n", m)
-	s.multi.DeleteOldClient(m.MAcc.UUID)
+
 	if m.MAcc.TelegramID != "" {
 		s.db.DeleteOldClient(m.MAcc.TelegramID)
 	}
@@ -359,4 +328,38 @@ func (s *Server) searchAndMove(i models.Identity) {
 		s.db.DeleteOldClient(m.MAcc.WhatsappID)
 	}
 	return
+}
+
+func ParseComplexToken(raw string) (userid, guildId string, err error) {
+	if strings.HasPrefix(raw, "ds") || strings.HasPrefix(raw, "tg") {
+		// 1. Определяем платформу
+		remainder := ""
+		if strings.HasPrefix(raw, "tg") {
+			remainder = strings.TrimPrefix(raw, "tg")
+		} else if strings.HasPrefix(raw, "ds") {
+			remainder = strings.TrimPrefix(raw, "ds")
+		} else {
+			return "", "", fmt.Errorf("unknown prefix")
+		}
+
+		// 2. Делим по первой точке: [ChatID].[Все остальное]
+		parts := strings.SplitN(remainder, ".", 2)
+		if len(parts) < 2 {
+			return "", "", fmt.Errorf("invalid format")
+		}
+		guildId = parts[0]
+
+		// 3. Используем регулярное выражение, чтобы отделить цифры (UserID) от букв (Secret)
+		// ^(\d+) ищет только цифры в начале строки
+		re := regexp.MustCompile(`^(\d+)(.*)`)
+		matches := re.FindStringSubmatch(parts[1])
+
+		if len(matches) > 2 {
+			userid = matches[1] // Только цифры
+		}
+
+		return userid, guildId, nil
+	}
+	return "", "", fmt.Errorf("invalid token")
+
 }

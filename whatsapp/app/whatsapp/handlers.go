@@ -9,7 +9,6 @@ import (
 	"time"
 	"whatsapp/models"
 
-	"github.com/42wim/matterbridge/bridge/config"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
@@ -349,14 +348,14 @@ func (b *Whatsapp) handleUserJoin(event *events.GroupInfo) {
 	for _, joinedJid := range event.Join {
 		senderName := b.getSenderNameFromJID(joinedJid)
 
-		rmsg := config.Message{
+		rmsg := Message{
 			UserID:   joinedJid.String(),
 			Username: senderName,
 			Channel:  event.JID.String(),
 			//Account:  b.Account,
 			//Protocol: b.Protocol,
-			Event: config.EventJoinLeave,
-			Text:  "joined chat",
+			//Event: config.EventJoinLeave,
+			Text: "joined chat",
 		}
 
 		fmt.Printf("%+v\n", rmsg)
@@ -367,14 +366,14 @@ func (b *Whatsapp) handleUserLeave(event *events.GroupInfo) {
 	for _, leftJid := range event.Leave {
 		senderName := b.getSenderNameFromJID(leftJid)
 
-		rmsg := config.Message{
+		rmsg := Message{
 			UserID:   leftJid.String(),
 			Username: senderName,
 			Channel:  event.JID.String(),
 			//Account:  b.Account,
 			//Protocol: b.Protocol,
-			Event: config.EventJoinLeave,
-			Text:  "left chat",
+			//Event: config.EventJoinLeave,
+			Text: "left chat",
 		}
 
 		fmt.Printf("%+v\n", rmsg)
@@ -391,14 +390,14 @@ func (b *Whatsapp) handleTopicChange(event *events.GroupInfo) {
 		text = "removed topic"
 	}
 
-	rmsg := config.Message{
+	rmsg := Message{
 		UserID:   senderJid.String(),
 		Username: senderName,
 		Channel:  event.JID.String(),
 		//Account:  b.Account,
 		//Protocol: b.Protocol,
-		Event: config.EventTopicChange,
-		Text:  "Topic changed: " + text,
+		//Event: config.EventTopicChange,
+		Text: "Topic changed: " + text,
 	}
 
 	fmt.Printf("handleTopicChange %+v\n", rmsg)

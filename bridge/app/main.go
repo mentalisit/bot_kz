@@ -18,7 +18,7 @@ func main() {
 	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "bridge")
 
 	st := storage.NewStorage(log, cfg)
-	b := logic.NewBridge(log, st)
+	b := logic.NewBridge(log, st, cfg)
 	grpc_server.GrpcMain(b, log)
 
 	log.Info("Service bridge load")

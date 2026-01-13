@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
 	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type ConfigBot struct {
@@ -18,6 +19,11 @@ type ConfigBot struct {
 		Username string `yaml:"username" env-default:"root"`
 		Password string `yaml:"password" env-default:"root"`
 	} `yaml:"postgress"`
+	Matrix struct {
+		HomeserverURL string `yaml:"homeserverURL" env-default:"http://10.0.0.184:6167"`
+		Username      string `yaml:"username" env-default:"@bridge_bot:matrix.mentalisit.myds.me"`
+		Password      string `yaml:"password" env-default:"botPassword"`
+	} `yaml:"matrix"`
 }
 
 var Instance *ConfigBot

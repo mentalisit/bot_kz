@@ -1,31 +1,42 @@
 package models
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Identity struct {
-	User         User                 `json:"user"`
-	Guild        Guild                `json:"guild"`
-	Token        string               `json:"token"`
-	MultiAccount *MultiAccount        `json:"multiAccount"`
-	MAccount     *MultiAccount        `json:"mAccount"`
-	MGuild       *MultiAccountGuildV2 `json:"mGuild"`
-}
-type Code struct {
-	Code      string
-	Timestamp int64
-	Identity  Identity
+	User     User                 `json:"user"`
+	Guild    Guild                `json:"guild"`
+	Token    string               `json:"token"`
+	MAccount *MultiAccount        `json:"mAccount"`
+	MGuild   *MultiAccountGuildV2 `json:"mGuild"`
 }
 
-//type IdentityGET struct {
-//	User  User    `json:"user"`
-//	Guild []Guild `json:"guilds"`
-//	Token string  `json:"token"`
-//}
+func (i Identity) Value() (driver.Value, error) {
+	return json.Marshal(i)
+}
+
+// Scan реализует интерфейс sql.Scanner для чтения из БД
+func (i *Identity) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(bytes, i)
+}
+
+type Code struct {
+	Code      string   `db:"code"`
+	Timestamp int64    `db:"time"`
+	Identity  Identity `db:"identity"`
+}
 
 type User struct {
 	ID       string `json:"id"`
@@ -51,34 +62,40 @@ type TechLevel struct {
 }
 type TechLevels map[int]TechLevel
 
-//type TechLevelArray map[int][2]int
-
-type Technology struct {
-	Tech TechLevels
-	Name string
+// Value: превращает мапу в JSON для базы (Valuer)
+func (t TechLevels) Value() (driver.Value, error) {
+	if t == nil {
+		return json.Marshal(make(TechLevels))
+	}
+	return json.Marshal(t)
 }
 
-//func (a *TechLevelArray) ConvertToTech(b []byte) TechLevelArray {
-//	//var m map[int]TechLevel
-//	m := make(map[int]TechLevel)
-//	err := json.Unmarshal(b, &m)
-//	if err != nil {
-//		return TechLevelArray{}
-//	}
-//	var mi = make(TechLevelArray)
-//	for i, le := range m {
-//		mi[i] = [2]int{le.Level}
-//	}
-//	return mi
-//}
+// Scan: читает JSON из базы в мапу (Scanner)
+func (t *TechLevels) Scan(src interface{}) error {
+	if src == nil {
+		*t = make(TechLevels)
+		return nil
+	}
+	bytes, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, t)
+}
 
-func (l *TechLevels) ConvertToTech(b []byte) TechLevels {
+func (t *TechLevels) ConvertToTech(b []byte) TechLevels {
 	m := make(TechLevels)
 	err := json.Unmarshal(b, &m)
 	if err != nil {
 		return nil
 	}
 	return m
+}
+
+type Technology struct {
+	Uid  uuid.UUID  `db:"uid"`
+	Tech TechLevels `db:"tech"`
+	Name string     `db:"username"` // Маппим username из БД в Name структуры
 }
 
 type SyncData struct {
@@ -93,10 +110,10 @@ type CorpData struct {
 	FilterName string       `json:"filterName"` // Name of current filter roleId
 }
 type CorpRole struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	TypeRole string
-	ChatId   int64
+	Id       string `db:"id" json:"id"`
+	Name     string `db:"name" json:"name"`
+	ChatId   int64  `db:"chat_id" json:"chat_id"`
+	TypeRole string `db:"-" json:"type_role,omitempty"`
 }
 
 func (r *CorpRole) GetRoleId() int64 {
@@ -154,13 +171,3 @@ func (v *CorpMember) GetType() string {
 	}
 	return ""
 }
-
-//type WsKill struct {
-//	GuildId      string
-//	ChatId       string
-//	UserName     string
-//	Mention      string
-//	ShipName     string
-//	TimestampEnd int64
-//	Language     string
-//}

@@ -96,8 +96,7 @@ func (d *Discord) FetchJSON(url string, params *models.ScoreboardParams, tsUnix 
 			return "", err
 		}
 		d.RedStarStart(rss, params)
-
-		d.storage.Db.InsertWebhookType(tsUnix, rss.Corporation.CorporationName, rss.EventType, string(body))
+		d.saveWebhook(params, tsUnix, body, rss.Corporation.CorporationName, rss.EventType)
 
 	case "RedStarEnded":
 		var rse models.RedStarEvent
@@ -178,10 +177,12 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 
 			points := rse.RSEventPoints / len(rse.Players)
 			for _, player := range rse.Players {
+				name := d.CombineNames(player.PlayerName)
+				fmt.Printf("name: %s CombineNames: %s\n", name, player.PlayerName)
 				err := d.storage.Battles.BattlesInsert(models.Battles{
 					EventId:  eventId,
 					CorpName: params.Name,
-					Name:     d.CombineNames(player.PlayerName),
+					Name:     name,
 					Level:    rse.StarLevel,
 					Points:   points,
 				})
@@ -298,12 +299,12 @@ func (d *Discord) saveWebhook(params *models.ScoreboardParams, tsUnix int64, bod
 		}
 	}
 
-	d.storage.Db.InsertWebhookType(tsUnix, CorporationName, EventType, string(body))
-
 	if params.Name == "global_ArtZor" {
 		d.storage.Db.InsertWebhook(tsUnix, CorporationName, string(body))
 	} else if params.Name == "rus" || params.Name == "soyuz" { //need remove after event
 		d.storage.Db.InsertWebhook(tsUnix, params.Name, string(body))
+	} else {
+		d.storage.Db.InsertWebhookType(tsUnix, CorporationName, EventType, string(body))
 	}
 }
 

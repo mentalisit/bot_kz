@@ -65,6 +65,9 @@ func (b *Bot) timerBot() { //цикл для удаления сообщений
 		now := time.Now().UTC()
 		if now.Second() == 0 {
 			b.MinusMin()
+			if now.Hour() == 23 && now.Minute() == 59 {
+				b.storage.Battles.DeleteOldWebhooks()
+			}
 
 			switch now.Minute() {
 

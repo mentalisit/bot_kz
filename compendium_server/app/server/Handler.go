@@ -19,10 +19,11 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 		return
 	}
 
-	identity := s.CheckCode(code)
+	i := s.CheckCode(code)
 
-	if identity.Token != "" {
-		c.JSON(http.StatusOK, identity)
+	if i.Token != "" {
+		fmt.Printf("CheckIdentityHandler corporation %s Name %s\n", i.Guild.Name, i.User.Username)
+		c.JSON(http.StatusOK, i)
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid code"})
@@ -37,6 +38,7 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 		if i.User.GameName != "" {
 			i.User.Username = i.User.GameName
 		}
+		fmt.Printf("CheckConnectHandler corporation %s Name %s\n", i.Guild.Name, i.User.Username)
 		c.JSON(http.StatusOK, i)
 		return
 	}
@@ -73,11 +75,12 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 		return
 	}
 
-	i := s.refreshToken2(token)
+	i := s.GetTokenIdentity(token)
 	if i != nil {
 		if i.User.GameName != "" {
 			i.User.Username = i.User.GameName
 		}
+		fmt.Printf("CheckRefreshHandler corporation %s Name %s\n", i.Guild.Name, i.User.Username)
 		c.JSON(http.StatusOK, i)
 		return
 	}
@@ -88,9 +91,9 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 	mode := c.Param("mode")
 	twin := c.DefaultQuery("twin", "")
 	token := c.GetHeader("authorization")
+	i := s.GetTokenIdentity(token)
 	if strings.HasPrefix(token, "my_compendium_") {
-		i2 := s.GetTokenIdentity(token)
-		if i2 != nil && i2.MAccount.Nickname != "" {
+		if i != nil && i.MAccount.Nickname != "" {
 			if mode == "" {
 				mode = c.GetHeader("X-Sync-Mode")
 			}
@@ -98,11 +101,11 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 				twin = c.GetHeader("X-Alt-Name")
 			}
 
-			userName := i2.MAccount.Nickname
+			userName := i.MAccount.Nickname
 			if twin != "" && twin != "default" {
 				userName = twin
 			}
-
+			fmt.Printf("mode %s corporation %s Name %s\n", mode, i.Guild.Name, userName)
 			sd := models.SyncData{
 				TechLevels: models.TechLevels{},
 				Ver:        2,
@@ -110,7 +113,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 			}
 
 			if mode == "get" {
-				techLevels, err := s.dbV2.TechnologiesGet(i2.MAccount.UUID, userName)
+				techLevels, err := s.dbV2.TechnologiesGet(i.MAccount.UUID, userName)
 				if err == nil && techLevels != nil {
 					sd.TechLevels = *techLevels
 				}
@@ -121,7 +124,7 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 					c.JSON(400, gin.H{"error": bindErr.Error()})
 					return
 				}
-				updateErr := s.dbV2.TechnologiesUpdate(i2.MAccount.UUID, userName, sd.TechLevels)
+				updateErr := s.dbV2.TechnologiesUpdate(i.MAccount.UUID, userName, sd.TechLevels)
 				if updateErr != nil {
 					s.log.ErrorErr(updateErr)
 				}
@@ -132,12 +135,11 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 		}
 	}
 
-	i := s.GetTokenIdentity(token)
 	if i == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 		return
 	}
-	if i.MultiAccount != nil && i.MGuild != nil {
+	if i.MAccount != nil && i.MGuild != nil {
 		s.SyncTechMulti(c, i, mode, twin)
 		return
 	}
@@ -186,6 +188,9 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 				s.log.Info(text)
 				data.TechLevels[id] = m[id]
 			}
+			if m[id] != l {
+				fmt.Printf("update module %d to %d\n", id, m[id].Level)
+			}
 		}
 
 		bytes, err := json.Marshal(data.TechLevels)
@@ -211,38 +216,25 @@ func (s *Server) CheckUserCorporationsHandler(c *gin.Context) {
 
 	// Получаем информацию о пользователе по токену
 	i := s.GetTokenIdentity(token)
-	if strings.HasPrefix(token, "my_compendium_") {
-		if i != nil && i.MAccount.Nickname != "" {
-			// Получаем список корпораций пользователя
-			corporations, err := s.dbV2.UserCorporationsGet(i)
-			if err != nil {
-				s.log.ErrorErr(err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
+	if i != nil {
+		fmt.Printf("CheckUserCorporationsHandler corporation %s Name %s\n", i.Guild.Name, i.User.Username)
+		if strings.HasPrefix(token, "my_compendium_") {
+			if i.MAccount.Nickname != "" {
+				// Получаем список корпораций пользователя
+				corporations, err := s.dbV2.UserCorporationsGet(i)
+				if err != nil {
+					s.log.ErrorErr(err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
+					return
+				}
+
+				c.JSON(http.StatusOK, gin.H{
+					"user":         i.MAccount,
+					"corporations": corporations,
+				})
 				return
 			}
-
-			c.JSON(http.StatusOK, gin.H{
-				"user":         i.MAccount,
-				"corporations": corporations,
-			})
-			return
 		}
-	}
-
-	if i != nil {
-		// Получаем список корпораций пользователя
-		corporations, err := s.db.UserCorporationsGet(i)
-		if err != nil {
-			s.log.ErrorErr(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user corporations"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"user":         i.User,
-			"corporations": corporations,
-		})
-		return
 	}
 
 	c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})

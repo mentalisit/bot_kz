@@ -37,7 +37,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 	userAvatar := m.Avatar
 
 	if m.MAcc != nil {
-		techLevels, err := c.db.V2.TechnologiesGet(m.MAcc.UUID, m.MAcc.Nickname)
+		techLevels, err := c.DbV2.TechnologiesGet(m.MAcc.UUID, m.MAcc.Nickname)
 		if err == nil && techLevels != nil {
 			picName = m.MAcc.Nickname
 			guildAvatar = m.MGuild.AvatarUrl
@@ -46,19 +46,6 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 			userPic := imageGenerator.GenerateUser(userAvatar, guildAvatar, picName, guildName, *techLevels)
 			c.sendChatPic(m, "", userPic)
 			return
-		}
-	}
-	if m.MultiAccount != nil {
-		mBytesTech, err := c.db.Multi.TechnologiesGet(m.MultiAccount.UUID, m.MultiAccount.Nickname)
-		if err != nil {
-			c.log.Error(fmt.Sprintf("TechnologiesGet %s err %+v", m.MultiAccount.Nickname, err))
-			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-			return
-		}
-
-		if mBytesTech != nil && len(mBytesTech) > 0 {
-			mBytes = mBytesTech
-			picName = m.MultiAccount.Nickname
 		}
 	}
 	if len(mBytes) == 0 {
@@ -169,25 +156,6 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 			}
 		}
 
-		var multiAcc *models.MultiAccount
-		if userID != "" {
-			multiAcc, _ = c.db.Multi.FindMultiAccountByUserId(userID)
-		} else if userName != "" {
-			multiAcc, _ = c.db.Multi.FindMultiAccountByUsername(userName)
-		}
-
-		if multiAcc != nil {
-			mBytesTech, _, err := c.db.Multi.TechnologiesGetName(multiAcc.Nickname)
-			if err != nil {
-				return false
-			}
-			if len(mBytesTech) != 0 {
-				mBytes = mBytesTech
-				picName = multiAcc.Nickname
-				userAvatar = multiAcc.AvatarURL
-			}
-		}
-
 		if len(mBytes) == 0 {
 			var user *models.User
 			if userID != "" {
@@ -271,45 +239,34 @@ func (c *Hs) techImageNameAlt(m models.IncomingMessage) bool {
 				return true
 			}
 		}
-
-		multiAccount, _ := c.db.Multi.FindMultiAccountByUsername(userName)
-		if multiAccount != nil {
-			userAvatar = multiAccount.AvatarURL
-			mBytesTech, _ := c.db.Multi.TechnologiesGet(multiAccount.UUID, userName)
-			if mBytesTech != nil {
-				mBytes = mBytesTech
+		techBytes, userID, err := c.tech.TechGetName(userName)
+		if err != nil || userID == "" {
+			usersGetNick, _ := c.users.UsersFindByGameName(userName)
+			if len(usersGetNick) > 1 {
+				c.log.InfoStruct("techImage usersGetNick", usersGetNick)
 			}
-		}
-		if multiAccount == nil {
-			techBytes, userID, err := c.tech.TechGetName(userName)
-			if err != nil || userID == "" {
-				usersGetNick, _ := c.users.UsersFindByGameName(userName)
-				if len(usersGetNick) > 1 {
-					c.log.InfoStruct("techImage usersGetNick", usersGetNick)
-				}
-				if usersGetNick != nil && len(usersGetNick) > 0 {
-					for _, userGetNick := range usersGetNick {
-						techBytes, userID, err = c.tech.TechGetName(userGetNick.Username)
-						if userID != "" || techBytes != nil {
-							break
-						}
+			if usersGetNick != nil && len(usersGetNick) > 0 {
+				for _, userGetNick := range usersGetNick {
+					techBytes, userID, err = c.tech.TechGetName(userGetNick.Username)
+					if userID != "" || techBytes != nil {
+						break
 					}
 				}
-				if userID == "" || techBytes == nil {
-					c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-					return true
-				}
 			}
-
-			user, err := c.users.UsersGetByUserId(userID)
-			if err != nil || user == nil {
+			if userID == "" || techBytes == nil {
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
-				c.log.Error(fmt.Sprintf("UsersGetByUserId %s %s  err %+v", m.Name, m.NameId, err))
 				return true
 			}
-			userAvatar = user.AvatarURL
-			mBytes = techBytes
 		}
+
+		user, err := c.users.UsersGetByUserId(userID)
+		if err != nil || user == nil {
+			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
+			c.log.Error(fmt.Sprintf("UsersGetByUserId %s %s  err %+v", m.Name, m.NameId, err))
+			return true
+		}
+		userAvatar = user.AvatarURL
+		mBytes = techBytes
 		if len(mBytes) == 0 {
 			c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))
 			return true

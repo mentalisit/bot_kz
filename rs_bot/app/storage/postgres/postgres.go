@@ -105,40 +105,7 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS kzbot.subscribe(
-    id        bigserial	primary key,
-    name      text,
-    nameid    text,
-    lvlkz     text,
-    tip       bigint,
-    chatid    text,
-    timestart text,
-    timeend   text
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
 
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS kzbot.users(
-    id      bigserial primary key,
-    tip     text,
-	name    text,
-	em1     text,
-	em2     text,
-	em3     text,
-	em4     text,
-	module1 text,
-	module2 text,
-	module3 text,
-	weapon  text
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
 	_, err = d.db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS kzbot.rsevent(
 		id          bigserial        primary key,
@@ -179,7 +146,7 @@ func (d *Db) createTable() {
 
 	_, err = d.db.Exec(ctx,
 		`CREATE TABLE IF NOT EXISTS rs_bot.module(
-    uid uuid references compendium.multi_accounts(uuid) on delete cascade,
+    uid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
     name    text,
 	gen bigint,
 	enr bigint,
@@ -189,19 +156,6 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 		return
 	}
-
-	//_, err = d.db.Exec(ctx, `
-	//	CREATE TABLE IF NOT EXISTS rs_bot.fakeuser
-	//(
-	//	id     bigserial        primary key,
-	//	name text NOT NULL DEFAULT '',
-	//	level    integer NOT NULL DEFAULT 0,
-	//	points   integer NOT NULL DEFAULT 0
-	//);`)
-	//if err != nil {
-	//	d.log.ErrorErr(err)
-	//	return
-	//}
 
 	_, err = d.db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS rs_bot.scoreboard

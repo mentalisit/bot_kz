@@ -42,8 +42,11 @@ func (c *Hs) connect(m models.IncomingMessage) (conn bool) {
 
 	code := c.generateCodeAndSave(newIdentify)
 	cmNew := false
-	oldCM, _ := c.db.V2.CorpMemberByUId(newIdentify.MAccount.UUID)
-	if oldCM != nil {
+	oldCM, err := c.DbV2.CorpMemberByUId(newIdentify.MAcc.UUID)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+	if oldCM != nil && err == nil {
 		if !oldCM.Exist(newIdentify.MGuild.GId) {
 			oldCM.GuildIds = append(oldCM.GuildIds, newIdentify.MGuild.GId)
 			err = c.db.V2.CorpMemberUpdate(*oldCM)

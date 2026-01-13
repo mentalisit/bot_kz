@@ -4,7 +4,6 @@ import (
 	"compendium/models"
 	"compendium/storage"
 	"compendium/storage/postgres"
-	"compendium/storage/postgres/multi"
 	"compendium/storage/postgres/postgresV2"
 	"context"
 	"errors"
@@ -22,9 +21,8 @@ type Server struct {
 	db  *postgres.Db
 	In  chan models.IncomingMessage
 	LogicServiceServer
-	Multi *multi.Db
-	DBv2  *postgresv2.Db
-	st    *storage.Storage
+	DBv2 *postgresv2.Db
+	st   *storage.Storage
 }
 
 func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
@@ -35,12 +33,11 @@ func GrpcMain(log *logger.Logger, st *storage.Storage) *Server {
 
 	s := grpc.NewServer()
 	serv := &Server{
-		log:   log,
-		db:    st.DB,
-		In:    make(chan models.IncomingMessage, 10),
-		Multi: st.Multi,
-		DBv2:  st.V2,
-		st:    st,
+		log:  log,
+		db:   st.DB,
+		In:   make(chan models.IncomingMessage, 10),
+		DBv2: st.V2,
+		st:   st,
 	}
 
 	RegisterLogicServiceServer(s, serv)
@@ -78,25 +75,12 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		in.Type = in.Type[:2]
 	}
 
-	multiAccount, _ := s.db.Multi.FindMultiAccountByUserId(in.NameId)
-	if multiAccount != nil && multiAccount.TelegramID != "" && multiAccount.DiscordID != "" {
-		if in.Avatar != "" {
-			if multiAccount.AvatarURL != in.Avatar {
-				multiAccount.AvatarURL = in.Avatar
-				_, _ = s.db.Multi.UpdateMultiAccountAvatarUrl(*multiAccount)
-			}
-		}
-		in.MultiAccount = multiAccount
-	}
-
-	//v2
 	in.MAcc, _ = s.DBv2.FindMultiAccountByUserId(req.NameId)
 	fmt.Printf("FindMultiAccountByUserId %s\n", req.NameId)
 	if in.MAcc == nil || in.MAcc.Nickname == "" {
-		oldAcc, _ := s.st.DB.Multi.FindMultiAccountByUserId(req.NameId)
 		user, _ := s.db.UsersGetByUserId(req.NameId)
-		if oldAcc == nil && user != nil {
-			oldAcc = &models.MultiAccount{
+		if user != nil {
+			oldAcc := &models.MultiAccount{
 				UUID:      uuid.New(),
 				Nickname:  user.GameName,
 				AvatarURL: user.AvatarURL,
@@ -117,41 +101,45 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 				oldAcc.WhatsappID = user.ID
 				oldAcc.WhatsappUsername = user.Username
 			}
+			if oldAcc != nil {
+				//копируем
+				in.MAcc, _ = s.DBv2.CreateMultiAccountFull(*oldAcc)
+			} else {
+				// Создаем новый аккаунт
+				in.MAcc, _ = s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
+			}
 		}
-		if oldAcc != nil {
-			//копируем
-			in.MAcc, _ = s.DBv2.CreateMultiAccountFull(*oldAcc)
-		} else {
-			// Создаем новый аккаунт
-			in.MAcc, _ = s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
-		}
+
 	}
-	if in.MAcc.AvatarURL != req.Avatar {
+	if in.MAcc == nil {
+		in.MAcc, _ = s.DBv2.CreateMultiAccountWithPlatform(req.NameId, req.Name, req.Type, req.Name)
+	}
+	if in.MAcc != nil && in.MAcc.AvatarURL != req.Avatar {
 		in.MAcc.AvatarURL = req.Avatar
 		in.MAcc, _ = s.DBv2.UpdateMultiAccountAvatarUrl(*in.MAcc)
 
 	}
 	fmt.Printf("in.ma %+v\n", in.MAcc)
-	guild2, err := s.DBv2.GuildGetChatId(req.GuildId)
-	if err != nil && guild2 == nil {
+	guild, err := s.DBv2.GuildGetChannel(req.GuildId)
+	if err != nil && guild == nil {
 		g := models.MultiAccountGuildV2{
 			GuildName: req.GuildName,
 			Channels:  make(map[string][]string),
 			AvatarUrl: req.GuildAvatar,
 		}
 		g.Channels[req.Type] = append(g.Channels[req.Type], req.GuildId)
-		guild2, err = s.DBv2.GuildInsert(g)
+		guild, err = s.DBv2.GuildSave(g)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
-	} else if guild2 != nil && guild2.AvatarUrl != req.GuildAvatar {
-		guild2.AvatarUrl = req.GuildAvatar
-		err = s.DBv2.GuildUpdateAvatar(*guild2)
+	} else if guild != nil && guild.AvatarUrl != req.GuildAvatar {
+		guild.AvatarUrl = req.GuildAvatar
+		err = s.DBv2.GuildUpdateAvatar(*guild)
 		if err != nil {
 			s.log.ErrorErr(err)
 		}
 	}
-	in.MGuild = guild2
+	in.MGuild = guild
 
 	s.In <- in
 	return &Empty{}, nil

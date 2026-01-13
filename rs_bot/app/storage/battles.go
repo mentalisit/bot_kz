@@ -9,4 +9,5 @@ type Battles interface {
 	ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string)
 	StatisticGetName(name string) ([]models.Statistic, error)
 	GetBattleStats(corporation string, minRecords int) []*models.BattleStats
+	DeleteOldWebhooks()
 }

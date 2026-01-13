@@ -1,7 +1,5 @@
 package postgres
 
-import "github.com/google/uuid"
-
 func (d *Db) ListUserInsert(token, userid, guildid string) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
@@ -98,48 +96,3 @@ func (d *Db) ListUserUpdateToken(tokenOld, tokenNew string) error {
 	}
 	return nil
 }
-
-func (d *Db) MultiListUserInsert(token, guildId string, uid uuid.UUID) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	count, err := d.MultiListUserGetCountByUUID(guildId, uid)
-	if err != nil {
-		return err
-	}
-	if count > 0 {
-		err = d.MultiListUserUpdate(token, guildId, uid)
-		if err != nil {
-			return err
-		}
-	} else {
-		insert := `INSERT INTO compendium.list_users(uid, guildid, token) VALUES ($1,$2,$3)`
-		_, err = d.db.Exec(ctx, insert, uid, guildId, token)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-func (d *Db) MultiListUserGetCountByUUID(guildId string, uid uuid.UUID) (int, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	var count int
-	sel := "SELECT count(*) as count FROM compendium.list_users WHERE uid = $1 AND guildid = $2"
-	err := d.db.QueryRow(ctx, sel, uid, guildId).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-func (d *Db) MultiListUserUpdate(token, guildId string, uid uuid.UUID) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	upd := `update compendium.list_users set token = $1 where guildid = $2 AND uid = $3`
-	_, err := d.db.Exec(ctx, upd, token, guildId, uid)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-//todo get token

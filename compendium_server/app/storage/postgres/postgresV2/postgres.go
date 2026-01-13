@@ -64,22 +64,22 @@ func (d *Db) createTable() {
 			alts 	TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
 			created_at timestamp default now()
 		)`
+
+	//-- 2. Создаем частичные индексы отдельно
+	//CREATE UNIQUE INDEX idx_unique_telegram_id
+	//ON my_compendium.multi_accounts (telegram_id)
+	//WHERE telegram_id != '';
+	//
+	//CREATE UNIQUE INDEX idx_unique_discord_id
+	//ON my_compendium.multi_accounts (discord_id)
+	//WHERE discord_id != '';
+	//
+	//CREATE UNIQUE INDEX idx_unique_whatsapp_id
+	//ON my_compendium.multi_accounts (whatsapp_id)
+	//WHERE whatsapp_id != '';
+
 	if _, err := d.db.Exec(multiAccountsTable); err != nil {
 		d.log.ErrorErr(fmt.Errorf("failed to create multi_accounts table: %w", err))
-		return
-	}
-
-	// Create accounts_link_codes table
-	linkCodesTable := `
-		CREATE TABLE IF NOT EXISTS my_compendium.accounts_link_codes
-		(
-			code  text primary key,
-			uuid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
-			expires_at timestamp not null,
-			created_at timestamp default now()
-		)`
-	if _, err := d.db.Exec(linkCodesTable); err != nil {
-		d.log.ErrorErr(fmt.Errorf("failed to create accounts_link_codes table: %w", err))
 		return
 	}
 

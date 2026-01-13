@@ -28,10 +28,10 @@ func (c *Hs) setGameName(m models.IncomingMessage) bool {
 						c.log.ErrorErr(err)
 					}
 				}
-			} else if m.MultiAccount != nil {
-				_ = c.db.Multi.TechnologiesUpdateUsername(m.MultiAccount.UUID, m.MultiAccount.Nickname, gameName)
-				m.MultiAccount.Nickname = gameName
-				_, err := c.db.Multi.UpdateMultiAccountNickname(*m.MultiAccount)
+			} else if m.MAcc != nil {
+				_ = c.DbV2.TechnologiesUpdateUsername(m.MAcc.UUID, m.MAcc.Nickname, gameName)
+				m.MAcc.Nickname = gameName
+				_, err := c.DbV2.UpdateMultiAccountNickname(*m.MAcc)
 				if err != nil {
 					c.log.ErrorErr(err)
 				}

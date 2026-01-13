@@ -57,7 +57,7 @@ func (d *Db) FindMultiAccountByUserIdCompendium(userId string) (*models.MultiAcc
 		       whatsapp_id, whatsapp_username,
 		       created_at,
 			   avatarUrl, alts
-		FROM compendium.multi_accounts
+		FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, userId)
@@ -84,7 +84,7 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 		       whatsapp_id, whatsapp_username,
 		       created_at,
 			   avatarUrl, alts
-		FROM compendium.multi_accounts
+		FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, userId)
@@ -100,23 +100,3 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 	}
 	return acc, nil
 }
-
-//func (d *Db) UpdateMultiAccountNickname(m models.MultiAccount) (*models.MultiAccount, error) {
-//	ctx, cancel := d.getContext()
-//	defer cancel()
-//
-//	const query = `
-//		UPDATE compendium.multi_accounts
-//		SET nickname = $1
-//		WHERE uuid = $2` + returningMultiAccount
-//
-//	row := d.db.QueryRow(ctx, query, m.Nickname, m.UUID)
-//
-//	acc, err := scanMultiAccount(row)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return acc, nil
-//}

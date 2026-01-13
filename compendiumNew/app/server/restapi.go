@@ -40,12 +40,13 @@ func (s *Server) api(c *gin.Context) {
 	guildid := c.Query("guildid")
 	if userid != "" {
 		fmt.Println("userid:", userid)
-		multiAccount, _ := s.multi.FindMultiAccountByUserId(userid)
+		multiAccount, _ := s.dbV2.FindMultiAccountByUserId(userid)
 		if multiAccount != nil {
 			fmt.Printf("multiAccount: %+v\n", multiAccount)
-			corpMember, _ := s.multi.TechnologiesGetAllCorpMember(models.CorpMember{
-				MultiAccount: multiAccount,
-				UserId:       userid})
+
+			corpMember, _ := s.dbV2.TechnologiesGetAllCorpMember(models.CorpMember{
+				MAcc:   multiAccount,
+				UserId: userid})
 			if len(corpMember) != 0 {
 				fmt.Printf("corpMember: %+v\n", corpMember)
 				c.JSON(http.StatusOK, corpMember)
@@ -84,7 +85,7 @@ func (s *Server) apiUserAlts(c *gin.Context) {
 		return
 	}
 	fmt.Println("userid:", userid)
-	accountByUserId, _ := s.multi.FindMultiAccountByUserId(userid)
+	accountByUserId, _ := s.dbV2.FindMultiAccountByUserId(userid)
 	if accountByUserId != nil && len(accountByUserId.Alts) > 0 {
 		fmt.Printf("accountByUserId: %+v\n", accountByUserId.Alts)
 		c.JSON(http.StatusOK, accountByUserId.Alts)

@@ -12,17 +12,13 @@ func GenerateIdentity(m models.IncomingMessage) models.Identity {
 		},
 	}
 
-	if m.MultiAccount != nil {
-		i.MultiAccount = m.MultiAccount
-	}
-
 	if m.MAcc != nil && m.MGuild != nil {
 		token, err := JWTGenerateToken(m.MAcc.UUID, m.MGuild.GId)
 		if err == nil {
 			i.Token = token
 		}
 		i.MGuild = m.MGuild
-		i.MAccount = m.MAcc
+		i.MAcc = m.MAcc
 		i.User = models.User{
 			ID:        m.MAcc.UUID.String(),
 			Username:  m.MAcc.Nickname,

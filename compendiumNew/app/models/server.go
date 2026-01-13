@@ -1,22 +1,37 @@
 package models
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 )
 
 type Identity struct {
-	User         User                 `json:"user"`
-	Guild        Guild                `json:"guild"`
-	Token        string               `json:"token"`
-	MultiAccount *MultiAccount        `json:"multiAccount"`
-	MAccount     *MultiAccount        `json:"mAccount"`
-	MultiGuild   *MultiAccountGuild   `json:"multiGuild"`
-	MGuild       *MultiAccountGuildV2 `json:"mGuild"`
+	User   User                 `json:"user"`
+	Guild  Guild                `json:"guild"`
+	Token  string               `json:"token"`
+	MAcc   *MultiAccount        `json:"mAcc"`
+	MGuild *MultiAccountGuildV2 `json:"mGuild"`
 }
+
+func (i Identity) Value() (driver.Value, error) {
+	return json.Marshal(i)
+}
+
+// Scan реализует интерфейс sql.Scanner для чтения из БД
+func (i *Identity) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(bytes, i)
+}
+
 type Code struct {
-	Code      string
-	Timestamp int64
-	Identity  Identity
+	Code      string   `db:"code"`
+	Timestamp int64    `db:"time"`
+	Identity  Identity `db:"identity"`
 }
 
 //type IdentityGET struct {
@@ -49,7 +64,28 @@ type TechLevel struct {
 }
 type TechLevels map[int]TechLevel
 
-func (l *TechLevels) ConvertToTech(b []byte) map[int]TechLevel {
+// Value: превращает мапу в JSON для базы (Valuer)
+func (t TechLevels) Value() (driver.Value, error) {
+	if t == nil {
+		return json.Marshal(make(TechLevels))
+	}
+	return json.Marshal(t)
+}
+
+// Scan: читает JSON из базы в мапу (Scanner)
+func (t *TechLevels) Scan(src interface{}) error {
+	if src == nil {
+		*t = make(TechLevels)
+		return nil
+	}
+	bytes, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, t)
+}
+
+func (t *TechLevels) ConvertToTech(b []byte) map[int]TechLevel {
 	//var m map[int]TechLevel
 	m := make(map[int]TechLevel)
 	err := json.Unmarshal(b, &m)
@@ -70,34 +106,31 @@ type CorpData struct {
 	FilterId   string       `json:"filterId"`   // Current filter roleId
 	FilterName string       `json:"filterName"` // Name of current filter roleId
 }
-
 type CorpMember struct {
-	Name    string `json:"name"`
-	UserId  string `json:"userId"`
-	GuildId string `json:"guildId"`
-	//Avatar       string     `json:"avatar"`
-	Tech         TechLevels `json:"tech"`
-	AvatarUrl    string     `json:"avatarUrl"`
-	LocalTime    string     `json:"localTime"`   //localTime:"07:52 PM"
-	LocalTime24  string     `json:"localTime24"` //localTime24:"19:52"
-	TimeZone     string     `json:"timeZone"`    //timeZone:"UTC-5"
-	ZoneOffset   int        `json:"zoneOffset"`  //zoneOffset:-300
-	AfkFor       string     `json:"afkFor"`      // readable afk duration
-	AfkWhen      int        `json:"afkWhen"`     // Unix Epoch when user returns
-	MultiAccount *MultiAccount
-	MultiGuild   *MultiAccountGuild
-	MAcc         *MultiAccount
-	MGuild       *MultiAccountGuildV2
+	Name        string     `db:"username" json:"name"` // Колонка username в базу -> Name в Go
+	UserId      string     `db:"uid" json:"userId"`    // UUID в базу -> string в Go (sqlx сконвертирует)
+	GuildId     string     `json:"guildId"`            // Это поле обычно заполняется отдельно
+	Tech        TechLevels `db:"tech" json:"tech"`     // Наш умный тип JSONB
+	AvatarUrl   string     `db:"avatarurl" json:"avatarUrl"`
+	LocalTime   string     `json:"localTime"`   //localTime:"07:52 PM"
+	LocalTime24 string     `json:"localTime24"` //localTime24:"19:52"
+	TimeZone    string     `json:"timeZone"`    //timeZone:"UTC-5"
+	ZoneOffset  int        `json:"zoneOffset"`  //zoneOffset:-300
+	AfkFor      string     `json:"afkFor"`      // readable afk duration
+	AfkWhen     int        `json:"afkWhen"`     // Unix Epoch when user returns
+	MAcc        *MultiAccount
+	MGuild      *MultiAccountGuildV2
 }
 
 type WsKill struct {
-	GuildId      string
-	ChatId       string
-	UserName     string
-	Mention      string
-	ShipName     string
-	TimestampEnd int64
-	Language     string
+	Id           int64  `db:"id" json:"id"` // Добавим Id, так как он есть в БД
+	GuildId      string `db:"guildid"`
+	ChatId       string `db:"chatid"`
+	UserName     string `db:"username"`
+	Mention      string `db:"mention"`
+	ShipName     string `db:"shipname"`
+	TimestampEnd int64  `db:"timestampend"`
+	Language     string `db:"language"`
 }
 type TechTable struct {
 	Id      int64

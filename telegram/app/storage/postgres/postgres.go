@@ -41,28 +41,82 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		db:  pool,
 		log: log,
 	}
-	db.createTable()
+	db.CreateTables(context.Background())
 	return db
 }
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }
-func (d *Db) createTable() {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	// Создание таблиц
-	_, err := d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS rs_bot.chat_members (
-		chat_id BIGINT PRIMARY KEY,
-		chat_name text NOT NULL DEFAULT '',
-		data JSONB NOT NULL DEFAULT '{}',
-		roles JSONB NOT NULL DEFAULT '{}',
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
+
+// CreateTables создает необходимые таблицы в схеме telegram
+func (d *Db) CreateTables(ctx context.Context) error {
+	// Сначала создаем схему если она не существует
+	queries := []string{
+		`CREATE SCHEMA IF NOT EXISTS telegram`,
+
+		// Таблица чатов
+		`CREATE TABLE IF NOT EXISTS telegram.chats (
+			chat_id BIGINT PRIMARY KEY,
+			chat_name VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT NOW(),
+			updated_at TIMESTAMP DEFAULT NOW()
+		)`,
+
+		// Таблица участников чатов
+		`CREATE TABLE IF NOT EXISTS telegram.chat_members (
+			chat_id BIGINT NOT NULL,
+			user_id BIGINT NOT NULL,
+			first_name VARCHAR(255),
+			last_name VARCHAR(255),
+			user_name VARCHAR(255),
+			is_admin BOOLEAN DEFAULT FALSE,
+			last_updated TIMESTAMP DEFAULT NOW(),
+			PRIMARY KEY (chat_id, user_id)
+		)`,
+
+		// Таблица ролей
+		`CREATE TABLE IF NOT EXISTS telegram.roles (
+			id BIGSERIAL PRIMARY KEY,
+			chat_id BIGINT NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			created_by BIGINT NOT NULL,
+			created_at TIMESTAMP DEFAULT NOW(),
+			UNIQUE(chat_id, name)
+		)`,
+
+		// Таблица связи пользователей и ролей
+		`CREATE TABLE IF NOT EXISTS telegram.user_roles (
+			id BIGSERIAL PRIMARY KEY,
+			user_id BIGINT NOT NULL,
+			role_id BIGINT NOT NULL,
+			chat_id BIGINT NOT NULL,
+			assigned_at TIMESTAMP DEFAULT NOW(),
+			UNIQUE(user_id, role_id),
+			FOREIGN KEY (role_id) REFERENCES telegram.roles(id) ON DELETE CASCADE
+		)`,
+
+		// Таблица прав доступа
+		`CREATE TABLE IF NOT EXISTS telegram.chat_permissions (
+			chat_id BIGINT NOT NULL,
+			user_id BIGINT NOT NULL,
+			is_admin BOOLEAN DEFAULT FALSE,
+			PRIMARY KEY (chat_id, user_id)
+		)`,
+
+		// Индексы для оптимизации
+		`CREATE INDEX IF NOT EXISTS idx_chat_members_chat_id ON telegram.chat_members(chat_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_chat_members_user_id ON telegram.chat_members(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_roles_chat_id ON telegram.roles(chat_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_user_roles_user_chat ON telegram.user_roles(user_id, chat_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON telegram.user_roles(role_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_chat_permissions_chat_user ON telegram.chat_permissions(chat_id, user_id)`,
 	}
-	d.CreateTables(context.Background())
+
+	for _, query := range queries {
+		_, err := d.db.Exec(ctx, query)
+		if err != nil {
+			return fmt.Errorf("failed to create table: %w, query: %s", err, query)
+		}
+	}
+	return nil
 }

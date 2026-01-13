@@ -5,6 +5,7 @@ import (
 	"rs/bot/helpers"
 	"rs/models"
 	"strconv"
+	"time"
 )
 
 func (b *Bot) darkAlt(in models.InMessage, i int) {
@@ -26,6 +27,10 @@ func (b *Bot) darkAlt(in models.InMessage, i int) {
 }
 
 func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда RsDarkPlus Отправитель %s Время выполнения: %v\n", in.Username, time.Since(startTime))
+	}()
 	b.helpers.ReadNameModules(in, alt)
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -206,7 +211,7 @@ func (b *Bot) RsDarkPlus(in models.InMessage, alt string) {
 					}
 
 					b.wg.Wait()
-					go b.SendLsNotification(in, u)
+					b.SendLsNotification(in, u)
 					b.storage.DbFunc.InsertQueue(DsMessageId, alt, in.Config.CorpName, in.Username, in.UserId, in.GetNameMention(), in.Tip, in.RsTypeLevel, in.TimeRs, TgMessageId, numberName)
 					err = b.storage.Update.UpdateCompliteRS(in.RsTypeLevel, DsMessageId, TgMessageId, alt, numberLevel, numberEvent, in.Config.CorpName)
 					if err != nil {
