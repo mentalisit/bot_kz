@@ -1,0 +1,16 @@
+{
+  "servers": [
+    {
+      "url": "https://mentalisit.myds.me",
+      "priority": 1
+    },
+    {
+      "url": "https://mentalisit.tsl.rocks",
+      "priority": 2
+    },
+    {
+      "url": "https://mentalisit.top",
+      "priority": 3
+    }
+  ]
+}
