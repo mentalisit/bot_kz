@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 // Multi-account methods
@@ -75,6 +76,14 @@ func (d *Db) FindMultiAccountByUserName(userName string) (*models.MultiAccount, 
 }
 
 func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username string) (*models.MultiAccount, error) {
+	// Логируем если никнейм пустой
+	if nickname == "" {
+		d.log.Warn("CreateMultiAccountWithPlatform called with empty nickname",
+			zap.String("user_id", id),
+			zap.String("platform", platform),
+			zap.String("username", username))
+	}
+
 	// Определяем имя колонки ID и Username в зависимости от платформы
 	var ma models.MultiAccount
 
@@ -118,6 +127,22 @@ func (d *Db) UpdateMultiAccountAlts(m models.MultiAccount) (*models.MultiAccount
 func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount, error) {
 	if m.UUID == uuid.Nil {
 		m.UUID = uuid.New()
+	}
+	if m.Nickname == "" {
+		if m.TelegramID != "" {
+			m.Nickname = m.TelegramUsername
+		}
+		if m.DiscordID != "" {
+			m.Nickname = m.DiscordUsername
+		}
+	}
+	// Логируем если никнейм пустой
+	if m.Nickname == "" {
+		d.log.Warn("CreateMultiAccountFull called with empty nickname",
+			zap.String("uuid", m.UUID.String()),
+			zap.String("telegram_id", m.TelegramID),
+			zap.String("discord_id", m.DiscordID),
+			zap.String("whatsapp_id", m.WhatsappID))
 	}
 
 	query := `

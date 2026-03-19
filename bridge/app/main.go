@@ -26,4 +26,11 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
+
+	// Корректное завершение всех модулей
+	log.Info("Received shutdown signal, shutting down...")
+	b.Shutdown()
+	log.Info("Service bridge stopped")
 }
+
+//go:generate protoc --go_out=. --go-grpc_out=. bridge.proto

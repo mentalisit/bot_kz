@@ -2,13 +2,13 @@ package telegram
 
 import (
 	"context"
-	"telegram/models"
+	"telegram/models2"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
 func (t *Telegram) SaveMember(c *tgbotapi.Chat, u *tgbotapi.User) {
-	chat := models.Chat{
+	chat := models2.Chat{
 		ChatID:   c.ID,
 		ChatName: c.Title,
 	}
@@ -16,7 +16,7 @@ func (t *Telegram) SaveMember(c *tgbotapi.Chat, u *tgbotapi.User) {
 		return
 	}
 
-	user := models.User{
+	user := models2.User{
 		ID:        u.ID,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
@@ -27,7 +27,7 @@ func (t *Telegram) SaveMember(c *tgbotapi.Chat, u *tgbotapi.User) {
 }
 
 // UpdateUserFromMessage обновляет данные пользователя из сообщения
-func (t *Telegram) UpdateUserFromMessage(chat models.Chat, user models.User) {
+func (t *Telegram) UpdateUserFromMessage(chat models2.Chat, user models2.User) {
 	// Сначала убедимся, что чат существует в бд
 	_, err := t.Storage.Db.GetChat(chat.ChatID)
 	if err != nil {
@@ -40,7 +40,7 @@ func (t *Telegram) UpdateUserFromMessage(chat models.Chat, user models.User) {
 	}
 
 	// Обновляем/добавляем пользователя в чат
-	dbUser := models.User{
+	dbUser := models2.User{
 		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,

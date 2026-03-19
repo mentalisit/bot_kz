@@ -55,3 +55,5 @@ func RunNew(ctx context.Context) error {
 	log.Info("shutdown")
 	return nil
 }
+
+//go:generate protoc --go_out=. --go-grpc_out=. rs.proto

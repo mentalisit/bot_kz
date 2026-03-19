@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
@@ -44,7 +45,9 @@ func (t *Telegram) update() {
 		} else if update.Message != nil {
 			t.updateMessage(update.Message)
 		} else if update.EditedMessage != nil {
-			t.logicMix(update.EditedMessage, true)
+			if time.Now().Unix()-update.EditedMessage.Date < 300 {
+				t.logicMix(update.EditedMessage, true)
+			}
 		} else if update.MyChatMember != nil {
 			t.myChatMember(update.MyChatMember)
 		} else if update.ChatMember != nil {

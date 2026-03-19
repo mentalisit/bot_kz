@@ -68,10 +68,9 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 			if user != nil && member.Name == user.Username && user.GameName != "" {
 				member.Name = user.GameName
 			}
+			// Используем функцию с поддержкой DST
 			if member.TimeZone != "" {
-				t12, t24 := getTimeStrings(member.ZoneOffset)
-				member.LocalTime = t12
-				member.LocalTime24 = t24
+				member.LocalTime, member.LocalTime24 = getTimeStringsWithDST(member.TimeZone, member.ZoneOffset)
 			}
 			member.UserId = t.UserId + "/" + member.Name
 			mm = append(mm, member)
@@ -131,4 +130,23 @@ func getTimeStrings(offset int) (string, string) {
 	time24HourFormat := timeWithOffset.Format("15:04")
 
 	return time12HourFormat, time24HourFormat
+}
+
+// getTimeStringsWithDST возвращает время с учетом DST (летнего/зимнего времени)
+// Если timezone - это название локации (например, "America/New_York"),
+// то смещение вычисляется динамически с учетом текущего DST
+func getTimeStringsWithDST(timezone string, fallbackOffsetMinutes int) (string, string) {
+	now := time.Now()
+
+	// Пытаемся загрузить локацию для динамического расчета DST
+	if timezone != "" {
+		loc, err := time.LoadLocation(timezone)
+		if err == nil {
+			timeInLocation := now.In(loc)
+			return timeInLocation.Format("03:04 PM"), timeInLocation.Format("15:04")
+		}
+	}
+
+	// Fallback на фиксированное смещение
+	return getTimeStrings(fallbackOffsetMinutes)
 }

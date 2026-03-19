@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) CheckIdentityHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckIdentityHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	code := c.GetHeader("authorization")
 
 	// Проверка наличия кода в запросе и его длины
@@ -30,6 +35,10 @@ func (s *Server) CheckIdentityHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckConnectHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckConnectHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	token := c.GetHeader("authorization")
 
 	// Локальная проверка
@@ -46,6 +55,10 @@ func (s *Server) CheckConnectHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckCorpDataHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckCorpDataHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	token, roleId, mGuild, err := extractAndValidateCheckHeaders(c)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -69,6 +82,10 @@ func (s *Server) CheckCorpDataHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckRefreshHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckRefreshHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	token := c.GetHeader("authorization")
 	if token == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})
@@ -88,6 +105,10 @@ func (s *Server) CheckRefreshHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckSyncTechHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckSyncTechHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	mode := c.Param("mode")
 	twin := c.DefaultQuery("twin", "")
 	token := c.GetHeader("authorization")
@@ -208,6 +229,10 @@ func (s *Server) CheckSyncTechHandler(c *gin.Context) {
 }
 
 func (s *Server) CheckUserCorporationsHandler(c *gin.Context) {
+	startTime := time.Now()
+	defer func() {
+		fmt.Printf("Команда CheckUserCorporationsHandler Время выполнения: %v\n", time.Since(startTime))
+	}()
 	token := c.GetHeader("authorization")
 	if token == "" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "missing token"})

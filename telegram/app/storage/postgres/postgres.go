@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"telegram/config"
 	"time"
 
@@ -11,11 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
+	"github.com/mentalisit/restapi/models"
 )
 
 type Db struct {
 	db  Client
 	log *logger.Logger
+	sync.RWMutex
+	RsBotConfig  map[string]models.CorporationConfigV2
+	BridgeConfig map[string]models.Bridge2Config
+	KzBotConfig  map[string]models.CorporationConfig
+	pool         *pgxpool.Pool
 }
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
@@ -38,12 +45,21 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		//return err
 	}
 	db := &Db{
-		db:  pool,
-		log: log,
+		db:           pool,
+		log:          log,
+		RsBotConfig:  make(map[string]models.CorporationConfigV2),
+		BridgeConfig: make(map[string]models.Bridge2Config),
+		KzBotConfig:  make(map[string]models.CorporationConfig),
+		pool:         pool,
 	}
 	db.CreateTables(context.Background())
+
+	db.loadConfig()
+	go db.StartConfigWatcher(context.Background())
+
 	return db
 }
+
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }

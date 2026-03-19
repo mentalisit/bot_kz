@@ -10,6 +10,7 @@ service BotService {
   rpc CheckAdmin(CheckAdminRequest) returns (FlagResponse);
   rpc CheckRole(CheckRoleRequest) returns (FlagResponse);
   rpc ChannelTyping(ChannelTypingRequest) returns (Empty);
+  rpc GetOrCreateWebhookGame(TextResponse) returns (WebhookResponse);
   rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
   rpc DeleteMessageSecond(DeleteMessageSecondRequest) returns (Empty);
   rpc EditComplexButton(EditComplexButtonRequest) returns (ErrorResponse);
@@ -190,6 +191,11 @@ message SendChannelDelSecondRequest {
 
 message SendEmbedTimeRequest {
   string chatid = 1;
+  string text = 2;
+}
+
+message WebhookResponse {
+  string chatId = 1;
   string text = 2;
 }
 

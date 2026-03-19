@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
 	"net/http"
 	"time"
 	"ws/server/getCountry"
+
+	"github.com/gin-gonic/gin"
+	"github.com/mentalisit/logger"
 )
 
 type Srv struct {
@@ -28,28 +29,35 @@ func NewSrv(log *logger.Logger) *Srv {
 }
 
 func (s *Srv) runServer() {
-	port := "4443"
-	//blockedIPs := []string{
-	//	"34.42.221.171",
-	//"34.72.76.85",}
+	port := "24443"
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
-	//	router.Use(BlockIPMiddleware(blockedIPs))
+	router.Use(CORSMiddleware())
 
 	router.Use(gin.LoggerWithFormatter(s.CustomLogFormatter))
 
-	router.GET("/matches", s.getWsMatches)
-	router.GET("/docs", s.docs)
-	router.GET("/", s.docs)
-	router.GET("/corps", s.getWsCorps)
-	router.GET("/poll/:id", s.poll)
-	router.GET("/health", HealthCheckHandler)
+	// Регистрируем маршруты через функцию
+	registerRoutes := func(r gin.IRouter) {
+		r.GET("/matches", s.getWsMatches)
+		r.GET("/docs", s.docs)
+		r.GET("/", s.docs)
+		r.GET("/corps", s.getWsCorps)
+		r.GET("/poll/:id", s.poll)
+		r.GET("/health", HealthCheckHandler)
+	}
+
+	// Маршруты без префикса: /matches, /docs, ...
+	registerRoutes(router)
+
+	// Маршруты с префиксом /ws: /ws/matches, /ws/docs, ...
+	wsGroup := router.Group("/ws")
+	registerRoutes(wsGroup)
 
 	fmt.Println("Running port:" + port)
 
-	err := router.RunTLS(":"+port, s.certFile, s.keyFile)
+	err := router.Run(":" + port)
 	if err != nil {
 		s.log.ErrorErr(err)
 	}
@@ -109,4 +117,22 @@ func HealthCheckHandler(c *gin.Context) {
 		"status":  "success",
 		"message": "Service is healthy",
 	})
+}
+
+// CORSMiddleware Выносим CORS в middleware
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Добавляем CORS заголовки
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+
+		// Обрабатываем preflight OPTIONS запросы
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	}
 }

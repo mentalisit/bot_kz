@@ -67,3 +67,8 @@ func (d *Db) createTable() {
 		d.log.ErrorErr(err)
 	}
 }
+
+// GetDB возвращает указатель на sql.DB для использования в других пакетах
+func (d *Db) GetDB() *sql.DB {
+	return d.db
+}

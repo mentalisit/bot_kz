@@ -1,11 +1,11 @@
 package DiscordClient
 
 import (
-	"discord/models"
 	"fmt"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 //lang ok

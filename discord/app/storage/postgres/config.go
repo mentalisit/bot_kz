@@ -1,11 +1,11 @@
 package postgres
 
 import (
-	"discord/models"
 	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ReadConfigRs() ([]models.CorporationConfig, error) {

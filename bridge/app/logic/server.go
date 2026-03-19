@@ -34,9 +34,10 @@ func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 		discord:  ds.NewClient(log),
 		telegram: tg.NewClient(log),
 		whatsapp: wa.NewClient(log),
-		matrix:   matrix.RunMatrixBridge(cfg),
+		matrix:   matrix.RunMatrixBridge(cfg, st.DB.GetDB()),
 		storage:  st.DB,
 	}
+	bridge.matrix.OnMessage = bridge.Logic
 	bridge.LoadConfig()
 
 	//	go bridge.ServerRun()
@@ -107,4 +108,35 @@ func (b *Bridge) PrintGoroutine() {
 	}
 
 	fmt.Println(text)
+}
+
+// Shutdown корректно завершает все модули bridge
+func (b *Bridge) Shutdown() {
+	b.log.Info("Bridge shutting down...")
+
+	// Shutdown Matrix (сохраняет кэш и останавливает горутины)
+	if b.matrix != nil {
+		b.matrix.Shutdown()
+	}
+
+	// Close gRPC connections
+	if b.discord != nil {
+		if err := b.discord.Close(); err != nil {
+			b.log.ErrorErr(err)
+		}
+	}
+
+	if b.telegram != nil {
+		if err := b.telegram.Close(); err != nil {
+			b.log.ErrorErr(err)
+		}
+	}
+
+	if b.whatsapp != nil {
+		if err := b.whatsapp.Close(); err != nil {
+			b.log.ErrorErr(err)
+		}
+	}
+
+	b.log.Info("Bridge shutdown complete")
 }

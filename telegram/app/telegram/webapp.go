@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"telegram/models"
+	"telegram/models2"
+
 	"telegram/telegram/handlers"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
@@ -44,9 +45,9 @@ func (t *Telegram) UpdateChatMembersCache(chatID int64) error {
 		return fmt.Errorf("failed to get chat members: %w", err)
 	}
 
-	users := make(map[int64]models.User)
+	users := make(map[int64]models2.User)
 	for _, member := range members {
-		user := models.User{
+		user := models2.User{
 			ID:        member.User.ID,
 			FirstName: member.User.FirstName,
 			LastName:  member.User.LastName,
@@ -66,7 +67,7 @@ func (t *Telegram) UpdateChatMembersCache(chatID int64) error {
 }
 
 // updateAdminsForChat определяет администраторов чата
-func (t *Telegram) updateAdminsForChat(ctx context.Context, chatID int64, users map[int64]models.User) error {
+func (t *Telegram) updateAdminsForChat(ctx context.Context, chatID int64, users map[int64]models2.User) error {
 	chatConfig := tgbotapi.ChatConfig{ChatID: chatID}
 	chatConf := tgbotapi.ChatAdministratorsConfig{ChatConfig: chatConfig}
 	admins, err := t.t.GetChatAdministrators(chatConf)

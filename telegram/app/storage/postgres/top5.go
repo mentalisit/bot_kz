@@ -15,10 +15,10 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 
 	// Выполнение запроса
 	rows, err := d.db.Query(ctx, query, corpname)
-	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+	defer rows.Close()
 
 	var levels []string
 

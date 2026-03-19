@@ -44,6 +44,7 @@ func (s *Server) InboxBridge(ctx context.Context, i *ToBridgeMessage) (*Empty, e
 	in := models.ToBridgeMessage{
 		Text:          i.Text,
 		Sender:        i.Sender,
+		SenderId:      i.SenderId,
 		Tip:           i.Tip,
 		ChatId:        i.ChatId,
 		MesId:         i.MesId,

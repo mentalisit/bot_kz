@@ -2,13 +2,13 @@ package DiscordClient
 
 import (
 	"discord/discord/helpers"
-	"discord/models"
 	"fmt"
 	"log/slog"
 	"path/filepath"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 const twoDay = 172800
@@ -116,6 +116,37 @@ func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate
 			return
 		}
 
+		good2, config2 := d.checkChannelConfig2(m.ChannelID)
+		if good2 {
+			if len(m.Attachments) > 0 {
+				m.Content += m.Attachments[0].URL
+			}
+			if len(m.Message.Embeds) > 0 {
+				m.Content += "\u200B"
+			}
+			in2 := models.InMessageV2{
+				Text:        d.ReplaceTextMessage(m.Content, m.GuildID),
+				Tip:         "ds",
+				NameNick:    "",
+				Username:    m.Author.Username,
+				UserId:      m.Author.ID,
+				NameMention: m.Author.Mention(),
+				Messenger: models.Info{
+					TypeMessenger:  "ds",
+					MessageId:      m.ID,
+					ChannelId:      m.ChannelID,
+					GuildId:        m.GuildID,
+					GuildName:      config2.Channels[m.ChannelID].GuildName,
+					GuildAvatarUrl: config2.Channels[m.ChannelID].GuildAvatarUrl,
+					UserAvatarUrl:  m.Author.AvatarURL("128"),
+				},
+				Config:  config2,
+				Options: models.Options{},
+			}
+			in2.Options.Add(models.OptionInClient)
+			d.api.SendRsBotV2AppRecover(in2)
+		}
+
 		good, configBridge := d.BridgeCheckChannelConfigDS(m.ChannelID)
 		if good {
 			username := m.Author.Username
@@ -125,6 +156,7 @@ func (d *Discord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate
 			mes := models.ToBridgeMessage{
 				Text:          d.ReplaceTextMessage(m.Content, m.GuildID),
 				Sender:        username,
+				SenderId:      m.Author.ID,
 				Tip:           "dse",
 				ChatId:        m.ChannelID,
 				MesId:         m.ID,
@@ -189,11 +221,7 @@ func (d *Discord) messageReactionAdd(s *discordgo.Session, r *discordgo.MessageR
 		return
 	}
 
-	if message.Author.ID == s.State.User.ID {
-		go d.readReactionQueue(r, message)
-	} else {
-		go d.readReactionTranslate(r, message)
-	}
+	go d.readReactionTranslate(r, message)
 }
 
 func (d *Discord) slash(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -636,3 +664,25 @@ func (d *Discord) handleDownloadBridge(mes *models.ToBridgeMessage, m *discordgo
 		}
 	}
 }
+
+//func (d *Discord) name(r *discordgo.MessageReactionAdd) (text string) {
+//if r.Emoji.Name == emPlus {
+//	text = "+"
+//} else if r.Emoji.Name == emMinus {
+//	text = "-"
+//} else if r.Emoji.Name == emOK || r.Emoji.Name == emCancel || r.Emoji.Name == emRsStart || r.Emoji.Name == emPl30 {
+//	in.Lvlkz, err = d.storage.Db.ReadMesIdDS(r.MessageID)
+//	if err == nil && in.Lvlkz != "" {
+//		if r.Emoji.Name == emOK {
+//			in.Timekz = "30"
+//			in.Mtext = in.Lvlkz + "+"
+//		} else if r.Emoji.Name == emCancel {
+//			in.Mtext = in.Lvlkz + "-"
+//		} else if r.Emoji.Name == emRsStart {
+//			in.Mtext = in.Lvlkz + "++"
+//		} else if r.Emoji.Name == emPl30 {
+//			in.Mtext = in.Lvlkz + "+++"
+//		}
+//	}
+//}
+//}

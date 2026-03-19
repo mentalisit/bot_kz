@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/ilyakaznacheev/cleanenv"
 	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type ConfigBot struct {

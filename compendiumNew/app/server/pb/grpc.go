@@ -76,7 +76,6 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 	}
 
 	in.MAcc, _ = s.DBv2.FindMultiAccountByUserId(req.NameId)
-	fmt.Printf("FindMultiAccountByUserId %s\n", req.NameId)
 	if in.MAcc == nil || in.MAcc.Nickname == "" {
 		user, _ := s.db.UsersGetByUserId(req.NameId)
 		if user != nil {
@@ -119,12 +118,11 @@ func (s *Server) InboxMessage(ctx context.Context, req *IncomingMessage) (*Empty
 		in.MAcc, _ = s.DBv2.UpdateMultiAccountAvatarUrl(*in.MAcc)
 
 	}
-	fmt.Printf("in.ma %+v\n", in.MAcc)
 	guild, err := s.DBv2.GuildGetChannel(req.GuildId)
-	if err != nil && guild == nil {
+	if err != nil || guild == nil {
 		g := models.MultiAccountGuildV2{
 			GuildName: req.GuildName,
-			Channels:  make(map[string][]string),
+			Channels:  make(models.GuildChannels),
 			AvatarUrl: req.GuildAvatar,
 		}
 		g.Channels[req.Type] = append(g.Channels[req.Type], req.GuildId)

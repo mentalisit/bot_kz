@@ -6,7 +6,7 @@ import (
 	"rs/models"
 )
 
-func (d *Db) EmojiReadUUID(uid uuid.UUID, tip string) models.Emoji {
+func (d *Db) EmojiReadUUID(uid uuid.UUID, tip string) *models.Emoji {
 	ctx, cancel := d.getContext()
 	defer cancel()
 	Emoji := "SELECT * FROM rs_bot.emoji WHERE uid = $1 AND tip = $2"
@@ -22,7 +22,7 @@ func (d *Db) EmojiReadUUID(uid uuid.UUID, tip string) models.Emoji {
 			d.log.ErrorErr(err)
 		}
 	}
-	return t
+	return &t
 }
 func (d *Db) EmojiUpdateUUID(uid uuid.UUID, tip, slot, emo string) string {
 	ctx, cancel := d.getContext()

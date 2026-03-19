@@ -9,6 +9,7 @@ import (
 func (h *HS) SavePercent(newContent []models.Content) {
 
 	listHCorps := h.getMapLevelCorps()
+	listCorpId := h.getMapLevelCorpsV2()
 
 	for _, cont := range newContent {
 		//corpData := h.r.ReadCorpData(cont.Key)
@@ -21,6 +22,13 @@ func (h *HS) SavePercent(newContent []models.Content) {
 
 		f := corpData.SortWin()
 
+		if listCorpId[f.Corporation1Id].CorpName != "" {
+			c := listCorpId[f.Corporation1Id]
+			if c.DateEnded.Before(f.DateEnded) {
+				c.DateEnded = f.DateEnded
+				h.p.UpdateCorpInfo(c)
+			}
+		}
 		if listHCorps[f.Corporation1Name].HCorp != "" {
 			c := listHCorps[f.Corporation1Name]
 			if c.EndDate.Before(f.DateEnded) {
@@ -33,9 +41,11 @@ func (h *HS) SavePercent(newContent []models.Content) {
 			}
 		}
 		h.Relic(listHCorps, f)
+		h.RelicV2(listCorpId, f)
 	}
 
 	h.recalculateCorpLevel()
+	h.recalculateCorpLevelV2()
 }
 
 func (h *HS) getMapLevelCorps() map[string]models.LevelCorps {

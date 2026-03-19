@@ -7,6 +7,7 @@ func InboxBridge(text, sender, tip, chatId, mesId, guildId, avatar string, times
 type ToBridgeMessage struct {
 	Text          string              `json:"text"`
 	Sender        string              `json:"sender"`
+	SenderId      string              `json:"senderId"`
 	Tip           string              `json:"tip"`
 	ChatId        string              `json:"chatId"`
 	MesId         string              `json:"mesId"`

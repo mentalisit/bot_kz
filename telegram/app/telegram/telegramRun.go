@@ -4,24 +4,23 @@ import (
 	"fmt"
 	"net/http"
 
-	tgbotapi "github.com/OvyFlash/telegram-bot-api"
-
 	"strconv"
-	"telegram/models"
 	"telegram/storage"
-	"telegram/telegram/restapi"
 	"time"
+
+	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi"
 
 	"github.com/mentalisit/logger"
 )
 
 type Telegram struct {
-	t                      *tgbotapi.BotAPI
-	log                    *logger.Logger
-	bridgeConfig           []models.Bridge2Config
-	bridgeConfigUpdateTime int64
-	Storage                *storage.Storage
-	api                    *restapi.Recover
+	t   *tgbotapi.BotAPI
+	log *logger.Logger
+	//bridgeConfig           []models.Bridge2Config
+	//bridgeConfigUpdateTime int64
+	Storage *storage.Storage
+	api     *restapi.Recover
 	//usernameMap            map[string]int
 	server *http.Server
 }
@@ -45,7 +44,6 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 
 	go t.StartWebApp("8080")
 
-	//t.loadConfig()
 	go t.update()
 	go t.DeleteMessageTimer()
 	return t

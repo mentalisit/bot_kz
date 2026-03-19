@@ -2,10 +2,8 @@ package helpers
 
 import (
 	"fmt"
-	"regexp"
 	"rs/models"
 	"rs/storage"
-	"strconv"
 	"strings"
 
 	"github.com/mentalisit/logger"
@@ -17,8 +15,6 @@ const tg = "tg"
 type Helpers struct {
 	log     *logger.Logger
 	storage *storage.Storage
-	//saveArray []SaveDM
-	//Gemini    *Gemini
 }
 
 func NewHelpers(log *logger.Logger, storage *storage.Storage) *Helpers {
@@ -106,12 +102,6 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 		t := h.storage.Emoji.EmojiModuleReadUsers(name, ForType)
 
 		if len(t.Name) > 0 {
-			////nickName
-			//if t.Weapon != "" && s.Tip == "tg" {
-			//	newName = fmt.Sprintf("%s [%s]", newName, t.Weapon)
-			//}
-			//Alt
-
 			if t.Module1 != "" {
 				if ForType == ds {
 					newName = fmt.Sprintf("%s %s %s %s %s", newName, t.Module1, t.Module2, t.Module3, t.Weapon)
@@ -128,40 +118,35 @@ func (h *Helpers) emReadName(s models.Sborkz, ForType string, mention ...bool) s
 	}
 	module := h.storage.Postgres.ModuleReadUUID(multiAccount.UUID, name)
 	if module != nil {
-		//fmt.Printf("ModuleReadUUID %s %+v\n", name, module)
-
-		if module.Name != "" {
-			if ForType == ds {
-				gen := ""
-				if module.Gen != 0 {
-					gen = fmt.Sprintf("<:genesis:1199068748280242237> %d ", module.Gen)
-				}
-
-				enr := ""
-				if module.Enr != 0 {
-					enr = fmt.Sprintf("<:enrich:1199068793633251338> %d ", module.Enr)
-				}
-
-				rse := ""
-				if module.Rse != 0 {
-					rse = fmt.Sprintf("<:rse:1199068829511335946> %d ", module.Rse)
-				}
-
-				newName = fmt.Sprintf("%s %s %s %s", newName, gen, enr, rse)
-			} else if ForType == tg {
-				newName = fmt.Sprintf("%s (%d/%d/%d)", newName, module.Gen, module.Enr, module.Rse)
+		if ForType == ds {
+			gen := ""
+			if module.Gen != 0 {
+				gen = fmt.Sprintf("<:genesis:1199068748280242237> %d ", module.Gen)
 			}
-		}
 
+			enr := ""
+			if module.Enr != 0 {
+				enr = fmt.Sprintf("<:enrich:1199068793633251338> %d ", module.Enr)
+			}
+
+			rse := ""
+			if module.Rse != 0 {
+				rse = fmt.Sprintf("<:rse:1199068829511335946> %d ", module.Rse)
+			}
+
+			newName = fmt.Sprintf("%s %s %s %s", newName, gen, enr, rse)
+		} else if ForType == tg {
+			newName = fmt.Sprintf("%s (%d/%d/%d)", newName, module.Gen, module.Enr, module.Rse)
+		}
 	}
+
 	emoji := h.storage.Postgres.EmojiReadUUID(multiAccount.UUID, ForType)
-	if emoji.Tip == ForType {
+	if emoji != nil && emoji.Tip == ForType {
 		newName = fmt.Sprintf("%s %s %s %s %s", newName, emoji.Em1, emoji.Em2, emoji.Em3, emoji.Em4)
 	}
 
 	return newName
 }
-
 func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string) {
 	if u.User1.Tip == tip {
 		n1 = h.emReadName(u.User1, tip, true)
@@ -192,99 +177,82 @@ func (h *Helpers) NameMention(u models.Users, tip string) (n1, n2, n3, n4 string
 
 	return
 }
-
-func extractNumbers(input string) int {
-	re := regexp.MustCompile(`\d+`)
-	matches := re.FindAllString(input, -1)
-
-	if len(matches) == 0 {
-		return 0
-	}
-	level, err := strconv.Atoi(matches[len(matches)-1])
-	if err != nil || level > 16 {
-		return 0
-	}
-	return level
-}
-
 func (h *Helpers) ReadNameModules(in models.InMessage, name string) {
-	if name == "" {
-		multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
-		if multiAccount != nil {
-			h.ReadNameModulesUUID(in, name)
+	multiAccount, _ := h.storage.Postgres.FindMultiAccountByUserId(in.UserId)
+	if multiAccount != nil {
+		if name == "" {
+			if multiAccount.Nickname != "" {
+				name = multiAccount.Nickname
+			} else {
+				name = in.Username
+			}
+		}
+		genesis, enrich, rsextender := h.Get2TechDataUserId(name, in.UserId, multiAccount)
+		if genesis != 0 || enrich != 0 || rsextender != 0 {
 			return
 		}
-		name = in.Username
 	}
-	var tds, ttg models.EmodjiUser
-	var DsGenesis, DsEnrich, DsRsExtender int
-	var TgGenesis, TgEnrich, TgRsExtender int
-	var genesisA, enrichA, rseA int
-	if in.IfDiscord() {
-		genesis1, enrich1, rsextender1 := 0, 0, 0
-		//if name == in.Username {
-		//	genesis1, enrich1, rsextender1 = GetTechDataUserId(in.UserId, in.Config.Guildid)
-		//}
-		genesis2, enrich2, rsextender2 := Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
-
-		DsGenesis = max(genesis1, genesis2)
-		DsEnrich = max(enrich1, enrich2)
-		DsRsExtender = max(rsextender1, rsextender2)
-	}
-	if in.IfTelegram() {
+	genesis, enrich, rsextender := 0, 0, 0
+	if in.Ds.Guildid != "" {
+		genesis, enrich, rsextender = Get2TechDataUserId(name, in.UserId, in.Ds.Guildid)
+	} else {
 		split := strings.Split(in.Config.TgChannel, "/")
-		TgGenesis, TgEnrich, TgRsExtender = Get2TechDataUserId(name, in.UserId, split[0])
+		genesis, enrich, rsextender = Get2TechDataUserId(name, in.UserId, split[0])
 	}
-	if in.Tip == tg {
-		genesisA, enrichA, rseA = Get3TechDataUserId(name, in.UserId)
-		if genesisA != 0 || enrichA != 0 || rseA != 0 {
+	if genesis != 0 && enrich != 0 && rsextender != 0 {
+		genesis, enrich, rsextender = Get3TechDataUserId(name, in.UserId)
+		if genesis != 0 || enrich != 0 || rsextender != 0 {
 			fmt.Printf("use Get3TechDataUserId for %s %s\n", name, in.UserId)
 		}
 	}
 
-	genesis := max(DsGenesis, TgGenesis, genesisA)
-	enrich := max(DsEnrich, TgEnrich, enrichA)
-	rsextender := max(DsRsExtender, TgRsExtender, rseA)
-
 	fmt.Printf("genesis %d enrich %d rsextender %d for:%s\n", genesis, enrich, rsextender, name)
+	if multiAccount == nil {
+		if name == "" {
+			name = in.Username
+		}
+		multiAccount, _ = h.storage.Postgres.CreateMultiAccountWithPlatform(in.UserId, name, in.Tip, name)
+	}
 
-	if in.IfDiscord() {
-		tds = h.storage.Emoji.EmojiModuleReadUsers(name, ds)
-		if tds.Name == "" {
-			h.storage.Emoji.EmInsertEmpty(ds, name)
-		}
+	module := h.storage.Postgres.ModuleReadUUID(multiAccount.UUID, name)
+	mod := models.Module{
+		Uid:  multiAccount.UUID,
+		Name: name,
+		Gen:  genesis,
+		Enr:  enrich,
+		Rse:  rsextender,
+	}
+	if module == nil {
+		h.storage.Postgres.ModuleInsertUUID(mod)
+	} else if mod != *module {
+		h.storage.Postgres.ModuleUpdateUUID(mod)
+	}
 
-		one := fmt.Sprintf("<:genesis:1199068748280242237> %d ", genesis)
-		two := fmt.Sprintf("<:enrich:1199068793633251338> %d ", enrich)
-		three := fmt.Sprintf("<:rse:1199068829511335946> %d ", rsextender)
-		if genesis != 0 && tds.Module1 != one {
-			h.storage.Emoji.ModuleUpdate(name, "ds", "1", one)
+	moveUpdateEmoji := func(name, tip string) {
+		t := h.storage.Emoji.EmojiModuleReadUsers(name, tip)
+		emojiReadUUID := h.storage.Postgres.EmojiReadUUID(multiAccount.UUID, tip)
+		if emojiReadUUID == nil {
+			h.storage.Postgres.EmojiInsertEmptyUUID(multiAccount.UUID, tip)
 		}
-		if enrich != 0 && tds.Module2 != two {
-			h.storage.Emoji.ModuleUpdate(name, "ds", "2", two)
+		if t.Em1 != "" {
+			h.storage.Postgres.EmojiUpdateUUID(multiAccount.UUID, tip, "1", t.Em1)
 		}
-		if rsextender != 0 && tds.Module3 != three {
-			h.storage.Emoji.ModuleUpdate(name, "ds", "3", three)
+		if t.Em2 != "" {
+			h.storage.Postgres.EmojiUpdateUUID(multiAccount.UUID, tip, "2", t.Em2)
+		}
+		if t.Em3 != "" {
+			h.storage.Postgres.EmojiUpdateUUID(multiAccount.UUID, tip, "3", t.Em3)
+		}
+		if t.Em4 != "" {
+			h.storage.Postgres.EmojiUpdateUUID(multiAccount.UUID, tip, "4", t.Em4)
 		}
 	}
 
-	if in.IfTelegram() {
-		ttg = h.storage.Emoji.EmojiModuleReadUsers(name, tg)
-		if ttg.Name == "" {
-			h.storage.Emoji.EmInsertEmpty(tg, name)
-		}
+	if in.IfDiscord() {
+		moveUpdateEmoji(name, ds)
+	}
 
-		gen := strconv.Itoa(genesis)
-		enr := strconv.Itoa(enrich)
-		rse := strconv.Itoa(rsextender)
-		if genesis != 0 && ttg.Module1 != gen {
-			h.storage.Emoji.ModuleUpdate(name, "tg", "1", gen)
-		}
-		if enrich != 0 && ttg.Module2 != enr {
-			h.storage.Emoji.ModuleUpdate(name, "tg", "2", enr)
-		}
-		if rsextender != 0 && ttg.Module1 != rse {
-			h.storage.Emoji.ModuleUpdate(name, "tg", "3", rse)
-		}
+	if in.IfTelegram() {
+		moveUpdateEmoji(name, tg)
 	}
 }

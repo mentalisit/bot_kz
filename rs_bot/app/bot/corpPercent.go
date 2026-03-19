@@ -3,10 +3,11 @@ package bot
 import (
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"rs/pkg/utils"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (b *Bot) SendPercent(Config models.CorporationConfig) {

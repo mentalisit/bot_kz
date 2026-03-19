@@ -34,3 +34,9 @@ type CorpRole struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
+type TechLevels map[int]TechLevel
+
+type TechUser struct {
+	Name string
+	Tech TechLevels
+}

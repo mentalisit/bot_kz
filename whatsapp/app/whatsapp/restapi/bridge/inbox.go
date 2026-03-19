@@ -38,6 +38,7 @@ func (c *Client) SendToBridge(i models.ToBridgeMessage) error {
 	in := ToBridgeMessage{
 		Text:        i.Text,
 		Sender:      i.Sender,
+		SenderId:    i.SenderId,
 		Tip:         i.Tip,
 		ChatId:      i.ChatId,
 		MesId:       i.MesId,
@@ -66,47 +67,35 @@ func (c *Client) SendToBridge(i models.ToBridgeMessage) error {
 		}
 	}
 
-	// 4. Обработка конфигурации (Config)
 	if i.Config != nil && i.Config.HostRelay != "" {
-		// Инициализируем Protobuf-структуру конфигурации
 		conf := &Bridge2Config{
-			Id:                int32(i.Config.Id), // Убедимся, что Id — это int32
+			Id:                int32(i.Config.Id),
 			NameRelay:         i.Config.NameRelay,
 			HostRelay:         i.Config.HostRelay,
 			Role:              i.Config.Role,
 			ForbiddenPrefixes: i.Config.ForbiddenPrefixes,
+			Channel:           make(map[string]*Bridge2Config_Bridge2ConfigsList),
 		}
-
-		// Инициализация поля Channel (map<string, Bridge2ConfigsList>)
-		// Мы предполагаем, что Channel в Bridge2Config — это map[string]*Bridge2Config_Bridge2ConfigsList
-		conf.Channel = make(map[string]*Bridge2Config_Bridge2ConfigsList)
-
-		// --- Заполнение Channel ---
 		if len(i.Config.Channel) > 0 {
-			for key, configs := range i.Config.Channel {
-				// 4a. Создаем вспомогательный список Protobuf
-				listProto := &Bridge2Config_Bridge2ConfigsList{}
+			for t, dd := range i.Config.Channel {
+				for _, d := range dd {
+					if conf.Channel[t] == nil {
+						conf.Channel[t] = &Bridge2Config_Bridge2ConfigsList{}
+					}
 
-				for _, cfg := range configs {
-					// 4b. Создаем Protobuf-структуру Bridge2Configs и добавляем ее в список
-					listProto.Configs = append(listProto.Configs, &Bridge2Configs{
-						ChannelId:       cfg.ChannelId,
-						GuildId:         cfg.GuildId,
-						CorpChannelName: cfg.CorpChannelName,
-						AliasName:       cfg.AliasName,
-						MappingRoles:    cfg.MappingRoles,
+					conf.Channel[t].Configs = append(conf.Channel[t].Configs, &Bridge2Configs{
+						ChannelId:       d.ChannelId,
+						GuildId:         d.GuildId,
+						CorpChannelName: d.CorpChannelName,
+						AliasName:       d.AliasName,
+						MappingRoles:    d.MappingRoles,
 					})
 				}
-
-				// 4c. Добавляем список во вспомогательную карту Protobuf
-				conf.Channel[key] = listProto
 			}
 		}
-
 		in.Config = conf
 	}
 
-	// 6. Вызов клиента
-	_, err := c.client.InboxBridge(context.Background(), &in) // Передаем указатель 'in'
+	_, err := c.client.InboxBridge(context.Background(), &in)
 	return err
 }

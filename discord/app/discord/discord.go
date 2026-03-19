@@ -2,9 +2,10 @@ package DiscordClient
 
 import (
 	"discord/config"
-	"discord/discord/restapi"
+
+	"github.com/mentalisit/restapi"
+
 	"discord/discord/transmitter"
-	"discord/models"
 	"discord/storage"
 	"fmt"
 	"time"
@@ -14,15 +15,15 @@ import (
 )
 
 type Discord struct {
-	S                      *discordgo.Session
-	webhook                *transmitter.Transmitter
-	log                    *logger.Logger
-	storage                *storage.Storage
-	bridgeConfig           []models.Bridge2Config
-	bridgeConfigUpdateTime int64
-	api                    *restapi.Recover
-	re                     *replace
-	NameAliases            map[string]string
+	S       *discordgo.Session
+	webhook *transmitter.Transmitter
+	log     *logger.Logger
+	storage *storage.Storage
+	//bridgeConfig           []models.Bridge2Config
+	//bridgeConfigUpdateTime int64
+	api         *restapi.Recover
+	re          *replace
+	NameAliases map[string]string
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 	"whatsapp/models"
 
 	"go.mau.fi/whatsmeow"
@@ -11,6 +12,26 @@ import (
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 )
+
+func (b *Whatsapp) bridgePoint(text string, messageInfo types.MessageInfo) {
+	if strings.HasPrefix(text, ".") {
+		g := b.getGroupCommunity(messageInfo)
+		mes := models.ToBridgeMessage{
+			Text:     text,
+			Sender:   messageInfo.Sender.String(),
+			SenderId: messageInfo.Sender.String(),
+			Tip:      "wa",
+			ChatId:   g.ChannelId,
+			MesId:    getMessageIdFormat(messageInfo.Sender, messageInfo.ID),
+			GuildId:  g.GuildId,
+			Config: &models.Bridge2Config{
+				HostRelay: g.GuildName,
+			},
+		}
+
+		b.api.SendBridgeAppRecover(mes)
+	}
+}
 
 func (b *Whatsapp) handleBridgeMessage(message *events.Message, conf models.Bridge2Config) {
 	msg := message.Message
@@ -32,6 +53,11 @@ func (b *Whatsapp) handleBridgeMessage(message *events.Message, conf models.Brid
 	default:
 		fmt.Printf("Receiving message %+v\n", msg)
 		return
+	}
+
+	err := b.wc.MarkRead(context.Background(), []string{message.Info.ID}, time.Now(), message.Info.Chat, message.Info.Sender)
+	if err != nil {
+		fmt.Printf("Не удалось отметить сообщение как прочитанное: %v", err)
 	}
 }
 
@@ -60,12 +86,13 @@ func (b *Whatsapp) handleBridgeProtocolMessage(messageInfo types.MessageInfo, ms
 				b.log.InfoStruct("get message Edit ", pr.GetEditedMessage())
 			}
 			rmsg := models.ToBridgeMessage{
-				Text:   text,
-				Sender: b.getSenderName(messageInfo),
-				Tip:    "wae",
-				ChatId: pr.GetKey().GetRemoteJID(),
-				MesId:  getMessageIdFormat(senderJID, pr.GetKey().GetID()),
-				Config: conf,
+				Text:     text,
+				Sender:   b.getSenderName(messageInfo),
+				SenderId: messageInfo.Sender.String(),
+				Tip:      "wae",
+				ChatId:   pr.GetKey().GetRemoteJID(),
+				MesId:    getMessageIdFormat(senderJID, pr.GetKey().GetID()),
+				Config:   conf,
 			}
 			b.api.SendBridgeAppRecover(rmsg)
 			return
@@ -170,6 +197,7 @@ func (b *Whatsapp) handleBridgeTextMessage(messageInfo types.MessageInfo, msg *w
 	rmsg := models.ToBridgeMessage{
 		Text:          text,
 		Sender:        senderName,
+		SenderId:      messageInfo.Sender.String(),
 		Tip:           "wa",
 		ChatId:        channel.String(),
 		MesId:         getMessageIdFormat(senderJID, messageInfo.ID),

@@ -48,7 +48,7 @@ func (o *OtherQ) ReadingQueueByLevel(level, corp string) (text string, err error
 		for _, queues := range queueLevel {
 			for _, i := range queues {
 				//fmt.Printf("corp '%s' deleteChannel '%s'", deleteChannelName(corp), i.CorpName)
-				if i.CorpName != deleteChannelName(corp) {
+				if i.CorpName != deleteChannelName(corp) && !strings.HasPrefix(i.CorpName, "-100") {
 					q = append(q, i)
 				}
 			}

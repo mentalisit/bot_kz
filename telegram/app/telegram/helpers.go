@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"telegram/models"
 	"time"
 	"unicode"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 const nickname = "Для того что бы БОТ мог Вас индентифицировать, создайте уникальный НикНейм в настройках. Вы можете использовать a-z, 0-9 и символы подчеркивания. Минимальная длина - 5 символов."
@@ -37,6 +37,7 @@ func (t *Telegram) chat(chatid string) (chatId int64, threadID int) {
 	a := strings.SplitN(chatid, "/", 2)
 	chatId, err := strconv.ParseInt(a[0], 10, 64)
 	if err != nil {
+		t.log.Info(fmt.Sprintf("chat %s err.Error %s \n", chatid, err.Error()))
 		t.log.ErrorErr(err)
 	}
 	if len(a) > 1 {
@@ -81,7 +82,10 @@ func (t *Telegram) getAvatarIsExist(userid int64) string {
 		t.log.ErrorErr(err)
 		return ""
 	}
-	return "https://api.telegram.org/file/bot" + t.t.Token + "/" + file.FilePath
+	fileURL := file.Link(t.t.Token)
+
+	_, newUrl := t.SaveAvatarLocalCache(strconv.FormatInt(userid, 10), fileURL)
+	return newUrl
 }
 
 func (t *Telegram) chatName(chatid string) (chatName string) {

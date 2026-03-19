@@ -1,6 +1,8 @@
 package grpc_server
 
-import "context"
+import (
+	"context"
+)
 
 func (s *Server) ChannelTyping(ctx context.Context, req *ChannelTypingRequest) (*Empty, error) {
 	s.ds.ChannelTyping(req.ChannelID)
@@ -25,4 +27,12 @@ func (s *Server) CleanChat(ctx context.Context, req *CleanChatRequest) (*Empty, 
 func (s *Server) CleanOldMessageChannel(ctx context.Context, req *CleanOldMessageChannelRequest) (*Empty, error) {
 	s.ds.CleanOldMessageChannel(req.ChatId, req.Lim)
 	return &Empty{}, nil
+}
+
+func (s *Server) GetOrCreateWebhookGame(ctx context.Context, req *TextResponse) (*WebhookResponse, error) {
+	webhookUrl, chatId := s.ds.GetOrCreateWebhookGame(req.Text)
+	return &WebhookResponse{
+		ChatId: chatId,
+		Text:   webhookUrl,
+	}, nil
 }

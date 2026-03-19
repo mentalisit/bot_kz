@@ -3,7 +3,7 @@ package DiscordClient
 import (
 	"bytes"
 	"discord/discord/helpers"
-	"discord/models"
+
 	"fmt"
 	"mime"
 	"os"
@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Discord) SendEmbedText(chatid, title, text string) *discordgo.Message {
@@ -582,7 +583,7 @@ func (d *Discord) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.M
 				ChannelID: channelId,
 			})
 			if err != nil {
-				d.log.ErrorErr(err)
+				d.log.Error(fmt.Sprintf("sendReply ch:%s t:%s replyId:%s\n%+v\n", channelId, text, replyId, err))
 			} else {
 				messageData := models.MessageIds{
 					MessageId: sendReply.ID,

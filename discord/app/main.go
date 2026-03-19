@@ -5,10 +5,11 @@ import (
 	DiscordClient "discord/discord"
 	"discord/grpc_server"
 	"discord/storage"
-	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/mentalisit/logger"
 )
 
 func main() {
@@ -33,3 +34,5 @@ func main() {
 	ds.Shutdown()
 
 }
+
+//go:generate protoc --go_out=. --go-grpc_out=. discord.proto

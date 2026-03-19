@@ -2,20 +2,27 @@ package grpc_server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"path"
 	"strconv"
 	"strings"
-	"telegram/models"
 	"time"
+
+	"github.com/mentalisit/restapi/models"
 )
 
 func (s *Server) DeleteMessage(ctx context.Context, in *DeleteMessageRequest) (*ErrorResponse, error) {
 	mId, _ := strconv.Atoi(in.GetMesid())
+	chatId := in.GetChatid()
+	if chatId == "" || mId == 0 {
+		err := fmt.Errorf("invalid chatId or mid")
+		return &ErrorResponse{ErrorMessage: err.Error()}, err
+	}
 
-	err := s.tg.DelMessage(in.GetChatid(), mId)
+	err := s.tg.DelMessage(chatId, mId)
 	if err != nil {
 		return &ErrorResponse{
 			ErrorMessage: err.Error(),
@@ -106,7 +113,11 @@ func (s *Server) SendEmbedTime(ctx context.Context, in *SendMessageRequest) (*In
 	return &IntResponse{Result: int32(id)}, err
 }
 func (s *Server) SendChannelTyping(ctx context.Context, in *SendChannelTypingRequest) (*Empty, error) {
-	_ = s.tg.ChatTyping(in.GetChannelID())
+	chatId := in.GetChannelID()
+	if chatId == "" {
+		return &Empty{}, errors.New("invalid chat id")
+	}
+	_ = s.tg.ChatTyping(chatId)
 	return &Empty{}, nil
 }
 func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArrayMessagesRequest) (*SendBridgeArrayMessagesResponse, error) {

@@ -25,9 +25,40 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 
 		paramsReadAll := b.storage.Scoreboard.ScoreboardReadAll()
 
+		send := func(m map[string]string, filename string) {
+			for s, channel := range m {
+				if s == "ds" {
+					err := b.client.Ds.SendOrEditEmbedImageScoreboard(channel, title, filename)
+					if err != nil {
+						b.log.ErrorErr(err)
+					}
+				} else if s == "tg" {
+					mid, err := b.client.Tg.SendPicScoreboard(channel, title, filename)
+					if err != nil {
+						b.log.ErrorErr(err)
+					}
+					if tn.Weekday() == time.Sunday && tn.Hour() == 23 && tn.Minute() == 59 {
+						fmt.Println("final scoreboard event")
+					} else {
+						b.client.Tg.DelMessageSecond(channel, mid, seconds)
+					}
+				} else if s == "wa" {
+					if tn.Minute() == 59 && (tn.Hour() == 5 || tn.Hour() == 11 || tn.Hour() == 17 || tn.Hour() == 23) {
+						_, err := b.client.Wa.SendPicScoreboard(channel, title, filename)
+						if err != nil {
+							b.log.ErrorErr(err)
+						}
+					}
+				}
+			}
+		}
+
 		for _, wh := range paramsReadAll {
 
 			if wh.ChannelScoreboardOrMap == "" {
+				continue
+			}
+			if eventId == 48 && wh.Name == "IX Легион" {
 				continue
 			}
 
@@ -38,30 +69,13 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 			scoreboard := b.helpers.CreateScoreboard(filename, wh.Name, eventId)
 			if scoreboard != "" {
 				if str == "" {
-					for s, channel := range m {
-						if s == "ds" {
-							err := b.client.Ds.SendOrEditEmbedImageScoreboard(channel, title, filename)
-							if err != nil {
-								b.log.ErrorErr(err)
-							}
-						} else if s == "tg" {
-							mid, err := b.client.Tg.SendPicScoreboard(channel, title, filename)
-							if err != nil {
-								b.log.ErrorErr(err)
-							}
-							if tn.Weekday() == time.Sunday && tn.Hour() == 23 && tn.Minute() == 59 {
-								b.log.Info("final scoreboard event")
-							} else {
-								b.client.Tg.DelMessageSecond(channel, mid, seconds)
-							}
-						} else if s == "wa" {
-							if tn.Minute() == 59 && (tn.Hour() == 5 || tn.Hour() == 11 || tn.Hour() == 17 || tn.Hour() == 23) {
-								_, err := b.client.Wa.SendPicScoreboard(channel, title, filename)
-								if err != nil {
-									b.log.ErrorErr(err)
-								}
-							}
+					send(m, filename)
+					if eventId == 48 && wh.Name == "русь " {
+						legion := map[string]string{
+							"ds": "1253851338408857641",
+							"tg": "-1002298028181/71634",
 						}
+						send(legion, filename)
 					}
 				} else {
 					err := b.client.Ds.SendOrEditEmbedImageScoreboard(wh.ChannelScoreboardOrMap, title, filename)

@@ -2,11 +2,12 @@ package helpers
 
 import (
 	"bytes"
-	"golang.org/x/image/webp"
 	"image/png"
 	"io"
 	"net/http"
 	"time"
+
+	"golang.org/x/image/webp"
 )
 
 func DownloadFile(url string) ([]byte, error) {

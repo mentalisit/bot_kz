@@ -1,6 +1,8 @@
 package dbpostgres
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 	"ws/models"
@@ -73,4 +75,80 @@ func (d *Db) ReadCorpsLevel(hCorp string) (models.LevelCorps, error) {
 	}
 
 	return n, nil
+}
+
+// GetAllCorpInfo возвращает все записи о корпорациях
+func (d *Db) GetAllCorpInfo() ([]models.CorpInfo, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+
+	query := `SELECT id, corp_name, corp_id, level, xp, webhook, last_win, date_ended, last_update 
+			  FROM ws.corps_info ORDER BY corp_name`
+
+	rows, err := d.pool.Query(ctx, query)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var corps []models.CorpInfo
+	for rows.Next() {
+		var corp models.CorpInfo
+		err := rows.Scan(
+			&corp.ID,
+			&corp.CorpName,
+			&corp.CorpID,
+			&corp.Level,
+			&corp.XP,
+			&corp.Webhook,
+			&corp.LastWin,
+			&corp.DateEnded,
+			&corp.LastUpdate,
+		)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return nil, err
+		}
+		corps = append(corps, corp)
+	}
+
+	if err = rows.Err(); err != nil {
+		d.log.ErrorErr(err)
+		return nil, err
+	}
+
+	return corps, nil
+}
+
+// ReadCorpInfoByCorpID читает запись о корпорации по corp_id
+func (d *Db) ReadCorpInfoByCorpID(corpID string) (*models.CorpInfo, error) {
+	ctx, cancel := d.getContext()
+	defer cancel()
+
+	query := `SELECT id, corp_name, corp_id, level, xp, webhook, last_win, date_ended, last_update 
+			  FROM ws.corps_info WHERE corp_id = $1`
+
+	var corp models.CorpInfo
+	err := d.pool.QueryRow(ctx, query, corpID).Scan(
+		&corp.ID,
+		&corp.CorpName,
+		&corp.CorpID,
+		&corp.Level,
+		&corp.XP,
+		&corp.Webhook,
+		&corp.LastWin,
+		&corp.DateEnded,
+		&corp.LastUpdate,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		d.log.ErrorErr(err)
+		return nil, err
+	}
+
+	return &corp, nil
 }

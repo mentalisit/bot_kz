@@ -6,17 +6,24 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mentalisit/logger"
+	"github.com/mentalisit/restapi/models"
 )
 
 type Db struct {
 	db  Client
 	log *logger.Logger
+	sync.RWMutex
+	RsBotConfig  map[string]models.CorporationConfigV2
+	BridgeConfig map[string]models.Bridge2Config
+	KzBotConfig  map[string]models.CorporationConfig
+	pool         *pgxpool.Pool
 }
 
 type Client interface {
@@ -41,16 +48,18 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		//return err
 	}
 	db := &Db{
-		db:  pool,
-		log: log,
+		db:           pool,
+		log:          log,
+		RsBotConfig:  make(map[string]models.CorporationConfigV2),
+		BridgeConfig: make(map[string]models.Bridge2Config),
+		KzBotConfig:  make(map[string]models.CorporationConfig),
+		pool:         pool,
 	}
 
 	go db.createTable()
 
-	//go func() {
-	//	time.Sleep(5 * time.Second)
-	//	db.BattlesCheckNames()
-	//}()
+	db.loadConfig()
+	go db.StartConfigWatcher(context.Background())
 
 	return db
 }

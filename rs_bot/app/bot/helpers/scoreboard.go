@@ -3,7 +3,6 @@ package helpers
 import (
 	"bytes"
 	"fmt"
-	"github.com/fogleman/gg"
 	"image/color"
 	"image/png"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/fogleman/gg"
 )
 
 func (h *Helpers) CreateScoreboard(filename string, corpName string, eventId int) string {
@@ -22,23 +23,32 @@ func (h *Helpers) CreateScoreboard(filename string, corpName string, eventId int
 	if len(all) == 0 {
 		return h.CreateScoreboardTop(filename, corpName)
 	}
-	if corpName == "rusb" {
+	if corpName == "русь " {
 		allbest, _ := h.storage.Battles.BattlesGetAll("best", eventId)
+		allLegion, _ := h.storage.Battles.BattlesGetAll("IX Легион", eventId)
+		if eventId != 48 {
+			allLegion = []models.PlayerStats{}
+		}
 		aa := make(map[string]models.PlayerStats)
 		for _, stats := range all {
 			aa[stats.Player] = stats
 		}
-		for _, stats := range allbest {
-			if existing, ok := aa[stats.Player]; ok {
-				// Если уже есть — складываем нужные поля
-				existing.Points += stats.Points
-				existing.Runs += stats.Runs
-				aa[stats.Player] = existing // обновляем обратно
-			} else {
-				// Иначе просто записываем
-				aa[stats.Player] = stats
+		added := func(add []models.PlayerStats) {
+			for _, stats := range add {
+				if existing, ok := aa[stats.Player]; ok {
+					// Если уже есть — складываем нужные поля
+					existing.Points += stats.Points
+					existing.Runs += stats.Runs
+					aa[stats.Player] = existing // обновляем обратно
+				} else {
+					// Иначе просто записываем
+					aa[stats.Player] = stats
+				}
 			}
 		}
+		added(allbest)
+		added(allLegion)
+
 		all = []models.PlayerStats{}
 		for _, stats := range aa {
 			all = append(all, stats)

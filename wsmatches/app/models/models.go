@@ -80,6 +80,18 @@ type LevelCorps struct {
 	Relic      int
 }
 
+type CorpInfo struct {
+	ID         int64     `json:"id" db:"id"`
+	CorpName   string    `json:"corp_name" db:"corp_name"`
+	CorpID     string    `json:"corp_id" db:"corp_id"`
+	Level      int       `json:"level" db:"level"`
+	XP         int       `json:"xp" db:"xp"`
+	Webhook    bool      `json:"webhook" db:"webhook"`
+	LastWin    time.Time `json:"last_win" db:"last_win"`
+	DateEnded  time.Time `json:"date_ended" db:"date_ended"`
+	LastUpdate time.Time `json:"last_update" db:"last_update"`
+}
+
 type FilterCorps struct {
 	Corp []Corporation `json:"Corp"`
 }

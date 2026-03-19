@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"telegram/models"
+	"telegram/models2"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -28,7 +28,7 @@ func (d *Db) getAllRoleMemberCount(ctx context.Context, chatID int64) (int, erro
 }
 
 // GetChatUsers возвращает пользователей чата с их ролями
-func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models.User, error) {
+func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, error) {
 	query := `
         SELECT 
             cm.user_id,
@@ -47,11 +47,11 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models.User, err
 	}
 	defer rows.Close()
 
-	var users []models.User
-	userMap := make(map[int64]*models.User)
+	var users []models2.User
+	userMap := make(map[int64]*models2.User)
 
 	for rows.Next() {
-		var user models.User
+		var user models2.User
 		if err := rows.Scan(
 			&user.ID,
 			&user.FirstName,
@@ -62,7 +62,10 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models.User, err
 			return nil, fmt.Errorf("failed to scan user: %w", err)
 		}
 		user.Roles = make(map[int64]bool)
-		users = append(users, user)
+		if user.UserName != "mentalisit" {
+			users = append(users, user)
+		}
+
 		userMap[user.ID] = &users[len(users)-1]
 	}
 
@@ -146,7 +149,7 @@ func (d *Db) IsChatAdmin(ctx context.Context, chatID, userID int64) (bool, error
 }
 
 // UpdateUserCache обновляет кэш пользователей чата
-func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]models.User) error {
+func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]models2.User) error {
 	// Начнем транзакцию
 	tx, err := d.db.Begin(ctx)
 	if err != nil {
@@ -221,7 +224,7 @@ func (d *Db) UpdateUserInfo(ctx context.Context, userID int64, firstName, lastNa
 }
 
 // AddUserToChat добавляет пользователя в чат
-func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models.User) error {
+func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models2.User) error {
 	query := `
         INSERT INTO telegram.chat_members (chat_id, user_id, first_name, last_name, user_name, is_admin)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -243,7 +246,7 @@ func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models.User) 
 }
 
 // GetChatAdmins возвращает список администраторов чата
-func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models.User, error) {
+func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models2.User, error) {
 	query := `
         SELECT cm.user_id, cm.first_name, cm.last_name, cm.user_name, cm.is_admin
         FROM telegram.chat_members cm
@@ -258,9 +261,9 @@ func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models.User, er
 	}
 	defer rows.Close()
 
-	var admins []models.User
+	var admins []models2.User
 	for rows.Next() {
-		var admin models.User
+		var admin models2.User
 		if err := rows.Scan(
 			&admin.ID,
 			&admin.FirstName,
@@ -281,7 +284,7 @@ func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models.User, er
 }
 
 // GetRolesUsers возвращает пользователей чата с определенной ролью
-func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]models.User, error) {
+func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]models2.User, error) {
 	query := `
 		SELECT
 			cm.user_id,
@@ -301,10 +304,10 @@ func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]m
 	}
 	defer rows.Close()
 
-	var users []models.User
+	var users []models2.User
 
 	for rows.Next() {
-		var user models.User
+		var user models2.User
 		if err := rows.Scan(
 			&user.ID,
 			&user.FirstName,
@@ -378,7 +381,7 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 }
 
 // GetCorpMembersMyCompendium возвращает участников корпорации из my_compendium
-func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]models.CompendiumCorpMember, error) {
+func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]models2.CompendiumCorpMember, error) {
 	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
 	if err != nil {
 		return nil, err
@@ -395,9 +398,9 @@ func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]mo
 	}
 	defer rows.Close()
 
-	var users []models.CompendiumCorpMember
+	var users []models2.CompendiumCorpMember
 	for rows.Next() {
-		var user models.CompendiumCorpMember
+		var user models2.CompendiumCorpMember
 		var userUUID uuid.UUID
 		if err := rows.Scan(&userUUID, &user.Username, &user.AvatarURL); err != nil {
 			return nil, fmt.Errorf("failed to scan corp member: %w", err)
@@ -417,7 +420,7 @@ func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]mo
 }
 
 // GetCorpMembersHSCompendium возвращает участников корпорации из hs_compendium
-func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]models.CompendiumCorpMember, error) {
+func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]models2.CompendiumCorpMember, error) {
 	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
 	if err != nil {
 		return nil, err
@@ -430,9 +433,9 @@ func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]mo
 	if err != nil {
 		return nil, err
 	}
-	var mm []models.CompendiumCorpMember
+	var mm []models2.CompendiumCorpMember
 	for results.Next() {
-		var t models.CompendiumCorpMember
+		var t models2.CompendiumCorpMember
 		err = results.Scan(&t.Username, &t.UserID, &t.AvatarURL)
 		if err != nil {
 			return nil, err
@@ -443,7 +446,7 @@ func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]mo
 	}
 	return mm, nil
 }
-func changeName(m models.CompendiumCorpMember) string {
+func changeName(m models2.CompendiumCorpMember) string {
 	if len(m.UserID) < 13 {
 		return "(TG) " + m.Username
 	} else if len(m.UserID) > 16 {

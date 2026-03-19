@@ -53,12 +53,14 @@ func (s *Server) runServer() error {
 	router.POST("/api/queue", s.QueueApi)
 	router.POST("/api/queue2", s.QueueApi2)
 	router.GET("/api/webhooks", s.GetWebhooks)
+	router.GET("/api/battles", s.GetBattlesAll)
 	router.GET("/api/active0", s.ReadAllQueueActive0)
 	router.POST("/api/left", s.Left)
 	router.GET("/health", HealthCheckHandler)
 
 	fmt.Println("Running port:" + port)
-	err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
+	//err := router.RunTLS(":"+port, "docker/cert/RSA-cert.pem", "docker/cert/RSA-privkey.pem")
+	err := router.Run(":" + port)
 	if err != nil {
 		return err
 	}

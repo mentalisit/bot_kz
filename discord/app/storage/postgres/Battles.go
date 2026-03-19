@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"discord/models"
 	"fmt"
+
+	"github.com/mentalisit/restapi/models"
 )
 
 /*

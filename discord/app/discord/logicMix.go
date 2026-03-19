@@ -2,11 +2,12 @@ package DiscordClient
 
 import (
 	"discord/discord/helpers"
-	"discord/models"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 const (
@@ -18,72 +19,6 @@ const (
 	emMinus   = "➖"
 )
 
-func (d *Discord) readReactionQueue(r *discordgo.MessageReactionAdd, message *discordgo.Message) {
-	user, err := d.S.User(r.UserID)
-	if err != nil {
-		d.log.ErrorErr(err)
-	}
-	if user.ID != message.Author.ID {
-		ok, config := d.CheckChannelConfigDS(r.ChannelID)
-		if ok {
-			in := models.InMessage{
-				Tip:         "ds",
-				Username:    user.Username,
-				UserId:      user.ID,
-				NameNick:    "",
-				NameMention: user.Mention(),
-				Ds: struct {
-					Mesid   string
-					Guildid string
-					Avatar  string
-				}{
-					Mesid:   r.MessageID,
-					Guildid: config.Guildid,
-					Avatar:  user.AvatarURL("128"),
-				},
-
-				Config: config,
-				Option: models.Option{
-					Reaction: true},
-			}
-
-			if r.Member != nil && r.Member.Nick != "" {
-				in.NameNick = r.Member.Nick
-			} else if in.NameNick == "" && user.GlobalName != "" {
-				in.NameNick = user.GlobalName
-			}
-
-			d.reactionUserRemove(r)
-
-			if r.Emoji.Name == emPlus {
-				in.Mtext = "+"
-			} else if r.Emoji.Name == emMinus {
-				in.Mtext = "-"
-			} else if r.Emoji.Name == emOK || r.Emoji.Name == emCancel || r.Emoji.Name == emRsStart || r.Emoji.Name == emPl30 {
-				in.Lvlkz, err = d.storage.Db.ReadMesIdDS(r.MessageID)
-				if err == nil && in.Lvlkz != "" {
-					if r.Emoji.Name == emOK {
-						in.Timekz = "30"
-						in.Mtext = in.Lvlkz + "+"
-					} else if r.Emoji.Name == emCancel {
-						in.Mtext = in.Lvlkz + "-"
-					} else if r.Emoji.Name == emRsStart {
-						in.Mtext = in.Lvlkz + "++"
-					} else if r.Emoji.Name == emPl30 {
-						in.Mtext = in.Lvlkz + "+++"
-					}
-				}
-			}
-			d.api.SendRsBotAppRecover(in)
-		}
-	}
-}
-func (d *Discord) reactionUserRemove(r *discordgo.MessageReactionAdd) {
-	err := d.S.MessageReactionRemove(r.ChannelID, r.MessageID, r.Emoji.Name, r.UserID)
-	if err != nil {
-		fmt.Println("Ошибка удаления эмоджи", err)
-	}
-}
 func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 	if d.ifMentionBot(m) {
 		return
@@ -111,6 +46,11 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		d.SendToRsFilter(m, config)
 		return
 	}
+	good2, config2 := d.checkChannelConfig2(m.ChannelID)
+	if good2 {
+		d.SendToRs2Filter(m, config2)
+		return
+	}
 
 	//bridge
 	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(m.ChannelID)
@@ -123,6 +63,36 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		return
 	}
 }
+
+func (d *Discord) SendToRs2Filter(m *discordgo.MessageCreate, config2 models.CorporationConfigV2) {
+	if len(m.Attachments) > 0 {
+		m.Content += m.Attachments[0].URL
+	}
+	if len(m.Message.Embeds) > 0 {
+		m.Content += "\u200B"
+	}
+	in2 := models.InMessageV2{
+		Text:        d.ReplaceTextMessage(m.Content, m.GuildID),
+		Tip:         "ds",
+		NameNick:    "",
+		Username:    m.Author.Username,
+		UserId:      m.Author.ID,
+		NameMention: m.Author.Mention(),
+		Messenger: models.Info{
+			TypeMessenger:  "ds",
+			MessageId:      m.ID,
+			ChannelId:      m.ChannelID,
+			GuildId:        m.GuildID,
+			GuildName:      config2.Channels[m.ChannelID].GuildName,
+			GuildAvatarUrl: config2.Channels[m.ChannelID].GuildAvatarUrl,
+			UserAvatarUrl:  m.Author.AvatarURL("128"),
+		},
+		Config:  config2,
+		Options: models.Options{models.OptionInClient},
+	}
+	d.api.SendRsBotV2AppRecover(in2)
+}
+
 func (d *Discord) SendToRsFilter(m *discordgo.MessageCreate, config models.CorporationConfig) {
 	if len(m.Attachments) > 0 {
 		m.Content += m.Attachments[0].URL
@@ -246,7 +216,10 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 			Mesid   string
 			Guildid string
 			Avatar  string
-		}{Mesid: m.ID, Guildid: m.GuildID, Avatar: m.Author.AvatarURL("")},
+		}{
+			Mesid:   m.ID,
+			Guildid: m.GuildID,
+			Avatar:  m.Author.AvatarURL("")},
 
 		Option: models.Option{
 			InClient: true,
@@ -265,10 +238,64 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		}
 	}
 	d.api.SendRsBotAppRecover(in)
+
+	good2, config2 := d.checkChannelConfig2(m.ChannelID)
+	in2 := models.InMessageV2{
+		Text:        m.Content,
+		Tip:         "ds",
+		Username:    m.Author.Username,
+		UserId:      m.Author.ID,
+		NameMention: m.Author.Mention(),
+		Messenger: models.Info{
+			TypeMessenger:  "ds",
+			MessageId:      m.ID,
+			ChannelId:      m.ChannelID,
+			ChannelName:    "",
+			GuildId:        m.GuildID,
+			GuildAvatarUrl: "",
+			UserAvatarUrl:  m.Author.AvatarURL("128"),
+			Language:       "ru",
+			CreatedAt:      time.Now(),
+		},
+		Options: models.Options{models.OptionInClient},
+	}
+
+	if good2 {
+		in2.Config = config2
+	}
+
+	if m.Content == ".setup" || strings.HasPrefix(m.Content, ".invite ") {
+		in2.Config = models.CorporationConfigV2{
+			//Name:        d.GuildChatName(m.ChannelID, m.GuildID),
+			//Language:    "ru",
+			Channels:    make(models.ChannelsMap),
+			HelpMessage: make(models.HelpMessage),
+		}
+		g, _ := d.S.Guild(m.GuildID)
+		if g != nil {
+			in2.Messenger.GuildName = g.Name
+			in2.Messenger.GuildAvatarUrl = g.IconURL("128")
+		}
+		guildChannels, _ := d.S.GuildChannels(m.GuildID)
+		for _, ch := range guildChannels {
+			if ch.ID == m.ChannelID {
+				in2.Messenger.ChannelName = ch.Name
+				break
+			}
+		}
+		if in2.Config.Channels[m.ChannelID] == nil {
+			in2.Config.Channels[m.ChannelID] = &models.Info{}
+		}
+		in2.Config.Channels[m.ChannelID] = &in2.Messenger
+	}
+
+	d.api.SendRsBotV2AppRecover(in2)
+
 	go func() {
 		mes := models.ToBridgeMessage{
 			Text:          m.Content,
 			Sender:        m.Author.Username,
+			SenderId:      m.Author.ID,
 			Tip:           "ds",
 			Avatar:        m.Author.AvatarURL("128"),
 			ChatId:        m.ChannelID,
@@ -295,6 +322,7 @@ func (d *Discord) SendToBridge(m *discordgo.MessageCreate, bridgeConfig models.B
 		Config:        &bridgeConfig,
 		Text:          d.ReplaceTextMessage(m.Content, m.GuildID),
 		Sender:        d.getAuthorName(m),
+		SenderId:      m.Author.ID,
 		Tip:           "ds",
 		MesId:         m.ID,
 		GuildId:       m.GuildID,

@@ -1,6 +1,6 @@
 package storage
 
-import "discord/models"
+import "github.com/mentalisit/restapi/models"
 
 type Scoreboard interface {
 	ScoreboardUpdateParamLastMessageId(p models.ScoreboardParams)

@@ -1,7 +1,6 @@
 package DiscordClient
 
 import (
-	"discord/models"
 	"fmt"
 	"log/slog"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 
 	gt "github.com/bas24/googletranslatefree"
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Discord) CheckAdmin(nameid string, chatid string) bool {
@@ -432,4 +432,12 @@ func (d *Discord) filterNewsMessage(msg string) (en, ru, ua string) {
 		d.log.Info(msg)
 	}
 	return "", "", ""
+}
+
+func (d *Discord) GetOrCreateWebhookGame(s string) (webhookUrl, chatId string) {
+	robotGuild := "700238199070523412"
+	robotCategoryId := "1359247068996309022"
+	webhookUrl, chatId, _ = d.webhook.CreateChannelAndWebhook(robotGuild, s, robotCategoryId)
+
+	return webhookUrl, chatId
 }

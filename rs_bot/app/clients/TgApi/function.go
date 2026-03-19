@@ -20,6 +20,21 @@ func (c *Client) DelMessage(ChatId string, messageID int) {
 		return
 	}
 }
+func (c *Client) DeleteMessage(ChatId, messageID string) {
+	er, err := c.client.DeleteMessage(context.Background(), &DeleteMessageRequest{
+		Chatid: ChatId,
+		Mesid:  messageID,
+	})
+	if err != nil {
+		//c.log.ErrorErr(err)
+		return
+	}
+	if er.ErrorMessage != "" {
+		c.log.Error(er.ErrorMessage)
+		return
+	}
+}
+
 func (c *Client) DelMessageSecond(chatId, messageId string, second int) {
 	er, err := c.client.DeleteMessageSecond(context.Background(), &DeleteMessageSecondRequest{
 		Chatid: chatId,
@@ -112,6 +127,16 @@ func (c *Client) SendChannel(chatId string, text string) int {
 	}
 	return mid
 
+}
+func (c *Client) SendChannelId(chatId string, text string) string {
+	response, err := c.client.Send(context.Background(), &SendMessageRequest{
+		Text:   text,
+		ChatID: chatId,
+	})
+	if err != nil {
+		return ""
+	}
+	return response.Text
 }
 func (c *Client) ChatTyping(chatId string) {
 	_, err := c.client.SendChannelTyping(context.Background(), &SendChannelTypingRequest{

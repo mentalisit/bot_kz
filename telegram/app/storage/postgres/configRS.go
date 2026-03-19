@@ -3,9 +3,9 @@ package postgres
 import (
 	"encoding/json"
 	"errors"
-	"telegram/models"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {

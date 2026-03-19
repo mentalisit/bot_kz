@@ -23,6 +23,8 @@ type ConfigBot struct {
 		HomeserverURL string `yaml:"homeserverURL" env-default:"http://10.0.0.184:6167"`
 		Username      string `yaml:"username" env-default:"@bridge_bot:matrix.mentalisit.myds.me"`
 		Password      string `yaml:"password" env-default:"botPassword"`
+		ASToken       string `yaml:"asToken"`
+		HSToken       string `yaml:"hsToken"`
 	} `yaml:"matrix"`
 }
 

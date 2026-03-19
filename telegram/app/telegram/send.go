@@ -9,10 +9,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"telegram/models"
+	"telegram/models2"
 	"time"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (t *Telegram) ChatTyping(chatId string) error {
@@ -47,7 +48,7 @@ func (t *Telegram) SendChannel(chatid, text, parseMode string) (string, error) {
 	chatId, threadID := t.chat(chatid)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
-	found, newText := models.FindTelegramMentions(text)
+	found, newText := FindTelegramMentions(text)
 	if found || parseMode == "MarkdownV2" {
 		m.ParseMode = "MarkdownV2"
 		m.Text = newText
@@ -68,7 +69,7 @@ func (t *Telegram) SendChannelReply(chatid, text, parseMode string, replyId int)
 	m := tgbotapi.NewMessage(chatId, text)
 	m.MessageThreadID = threadID
 	m.ReplyParameters.MessageID = replyId
-	found, newText := models.FindTelegramMentions(text)
+	found, newText := FindTelegramMentions(text)
 	if found || parseMode == "MarkdownV2" {
 		m.ParseMode = "MarkdownV2"
 		m.Text = newText
@@ -170,7 +171,7 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 				roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), chatId)
 				if roles != nil {
 					rolesMap, rolesId := makeRolesMap(roles)
-					us := make(map[string][]models.User)
+					us := make(map[string][]models2.User)
 					users, _ := t.Storage.Db.GetChatUsers(context.Background(), chatId)
 
 					for _, mention := range mentions {
@@ -181,7 +182,7 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 								if _, hasRole := user.Roles[roleID]; hasRole {
 									roleDisplayName := rolesId[roleID]
 									if us[roleDisplayName] == nil {
-										us[roleDisplayName] = []models.User{}
+										us[roleDisplayName] = []models2.User{}
 									}
 									us[roleDisplayName] = append(us[roleDisplayName], user)
 								}
@@ -357,23 +358,34 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 
 	var levels []string
 	chatId, ThreadID := t.chat(chatid)
+	var ok2 bool
+	var config2 models.CorporationConfigV2
+
 	ok, config := t.checkChannelConfigTG(chatid)
+
+	if !ok {
+		ok2, config2 = t.checkChannelConfig2(chatid)
+	}
 
 	if ok {
 		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
+		fmt.Printf("SendHelp ReadTop5Level: %+v\n", levels)
+	}
+	if ok2 {
+		fmt.Println("send help need implement ", config2)
 	}
 
 	if !ifUser && config.TgChannel != "" {
 		last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
 		if last == 0 {
-			active := t.Storage.Db.ReadTelegramLastMessageActive(config.CorpName)
-			if active == 0 {
-				t.log.Info(fmt.Sprintf("удалена корпорация '%s' \n", config.CorpName))
-				_, _ = t.SendChannel(config.TgChannel, "Бот отключен, для активации бота напишите команду \n.добавить", "")
-
-				t.Storage.Db.DeleteConfigRs(config)
-				return "Бот отключен", nil
-			}
+			//active := t.Storage.Db.ReadTelegramLastMessageActive(config.CorpName)
+			//if active == 0 {
+			//	//t.log.Info(fmt.Sprintf("удалена корпорация '%s' \n", config.CorpName))
+			//	//_, _ = t.SendChannel(config.TgChannel, "Бот отключен, для активации бота напишите команду \n.добавить", "")
+			//
+			//	//t.Storage.Db.DeleteConfigRs(config)
+			//	return "Бот отключен", nil
+			//}
 		}
 		//
 		if last-5 < midHelpTg {
@@ -406,23 +418,26 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 	}
 
 	var btt []tgbotapi.InlineKeyboardButton
-	if len(levels) > 2 {
+	if len(levels) >= 2 {
 		for _, level := range levels {
 			key := getButton(level)
+			if level == key {
+				t.log.Info("need implement custom Rs name ")
+			}
 
 			bt := tgbotapi.NewInlineKeyboardButtonData(key, key)
 
 			btt = append(btt, bt)
 		}
 	} else {
-		for i := 7; i < 12; i++ {
+		for i := 8; i <= 12; i++ {
 			l := strconv.Itoa(i)
 			bt := tgbotapi.NewInlineKeyboardButtonData(l+"+", l+"+")
 			btt = append(btt, bt)
 		}
 	}
 
-	msg := tgbotapi.NewMessage(chatId, models.EscapeMarkdownV2ForHelp(text))
+	msg := tgbotapi.NewMessage(chatId, EscapeMarkdownV2ForHelp(text))
 
 	msg.MessageThreadID = ThreadID
 	msg.ParseMode = tgbotapi.ModeMarkdownV2
@@ -456,7 +471,7 @@ func (t *Telegram) SendPoll(m models.Request) string {
 	chatId, ThreadID := t.chat(chatid)
 	text := fmt.Sprintf("%s\n%s\n\n[результат](%s)", title, description, url)
 
-	msg := tgbotapi.NewMessage(chatId, models.EscapeMarkdownV2ForLink(text))
+	msg := tgbotapi.NewMessage(chatId, EscapeMarkdownV2ForLink(text))
 
 	msg.MessageThreadID = ThreadID
 	msg.ParseMode = tgbotapi.ModeMarkdownV2
@@ -521,7 +536,7 @@ const (
 	emFive = "5️⃣"
 )
 
-func makeRolesMap(st []models.Role) (map[string]int64, map[int64]string) {
+func makeRolesMap(st []models2.Role) (map[string]int64, map[int64]string) {
 	rolesMap := make(map[string]int64)
 	rolesId := make(map[int64]string)
 

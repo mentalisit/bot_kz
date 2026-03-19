@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"telegram/models"
+	"time"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
@@ -35,6 +36,12 @@ func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
 	ok, config := t.checkChannelConfigTG(ChatId)
 	if ok {
 		go t.sendToRsFilter(m, config, ChatId)
+		return
+	}
+	//RsClient2
+	good2, config2 := t.checkChannelConfig2(ChatId)
+	if good2 {
+		go t.sendToRs2Filter(m, config2, ChatId)
 		return
 	}
 
@@ -73,6 +80,29 @@ func (t *Telegram) sendToRsFilter(m *tgbotapi.Message, config models.Corporation
 	}
 
 	t.api.SendRsBotAppRecover(in)
+}
+func (t *Telegram) sendToRs2Filter(m *tgbotapi.Message, config2 models.CorporationConfigV2, ChatId string) {
+	in2 := models.InMessageV2{
+		Text:        m.Text,
+		Tip:         "tg",
+		NameNick:    "",
+		Username:    m.From.String(),
+		UserId:      strconv.FormatInt(m.From.ID, 10),
+		NameMention: "@" + m.From.UserName,
+		Messenger: models.Info{
+			TypeMessenger:  "tg",
+			MessageId:      strconv.Itoa(m.MessageID),
+			ChannelId:      ChatId,
+			GuildId:        strconv.FormatInt(m.Chat.ID, 10),
+			GuildName:      m.Chat.Title,
+			GuildAvatarUrl: config2.Channels[ChatId].GuildAvatarUrl,
+			UserAvatarUrl:  t.getAvatarIsExist(m.From.ID),
+		},
+		Config:  config2,
+		Options: models.Options{models.OptionInClient},
+	}
+
+	t.api.SendRsBotV2AppRecover(in2)
 }
 func (t *Telegram) sendToCompendiumFilter(m *tgbotapi.Message, ChatId string) {
 	i := models.IncomingMessage{
@@ -150,6 +180,7 @@ func (t *Telegram) sendToBridgeFilter(m *tgbotapi.Message, ChatId string, config
 			GuildId:       strconv.FormatInt(m.Chat.ID, 10),
 			TimestampUnix: m.Time().Unix(),
 			Sender:        ReplaceCyrillicToLatin(m.From.String()),
+			SenderId:      strconv.FormatInt(m.From.ID, 10),
 			Avatar:        t.getAvatarIsExist(m.From.ID),
 		}
 
@@ -212,13 +243,59 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 	}
 	t.api.SendRsBotAppRecover(in)
 
+	good2, config2 := t.checkChannelConfig2(ChatId)
+	in2 := models.InMessageV2{
+		Text:        m.Text,
+		Tip:         "tg",
+		NameNick:    "",
+		Username:    m.From.String(),
+		UserId:      strconv.FormatInt(m.From.ID, 10),
+		NameMention: "@" + m.From.UserName,
+		Messenger: models.Info{
+			TypeMessenger: "tg",
+			MessageId:     strconv.Itoa(m.MessageID),
+			ChannelId:     ChatId,
+			GuildId:       strconv.FormatInt(m.Chat.ID, 10),
+			GuildName:     m.Chat.Title,
+			UserAvatarUrl: t.getAvatarIsExist(m.From.ID),
+			Language:      "ru",
+			CreatedAt:     time.Now(),
+		},
+		Config:  models.CorporationConfigV2{},
+		Options: models.Options{models.OptionInClient},
+	}
+	if good2 {
+		in2.Config.Uid = config2.Uid
+	}
+	if m.Text == ".setup" || strings.HasPrefix(m.Text, ".invite ") {
+		chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: tgbotapi.ChatConfig{ChatID: m.Chat.ID}})
+		if err != nil {
+			t.log.ErrorErr(err)
+		} else if chat.Photo != nil {
+			file, err := t.t.GetFile(tgbotapi.FileConfig{FileID: chat.Photo.SmallFileID})
+			if err != nil {
+				t.log.ErrorErr(err)
+			}
+			fileURL := file.Link(t.t.Token)
+
+			_, newUrl := t.SaveAvatarLocalCache(strconv.FormatInt(m.Chat.ID, 10), fileURL)
+			in2.Messenger.GuildAvatarUrl = newUrl
+		}
+	}
+
+	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
+		in2.Messenger.ChannelName = m.ReplyToMessage.ForumTopicCreated.Name
+	}
+	t.api.SendRsBotV2AppRecover(in2)
+
 	mes := models.ToBridgeMessage{
-		Text:    m.Text,
-		Sender:  m.From.String(),
-		Tip:     "tg",
-		ChatId:  ChatId,
-		MesId:   strconv.Itoa(m.MessageID),
-		GuildId: chatName,
+		Text:     m.Text,
+		Sender:   m.From.String(),
+		SenderId: strconv.FormatInt(m.From.ID, 10),
+		Tip:      "tg",
+		ChatId:   ChatId,
+		MesId:    strconv.Itoa(m.MessageID),
+		GuildId:  chatName,
 		Config: &models.Bridge2Config{
 			HostRelay: chatName,
 		},

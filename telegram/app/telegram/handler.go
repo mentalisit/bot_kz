@@ -6,9 +6,9 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"telegram/models"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
@@ -40,6 +40,32 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 
 		t.api.SendRsBotAppRecover(in)
 	}
+
+	good2, config2 := t.checkChannelConfig2(ChatId)
+	if good2 {
+		in2 := models.InMessageV2{
+			Text:        cb.Data,
+			Tip:         "tg",
+			NameNick:    "",
+			Username:    cb.From.String(),
+			UserId:      strconv.FormatInt(cb.From.ID, 10),
+			NameMention: "@" + cb.From.UserName,
+			Messenger: models.Info{
+				TypeMessenger:  "tg",
+				MessageId:      strconv.Itoa(cb.Message.MessageID),
+				ChannelId:      ChatId,
+				GuildId:        strconv.FormatInt(cb.Message.Chat.ID, 10),
+				GuildName:      cb.Message.Chat.Title,
+				GuildAvatarUrl: "",
+				UserAvatarUrl:  "",
+			},
+			Config:  config2,
+			Options: models.Options{},
+		}
+		in2.Options.Add(models.OptionReaction)
+		t.api.SendRsBotV2AppRecover(in2)
+	}
+
 	tg, bridgeConfig := t.bridgeCheckChannelConfigTg(ChatId)
 	if tg {
 		fmt.Println("cb.Data " + cb.Data)
@@ -53,6 +79,7 @@ func (t *Telegram) callback(cb *tgbotapi.CallbackQuery) {
 				GuildId:       strconv.FormatInt(cb.GetInaccessibleMessage().Chat.ID, 10),
 				TimestampUnix: cb.Message.Time().Unix(),
 				Sender:        ReplaceCyrillicToLatin(cb.From.String()),
+				SenderId:      strconv.FormatInt(cb.From.ID, 10),
 			}
 
 			if mes.Text != "" {
@@ -105,12 +132,15 @@ func (t *Telegram) ifCommand(m *tgbotapi.Message) {
 }
 
 func (t *Telegram) myChatMember(member *tgbotapi.ChatMemberUpdated) {
+
+	fmt.Printf("member %+v\n", member)
+
 	t.SaveMember(&member.Chat, member.NewChatMember.User)
 
 	ChatId := strconv.FormatInt(member.Chat.ID, 10) + "/0"
 	if member.NewChatMember.Status == "member" {
 		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s мне нужны права админа для коректной работы", member.From.UserName), "", 60)
-	} else if member.NewChatMember.Status == "administrator" {
+	} else if member.NewChatMember.Status == "administrator" && member.OldChatMember.Status != "administrator" {
 		t.SendChannelDelSecond(ChatId, fmt.Sprintf("@%s спасибо ... я готов к работе \nАктивируй нужный режим бота,\n если сложности пиши мне @Mentalisit", member.From.UserName), "", 60)
 	}
 }
@@ -124,7 +154,7 @@ func (t *Telegram) chatMember(chMember *tgbotapi.ChatMemberUpdated) {
 		t.SaveMember(&chMember.Chat, chMember.NewChatMember.User)
 	}
 
-	if chMember.NewChatMember.Status == "member" {
+	if chMember.NewChatMember.Status == "member" && chMember.OldChatMember.Status != "member" {
 		ChatId := strconv.FormatInt(chMember.Chat.ID, 10) + "/0"
 		t.SendChannelDelSecond(ChatId,
 			fmt.Sprintf("%s Добро пожаловать в наш чат ", chMember.NewChatMember.User.String()),

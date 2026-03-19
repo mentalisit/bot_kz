@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 func (d *Db) FindMultiAccountUUID(uid uuid.UUID) (*models.MultiAccount, error) {
@@ -49,6 +50,15 @@ func (d *Db) FindMultiAccountByUserId(userid string) (*models.MultiAccount, erro
 func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount, error) {
 	if m.UUID == uuid.Nil {
 		m.UUID = uuid.New()
+	}
+
+	// Логируем если никнейм пустой
+	if m.Nickname == "" {
+		d.log.Warn("CreateMultiAccountFull called with empty nickname",
+			zap.String("uuid", m.UUID.String()),
+			zap.String("telegram_id", m.TelegramID),
+			zap.String("discord_id", m.DiscordID),
+			zap.String("whatsapp_id", m.WhatsappID))
 	}
 
 	query := `

@@ -62,8 +62,9 @@ func (d *Db) CorpMembersReadMulti(gid *uuid.UUID) ([]models.CorpMember, error) {
 		}
 
 		// Вычисляем время, если указана зона
+		// Используем функцию с поддержкой DST
 		if member.TimeZone != "" {
-			member.LocalTime, member.LocalTime24 = getTimeStrings(member.ZoneOffset)
+			member.LocalTime, member.LocalTime24 = getTimeStringsWithDST(member.TimeZone, member.ZoneOffset)
 		}
 
 		// Обработка технологий (ваша логика создания копий для каждого Tech)
@@ -85,17 +86,6 @@ func (d *Db) CorpMembersReadMulti(gid *uuid.UUID) ([]models.CorpMember, error) {
 }
 
 func (d *Db) CorpMemberInsert(m models.MultiAccountCorpMember) error {
-	// 1. Гарантируем наличие записи в родительской таблице multi_accounts.
-	// Если запись есть — ничего не произойдет. Если нет — создастся минимальная.
-	// Это заменяет весь ваш блок с SELECT и проверкой на ErrNoRows.
-	parentQuery := `INSERT INTO my_compendium.multi_accounts (uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING`
-	if _, err := d.db.Exec(parentQuery, m.Uid); err != nil {
-		return fmt.Errorf("ensure parent account: %w", err)
-	}
-
-	// 2. Выполняем Upsert основной записи.
-	// Если вы уже добавили UUIDArray в свои модели (как мы обсуждали),
-	// то pq.Array(m.GuildIds) больше не нужен — sqlx сам все сделает.
 	query := `
        INSERT INTO my_compendium.corpMember (uid, guildids, timezona, zonaoffset, afkfor)
        VALUES (:uid, :guildids, :timezona, :zonaoffset, :afkfor)
@@ -130,6 +120,25 @@ func getTimeStrings(offset int) (string, string) {
 	time24HourFormat := timeWithOffset.Format("15:04")
 
 	return time12HourFormat, time24HourFormat
+}
+
+// getTimeStringsWithDST возвращает время с учетом DST (летнего/зимнего времени)
+// Если timezone - это название локации (например, "America/New_York"),
+// то смещение вычисляется динамически с учетом текущего DST
+func getTimeStringsWithDST(timezone string, fallbackOffsetMinutes int) (string, string) {
+	now := time.Now()
+
+	// Пытаемся загрузить локацию для динамического расчета DST
+	if timezone != "" {
+		loc, err := time.LoadLocation(timezone)
+		if err == nil {
+			timeInLocation := now.In(loc)
+			return timeInLocation.Format("03:04 PM"), timeInLocation.Format("15:04")
+		}
+	}
+
+	// Fallback на фиксированное смещение
+	return getTimeStrings(fallbackOffsetMinutes)
 }
 
 //func (d *Db) CorpMemberInsert(corpMember models.MultiAccountCorpMember) error {

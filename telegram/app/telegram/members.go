@@ -6,10 +6,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"telegram/models"
+	"telegram/models2"
 	"time"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, parsemode string, second int) (bool, error) {
@@ -28,15 +29,20 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 	chat, threadID := t.chat(chatid)
 	roleId, _ := t.Storage.Db.GetRoleByName(context.Background(), RsTypeLevel, chat)
 	if roleId == 0 {
-		t.SendChannelDelSecond(chatid, "роль не найдена, попроси админа создать роль "+RsTypeLevel, "", 60)
+		_ = t.Storage.Db.CreateRole(context.Background(), &models2.Role{
+			ChatID:    chat,
+			Name:      RsTypeLevel,
+			CreatedBy: 1,
+		})
+		//t.SendChannelDelSecond(chatid, "роль не найдена, попроси админа создать роль "+RsTypeLevel, "", 60)
 		return true, nil
 	}
 	users, _ := t.Storage.Db.GetRolesUsers(context.Background(), chat, roleId)
 	if len(users) == 0 {
-		t.SendChannelDelSecond(chatid, "не найдено желающих получать пинг на "+RsTypeLevel, "", 60)
+		t.SendChannelDelSecond(chatid, "не найдено желающих получать пинг на "+RsTypeLevel, "", 10)
 		return true, nil
 	}
-	var u []models.User
+	var u []models2.User
 	for _, user := range users {
 		if user.ID != userID {
 			u = append(u, user)
@@ -111,7 +117,7 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 			ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
 			roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), m.Chat.ID)
 			if roles != nil {
-				us := make(map[string][]models.User)
+				us := make(map[string][]models2.User)
 				for _, mention := range mentions {
 					if mention[1:] == "all" && t.CheckAdminTg(ChatId, m.From.UserName) {
 						users, _ := t.Storage.Db.GetChatUsers(context.Background(), m.Chat.ID)
@@ -138,7 +144,7 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 }
 
 // Функция для упоминания участников по ролям
-func (t *Telegram) MentionMembersRoles1(ChatId string, replyId int, trackedMembers map[string][]models.User) {
+func (t *Telegram) MentionMembersRoles1(ChatId string, replyId int, trackedMembers map[string][]models2.User) {
 	text := ""
 	text2 := ""
 	for roleName, users := range trackedMembers {
@@ -174,7 +180,7 @@ func (t *Telegram) MentionMembersRoles1(ChatId string, replyId int, trackedMembe
 		_, _ = t.SendChannelReply(ChatId, text2, "MarkdownV2", replyId)
 	}
 }
-func (t *Telegram) MentionMembersRoles(ChatId string, replyId int, trackedMembers map[string][]models.User) {
+func (t *Telegram) MentionMembersRoles(ChatId string, replyId int, trackedMembers map[string][]models2.User) {
 	if len(trackedMembers) == 0 {
 		return
 	}
@@ -238,7 +244,7 @@ func (t *Telegram) Unsubscribe(userId int64, argRoles string, guildId int64) int
 func (t *Telegram) Subscribe(userId int64, argRoles string, guildId int64) int {
 	roleId, err := t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
 	if err != nil && roleId == 0 {
-		_ = t.Storage.Db.CreateRole(context.Background(), &models.Role{ChatID: guildId, Name: argRoles})
+		_ = t.Storage.Db.CreateRole(context.Background(), &models2.Role{ChatID: guildId, Name: argRoles})
 		roleId, err = t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
 	}
 	if roleId == 0 {

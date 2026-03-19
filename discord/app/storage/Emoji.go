@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"discord/models"
+	"github.com/mentalisit/restapi/models"
 )
 
 type Emoji interface {

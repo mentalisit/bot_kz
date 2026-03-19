@@ -3,6 +3,7 @@ package models
 type ToBridgeMessage struct {
 	Text          string              `json:"text"`
 	Sender        string              `json:"sender"`
+	SenderId      string              `json:"senderId"`
 	Tip           string              `json:"tip"`
 	ChatId        string              `json:"chatId"`
 	MesId         string              `json:"mesId"`

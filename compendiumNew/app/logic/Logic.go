@@ -20,6 +20,7 @@ func (c *Hs) logic(m models.IncomingMessage) {
 	}
 	if m.MGuild == nil {
 		c.log.InfoStruct("m.MGuild==nil ", m)
+		return
 	}
 
 	fmt.Printf("logic: %+v %+v\n", time.Now().Format(time.RFC3339), m)

@@ -110,3 +110,13 @@ func (b *Bridge) CacheCheckChannelConfigWA(chatIdTg string) (bool, models.Bridge
 	}
 	return false, models.Bridge2Config{}
 }
+func (b *Bridge) CacheCheckChannelConfigMatrix(roomID string) (bool, models.Bridge2Config) {
+	for _, config := range b.configs {
+		for _, mx := range config.Channel["matrix"] {
+			if mx.ChannelId == roomID {
+				return true, config
+			}
+		}
+	}
+	return false, models.Bridge2Config{}
+}

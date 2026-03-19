@@ -96,38 +96,38 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				ch := utils.WaitForMessage("QueueLevel123")
-				fd(in)
+				utils.Watchdog("fd(in)99", 20, func() {
+					fd(in)
+				})
 				b.wg.Done()
-				close(ch)
 			}()
 		}
 		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				ch := utils.WaitForMessage("QueueLevel132")
-				ft(in)
+				utils.Watchdog("ft(in)108", 20, func() {
+					ft(in)
+				})
 				b.wg.Done()
-				close(ch)
 			}()
 		}
 	} else if count == 2 {
 		if in.Config.DsChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				ch := utils.WaitForMessage("QueueLevel142")
-				fd(in)
+				utils.Watchdog("fd(in)118", 20, func() {
+					fd(in)
+				})
 				b.wg.Done()
-				close(ch)
 			}()
 		}
 		if in.Config.TgChannel != "" {
 			b.wg.Add(1)
 			go func() {
-				ch := utils.WaitForMessage("QueueLevel151")
-				ft(in)
+				utils.Watchdog("ft(in)127", 20, func() {
+					ft(in)
+				})
 				b.wg.Done()
-				close(ch)
 			}()
 		}
 
@@ -136,19 +136,19 @@ func (b *Bot) QueueLevel(in models.InMessage) {
 			if in.Config.DsChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					ch := utils.WaitForMessage("QueueLevel163")
-					fd(in)
+					utils.Watchdog("fd(in)139", 20, func() {
+						fd(in)
+					})
 					b.wg.Done()
-					close(ch)
 				}()
 			}
 			if in.Config.TgChannel != "" {
 				b.wg.Add(1)
 				go func() {
-					ch := utils.WaitForMessage("QueueLevel172")
-					ft(in)
+					utils.Watchdog("ft(in)148", 20, func() {
+						ft(in)
+					})
 					b.wg.Done()
-					close(ch)
 				}()
 			}
 		} else {

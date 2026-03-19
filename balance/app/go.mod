@@ -1,3 +1,0 @@
-module balance
-
-go 1.24.2

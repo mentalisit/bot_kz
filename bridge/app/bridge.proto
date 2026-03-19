@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package bridge;
-option go_package = "grpc-server;bridge";
+option go_package = "./grpc-server;bridge";
 
 
 // Сообщение Bridge2Configs соответствует структуре Bridge2Configs
@@ -77,16 +77,17 @@ message BridgeConfig {
 message ToBridgeMessage {
   string text = 1;
   string sender = 2;
-  string tip = 3;
-  string chat_id = 4;
-  string mes_id = 5;
-  string guild_id = 6;
-  int64 time_message = 7;
-  repeated FileInfo extra = 8;
-  string avatar = 9;
-  BridgeMessageReply reply = 10;
-  map<string, string> reply_map = 11;
-  Bridge2Config config = 12;
+  string senderId = 3;
+  string tip = 4;
+  string chat_id = 5;
+  string mes_id = 6;
+  string guild_id = 7;
+  int64 time_message = 8;
+  repeated FileInfo extra = 9;
+  string avatar = 10;
+  BridgeMessageReply reply = 11;
+  map<string, string> reply_map = 12;
+  Bridge2Config config = 13;
 }
 
 // Сервис для функции InboxBridge

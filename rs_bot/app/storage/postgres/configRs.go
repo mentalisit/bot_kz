@@ -3,8 +3,9 @@ package postgres
 import (
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"rs/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
@@ -53,6 +54,7 @@ func (d *Db) UpdateConfigRs(c models.CorporationConfig) {
 		d.log.ErrorErr(err)
 	}
 }
+
 func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationConfig) {
 	ctx, cancel := d.getContext()
 	defer cancel()

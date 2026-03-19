@@ -47,7 +47,7 @@ func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 }
 
 func (s *Server) RunServer() {
-	port := "8443"
+	port := "28443"
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 
@@ -55,29 +55,29 @@ func (s *Server) RunServer() {
 
 	router.Use(gin.LoggerWithFormatter(s.CustomLogFormatter))
 
-	router.GET("/compendium/applink/identities", s.CheckIdentityHandler)
+	registerRoutes := func(r gin.IRouter) {
+		r.GET("/compendium/applink/identities", s.CheckIdentityHandler)
+		r.POST("/compendium/applink/connect", s.CheckConnectHandler)
+		r.POST("/compendium/cmd/syncTech/:mode", s.CheckSyncTechHandler)
+		r.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler)
+		r.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
+		r.GET("/compendium/user/corporations", s.CheckUserCorporationsHandler)
+		r.GET("/compendium/api/tech", s.api)
+		r.GET("/links", s.links)
+		r.GET("/health", HealthCheckHandler)
+		r.Static("/compendium/avatars", "docker/compendium/avatars")
+		r.Static("/docker/compendium/avatars", "docker/compendium/avatars")
+		r.Static("/tv", "docker/compendium/tv")
 
-	router.POST("/compendium/applink/connect", s.CheckConnectHandler)
+	}
 
-	router.POST("/compendium/cmd/syncTech/:mode", s.CheckSyncTechHandler)
+	registerRoutes(router)
 
-	router.GET("/compendium/cmd/corpdata", s.CheckCorpDataHandler)
+	group := router.Group("/compendium")
+	registerRoutes(group)
 
-	router.GET("/compendium/applink/refresh", s.CheckRefreshHandler)
-
-	router.GET("/compendium/user/corporations", s.CheckUserCorporationsHandler)
-
-	router.GET("/links", s.links)
-
-	router.GET("/compendium/api/tech", s.api)
-
-	router.Static("/compendium/avatars", "docker/compendium/avatars")
-	router.Static("/docker/compendium/avatars", "docker/compendium/avatars")
-	router.Static("/tv", "docker/compendium/tv")
-
-	router.GET("/health", HealthCheckHandler)
-
-	err := router.RunTLS(":"+port, s.certFile, s.keyFile)
+	//err := router.RunTLS(":"+port, s.certFile, s.keyFile)
+	err := router.Run(":" + port)
 	if err != nil {
 		s.log.ErrorErr(err)
 		//os.Exit(1)
@@ -123,6 +123,7 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 	if param.Method == "OPTIONS" {
 		return ""
 	}
+
 	var statusColor, methodColor, resetColor string
 	if param.IsOutputColor() {
 		statusColor = param.StatusCodeColor()
@@ -134,17 +135,24 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 		param.Latency = param.Latency.Truncate(time.Second)
 	}
 
-	country, err := s.cache.GetLocationInfo(param.ClientIP)
-	if err != nil {
-		fmt.Println(err)
+	// Берём реальный IP из keys, если есть — иначе param.ClientIP
+	clientIP := param.ClientIP
+	if ip, ok := param.Keys["clientIP"]; ok {
+		if ipStr, ok := ip.(string); ok && ipStr != "" {
+			clientIP = ipStr
+		}
 	}
-	addr := fmt.Sprintf("%s", country) //param.ClientIP, country)
 
-	return fmt.Sprintf("[GIN]%v|%s %3d %s|%13v|%15s|%s%-3s%s|%#v\n%s",
+	country, err := s.cache.GetLocationInfo(clientIP)
+	if err != nil {
+		country = clientIP // фолбэк — показываем просто IP
+	}
+
+	return fmt.Sprintf("[GIN] %v | %s %3d %s | %13v | %15s | %s%-7s%s | %#v\n%s",
 		param.TimeStamp.Format("2006/01/02-15:04:05"),
 		statusColor, param.StatusCode, resetColor,
 		param.Latency,
-		addr,
+		country,
 		methodColor, param.Method, resetColor,
 		param.Path,
 		param.ErrorMessage,

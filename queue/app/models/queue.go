@@ -23,3 +23,11 @@ type Webhook struct {
 	Corp    string          `json:"corp"`
 	Message json.RawMessage `json:"message"` // для хранения JSONB
 }
+
+type BattlesEvent struct {
+	EventId      int
+	Name         string
+	LevelMax     int
+	EntriesCount int
+	Points       int
+}

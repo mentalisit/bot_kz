@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"discord/models"
 	"github.com/jackc/pgx/v5"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ReadTop5Level(corpname string) []string {

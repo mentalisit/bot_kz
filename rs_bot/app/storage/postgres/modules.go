@@ -12,11 +12,11 @@ func (d *Db) ModuleReadUUID(uid uuid.UUID, name string) *models.Module {
 	defer cancel()
 	module := "SELECT * FROM rs_bot.module WHERE uid = $1 AND name = $2"
 	results, err := d.db.Query(ctx, module, uid, name)
-	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil
 	}
+	defer results.Close()
 	var t models.Module
 	for results.Next() {
 		err = results.Scan(&t.Uid, &t.Name, &t.Gen, &t.Enr, &t.Rse)

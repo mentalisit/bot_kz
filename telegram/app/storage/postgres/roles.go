@@ -3,12 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"telegram/models"
+	"telegram/models2"
 	"time"
 )
 
 // GetChatRoles возвращает роли определенного чата
-func (d *Db) GetChatsRoles(ctx context.Context, chatID int64) ([]models.Role, error) {
+func (d *Db) GetChatsRoles(ctx context.Context, chatID int64) ([]models2.Role, error) {
 	query := `SELECT id, chat_id, name FROM telegram.roles WHERE chat_id = $1`
 
 	rows, err := d.db.Query(ctx, query, chatID)
@@ -17,9 +17,9 @@ func (d *Db) GetChatsRoles(ctx context.Context, chatID int64) ([]models.Role, er
 	}
 	defer rows.Close()
 
-	var roles []models.Role
+	var roles []models2.Role
 	for rows.Next() {
-		var r models.Role
+		var r models2.Role
 		if err := rows.Scan(&r.ID, &r.ChatID, &r.Name); err != nil {
 			return nil, fmt.Errorf("failed to scan roles: %w", err)
 		}
@@ -55,7 +55,7 @@ func (d *Db) createAllRole(ctx context.Context, chatID int64) (int64, error) {
 }
 
 // CreateRole создает новую роль
-func (d *Db) CreateRole(ctx context.Context, role *models.Role) error {
+func (d *Db) CreateRole(ctx context.Context, role *models2.Role) error {
 	query := `
 		INSERT INTO telegram.roles (chat_id, name, created_by, created_at)
 		VALUES ($1, $2, $3, $4)

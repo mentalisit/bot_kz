@@ -3,12 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"telegram/models"
+	"telegram/models2"
 	"time"
 )
 
 // GetChatRoles возвращает роли в чате с информацией о подписке пользователя
-func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models.Role, error) {
+func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.Role, error) {
 	// Сначала получаем роли из базы данных
 	query := `
         SELECT r.id, r.chat_id, r.name, r.created_by, r.created_at,
@@ -27,12 +27,12 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models.R
 	}
 	defer rows.Close()
 
-	var roles []models.Role
+	var roles []models2.Role
 	var hasAllRole bool
 	var allRoleID int64
 
 	for rows.Next() {
-		var role models.Role
+		var role models2.Role
 		if err := rows.Scan(
 			&role.ID, &role.ChatID, &role.Name, &role.CreatedBy, &role.CreatedAt,
 			&role.MemberCount, &role.IsMember,
@@ -59,7 +59,7 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models.R
 			fmt.Printf("Warning: failed to create 'all' role: %v", err)
 		} else {
 			// Добавляем виртуальную роль "all" в результат
-			allRole := models.Role{
+			allRole := models2.Role{
 				ID:          allRoleID,
 				ChatID:      chatID,
 				Name:        "all",
@@ -68,7 +68,7 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models.R
 				MemberCount: 0,    // Будет рассчитано ниже
 				IsMember:    true, // Все пользователи автоматически в этой роли
 			}
-			roles = append([]models.Role{allRole}, roles...)
+			roles = append([]models2.Role{allRole}, roles...)
 		}
 	}
 

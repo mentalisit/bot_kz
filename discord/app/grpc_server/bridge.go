@@ -2,7 +2,8 @@ package grpc_server
 
 import (
 	"context"
-	"discord/models"
+
+	"github.com/mentalisit/restapi/models"
 )
 
 func (s *Server) SendBridgeArrayMessages(ctx context.Context, req *SendBridgeArrayMessagesRequest) (*SendBridgeArrayMessagesResponse, error) {

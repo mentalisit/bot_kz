@@ -75,3 +75,40 @@ func (d *Db) GetWebhooksByAfter(afterTs int64) ([]models.Webhook, error) {
 
 	return results, nil
 }
+
+func (d *Db) BattlesGetSeasonAll(season int) ([]models.BattlesEvent, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Добавляем COUNT(*) в SELECT
+	query := `
+        SELECT 
+            name, 
+            MAX(level), 
+            SUM(points), 
+            COUNT(*) as entries_count
+        FROM rs_bot.battles 
+        WHERE eventid = $1 
+          AND corporation IN ('IX Легион', 'русь ', 'best')
+        GROUP BY name 
+        ORDER BY SUM(points) DESC`
+
+	rows, err := d.db.Query(ctx, query, season)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка SQL: %v", err)
+	}
+	defer rows.Close()
+
+	var stats []models.BattlesEvent
+	for rows.Next() {
+		var ps models.BattlesEvent
+		// Важно: порядок в Scan должен совпадать с порядком в SELECT
+		if err = rows.Scan(&ps.Name, &ps.LevelMax, &ps.Points, &ps.EntriesCount); err != nil {
+			return nil, fmt.Errorf("ошибка Scan: %v", err)
+		}
+		ps.EventId = season
+		stats = append(stats, ps)
+	}
+
+	return stats, nil
+}

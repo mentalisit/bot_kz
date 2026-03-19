@@ -73,9 +73,8 @@ type InMessage struct {
 func (i *InMessage) GetNameMention() string {
 	if i.NameMention == "@" {
 		return fmt.Sprintf("[%s](tg://user?id=%s)", i.Username, i.UserId)
-	} else {
-		return i.NameMention
 	}
+	return i.NameMention
 }
 
 // TypeRedStar rs or drs or solo and level

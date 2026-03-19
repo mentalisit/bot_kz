@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"queue/models"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) GetWebhooks(c *gin.Context) {
@@ -19,6 +20,19 @@ func (s *Server) GetWebhooks(c *gin.Context) {
 		all, _ = s.kzbot.GetWebhooksByEventTypeAndAfterTs(eventType, afterTs)
 	} else {
 		all, _ = s.kzbot.GetWebhooksByAfter(afterTs)
+	}
+
+	c.JSON(http.StatusOK, all)
+	return
+}
+
+func (s *Server) GetBattlesAll(c *gin.Context) {
+	s.PrintGoroutine()
+
+	all, err := s.kzbot.BattlesGetSeasonAll(48)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, all)

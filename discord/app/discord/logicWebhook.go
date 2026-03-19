@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"discord/config"
-	"discord/models"
+
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Discord) logicMixWebhook(m *discordgo.Message) {
@@ -248,6 +249,7 @@ func (d *Discord) WhiteStarEnded(wse models.WhiteStarEnded, params *models.Score
 	text := fmt.Sprintf("%s\nПротивник: %s \n Opponent %d - Our %d \nXPGained %d\n",
 		wse.EventType, wse.Opponent.CorporationName, wse.OpponentScore, wse.OurScore, wse.XPGained)
 	d.SendWebhook(text, wse.Corporation.CorporationName, params.ChannelWebhook, wse.Corporation.GetAvatar())
+	d.WhiteStarEndedSaveToDB(wse)
 }
 
 func (d *Discord) CombineNames(input string) string {
@@ -334,4 +336,36 @@ func (d *Discord) sendWhiteStarData(data []byte) error {
 		return fmt.Errorf("Request failed Status: " + resp.Status)
 	}
 	return nil
+}
+
+func (d *Discord) WhiteStarEndedSaveToDB(wse models.WhiteStarEnded) {
+	info, err := d.storage.Db.ReadCorpInfoByCorpID(wse.Corporation.CorporationID)
+	parseTime, _ := time.Parse(time.RFC3339Nano, wse.Timestamp)
+	if err != nil || info == nil {
+		ci := models.CorpInfo{
+			CorpName:  wse.Corporation.CorporationName,
+			CorpID:    wse.Corporation.CorporationID,
+			XP:        wse.XPGained,
+			Webhook:   true,
+			DateEnded: parseTime,
+		}
+		if wse.OurScore > wse.OpponentScore {
+			ci.LastWin = parseTime
+		}
+		_, _ = d.storage.Db.CreateCorpInfo(ci)
+	} else {
+		info.DateEnded = parseTime
+		info.XP = info.XP + wse.XPGained
+		if wse.OurScore > wse.OpponentScore {
+			info.LastWin = parseTime
+		}
+		if !info.Webhook {
+			info.Webhook = true
+		}
+
+		err = d.storage.Db.UpdateCorpInfo(*info)
+		if err != nil {
+			d.log.ErrorErr(err)
+		}
+	}
 }

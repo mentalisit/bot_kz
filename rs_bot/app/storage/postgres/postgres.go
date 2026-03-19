@@ -14,6 +14,7 @@ type Db struct {
 	db     postgresLocal.Client
 	log    *logger.Logger
 	client *pgxpool.Pool
+	DB     postgresLocal.Client
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
@@ -25,6 +26,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		db:     db,
 		log:    log,
 		client: db,
+		DB:     db,
 	}
 	go d.createTable()
 	return d
@@ -124,74 +126,6 @@ func (d *Db) createTable() {
 		datestart   text,
 		datestop  text,
 		message text
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS rs_bot.emoji(
-    uid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
-    tip     text,
-    em1     text,
-	em2     text,
-	em3     text,
-	em4     text
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS rs_bot.module(
-    uid uuid references my_compendium.multi_accounts(uuid) on delete cascade,
-    name    text,
-	gen bigint,
-	enr bigint,
-	rse bigint
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.scoreboard
-	(
-		id     bigserial        primary key,
-		Name text NOT NULL DEFAULT '',
-		WebhookChannel    text NOT NULL DEFAULT '',
-		ScoreChannel   text NOT NULL DEFAULT ''
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.battles
-	(
-		id     bigserial        primary key,
-		eventId integer NOT NULL DEFAULT 0,
-		corporation text NOT NULL DEFAULT '',
-		name text NOT NULL DEFAULT '',
-		level    integer NOT NULL DEFAULT 0,
-		points   integer NOT NULL DEFAULT 0
-	);`)
-	if err != nil {
-		d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS rs_bot.timer(
-    id       bigserial primary key,
-    tip  text,
-    chatId text,
-    mesId  text,
-    timed    bigint
 	);`)
 	if err != nil {
 		d.log.ErrorErr(err)

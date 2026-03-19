@@ -2,9 +2,11 @@ package postgres
 
 import (
 	"context"
-	"discord/models"
+
 	"fmt"
 	"time"
+
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ScoreboardInsertParam(p models.ScoreboardParams) {

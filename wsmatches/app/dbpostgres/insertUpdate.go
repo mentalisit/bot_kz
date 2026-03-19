@@ -2,9 +2,10 @@ package dbpostgres
 
 import (
 	"errors"
-	"github.com/jackc/pgx/v5"
 	"time"
 	"ws/models"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
@@ -53,4 +54,30 @@ func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
+}
+
+// UpdateCorpInfo обновляет запись о корпорации
+func (d *Db) UpdateCorpInfo(corp models.CorpInfo) error {
+	ctx, cancel := d.getContext()
+	defer cancel()
+
+	query := `UPDATE ws.corps_info 
+			  SET level = $2, xp = $3, last_win = $4, date_ended = $5, last_update = $6 
+			  WHERE id = $1`
+
+	_, err := d.pool.Exec(ctx, query,
+		corp.ID,
+		corp.Level,
+		corp.XP,
+		corp.LastWin,
+		corp.DateEnded,
+		time.Now().UTC(),
+	)
+
+	if err != nil {
+		d.log.ErrorErr(err)
+		return err
+	}
+
+	return nil
 }

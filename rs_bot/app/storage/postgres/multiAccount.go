@@ -1,33 +1,28 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"rs/models"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"go.uber.org/zap"
 )
-
-const returningMultiAccount = `
-		RETURNING uuid, nickname,
-		          telegram_id, telegram_username,
-		          discord_id, discord_username,
-		          whatsapp_id, whatsapp_username,
-		          created_at,
-				  avatarUrl, alts`
 
 func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
 	var telegramID, discordID, whatsappID sql.NullString
-
 	err := row.Scan(
 		&acc.UUID, &acc.Nickname,
 		&telegramID, &acc.TelegramUsername,
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
-		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
+		&acc.AvatarURL,
+		&acc.Alts, &acc.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -46,21 +41,38 @@ func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 	return &acc, nil
 }
 
-func (d *Db) FindMultiAccountByUserIdCompendium(userId string) (*models.MultiAccount, error) {
+func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username string) (*models.MultiAccount, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 
-	var selectQuery = `
-		SELECT uuid, nickname,
-		       telegram_id, telegram_username,
-		       discord_id, discord_username,
-		       whatsapp_id, whatsapp_username,
-		       created_at,
-			   avatarUrl, alts
-		FROM my_compendium.multi_accounts
-		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
+	// Логируем если никнейм пустой
+	if nickname == "" {
+		d.log.Warn("CreateMultiAccountWithPlatform called with empty nickname",
+			zap.String("user_id", id),
+			zap.String("platform", platform),
+			zap.String("username", username))
+	}
 
-	row := d.db.QueryRow(ctx, selectQuery, userId)
+	var query string
+
+	switch platform {
+	case "tg":
+		query = `
+			INSERT INTO my_compendium.multi_accounts (nickname, telegram_id, telegram_username)
+			VALUES ($1, $2, $3) RETURNING *`
+	case "ds":
+		query = `
+			INSERT INTO my_compendium.multi_accounts (nickname, discord_id, discord_username)
+			VALUES ($1, $2, $3) RETURNING *`
+	case "wa":
+		query = `
+			INSERT INTO my_compendium.multi_accounts (nickname, whatsapp_id, whatsapp_username)
+			VALUES ($1, $2, $3) RETURNING *`
+	default:
+		return nil, fmt.Errorf("unsupported platform: %s", platform)
+	}
+
+	row := d.db.QueryRow(ctx, query, nickname, id, username)
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
@@ -78,13 +90,7 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 	defer cancel()
 
 	var selectQuery = `
-		SELECT uuid, nickname,
-		       telegram_id, telegram_username,
-		       discord_id, discord_username,
-		       whatsapp_id, whatsapp_username,
-		       created_at,
-			   avatarUrl, alts
-		FROM my_compendium.multi_accounts
+		SELECT * FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, userId)
@@ -92,11 +98,30 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 	acc, err := scanMultiAccount(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return d.FindMultiAccountByUserIdCompendium(userId)
-			//return nil, nil
+			return nil, nil
 		}
 		d.log.ErrorErr(err)
 		return nil, err
 	}
 	return acc, nil
+}
+
+func (d *Db) TechnologiesGetAll(u uuid.UUID) ([]models.TechUser, error) {
+	var results []models.TechUser
+
+	query := `SELECT username, tech FROM my_compendium.technologies WHERE uid = $1`
+
+	res, err := d.db.Query(context.Background(), query, u)
+	if err != nil {
+		return nil, err
+	}
+	for res.Next() {
+		var r models.TechUser
+		err = res.Scan(&r.Name, &r.Tech)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, r)
+	}
+	return results, nil
 }

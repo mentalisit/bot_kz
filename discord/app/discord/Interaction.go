@@ -2,12 +2,13 @@ package DiscordClient
 
 import (
 	"discord/discord/helpers"
-	"discord/models"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"log/slog"
 	"strconv"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/restapi/models"
 )
 
 // slash command module respond
@@ -125,13 +126,13 @@ func (d *Discord) updateModuleOrWeapon(username, module, level string) {
 	}
 }
 func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
+	user := i.Interaction.User
+	if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
+		user = i.Interaction.Member.User
+	}
+
 	ok, config := d.CheckChannelConfigDS(i.ChannelID)
 	if ok {
-		user := i.Interaction.User
-		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
-			user = i.Interaction.Member.User
-		}
-
 		in := models.InMessage{
 			Mtext:       i.MessageComponentData().CustomID,
 			Tip:         "ds",
@@ -164,15 +165,37 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			return
 		}
 	}
+	good2, config2 := d.checkChannelConfig2(i.ChannelID)
+	if good2 {
+		in2 := models.InMessageV2{
+			Text:        i.MessageComponentData().CustomID,
+			Tip:         "ds",
+			NameNick:    "",
+			Username:    user.Username,
+			UserId:      user.ID,
+			NameMention: user.Mention(),
+			Messenger: models.Info{
+				TypeMessenger:  "ds",
+				MessageId:      i.Interaction.Message.ID,
+				ChannelId:      i.ChannelID,
+				GuildId:        i.Interaction.GuildID,
+				GuildName:      config2.Channels[i.ChannelID].GuildName,
+				GuildAvatarUrl: config2.Channels[i.ChannelID].GuildAvatarUrl,
+				UserAvatarUrl:  config2.Channels[i.ChannelID].UserAvatarUrl,
+			},
+			Config:  config2,
+			Options: models.Options{},
+		}
+		in2.Options.Add(models.OptionReaction)
+		d.api.SendRsBotV2AppRecover(in2)
+	}
+
 	ds, bridgeConfig := d.BridgeCheckChannelConfigDS(i.ChannelID)
 	if ds {
-		user := i.Interaction.User
-		if i.Interaction.Member != nil && i.Interaction.Member.User != nil {
-			user = i.Interaction.Member.User
-		}
 		in := models.ToBridgeMessage{
 			Text:          ".poll " + i.MessageComponentData().CustomID,
 			Sender:        user.Username,
+			SenderId:      user.ID,
 			Tip:           "ds",
 			ChatId:        i.Interaction.ChannelID,
 			MesId:         i.Interaction.Message.ID,

@@ -107,6 +107,7 @@ func (b *Whatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *waE2E.M
 	rmsg := models.ToBridgeMessage{
 		Text:          text,
 		Sender:        senderName,
+		SenderId:      messageInfo.Sender.String(),
 		Tip:           "wa",
 		ChatId:        channel.String(),
 		MesId:         getMessageIdFormat(senderJID, messageInfo.ID),

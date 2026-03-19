@@ -2,9 +2,10 @@ package utils
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
 	"runtime"
 	"time"
+
+	"github.com/mentalisit/logger"
 )
 
 var log *logger.Logger
@@ -15,8 +16,8 @@ func PrintGoroutine(l *logger.Logger) {
 	}
 	goroutine := runtime.NumGoroutine()
 	tm := time.Now()
-	mdate := (tm.Format("2006-01-02"))
-	mtime := (tm.Format("15:04"))
+	mdate := tm.Format("2006-01-02")
+	mtime := tm.Format("15:04")
 	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
 	if log != nil {
 		if goroutine > 120 {
@@ -56,4 +57,16 @@ func WaitForMessage(nameFunc string) chan string {
 	}()
 
 	return ch
+}
+
+// Watchdog теперь принимает limitSec как обычное целое число
+func Watchdog(name string, limitSec int, f func()) {
+	startTime := time.Now()
+	f()
+
+	duration := time.Since(startTime)
+	// Превращаем число в объект Duration, умножая на 1 секунду
+	if duration > time.Duration(limitSec)*time.Second {
+		fmt.Printf("⚠️ ВНИМАНИЕ [%s]: Долгая обработка! Заняло %v \n", name, duration)
+	}
 }

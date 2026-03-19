@@ -1,9 +1,10 @@
 package DiscordClient
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func (d *Discord) SendHelp(chatid, title, description, oldMidHelps string, ifUser bool) string {
@@ -52,10 +53,11 @@ func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageCompone
 		if found {
 			return after + "+"
 		}
+		d.log.Info("AddButtonsStartQueue need implement custom name Rs")
 		return level
 	}
 
-	if len(levels) > 2 {
+	if len(levels) >= 2 {
 		for _, level := range levels {
 			button := discordgo.Button{
 				Style:    discordgo.DangerButton,
@@ -67,7 +69,7 @@ func (d *Discord) AddButtonsStartQueue(chatid string) []discordgo.MessageCompone
 	}
 
 	if len(components) == 0 {
-		for i := 7; i < 12; i++ {
+		for i := 8; i <= 12; i++ {
 			l := strconv.Itoa(i)
 
 			button := discordgo.Button{

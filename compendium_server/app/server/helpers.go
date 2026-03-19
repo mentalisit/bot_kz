@@ -164,6 +164,9 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 
 	if token != "" { //search in old database
 		userid, guildid, err := s.db.ListUserGetUserIdAndGuildId(token)
+		if strings.HasPrefix(userid, "1862488373") {
+			userid = "1862488373"
+		}
 		if err != nil {
 			userid, guildid, err = ParseComplexToken(token)
 			if err == nil && userid != "" && guildid != "" {
@@ -192,6 +195,8 @@ func (s *Server) GetTokenIdentityByOldToken(token string) *models.Identity {
 			user, err := s.db.UsersGetByUserId(userid)
 			if err != nil {
 				s.log.ErrorErr(err)
+				s.log.Info(fmt.Sprintf("get userID: %s\n", userid))
+				fmt.Printf("get userID: %s token %s\n", userid, token)
 				return nil
 			}
 			ma = &models.MultiAccount{

@@ -3,17 +3,17 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"telegram/models"
+	"telegram/models2"
 )
 
 // GetChat возвращает информацию о чате
-func (d *Db) GetChat(chatID int64) (*models.Chat, error) {
+func (d *Db) GetChat(chatID int64) (*models2.Chat, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()
 
 	query := `SELECT chat_id, chat_name FROM telegram.chats WHERE chat_id = $1`
 
-	var chat models.Chat
+	var chat models2.Chat
 	err := d.db.QueryRow(ctx, query, chatID).Scan(&chat.ChatID, &chat.ChatName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chat: %w", err)
@@ -95,7 +95,7 @@ func (d *Db) DeleteChat(ctx context.Context, chatID int64) error {
 }
 
 // GetUserChats возвращает список чатов пользователя
-func (d *Db) GetUserChats(ctx context.Context, userID int64) ([]models.Chat, error) {
+func (d *Db) GetUserChats(ctx context.Context, userID int64) ([]models2.Chat, error) {
 	query := `
         SELECT DISTINCT c.chat_id, c.chat_name 
         FROM telegram.chats c
@@ -110,9 +110,9 @@ func (d *Db) GetUserChats(ctx context.Context, userID int64) ([]models.Chat, err
 	}
 	defer rows.Close()
 
-	var chats []models.Chat
+	var chats []models2.Chat
 	for rows.Next() {
-		var chat models.Chat
+		var chat models2.Chat
 		if err := rows.Scan(&chat.ChatID, &chat.ChatName); err != nil {
 			return nil, fmt.Errorf("failed to scan chat: %w", err)
 		}

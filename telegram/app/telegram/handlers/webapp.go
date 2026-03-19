@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"telegram/models"
+	"telegram/models2"
 	"telegram/storage"
 	"time"
 
@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/mentalisit/logger"
+	"github.com/mentalisit/restapi/models"
 )
 
 type WebAppHandler struct {
@@ -37,11 +38,11 @@ func NewWebAppHandler(storage *storage.Storage, bot *tgbotapi.BotAPI, log *logge
 	return h
 }
 
-var DiscordOAuthConfig = models.OAuthConfig{}
+var DiscordOAuthConfig = OAuthConfig{}
 
 func (h *WebAppHandler) loadConfig() {
 	// Discord OAuth конфигурация
-	DiscordOAuthConfig = models.OAuthConfig{
+	DiscordOAuthConfig = OAuthConfig{
 		DiscordClientID:     h.storage.Conf.DiscordClientID,
 		DiscordClientSecret: h.storage.Conf.DiscordClientSecret,
 		DiscordRedirectURI:  "https://webapp.mentalisit.myds.me/auth/callback/discord",
@@ -93,7 +94,7 @@ func (h *WebAppHandler) GetUserChats(w http.ResponseWriter, r *http.Request) {
 		chatConf := tgbotapi.ChatAdministratorsConfig{ChatConfig: chatConfig}
 		admins, _ := h.bot.GetChatAdministrators(chatConf)
 		chatAdmins, _ := h.storage.Db.GetChatAdmins(context.Background(), chat.ChatID)
-		adminDB := make(map[int64]models.User)
+		adminDB := make(map[int64]models2.User)
 		for _, admin := range chatAdmins {
 			adminDB[admin.ID] = admin
 		}
@@ -186,7 +187,7 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.CreateRoleRequest
+	var req models2.CreateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.sendError(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -202,7 +203,7 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role := &models.Role{
+	role := &models2.Role{
 		ChatID:    chatID,
 		Name:      req.Name,
 		CreatedBy: userID,
@@ -214,7 +215,7 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendJSON(w, models.SuccessResponse{
+	h.sendJSON(w, models2.SuccessResponse{
 		Message: "Role created successfully",
 		Success: true,
 	})
@@ -262,7 +263,7 @@ func (h *WebAppHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.CreateRoleRequest
+	var req models2.CreateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.sendError(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -285,7 +286,7 @@ func (h *WebAppHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendJSON(w, models.SuccessResponse{
+	h.sendJSON(w, models2.SuccessResponse{
 		Message: "Role updated successfully",
 		Success: true,
 	})
@@ -341,7 +342,7 @@ func (h *WebAppHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sendJSON(w, models.SuccessResponse{
+	h.sendJSON(w, models2.SuccessResponse{
 		Message: "Role deleted successfully",
 		Success: true,
 	})
@@ -406,7 +407,7 @@ func (h *WebAppHandler) handleRoleMembership(w http.ResponseWriter, r *http.Requ
 		action = "left"
 	}
 
-	h.sendJSON(w, models.SuccessResponse{
+	h.sendJSON(w, models2.SuccessResponse{
 		Message: fmt.Sprintf("Successfully %s role", action),
 		Success: true,
 	})
@@ -498,7 +499,7 @@ func (h *WebAppHandler) SetUserRole(w http.ResponseWriter, r *http.Request) {
 		action = "removed"
 	}
 
-	h.sendJSON(w, models.SuccessResponse{
+	h.sendJSON(w, models2.SuccessResponse{
 		Message: fmt.Sprintf("Role %s successfully", action),
 		Success: true,
 	})
@@ -552,7 +553,7 @@ func (h *WebAppHandler) sendJSON(w http.ResponseWriter, data interface{}) {
 func (h *WebAppHandler) sendError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(models.ErrorResponse{
+	json.NewEncoder(w).Encode(models2.ErrorResponse{
 		Error: message,
 	})
 }
@@ -592,7 +593,7 @@ func (h *WebAppHandler) GetRoleMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Фильтруем пользователей по роли
-	var roleUsers []models.User
+	var roleUsers []models2.User
 	if roleName == "all" {
 		// Для роли "all" возвращаем всех пользователей
 		roleUsers = users
@@ -693,7 +694,7 @@ func (h *WebAppHandler) AuthDiscordCallback(w http.ResponseWriter, r *http.Reque
 }
 
 // exchangeDiscordCode обменивает authorization code на access token
-func (h *WebAppHandler) exchangeDiscordCode(code string) (*models.DiscordTokenResponse, error) {
+func (h *WebAppHandler) exchangeDiscordCode(code string) (*DiscordTokenResponse, error) {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
@@ -720,7 +721,7 @@ func (h *WebAppHandler) exchangeDiscordCode(code string) (*models.DiscordTokenRe
 		return nil, fmt.Errorf("ошибка Discord API [%d]: %s", resp.StatusCode, string(body))
 	}
 
-	var tokenResp models.DiscordTokenResponse
+	var tokenResp DiscordTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
 		return nil, fmt.Errorf("не удалось декодировать ответ: %w", err)
 	}
@@ -729,7 +730,7 @@ func (h *WebAppHandler) exchangeDiscordCode(code string) (*models.DiscordTokenRe
 }
 
 // getDiscordUser получает информацию о пользователе Discord
-func (h *WebAppHandler) getDiscordUser(accessToken string) (*models.DiscordUserResponse, error) {
+func (h *WebAppHandler) getDiscordUser(accessToken string) (*DiscordUserResponse, error) {
 	req, err := http.NewRequest("GET", DiscordOAuthConfig.DiscordUserURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("не удалось создать запрос: %w", err)
@@ -749,7 +750,7 @@ func (h *WebAppHandler) getDiscordUser(accessToken string) (*models.DiscordUserR
 		return nil, fmt.Errorf("ошибка Discord User API [%d]: %s", resp.StatusCode, string(body))
 	}
 
-	var userResp models.DiscordUserResponse
+	var userResp DiscordUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&userResp); err != nil {
 		return nil, fmt.Errorf("не удалось декодировать ответ: %w", err)
 	}
@@ -1090,7 +1091,6 @@ func (h *WebAppHandler) AuthLinkPage(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html))
 }
 
-// SubmitAuthData обрабатывает отправку данных авторизации с основным никнеймом
 func (h *WebAppHandler) SubmitAuthData(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		DiscordID    string `json:"discord_id"`
@@ -1127,15 +1127,26 @@ func (h *WebAppHandler) SubmitAuthData(w http.ResponseWriter, r *http.Request) {
 		existingAccount.DiscordUsername = data.DiscordName
 		existingAccount.Nickname = data.MainNickname
 
-		h.log.InfoStruct("*existingAccount ", *existingAccount)
+		discordAcc, _ := h.storage.Db.FindMultiAccountByDiscordID(data.DiscordID)
+		if discordAcc != nil {
+			// Объединяем аккаунты
+			account, err = h.mergeAccounts(existingAccount, discordAcc)
+			if err != nil {
+				http.Error(w, "Ошибка объединения аккаунтов", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			h.log.InfoStruct("*existingAccount ", *existingAccount)
 
-		updatedAccount, err := h.storage.Db.UpdateMultiAccount(*existingAccount)
-		if err != nil {
-			log.Printf("Error updating account: %v", err)
-			http.Error(w, "Ошибка обновления аккаунта", http.StatusInternalServerError)
-			return
+			updatedAccount, err := h.storage.Db.UpdateMultiAccount(*existingAccount)
+			if err != nil {
+				log.Printf("Error updating account: %v", err)
+				http.Error(w, "Ошибка обновления аккаунта", http.StatusInternalServerError)
+				return
+			}
+			account = updatedAccount
 		}
-		account = updatedAccount
+
 	} else {
 		// Создаем новый аккаунт
 		newAccount := models.MultiAccount{
@@ -1222,7 +1233,7 @@ func (h *WebAppHandler) GetCorpMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем участников из всех источников
-	var allMembers []models.CompendiumCorpMember
+	var allMembers []models2.CompendiumCorpMember
 
 	// My Compendium
 	if members, err := h.storage.Db.GetCorpMembersMyCompendium(r.Context(), chatID); err == nil {

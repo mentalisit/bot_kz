@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"telegram/models"
 	"time"
+
+	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) TimerInsert(c models.Timer) {

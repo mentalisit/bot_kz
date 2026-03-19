@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"ws/models"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,13 @@ func (s *Srv) getWsCorps(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 func (s *Srv) docs(c *gin.Context) {
-	htmlContent := `
+	// Определяем префикс из текущего пути
+	prefix := ""
+	if strings.HasPrefix(c.Request.URL.Path, "/ws") {
+		prefix = "/ws"
+	}
+
+	htmlContent := fmt.Sprintf(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,18 +53,18 @@ func (s *Srv) docs(c *gin.Context) {
     <title>Docs</title>
     <style>
         html, body {
-            height: 100%;
+            height: 100%%;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4; // Светлый фон всей страницы
+            background-color: #f4f4f4;
         }
         .centered-content {
-            width: 100%; // Ширина контента равна ширине страницы
-            max-width: 600px; // Максимальная ширина контента
+            width: 100%%;
+            max-width: 600px;
             text-align: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             background-color: white;
@@ -84,15 +91,16 @@ func (s *Srv) docs(c *gin.Context) {
     <div class="centered-content">
         <h1>Select endpoint:</h1>
         <ul>
-            <li><a href="/corps">list corporations</a></li>
-            <li><a href="/corps?limit=20">list corporations limit 20</a></li>
-            <li><a href="/matches">list matches</a></li>
-            <li><a href="/matches?limit=20">list matches limit 20</a></li>
+            <li><a href="%s/corps">list corporations</a></li>
+            <li><a href="%s/corps?limit=20">list corporations limit 20</a></li>
+            <li><a href="%s/matches">list matches</a></li>
+            <li><a href="%s/matches?limit=20">list matches limit 20</a></li>
         </ul>
     </div>
 </body>
 </html>
-`
+`, prefix, prefix, prefix, prefix)
+
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
 }
 

@@ -31,8 +31,16 @@ func (b *Bridge) logicSendMessage() {
 		}
 		if err == nil {
 			toMessenger.ReplyMap = replyMap
+			b.in.ReplyMap = replyMap
 			flag = true
 		}
+	}
+
+	// Matrix
+	resultChannelMx := make(chan models.MessageIds, 10)
+	if (b.in.Text != "" || len(b.in.Extra) > 0) && b.in.Tip != "matrix" {
+		wg.Add(1)
+		go b.matrix.SendBridgeArrayMessage(resultChannelMx, &wg, b.in)
 	}
 
 	// DS
@@ -94,6 +102,7 @@ func (b *Bridge) logicSendMessage() {
 	close(resultChannelTg)
 	close(resultChannelDs)
 	close(resultChannelWA)
+	close(resultChannelMx)
 	for value := range resultChannelTg {
 		memory.Message[value.ChatId] = value.MessageId
 	}
@@ -101,6 +110,9 @@ func (b *Bridge) logicSendMessage() {
 		memory.Message[value.ChatId] = value.MessageId
 	}
 	for value := range resultChannelWA {
+		memory.Message[value.ChatId] = value.MessageId
+	}
+	for value := range resultChannelMx {
 		memory.Message[value.ChatId] = value.MessageId
 	}
 	err := b.storage.SaveBridgeMap(memory.Message)

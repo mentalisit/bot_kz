@@ -25,6 +25,7 @@ const (
 	BotService_CheckAdmin_FullMethodName                   = "/ds.BotService/CheckAdmin"
 	BotService_CheckRole_FullMethodName                    = "/ds.BotService/CheckRole"
 	BotService_ChannelTyping_FullMethodName                = "/ds.BotService/ChannelTyping"
+	BotService_GetOrCreateWebhookGame_FullMethodName       = "/ds.BotService/GetOrCreateWebhookGame"
 	BotService_DeleteMessage_FullMethodName                = "/ds.BotService/DeleteMessage"
 	BotService_DeleteMessageSecond_FullMethodName          = "/ds.BotService/DeleteMessageSecond"
 	BotService_EditComplexButton_FullMethodName            = "/ds.BotService/EditComplexButton"
@@ -65,6 +66,7 @@ type BotServiceClient interface {
 	CheckAdmin(ctx context.Context, in *CheckAdminRequest, opts ...grpc.CallOption) (*FlagResponse, error)
 	CheckRole(ctx context.Context, in *CheckRoleRequest, opts ...grpc.CallOption) (*FlagResponse, error)
 	ChannelTyping(ctx context.Context, in *ChannelTypingRequest, opts ...grpc.CallOption) (*Empty, error)
+	GetOrCreateWebhookGame(ctx context.Context, in *TextResponse, opts ...grpc.CallOption) (*WebhookResponse, error)
 	DeleteMessage(ctx context.Context, in *DeleteMessageRequest, opts ...grpc.CallOption) (*Empty, error)
 	DeleteMessageSecond(ctx context.Context, in *DeleteMessageSecondRequest, opts ...grpc.CallOption) (*Empty, error)
 	EditComplexButton(ctx context.Context, in *EditComplexButtonRequest, opts ...grpc.CallOption) (*ErrorResponse, error)
@@ -157,6 +159,16 @@ func (c *botServiceClient) ChannelTyping(ctx context.Context, in *ChannelTypingR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, BotService_ChannelTyping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) GetOrCreateWebhookGame(ctx context.Context, in *TextResponse, opts ...grpc.CallOption) (*WebhookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WebhookResponse)
+	err := c.cc.Invoke(ctx, BotService_GetOrCreateWebhookGame_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -453,6 +465,7 @@ type BotServiceServer interface {
 	CheckAdmin(context.Context, *CheckAdminRequest) (*FlagResponse, error)
 	CheckRole(context.Context, *CheckRoleRequest) (*FlagResponse, error)
 	ChannelTyping(context.Context, *ChannelTypingRequest) (*Empty, error)
+	GetOrCreateWebhookGame(context.Context, *TextResponse) (*WebhookResponse, error)
 	DeleteMessage(context.Context, *DeleteMessageRequest) (*Empty, error)
 	DeleteMessageSecond(context.Context, *DeleteMessageSecondRequest) (*Empty, error)
 	EditComplexButton(context.Context, *EditComplexButtonRequest) (*ErrorResponse, error)
@@ -508,6 +521,9 @@ func (UnimplementedBotServiceServer) CheckRole(context.Context, *CheckRoleReques
 }
 func (UnimplementedBotServiceServer) ChannelTyping(context.Context, *ChannelTypingRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChannelTyping not implemented")
+}
+func (UnimplementedBotServiceServer) GetOrCreateWebhookGame(context.Context, *TextResponse) (*WebhookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrCreateWebhookGame not implemented")
 }
 func (UnimplementedBotServiceServer) DeleteMessage(context.Context, *DeleteMessageRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteMessage not implemented")
@@ -718,6 +734,24 @@ func _BotService_ChannelTyping_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BotServiceServer).ChannelTyping(ctx, req.(*ChannelTypingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_GetOrCreateWebhookGame_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TextResponse)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).GetOrCreateWebhookGame(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_GetOrCreateWebhookGame_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).GetOrCreateWebhookGame(ctx, req.(*TextResponse))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1256,6 +1290,10 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChannelTyping",
 			Handler:    _BotService_ChannelTyping_Handler,
+		},
+		{
+			MethodName: "GetOrCreateWebhookGame",
+			Handler:    _BotService_GetOrCreateWebhookGame_Handler,
 		},
 		{
 			MethodName: "DeleteMessage",

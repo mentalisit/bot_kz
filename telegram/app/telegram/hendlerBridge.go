@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"telegram/models"
 	"telegram/telegram/helper"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
+	"github.com/mentalisit/restapi/models"
 )
 
 func (t *Telegram) handleForwarded(rmsg *models.ToBridgeMessage, message *tgbotapi.Message) {
@@ -120,7 +120,11 @@ func (t *Telegram) handleDownloadBridge(rmsg *models.ToBridgeMessage, message *t
 	if strings.HasSuffix(name, ".tgs.webp") {
 		//b.maybeConvertTgs(&name, data)
 	} else if strings.HasSuffix(name, ".webp") {
-		t.maybeConvertWebp(&name, &data)
+		if err := t.maybeConvertWebp(&name, &data); err != nil {
+			// If WebP conversion fails, log the error but continue with original file
+			t.log.ErrorErr(fmt.Errorf("WebP conversion failed for %s: %v", name, err))
+			// Keep the original .webp file instead of failing completely
+		}
 	}
 
 	if strings.HasSuffix(name, ".oga") && message.Audio != nil {
@@ -174,11 +178,12 @@ func (t *Telegram) getFileDirectURL(id string) string {
 //			*name = strings.Replace(*name, "tgs.webp", format, 1)
 //		}
 //	}
-func (t *Telegram) maybeConvertWebp(name *string, data *[]byte) {
+func (t *Telegram) maybeConvertWebp(name *string, data *[]byte) error {
 	err := helper.ConvertWebPToPNG(data)
 	if err != nil {
-		t.log.ErrorErr(err)
+		return err
 	} else {
 		*name = strings.Replace(*name, ".webp", ".png", 1)
+		return nil
 	}
 }
