@@ -75,6 +75,11 @@ func (s *Server) SendPicScoreboard(ctx context.Context, in *ScoreboardRequest) (
 	return &ScoreboardResponse{Mid: mid}, nil
 }
 func (s *Server) CheckAdmin(ctx context.Context, in *CheckAdminRequest) (*FlagResponse, error) {
+	if strings.HasPrefix(in.GetName(), "UserID") {
+		split := strings.Split(in.GetName(), " ")
+		admin := s.tg.CheckAdminByUserId(in.Chatid, split[1])
+		return &FlagResponse{Flag: admin}, nil
+	}
 	admin := s.tg.CheckAdminTg(in.GetChatid(), in.GetName())
 	return &FlagResponse{Flag: admin}, nil
 }

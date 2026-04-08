@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"queue/models"
 	"strconv"
@@ -9,6 +10,11 @@ import (
 )
 
 func (s *Server) GetWebhooks(c *gin.Context) {
+	if c.ClientIP() == "176.12.64.29" {
+		fmt.Printf("ClientIP:%s redirect", c.ClientIP())
+		c.Redirect(http.StatusFound, "https://discord.com/")
+		return
+	}
 	s.PrintGoroutine()
 	ts := c.DefaultQuery("ts", "")
 	afterTs, _ := strconv.ParseInt(ts, 10, 64)
@@ -29,7 +35,7 @@ func (s *Server) GetWebhooks(c *gin.Context) {
 func (s *Server) GetBattlesAll(c *gin.Context) {
 	s.PrintGoroutine()
 
-	all, err := s.kzbot.BattlesGetSeasonAll(48)
+	all, err := s.kzbot.BattlesGetSeasonAll(50)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

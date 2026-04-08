@@ -6,17 +6,6 @@ import (
 	"time"
 )
 
-func (d *Db) BattlesInsert(b models.Battles) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	insert := `INSERT INTO rs_bot.battles(eventid,corporation,name,level,points) VALUES ($1,$2,$3,$4,$5)`
-	_, err := d.db.Exec(ctx, insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, error) {
 	ctx, cancel := d.getContext()
 	defer cancel()

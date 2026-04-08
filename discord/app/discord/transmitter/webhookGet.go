@@ -1,8 +1,11 @@
 package transmitter
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"fmt"
+	"math/rand"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func (t *Transmitter) getOrCreateWebhook(channelID string) (*discordgo.Webhook, error) {
@@ -29,11 +32,32 @@ func (t *Transmitter) getWebhook(channel string) *discordgo.Webhook {
 		return t.channelWebhooks[channel]
 	}
 
-	webhooks, err := t.session.ChannelWebhooks(channel)
+	// Add retry mechanism with exponential backoff
+	var webhooks []*discordgo.Webhook
+	var err error
+
+	for attempt := 0; attempt < 3; attempt++ {
+		webhooks, err = t.session.ChannelWebhooks(channel)
+		if err == nil {
+			break
+		}
+
+		// Log the error with attempt info
+		t.log.ErrorErr(fmt.Errorf("Attempt %d/3 failed to get webhooks for channel %s: %w", attempt+1, channel, err))
+
+		if attempt < 2 {
+			// Exponential backoff with jitter: 1s, 2s, 4s
+			backoffDuration := time.Duration(1<<uint(attempt)) * time.Second
+			jitter := time.Duration(rand.Float64() * float64(backoffDuration) * 0.1) // 10% jitter
+			time.Sleep(backoffDuration + jitter)
+		}
+	}
+
 	if err != nil {
-		t.log.ErrorErr(err)
+		t.log.ErrorErr(fmt.Errorf("All attempts failed to get webhooks for channel %s: %w", channel, err))
 		return nil
 	}
+
 	var webhook *discordgo.Webhook
 	for _, i := range webhooks {
 		if i.User.Bot && i.User.Username == t.session.State.User.Username {
@@ -74,11 +98,32 @@ func (t *Transmitter) createWebhook(channel string) (*discordgo.Webhook, error) 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	wh, err := t.session.WebhookCreate(channel, t.title+time.Now().Format(" 3:04:05PM"), "")
+	var wh *discordgo.Webhook
+	var err error
+
+	// Add retry mechanism with exponential backoff
+	for attempt := 0; attempt < 3; attempt++ {
+		wh, err = t.session.WebhookCreate(channel, t.title+time.Now().Format(" 3:04:05PM"), "")
+		if err == nil {
+			break
+		}
+
+		// Log the error with attempt info
+		t.log.ErrorErr(fmt.Errorf("Attempt %d/3 failed to create webhook for channel %s: %w", attempt+1, channel, err))
+
+		if attempt < 2 {
+			// Exponential backoff with jitter: 1s, 2s, 4s
+			backoffDuration := time.Duration(1<<uint(attempt)) * time.Second
+			jitter := time.Duration(rand.Float64() * float64(backoffDuration) * 0.1) // 10% jitter
+			time.Sleep(backoffDuration + jitter)
+		}
+	}
+
 	if err != nil {
-		t.log.ErrorErr(err)
+		t.log.ErrorErr(fmt.Errorf("All attempts failed to create webhook for channel %s: %w", channel, err))
 		return nil, err
 	}
+
 	t.channelWebhooks[channel] = wh
 	return wh, nil
 }

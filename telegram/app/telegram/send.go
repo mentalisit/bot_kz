@@ -358,42 +358,6 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 
 	var levels []string
 	chatId, ThreadID := t.chat(chatid)
-	var ok2 bool
-	var config2 models.CorporationConfigV2
-
-	ok, config := t.checkChannelConfigTG(chatid)
-
-	if !ok {
-		ok2, config2 = t.checkChannelConfig2(chatid)
-	}
-
-	if ok {
-		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
-		fmt.Printf("SendHelp ReadTop5Level: %+v\n", levels)
-	}
-	if ok2 {
-		fmt.Println("send help need implement ", config2)
-	}
-
-	if !ifUser && config.TgChannel != "" {
-		last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
-		if last == 0 {
-			//active := t.Storage.Db.ReadTelegramLastMessageActive(config.CorpName)
-			//if active == 0 {
-			//	//t.log.Info(fmt.Sprintf("удалена корпорация '%s' \n", config.CorpName))
-			//	//_, _ = t.SendChannel(config.TgChannel, "Бот отключен, для активации бота напишите команду \n.добавить", "")
-			//
-			//	//t.Storage.Db.DeleteConfigRs(config)
-			//	return "Бот отключен", nil
-			//}
-		}
-		//
-		if last-5 < midHelpTg {
-			return midHelpTgString, nil
-		} else {
-			fmt.Printf("!ifUser if last-5 < midHelpTg last: %d midHelpTg: %d\n", last-5, midHelpTg)
-		}
-	}
 	getButton := func(level string) string {
 		after, found := strings.CutPrefix(level, "rs")
 		if found {
@@ -410,11 +374,46 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 		return level
 	}
 
+	var ok2 bool
+	var config2 models.CorporationConfigV2
+
+	ok, config := t.checkChannelConfigTG(chatid)
+
+	if !ok {
+		ok2, config2 = t.checkChannelConfig2(chatid)
+	}
+
+	if ok {
+		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
+		fmt.Printf("SendHelp ReadTop5Level: %+v\n", levels)
+		if !ifUser && config.TgChannel != "" {
+			last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
+			if last-5 < midHelpTg {
+				return midHelpTgString, nil
+			}
+			fmt.Printf("!ifUser if last-5 < midHelpTg last: %d midHelpTg: %d\n", last-5, midHelpTg)
+		}
+	}
+	if ok2 {
+		levels = t.Storage.Db.ReadTop5LevelForV2(config2.Uid)
+		fmt.Printf("SendHelp ReadTop5LevelV2: %+v\n", levels)
+		if !ifUser {
+			last := t.Storage.Db.ReadTelegramLastMessageV2(config2.Uid, chatid)
+			if last-5 < midHelpTg {
+				return midHelpTgString, nil
+			}
+			fmt.Printf("!ifUser if last-5 < midHelpTg last: %d midHelpTg: %d\n", last-5, midHelpTg)
+		}
+	}
+
+	if !ok && !ok2 {
+		return midHelpTgString, nil
+	}
+
 	if midHelpTg != 0 {
 		go func() {
 			_ = t.DelMessage(chatid, midHelpTg)
 		}()
-
 	}
 
 	var btt []tgbotapi.InlineKeyboardButton
@@ -455,6 +454,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 	mid := strconv.Itoa(message.MessageID)
 
 	return mid, nil
+
 }
 
 func (t *Telegram) SendPoll(m models.Request) string {

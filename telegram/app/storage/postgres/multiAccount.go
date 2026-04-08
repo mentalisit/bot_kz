@@ -10,40 +10,39 @@ import (
 	"go.uber.org/zap"
 )
 
-const returningMultiAccount = `
-		RETURNING uuid, nickname,
-		          telegram_id, telegram_username,
-		          discord_id, discord_username,
-		          whatsapp_id, whatsapp_username,
-		          created_at,
-				  avatarUrl, alts`
+const (
+	MAReturn = ` RETURNING uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at`
+	MASelect = `SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at `
+)
 
 func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
+	// Используем NullString для тех, кто может быть NULL в БД
 	var telegramID, discordID, whatsappID sql.NullString
 
 	err := row.Scan(
-		&acc.UUID, &acc.Nickname,
-		&telegramID, &acc.TelegramUsername,
-		&discordID, &acc.DiscordUsername,
-		&whatsappID, &acc.WhatsappUsername,
+		&acc.UUID,
+		&acc.Nickname,
+		&telegramID,
+		&acc.TelegramUsername,
+		&discordID,
+		&acc.DiscordUsername,
+		&whatsappID,
+		&acc.WhatsappUsername,
+		&acc.AvatarURL,
+		&acc.Alts,
 		&acc.CreatedAt,
-		&acc.AvatarURL, &acc.Alts,
 	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	if telegramID.Valid {
-		acc.TelegramID = telegramID.String
-	}
-	if discordID.Valid {
-		acc.DiscordID = discordID.String
-	}
-	if whatsappID.Valid {
-		acc.WhatsappID = whatsappID.String
-	}
+	// Присвоение ID
+	acc.TelegramID = telegramID.String
+	acc.DiscordID = discordID.String
+	acc.WhatsappID = whatsappID.String
 
 	return &acc, nil
 }
@@ -62,7 +61,7 @@ func (d *Db) CreateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, 
 	query := `INSERT INTO my_compendium.multi_accounts (nickname, 
             telegram_id, telegram_username,
             discord_id, discord_username)
-			VALUES ($1, $2, $3, $4 ,$5)` + returningMultiAccount
+			VALUES ($1, $2, $3, $4 ,$5)` + MAReturn
 
 	row := d.db.QueryRow(ctx, query, acc.Nickname,
 		acc.TelegramID, acc.TelegramUsername,
@@ -83,14 +82,7 @@ func (d *Db) FindMultiAccountByTelegramID(telegramID string) (*models.MultiAccou
 	ctx, cancel := d.getContext()
 	defer cancel()
 
-	var selectQuery = `
-		SELECT uuid, nickname,
-		       telegram_id, telegram_username,
-		       discord_id, discord_username,
-		       whatsapp_id, whatsapp_username,
-		       created_at,
-			   avatarUrl, alts
-		FROM my_compendium.multi_accounts
+	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, telegramID)
@@ -110,14 +102,7 @@ func (d *Db) FindMultiAccountByDiscordID(discordID string) (*models.MultiAccount
 	ctx, cancel := d.getContext()
 	defer cancel()
 
-	var selectQuery = `
-		SELECT uuid, nickname,
-		       telegram_id, telegram_username,
-		       discord_id, discord_username,
-		       whatsapp_id, whatsapp_username,
-		       created_at,
-			   avatarUrl, alts
-		FROM my_compendium.multi_accounts
+	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE discord_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, discordID)
@@ -139,7 +124,7 @@ func (d *Db) UpdateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, 
 
 	query := `UPDATE my_compendium.multi_accounts
 			SET discord_id = $1, discord_username = $2, nickname = $3, alts = $4
-			WHERE uuid = $5` + returningMultiAccount
+			WHERE uuid = $5` + MAReturn
 
 	row := d.db.QueryRow(ctx, query, acc.DiscordID, acc.DiscordUsername, acc.Nickname, acc.Alts, acc.UUID)
 

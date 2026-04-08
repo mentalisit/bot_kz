@@ -107,8 +107,8 @@ type db interface {
 func (s *Server) PrintGoroutine() {
 	goroutine := runtime.NumGoroutine()
 	tm := time.Now()
-	mdate := (tm.Format("2006-01-02"))
-	mtime := (tm.Format("15:04"))
+	mdate := tm.Format("2006-01-02")
+	mtime := tm.Format("15:04")
 	text := fmt.Sprintf(" %s %s Горутин  %d\n", mdate, mtime, goroutine)
 	if goroutine > 120 {
 		s.log.Info(text)
@@ -119,20 +119,19 @@ func (s *Server) PrintGoroutine() {
 
 	fmt.Println(text)
 }
+
 func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 	if param.Method == "OPTIONS" {
 		return ""
 	}
 
-	var statusColor, methodColor, resetColor string
-	if param.IsOutputColor() {
-		statusColor = param.StatusCodeColor()
-		methodColor = param.MethodColor()
-		resetColor = param.ResetColor()
-	}
-
+	latency := param.Latency.String()
 	if param.Latency > time.Minute {
-		param.Latency = param.Latency.Truncate(time.Second)
+		latency = param.Latency.Truncate(time.Second).String()
+	} else if param.Latency > time.Millisecond {
+		latency = fmt.Sprintf("%.3fms", float64(param.Latency.Microseconds())/1000.0)
+	} else if param.Latency > time.Microsecond {
+		latency = fmt.Sprintf("%.3fµs", float64(param.Latency.Nanoseconds())/1000.0)
 	}
 
 	// Берём реальный IP из keys, если есть — иначе param.ClientIP
@@ -143,17 +142,15 @@ func (s *Server) CustomLogFormatter(param gin.LogFormatterParams) string {
 		}
 	}
 
-	country, err := s.cache.GetLocationInfo(clientIP)
-	if err != nil {
-		country = clientIP // фолбэк — показываем просто IP
-	}
+	arr, _ := s.cache.GetLocationInfo(clientIP)
+	country := fmt.Sprintf("%s %s", clientIP, arr)
 
-	return fmt.Sprintf("[GIN] %v | %s %3d %s | %13v | %15s | %s%-7s%s | %#v\n%s",
-		param.TimeStamp.Format("2006/01/02-15:04:05"),
-		statusColor, param.StatusCode, resetColor,
-		param.Latency,
+	return fmt.Sprintf("%s | %3d | %7v | %15s | %-5s | %#v\n%s",
+		param.TimeStamp.Format("15:04"),
+		param.StatusCode,
+		latency,
 		country,
-		methodColor, param.Method, resetColor,
+		param.Method,
 		param.Path,
 		param.ErrorMessage,
 	)

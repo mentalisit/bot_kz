@@ -11,12 +11,17 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	MAReturn = " RETURNING uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at"
+	MASelect = "SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at "
+)
+
 // Multi-account methods
 func (d *Db) FindMultiAccountUUID(uid uuid.UUID) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
 	// sqlx сам сопоставит колонки с тегами db:"..." в структуре
-	query := `SELECT * FROM my_compendium.multi_accounts WHERE uuid = $1`
+	query := MASelect + `FROM my_compendium.multi_accounts WHERE uuid = $1`
 
 	err := d.db.Get(&acc, query, uid)
 	if err != nil {
@@ -33,7 +38,7 @@ func (d *Db) FindMultiAccountByUserId(userid string) (*models.MultiAccount, erro
 	var acc models.MultiAccount
 
 	// Используем именованный запрос для красоты или обычный
-	query := `SELECT * FROM my_compendium.multi_accounts 
+	query := MASelect + `FROM my_compendium.multi_accounts 
               WHERE discord_id = $1 OR telegram_id = $1 OR whatsapp_id = $1 
               LIMIT 1`
 
@@ -53,8 +58,7 @@ func (d *Db) FindMultiAccountByUserName(userName string) (*models.MultiAccount, 
 	var acc models.MultiAccount
 
 	// Используем SELECT *, так как sqlx сам сопоставит колонки с полями структуры
-	query := `
-        SELECT * FROM my_compendium.multi_accounts 
+	query := MASelect + `FROM my_compendium.multi_accounts 
         WHERE nickname = $1 
            OR $1 = ANY(alts) 
            OR telegram_username = $1 
@@ -109,8 +113,7 @@ func (d *Db) UpdateMultiAccountAlts(m models.MultiAccount) (*models.MultiAccount
 	const query = `
        UPDATE my_compendium.multi_accounts
        SET alts = $1
-       WHERE uuid = $2
-       RETURNING *`
+       WHERE uuid = $2` + MAReturn
 
 	var acc models.MultiAccount
 
@@ -155,8 +158,7 @@ func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount
                  :avatarurl, :alts)
        ON CONFLICT (uuid) DO UPDATE SET 
           nickname=EXCLUDED.nickname, telegram_id=EXCLUDED.telegram_id, 
-          avatarurl=EXCLUDED.avatarurl, alts=EXCLUDED.alts
-       RETURNING *`
+          avatarurl=EXCLUDED.avatarurl, alts=EXCLUDED.alts` + MAReturn
 
 	// Выполняем запрос, передавая структуру m целиком
 	rows, err := d.db.NamedQuery(query, m)
@@ -177,8 +179,7 @@ func (d *Db) CreateMultiAccountFull(m models.MultiAccount) (*models.MultiAccount
 
 func (d *Db) findAnyBySocialIDs(tg, ds, wa string) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
-	query := `
-        SELECT * FROM my_compendium.multi_accounts 
+	query := MASelect + `FROM my_compendium.multi_accounts 
         WHERE (telegram_id = $1 AND telegram_id != '')
            OR (discord_id = $2 AND discord_id != '')
            OR (whatsapp_id = $3 AND whatsapp_id != '')
@@ -192,8 +193,7 @@ func (d *Db) UpdateMultiAccountNickname(m models.MultiAccount) (*models.MultiAcc
 	const query = `
        UPDATE my_compendium.multi_accounts
        SET nickname = $1
-       WHERE uuid = $2
-       RETURNING *`
+       WHERE uuid = $2` + MAReturn
 
 	var acc models.MultiAccount
 	err := d.db.Get(&acc, query, m.AvatarURL, m.UUID)
@@ -213,8 +213,7 @@ func (d *Db) UpdateMultiAccount(m models.MultiAccount) (*models.MultiAccount, er
            discord_id = :discord_id, discord_username = :discord_username,
            whatsapp_id = :whatsapp_id, whatsapp_username = :whatsapp_username,
            avatarurl = :avatarurl, alts = :alts
-       WHERE uuid = :uuid
-       RETURNING *`
+       WHERE uuid = :uuid` + MAReturn
 
 	// Используем NamedQuery, чтобы sqlx сам вытащил данные из структуры m
 	rows, err := d.db.NamedQuery(query, m)
@@ -234,8 +233,7 @@ func (d *Db) UpdateMultiAccountAvatarUrl(m models.MultiAccount) (*models.MultiAc
 	const query = `
        UPDATE my_compendium.multi_accounts
        SET avatarurl = $1
-       WHERE uuid = $2
-       RETURNING *`
+       WHERE uuid = $2` + MAReturn
 
 	var acc models.MultiAccount
 	err := d.db.Get(&acc, query, m.AvatarURL, m.UUID)

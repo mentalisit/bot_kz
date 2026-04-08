@@ -157,13 +157,6 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 		}
 
 		d.api.SendRsBotAppRecover(in)
-		err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredMessageUpdate,
-		})
-		if err != nil {
-			d.log.ErrorErr(err)
-			return
-		}
 	}
 	good2, config2 := d.checkChannelConfig2(i.ChannelID)
 	if good2 {
@@ -187,6 +180,7 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			Options: models.Options{},
 		}
 		in2.Options.Add(models.OptionReaction)
+
 		d.api.SendRsBotV2AppRecover(in2)
 	}
 
@@ -203,6 +197,10 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			TimestampUnix: i.Interaction.Message.Timestamp.Unix(),
 			Config:        &bridgeConfig,
 		}
+		d.api.SendBridgeAppRecover(in)
+	}
+
+	if ok || good2 || ds {
 		err := d.S.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseDeferredMessageUpdate,
 		})
@@ -210,7 +208,6 @@ func (d *Discord) handleButtonPressed(i *discordgo.InteractionCreate) {
 			d.log.ErrorErr(err)
 			return
 		}
-		d.api.SendBridgeAppRecover(in)
 	}
 }
 func existCompendiumData(name, userid, guildid string) bool {

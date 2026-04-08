@@ -146,9 +146,32 @@ func getSeasonNumber(text string) int {
 	seasonNumber, _ := strconv.Atoi(matches[1])
 	return seasonNumber
 }
+func (d *Discord) saveGameName(p []models.Participant) {
+	// Инициализируем кэш, если он пуст
+	if len(d.gameName) == 0 {
+		d.gameName = d.storage.Db.GetMergeGameAccountAll()
+	}
 
+	for _, participant := range p {
+		// Проверяем, изменилось ли имя или игрока вообще нет в кэше
+		oldName, exists := d.gameName[participant.PlayerID]
+
+		if !exists || oldName != participant.PlayerName {
+			err := d.storage.Db.UpsertGamePlayer(context.Background(), participant.PlayerID, participant.PlayerName)
+			if err != nil {
+				d.log.ErrorErr(err) // Желательно логировать, а не просто выходить
+				continue            // Продолжаем для остальных игроков, даже если один упал
+			}
+
+			// КРИТИЧНО: Обновляем локальный кэш, чтобы не делать
+			// повторный Update для этого же ID в этом же цикле или позже
+			d.gameName[participant.PlayerID] = participant.PlayerName
+		}
+	}
+}
 func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.ScoreboardParams) error {
 	if len(rse.Players) > 0 {
+		go d.saveGameName(rse.Players)
 		text := "RedStarEnded "
 		if rse.DarkRedStar {
 			text = text + fmt.Sprintf("ТКЗ%d\n", rse.StarLevel)
@@ -186,7 +209,7 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 					Name:     name,
 					Level:    rse.StarLevel,
 					Points:   points,
-				})
+				}, rse.Timestamp)
 				if err != nil {
 					fmt.Println(err)
 					return err
@@ -212,6 +235,7 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 }
 func (d *Discord) RedStarStart(rse models.RedStarEvent, params *models.ScoreboardParams) {
 	if len(rse.Players) > 0 {
+		go d.saveGameName(rse.Players)
 		text := "RedStarStart "
 		if rse.DarkRedStar {
 			text = text + fmt.Sprintf("ТКЗ%d\n", rse.StarLevel)
@@ -232,6 +256,11 @@ func (d *Discord) RedStarStart(rse models.RedStarEvent, params *models.Scoreboar
 
 }
 func (d *Discord) WhiteStarStarted(wss models.WhiteStarStarted, params *models.ScoreboardParams) {
+	users := wss.OurParticipants
+	users = append(users, wss.OpponentParticipants...)
+	if len(users) != 0 {
+		go d.saveGameName(users)
+	}
 	if wss.Opponent.CorporationName != "" {
 		text := wss.EventType
 		if len(wss.OurParticipants) > 0 {

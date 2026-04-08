@@ -58,7 +58,7 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 			if wh.ChannelScoreboardOrMap == "" {
 				continue
 			}
-			if eventId == 48 && wh.Name == "IX Легион" {
+			if eventId == 49 && wh.Name == "IX Легион" {
 				continue
 			}
 

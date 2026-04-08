@@ -13,7 +13,7 @@ func (m *Matrix) SendInMessage(in models.ToBridgeMessage) []models.MessageIds {
 	var mids []models.MessageIds
 
 	// 1. Find or create the target room in the space
-	roomID, err := m.GetRoomIDByNameInSpace(in.Config.NameRelay, "@mentalisit:matrix.mentalisit.myds.me", "мосты")
+	roomID, err := m.GetRoomIDByNameInSpace(in.Config.NameRelay, "@mentalisit:mentalisit.myds.me", "мосты")
 	if err != nil {
 		log.Printf("[Matrix] Failed to get room ID: %v", err)
 		return nil

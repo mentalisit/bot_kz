@@ -177,11 +177,9 @@ func (d *Discord) addButtonsQueue(level string) []discordgo.MessageComponent {
 	}
 }
 func (d *Discord) embedDS(mapa map[string]string) *discordgo.MessageEmbed {
-	return &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{},
-		Color:       16711680,
-		Description: mapa["description"] + mapa["textcount"],
-
+	em := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{},
+		Color:  16711680,
 		Fields: []*discordgo.MessageEmbedField{{
 			Name:   mapa["EmbedFieldName"],
 			Value:  mapa["EmbedFieldValue"],
@@ -190,6 +188,13 @@ func (d *Discord) embedDS(mapa map[string]string) *discordgo.MessageEmbed {
 		Timestamp: time.Now().Format(time.RFC3339), // ТЕКУЩЕЕ ВРЕМЯ ДИСКОРДА
 		Title:     mapa["title"],
 	}
+
+	if mapa["version"] == "2" {
+		em.Description = mapa["description"] + "\n\n" + mapa["listUsers"]
+	} else {
+		em.Description = mapa["description"] + mapa["textcount"]
+	}
+	return em
 }
 
 func (d *Discord) Subscribe(nameid, argRoles, guildid string) int {

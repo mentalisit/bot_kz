@@ -64,29 +64,36 @@ func (s *Srv) runServer() {
 }
 
 func (s *Srv) CustomLogFormatter(param gin.LogFormatterParams) string {
-	var statusColor, methodColor, resetColor string
-	if param.IsOutputColor() {
-		statusColor = param.StatusCodeColor()
-		methodColor = param.MethodColor()
-		resetColor = param.ResetColor()
+	if param.Method == "OPTIONS" {
+		return ""
 	}
 
+	latency := param.Latency.String()
 	if param.Latency > time.Minute {
-		param.Latency = param.Latency.Truncate(time.Second)
+		latency = param.Latency.Truncate(time.Second).String()
+	} else if param.Latency > time.Millisecond {
+		latency = fmt.Sprintf("%.3fms", float64(param.Latency.Microseconds())/1000.0)
+	} else if param.Latency > time.Microsecond {
+		latency = fmt.Sprintf("%.3fµs", float64(param.Latency.Nanoseconds())/1000.0)
 	}
 
-	country, err := s.cache.GetLocationInfo(param.ClientIP)
-	if err != nil {
-		fmt.Println(err)
+	// Берём реальный IP из keys, если есть — иначе param.ClientIP
+	clientIP := param.ClientIP
+	if ip, ok := param.Keys["clientIP"]; ok {
+		if ipStr, ok := ip.(string); ok && ipStr != "" {
+			clientIP = ipStr
+		}
 	}
-	addr := fmt.Sprintf("%s:%s", param.ClientIP, country)
 
-	return fmt.Sprintf("[GIN]%v|%s %3d %s|%13v|%15s|%s %-3s %s %#v\n%s",
-		param.TimeStamp.Format("2006/01/02-15:04:05"),
-		statusColor, param.StatusCode, resetColor,
-		param.Latency,
-		addr,
-		methodColor, param.Method, resetColor,
+	arr, _ := s.cache.GetLocationInfo(clientIP)
+	country := fmt.Sprintf("%s %s", clientIP, arr)
+
+	return fmt.Sprintf("%s | %3d | %7v | %15s | %-5s | %#v\n%s",
+		param.TimeStamp.Format("15:04"),
+		param.StatusCode,
+		latency,
+		country,
+		param.Method,
 		param.Path,
 		param.ErrorMessage,
 	)

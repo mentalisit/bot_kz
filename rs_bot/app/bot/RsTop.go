@@ -14,15 +14,15 @@ func GetCorpAlias(config models.CorporationConfig) string {
 	corpName := ""
 	switch config.CorpName {
 	case "Корпорация  \"РУСЬ\".сбор-на-кз":
-		corpName = "rusb"
+		corpName = "русь "
 	case "IX Legion.сбор-на-кз-бот":
-		corpName = "IX_Легион"
+		corpName = "IX Легион"
 	case "Неизбежный Рок/КЗ сбор":
-		corpName = "neizbejnii_rock"
+		corpName = "Неизбежный Рок"
 	case "Повстанцы Хаоса.кз-чат":
 		corpName = "povstanci"
 	case "ЛУННЫЙ ФЕНИКС/КЗ и новости":
-		corpName = "ЛУННЫЙ ФЕНИКС"
+		corpName = "Лунный Феникс"
 	case "ДИВЕРСАНТЫ 2.0/Бот кз":
 		corpName = "ДИВЕРСАНТЫ"
 
@@ -122,6 +122,7 @@ func (b *Bot) TopGame(in models.InMessage) {
 	message2 := ""
 	var allpoints int
 	var resultsTop []models.Top
+
 	format := func(top models.Top) string {
 		if top.Points == 0 {
 			return fmt.Sprintf("%d. %s - %d \n", number, top.Name, top.Numkz)
@@ -129,6 +130,31 @@ func (b *Bot) TopGame(in models.InMessage) {
 		allpoints += top.Points
 		return fmt.Sprintf("%d. %s - %d (%s)\n", number, top.Name, top.Numkz, formatNumber(top.Points))
 	}
+
+	// Внутренняя функция для сбора статистики из списка корпораций
+	collectStats := func(corps []string, eventID int) ([]models.PlayerStats, error) {
+		aggregated := make(map[string]models.PlayerStats)
+		for _, name := range corps {
+			statsList, err := b.storage.Battles.BattlesGetAll(name, eventID)
+			if err != nil {
+				return nil, err
+			}
+			for _, s := range statsList {
+				entry := aggregated[s.Player]
+				entry.Player = s.Player
+				entry.Points += s.Points
+				entry.Runs += s.Runs
+				aggregated[s.Player] = entry
+			}
+		}
+
+		var final []models.PlayerStats
+		for _, s := range aggregated {
+			final = append(final, s)
+		}
+		return final, nil
+	}
+	// ---------------------------------------
 
 	nextDateStart, nextDateStop, messageNews := b.storage.Battles.ReadEventScheduleAndMessage()
 	date1 := time.Now().UTC().Format("02-01-2006")
@@ -153,58 +179,38 @@ func (b *Bot) TopGame(in models.InMessage) {
 			title = fmt.Sprintf("\xF0\x9F\x93\x96 %s %s%s:\n",
 				b.getText(in, "top_participants"), b.getText(in, "rs"), level)
 
-			levelInt, err := strconv.Atoi(level)
-			if err != nil {
-				return
-			}
+			levelInt, _ := strconv.Atoi(level)
 			for _, top := range battlesTopGetAll {
 				if top.Level == levelInt {
-					resultsTop = append(resultsTop, models.Top{
-						Name:   top.Name,
-						Numkz:  top.Count,
-						Points: 0,
-					})
+					resultsTop = append(resultsTop, models.Top{Name: top.Name, Numkz: top.Count, Points: 0})
 				}
 			}
 		} else {
 			title = fmt.Sprintf("\xF0\x9F\x93\x96 %s:\n", b.getText(in, "top_participants"))
 			for _, t := range battlesTopGetAll {
-				resultsTop = append(resultsTop, models.Top{
-					Name:  t.Name,
-					Numkz: t.Count,
-				})
+				resultsTop = append(resultsTop, models.Top{Name: t.Name, Numkz: t.Count})
 			}
 		}
-		sort.Slice(resultsTop, func(i, j int) bool {
-			return resultsTop[i].Numkz > resultsTop[j].Numkz
-		})
+		sort.Slice(resultsTop, func(i, j int) bool { return resultsTop[i].Numkz > resultsTop[j].Numkz })
 	} else {
-		battlesGetAll, err := b.storage.Battles.BattlesGetAll(corpName, numEvent)
+		// Логика для сезона с объединением корпораций
+		corpsToMerge := []string{corpName}
+
+		// Если это "rusb", добавляем "best". Сюда можно дописать любое условие или доп. имена.
+		if corpName == "русь " {
+			corpsToMerge = append(corpsToMerge, "best")
+			corpsToMerge = append(corpsToMerge, "IX Легион")
+		}
+
+		if corpName == "IX Легион" {
+			corpsToMerge = append(corpsToMerge, "best")
+			corpsToMerge = append(corpsToMerge, "русь ")
+		}
+
+		battlesGetAll, err := collectStats(corpsToMerge, numEvent)
 		if err != nil {
 			b.log.ErrorErr(err)
 			return
-		}
-		if corpName == "rusb" {
-			battlesGetAll2, _ := b.storage.Battles.BattlesGetAll("best", numEvent)
-			aa := make(map[string]models.PlayerStats)
-			for _, stats := range battlesGetAll {
-				aa[stats.Player] = stats
-			}
-			for _, stats := range battlesGetAll2 {
-				if existing, ok := aa[stats.Player]; ok {
-					// Если уже есть — складываем нужные поля
-					existing.Points += stats.Points
-					existing.Runs += stats.Runs
-					aa[stats.Player] = existing // обновляем обратно
-				} else {
-					// Иначе просто записываем
-					aa[stats.Player] = stats
-				}
-			}
-			battlesGetAll = []models.PlayerStats{}
-			for _, stats := range aa {
-				battlesGetAll = append(battlesGetAll, stats)
-			}
 		}
 
 		for _, stats := range battlesGetAll {
@@ -216,16 +222,18 @@ func (b *Bot) TopGame(in models.InMessage) {
 		}
 		resultsTop = mergeAndSumTops(resultsTop)
 	}
+
 	if len(resultsTop) == 0 {
 		b.ifTipSendTextDelSecond(in, b.getText(in, "no_history"), 20)
 		return
-	} else if len(resultsTop) > 0 {
-		b.ifTipSendTextDelSecond(in, b.getText(in, "form_list"), 5)
-		for _, top := range resultsTop {
-			message2 = message2 + format(top)
-			number++
-		}
 	}
+
+	b.ifTipSendTextDelSecond(in, b.getText(in, "form_list"), 5)
+	for _, top := range resultsTop {
+		message2 += format(top)
+		number++
+	}
+
 	if allpoints != 0 {
 		message2 = fmt.Sprintf("%s\nTotal: %s", message2, formatNumber(allpoints))
 	}
@@ -234,8 +242,7 @@ func (b *Bot) TopGame(in models.InMessage) {
 		mid := b.client.Ds.SendEmbedText(in.Config.DsChannel, title, message2)
 		b.client.Ds.DeleteMessageSecond(in.Config.DsChannel, mid, 600)
 	} else if in.Tip == tg {
-		text := title + message2
-		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, text, 600)
+		b.client.Tg.SendChannelDelSecond(in.Config.TgChannel, title+message2, 600)
 	}
 }
 
@@ -273,25 +280,6 @@ func mergeAndSumTops(tops []models.Top) []models.Top {
 	return result
 }
 
-func (b *Bot) UpdateTopEvent() {
-	corp1 := models.CorporationHistory{
-		CorpName:  "Корпорация  \"РУСЬ\".сбор-на-кз",
-		ChannelDs: "1198012575615561979",
-	}
-	corp2 := models.CorporationHistory{
-		CorpName:  "IX Legion.сбор-на-кз-бот",
-		ChannelDs: "1253851338408857641",
-	}
-
-	nextDateStart, nextDateStop, messagee := b.storage.Event.ReadEventScheduleAndMessage()
-	date1 := time.Now().UTC().Format("02-01-2006")
-	date2 := time.Now().UTC().Add(24 * time.Hour).Format("02-01-2006")
-	if date1 == nextDateStart || date2 == nextDateStop {
-		title := fmt.Sprintf("Сезон №%d   %s  -  %s", getSeasonNumber(messagee), nextDateStart, nextDateStop)
-		b.UpdateTopEventForCorporation(corp1, title)
-		b.UpdateTopEventForCorporation(corp2, title)
-	}
-}
 func (b *Bot) UpdateTopEventForCorporation(Corp models.CorporationHistory, title string) {
 	number := 1
 	message2 := ""

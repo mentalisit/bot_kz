@@ -1,9 +1,5 @@
 package models
 
-func InboxBridge(text, sender, tip, chatId, mesId, guildId, avatar string, timestamp int64, extra []FileInfo, reply BridgeMessageReply, conf BridgeConfig) {
-
-}
-
 type ToBridgeMessage struct {
 	Text          string              `json:"text"`
 	Sender        string              `json:"sender"`
@@ -32,15 +28,7 @@ type BridgeMessageReply struct {
 	Avatar      string `json:"avatar"`
 	UserName    string `json:"userName"`
 }
-type BridgeConfig struct {
-	Id                int              `json:"id"`
-	NameRelay         string           `json:"nameRelay"`
-	HostRelay         string           `json:"hostRelay"`
-	Role              []string         `json:"role"`
-	ChannelDs         []BridgeConfigDs `json:"channelDs"`
-	ChannelTg         []BridgeConfigTg `json:"channelTg"`
-	ForbiddenPrefixes []string         `json:"forbiddenPrefixes"`
-}
+
 type Bridge2Config struct {
 	Id                int                         `json:"id"`
 	NameRelay         string                      `json:"nameRelay"`
@@ -52,20 +40,6 @@ type Bridge2Config struct {
 type Bridge2Configs struct {
 	ChannelId       string            `json:"channel_id"`
 	GuildId         string            `json:"guild_id"`
-	CorpChannelName string            `json:"corp_channel_name"`
-	AliasName       string            `json:"alias_name"`
-	MappingRoles    map[string]string `json:"mapping_roles"`
-}
-
-type BridgeConfigDs struct {
-	ChannelId       string            `json:"channel_id"`
-	GuildId         string            `json:"guild_id"`
-	CorpChannelName string            `json:"corp_channel_name"`
-	AliasName       string            `json:"alias_name"`
-	MappingRoles    map[string]string `json:"mapping_roles"`
-}
-type BridgeConfigTg struct {
-	ChannelId       string            `json:"channel_id"`
 	CorpChannelName string            `json:"corp_channel_name"`
 	AliasName       string            `json:"alias_name"`
 	MappingRoles    map[string]string `json:"mapping_roles"`

@@ -89,9 +89,9 @@ func (b *Bot) getMap(in models.InMessage, numberLevel int) map[string]string {
 	}
 
 	n["lang"] = in.Config.Country
-	n["title"] = b.getText(in, "rs_queue")
+	n["title"] = b.getText(in, "rs_queue") + level
 	if darkOrRed {
-		n["title"] = b.getText(in, "queue_drs")
+		n["title"] = b.getText(in, "queue_drs") + level
 	}
 
 	n["description"] = fmt.Sprintf("👇 %s <:rs:918545444425072671> %s (%d) ",

@@ -15,15 +15,16 @@ import (
 		corporation text NOT NULL DEFAULT '',
 		name text NOT NULL DEFAULT '',
 		level    integer NOT NULL DEFAULT 0,
-		points   integer NOT NULL DEFAULT 0
+		points   integer NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
 	);`
 */
 
-func (d *Db) BattlesInsert(b models.Battles) error {
+func (d *Db) BattlesInsert(b models.Battles, timestamp string) error {
 	ctx, cancel := d.getContext()
 	defer cancel()
-	insert := `INSERT INTO rs_bot.battles(eventid,corporation,name,level,points) VALUES ($1,$2,$3,$4,$5)`
-	_, err := d.db.Exec(ctx, insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points)
+	insert := `INSERT INTO rs_bot.battles(eventid,corporation,name,level,points,created_at) VALUES ($1,$2,$3,$4,$5,$6)`
+	_, err := d.db.Exec(ctx, insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points, timestamp)
 	if err != nil {
 		return err
 	}

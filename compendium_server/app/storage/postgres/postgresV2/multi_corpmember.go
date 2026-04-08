@@ -36,7 +36,7 @@ func (d *Db) CorpMembersReadMulti(gid *uuid.UUID) ([]models.CorpMember, error) {
 
 	var rows []tempRow
 	query := `
-       SELECT ma.*, cm.timezona, cm.zonaoffset, cm.afkfor
+       SELECT ma.uuid, ma.nickname, ma.telegram_id, ma.telegram_username, ma.discord_id, ma.discord_username, ma.whatsapp_id, ma.whatsapp_username, ma.avatarurl, ma.alts, ma.created_at, cm.timezona, cm.zonaoffset, cm.afkfor
        FROM my_compendium.corpmember cm
        JOIN my_compendium.multi_accounts ma ON cm.uid = ma.uuid
        WHERE $1 = ANY(cm.guildids)

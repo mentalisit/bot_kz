@@ -80,11 +80,6 @@ func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 //}
 
 type BridgeConfig interface {
-	DBReadBridgeConfig() []models.BridgeConfig
-	UpdateBridgeChat(br models.BridgeConfig)
-	InsertBridgeChat(br models.BridgeConfig)
-	DeleteBridgeChat(br models.BridgeConfig)
-
 	DBReadBridgeConfig2() []models.Bridge2Config
 	UpdateBridge2Chat(br models.Bridge2Config)
 	InsertBridge2Chat(br models.Bridge2Config)

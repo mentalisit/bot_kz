@@ -246,6 +246,34 @@ func (t *Telegram) CheckAdminTg(chatid string, name string) (admin bool) {
 	return admin
 }
 
+func (t *Telegram) CheckAdminByUserId(ChatId string, userId string) (admin bool) {
+	fmt.Printf("CheckAdminByUserId chatid '%s' userid '%s'\n", ChatId, userId)
+	chatId, _ := t.chat(ChatId)
+	admins, err := t.t.GetChatAdministrators(
+		tgbotapi.ChatAdministratorsConfig{
+			ChatConfig: tgbotapi.ChatConfig{
+				ChatID: chatId,
+			},
+		},
+	)
+	if err != nil {
+		t.log.ErrorErr(err)
+	}
+
+	uid, err := strconv.ParseInt(userId, 10, 64)
+	if err != nil {
+		return false
+	}
+
+	for _, ad := range admins {
+		if uid == ad.User.ID && (ad.IsAdministrator() || ad.IsCreator()) {
+			admin = true
+			break
+		}
+	}
+	return admin
+}
+
 func (t *Telegram) GetAvatarUrl(userID string) string {
 	userId, err := strconv.ParseInt(userID, 10, 64)
 	if err != nil {

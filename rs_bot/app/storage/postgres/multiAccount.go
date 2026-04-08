@@ -12,6 +12,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	MAReturn = ` RETURNING uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at`
+	MASelect = `SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at `
+)
+
 func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
@@ -59,15 +64,15 @@ func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username str
 	case "tg":
 		query = `
 			INSERT INTO my_compendium.multi_accounts (nickname, telegram_id, telegram_username)
-			VALUES ($1, $2, $3) RETURNING *`
+			VALUES ($1, $2, $3)` + MAReturn
 	case "ds":
 		query = `
 			INSERT INTO my_compendium.multi_accounts (nickname, discord_id, discord_username)
-			VALUES ($1, $2, $3) RETURNING *`
+			VALUES ($1, $2, $3)` + MAReturn
 	case "wa":
 		query = `
 			INSERT INTO my_compendium.multi_accounts (nickname, whatsapp_id, whatsapp_username)
-			VALUES ($1, $2, $3) RETURNING *`
+			VALUES ($1, $2, $3)` + MAReturn
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", platform)
 	}
@@ -89,8 +94,7 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 	ctx, cancel := d.getContext()
 	defer cancel()
 
-	var selectQuery = `
-		SELECT * FROM my_compendium.multi_accounts
+	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
 
 	row := d.db.QueryRow(ctx, selectQuery, userId)

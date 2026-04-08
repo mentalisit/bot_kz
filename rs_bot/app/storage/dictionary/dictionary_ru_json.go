@@ -73,7 +73,7 @@ func getDictionaryRuJson() []byte {
 "channel_not_connected":"ваш канал и так не подключен к логике бота ",
 "you_disabled_bot_functions":"вы отключили мои возможности",
 "drs":"ТКЗ",
-"queue_drs":"Очередь ТКЗ",
+"queue_drs":"Очередь Ткз",
 "drs_queue_closed":" закрыл очередь ТКЗ",
 "language_switched_to":"Вы переключили меня на Русский язык",
 "select_module_level":"Выбран модуль: %s, уровень: %d",
