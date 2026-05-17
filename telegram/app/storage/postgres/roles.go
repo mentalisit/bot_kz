@@ -1,17 +1,16 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"telegram/models2"
 	"time"
 )
 
 // GetChatRoles возвращает роли определенного чата
-func (d *Db) GetChatsRoles(ctx context.Context, chatID int64) ([]models2.Role, error) {
+func (d *Db) GetChatsRoles(chatID int64) ([]models2.Role, error) {
 	query := `SELECT id, chat_id, name FROM telegram.roles WHERE chat_id = $1`
 
-	rows, err := d.db.Query(ctx, query, chatID)
+	rows, err := d.db.Query(query, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chats roles: %w", err)
 	}
@@ -34,7 +33,7 @@ func (d *Db) GetChatsRoles(ctx context.Context, chatID int64) ([]models2.Role, e
 }
 
 // createAllRole создает системную роль "all"
-func (d *Db) createAllRole(ctx context.Context, chatID int64) (int64, error) {
+func (d *Db) createAllRole(chatID int64) (int64, error) {
 	query := `
         INSERT INTO telegram.roles (chat_id, name, created_by, created_at)
         VALUES ($1, $2, $3, $4)
@@ -42,7 +41,7 @@ func (d *Db) createAllRole(ctx context.Context, chatID int64) (int64, error) {
     `
 
 	var roleID int64
-	err := d.db.QueryRow(ctx, query,
+	err := d.db.QueryRow(query,
 		chatID, "all", 0, time.Now(), // created_by = 0 для системных ролей
 	).Scan(&roleID)
 
@@ -55,14 +54,14 @@ func (d *Db) createAllRole(ctx context.Context, chatID int64) (int64, error) {
 }
 
 // CreateRole создает новую роль
-func (d *Db) CreateRole(ctx context.Context, role *models2.Role) error {
+func (d *Db) CreateRole(role *models2.Role) error {
 	query := `
 		INSERT INTO telegram.roles (chat_id, name, created_by, created_at)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
 
-	err := d.db.QueryRow(ctx, query,
+	err := d.db.QueryRow(query,
 		role.ChatID, role.Name, role.CreatedBy, time.Now(),
 	).Scan(&role.ID)
 
@@ -74,20 +73,20 @@ func (d *Db) CreateRole(ctx context.Context, role *models2.Role) error {
 }
 
 // SetUserRole назначает или снимает роль с пользователя
-func (d *Db) SetUserRole(ctx context.Context, userID, roleID, chatID int64, assign bool) error {
+func (d *Db) SetUserRole(userID, roleID, chatID int64, assign bool) error {
 	if assign {
-		return d.JoinRole(ctx, userID, roleID, chatID)
+		return d.JoinRole(userID, roleID, chatID)
 	} else {
-		return d.LeaveRole(ctx, userID, roleID)
+		return d.LeaveRole(userID, roleID)
 	}
 }
 
 // DeleteRole удаляет роль
-func (d *Db) DeleteRole(ctx context.Context, roleID, chatID int64) error {
+func (d *Db) DeleteRole(roleID, chatID int64) error {
 	// Сначала проверяем, не является ли роль системной "all"
 	var roleName string
 	checkQuery := `SELECT name FROM telegram.roles WHERE id = $1 AND chat_id = $2`
-	err := d.db.QueryRow(ctx, checkQuery, roleID, chatID).Scan(&roleName)
+	err := d.db.QueryRow(checkQuery, roleID, chatID).Scan(&roleName)
 	if err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
 	}
@@ -97,12 +96,13 @@ func (d *Db) DeleteRole(ctx context.Context, roleID, chatID int64) error {
 	}
 
 	query := `DELETE FROM telegram.roles WHERE id = $1 AND chat_id = $2`
-	result, err := d.db.Exec(ctx, query, roleID, chatID)
+	result, err := d.db.Exec(query, roleID, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to delete role: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
+	r, _ := result.RowsAffected()
+	if r == 0 {
 		return fmt.Errorf("role not found or access denied")
 	}
 
@@ -110,10 +110,10 @@ func (d *Db) DeleteRole(ctx context.Context, roleID, chatID int64) error {
 }
 
 // UpdateRoleName обновляет название роли
-func (d *Db) UpdateRoleName(ctx context.Context, roleID, chatID int64, newName string) error {
+func (d *Db) UpdateRoleName(roleID, chatID int64, newName string) error {
 	var currentName string
 	checkQuery := `SELECT name FROM telegram.roles WHERE id = $1 AND chat_id = $2`
-	if err := d.db.QueryRow(ctx, checkQuery, roleID, chatID).Scan(&currentName); err != nil {
+	if err := d.db.QueryRow(checkQuery, roleID, chatID).Scan(&currentName); err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
 	}
 
@@ -122,12 +122,13 @@ func (d *Db) UpdateRoleName(ctx context.Context, roleID, chatID int64, newName s
 	}
 
 	query := `UPDATE telegram.roles SET name = $1 WHERE id = $2 AND chat_id = $3`
-	result, err := d.db.Exec(ctx, query, newName, roleID, chatID)
+	result, err := d.db.Exec(query, newName, roleID, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to update role name: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
+	r, _ := result.RowsAffected()
+	if r == 0 {
 		return fmt.Errorf("role not found or access denied")
 	}
 
@@ -135,9 +136,9 @@ func (d *Db) UpdateRoleName(ctx context.Context, roleID, chatID int64, newName s
 }
 
 // GetRoleName возвращает название роли по ID
-func (d *Db) GetRoleName(ctx context.Context, roleID int64, roleName *string) error {
+func (d *Db) GetRoleName(roleID int64, roleName *string) error {
 	query := `SELECT name FROM telegram.roles WHERE id = $1`
-	err := d.db.QueryRow(ctx, query, roleID).Scan(roleName)
+	err := d.db.QueryRow(query, roleID).Scan(roleName)
 	if err != nil {
 		return fmt.Errorf("failed to get role name: %w", err)
 	}
@@ -145,9 +146,9 @@ func (d *Db) GetRoleName(ctx context.Context, roleID int64, roleName *string) er
 }
 
 // GetRoleName возвращает  ID роли
-func (d *Db) GetRoleByName(ctx context.Context, roleName string, ChatID int64) (roleId int64, err error) {
+func (d *Db) GetRoleByName(roleName string, ChatID int64) (roleId int64, err error) {
 	query := `SELECT id FROM telegram.roles WHERE name = $1 AND chat_id = $2`
-	err = d.db.QueryRow(ctx, query, roleName, ChatID).Scan(&roleId)
+	err = d.db.QueryRow(query, roleName, ChatID).Scan(&roleId)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get role name: %w", err)
 	}
@@ -155,7 +156,7 @@ func (d *Db) GetRoleByName(ctx context.Context, roleName string, ChatID int64) (
 }
 
 // SetChatAdmin назначает пользователя администратором чата
-func (d *Db) SetChatAdmin(ctx context.Context, chatID, userID int64, isAdmin bool) error {
+func (d *Db) SetChatAdmin(chatID, userID int64, isAdmin bool) error {
 	query := `
         INSERT INTO telegram.chat_permissions (chat_id, user_id, is_admin)
         VALUES ($1, $2, $3)
@@ -163,7 +164,7 @@ func (d *Db) SetChatAdmin(ctx context.Context, chatID, userID int64, isAdmin boo
         DO UPDATE SET is_admin = EXCLUDED.is_admin
     `
 
-	_, err := d.db.Exec(ctx, query, chatID, userID, isAdmin)
+	_, err := d.db.Exec(query, chatID, userID, isAdmin)
 	if err != nil {
 		return fmt.Errorf("failed to set chat admin: %w", err)
 	}
@@ -172,15 +173,16 @@ func (d *Db) SetChatAdmin(ctx context.Context, chatID, userID int64, isAdmin boo
 }
 
 // RemoveChatAdmin удаляет права администратора у пользователя
-func (d *Db) RemoveChatAdmin(ctx context.Context, chatID, userID int64) error {
+func (d *Db) RemoveChatAdmin(chatID, userID int64) error {
 	query := `DELETE FROM telegram.chat_permissions WHERE chat_id = $1 AND user_id = $2`
 
-	result, err := d.db.Exec(ctx, query, chatID, userID)
+	result, err := d.db.Exec(query, chatID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to remove chat admin: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
+	r, _ := result.RowsAffected()
+	if r == 0 {
 		return fmt.Errorf("admin permission not found")
 	}
 
@@ -188,11 +190,11 @@ func (d *Db) RemoveChatAdmin(ctx context.Context, chatID, userID int64) error {
 }
 
 // RoleExists проверяет, существует ли роль с указанным именем в текущем чате и возвращает её ID
-func (d *Db) RoleExists(ctx context.Context, chatID int64, roleName string) (int64, error) {
+func (d *Db) RoleExists(chatID int64, roleName string) (int64, error) {
 	query := `SELECT id FROM telegram.roles WHERE chat_id = $1 AND name = $2`
 
 	var roleID int64
-	err := d.db.QueryRow(ctx, query, chatID, roleName).Scan(&roleID)
+	err := d.db.QueryRow(query, chatID, roleName).Scan(&roleID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to check role existence: %w", err)
 	}

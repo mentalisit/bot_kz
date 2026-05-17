@@ -22,6 +22,7 @@ service TelegramService {
   rpc SendPicScoreboard(ScoreboardRequest) returns (ScoreboardResponse);
   rpc Subscribe(SubscrRequest) returns (IntResponse);
   rpc Unsubscribe(SubscrRequest) returns (IntResponse);
+  rpc GetChatsMember(GetChatsMemberReq) returns (GetChatsMemberRes);
 }
 
 message TextResponse {
@@ -88,6 +89,24 @@ message SubscrRequest {
   string argRoles = 2;
   string guildid = 3;
 }
+
+message GetChatsMemberReq {
+  int64 userid = 1;
+  bool full = 2;
+}
+
+
+message GetChatsMemberRes {
+  repeated ChatAccess Chats = 1;
+}
+
+message ChatAccess {
+  int64 chatId = 1;
+  string chatName = 2;
+  int64 userId = 3;
+  string status = 4;
+}
+
 message IntResponse {
   int32 result = 1;
 }

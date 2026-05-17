@@ -1,14 +1,14 @@
 package postgres
 
 import (
-	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"rs/models"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +17,7 @@ const (
 	MASelect = `SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at `
 )
 
-func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
+func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
 	var telegramID, discordID, whatsappID sql.NullString
@@ -27,7 +27,7 @@ func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 		&discordID, &acc.DiscordUsername,
 		&whatsappID, &acc.WhatsappUsername,
 		&acc.AvatarURL,
-		&acc.Alts, &acc.CreatedAt,
+		pq.Array(&acc.Alts), &acc.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -47,9 +47,6 @@ func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 }
 
 func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username string) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	// Логируем если никнейм пустой
 	if nickname == "" {
 		d.log.Warn("CreateMultiAccountWithPlatform called with empty nickname",
@@ -77,11 +74,11 @@ func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username str
 		return nil, fmt.Errorf("unsupported platform: %s", platform)
 	}
 
-	row := d.db.QueryRow(ctx, query, nickname, id, username)
+	row := d.db.QueryRow(query, nickname, id, username)
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)
@@ -91,17 +88,14 @@ func (d *Db) CreateMultiAccountWithPlatform(id, nickname, platform, username str
 }
 
 func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1 or discord_id = $1 or whatsapp_id = $1`
 
-	row := d.db.QueryRow(ctx, selectQuery, userId)
+	row := d.db.QueryRow(selectQuery, userId)
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)
@@ -113,19 +107,38 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 func (d *Db) TechnologiesGetAll(u uuid.UUID) ([]models.TechUser, error) {
 	var results []models.TechUser
 
-	query := `SELECT username, tech FROM my_compendium.technologies WHERE uid = $1`
+	query := `
+		SELECT username, tech
+		FROM my_compendium.technologies
+		WHERE uid = $1
+	`
 
-	res, err := d.db.Query(context.Background(), query, u)
+	rows, err := d.db.Query(query, u)
 	if err != nil {
 		return nil, err
 	}
-	for res.Next() {
+	defer rows.Close()
+
+	for rows.Next() {
 		var r models.TechUser
-		err = res.Scan(&r.Name, &r.Tech)
+		var techBytes []byte
+
+		err = rows.Scan(&r.Name, &techBytes)
 		if err != nil {
 			return nil, err
 		}
+
+		err = json.Unmarshal(techBytes, &r.Tech)
+		if err != nil {
+			return nil, err
+		}
+
 		results = append(results, r)
 	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return results, nil
 }

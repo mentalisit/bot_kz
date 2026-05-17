@@ -335,3 +335,23 @@ func (d *Discord) SendDmText(text, AuthorID string) {
 	}
 	d.DeleteMesageSecond(dm, mes.ID, 600)
 }
+
+func GetCommonGuilds(s *discordgo.Session, userID string) ([]*discordgo.Guild, error) {
+	var commonGuilds []*discordgo.Guild
+
+	// Перебираем все серверы, на которых есть бот
+	for _, guild := range s.State.Guilds {
+		for _, member := range guild.Members {
+			if member.User.ID == userID {
+				commonGuilds = append(commonGuilds, guild)
+			}
+		}
+		//// Проверяем, является ли пользователь участником этого сервера
+		//member, err := s.GuildMember(guild.ID, userID)
+		//if err == nil && member != nil {
+		//	commonGuilds = append(commonGuilds, guild)
+		//}
+	}
+
+	return commonGuilds, nil
+}

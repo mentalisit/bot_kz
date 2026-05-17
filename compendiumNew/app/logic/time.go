@@ -2,6 +2,7 @@ package logic
 
 import (
 	"compendium/models"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 // GeoNames API configuration
@@ -499,7 +498,7 @@ func (c *Hs) setTimezoneForSelf(tzInfo *TimezoneInfo, m models.IncomingMessage) 
 	}
 
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			c.createNewMemberWithTimezone(m.NameId, tzInfo, m)
 		} else {
 			c.log.ErrorErr(err)
@@ -544,7 +543,7 @@ func (c *Hs) setTimezoneForMention(tzInfo *TimezoneInfo, mentionName string, m m
 
 	err := c.corpMember.CorpMemberTZUpdate(targetUserID, m.MGuild.GuildId(), tzInfo.Name, tzInfo.Offset)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			c.createNewMemberWithTimezone(targetUserID, tzInfo, m)
 		} else {
 			c.log.ErrorErr(err)

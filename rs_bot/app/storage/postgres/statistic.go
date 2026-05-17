@@ -9,9 +9,6 @@ import (
 func (d *Db) StatisticGetName(name string) ([]models.Statistic, error) {
 	var stat []models.Statistic
 
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	query := `
         SELECT
             eventid,
@@ -28,7 +25,7 @@ func (d *Db) StatisticGetName(name string) ([]models.Statistic, error) {
             eventid;
     `
 
-	rows, err := d.db.Query(ctx, query, name)
+	rows, err := d.db.Query(query, name)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка выполнения запроса: %w", err)
 	}
@@ -59,9 +56,6 @@ func (d *Db) StatisticGetName(name string) ([]models.Statistic, error) {
 }
 
 func (d *Db) GetBattleStats(corporation string, minRecords int) []*models.BattleStats {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	query := `
     WITH max_event AS (
         SELECT MAX(eventid) as max_eventid 
@@ -90,7 +84,7 @@ func (d *Db) GetBattleStats(corporation string, minRecords int) []*models.Battle
     HAVING COUNT(*) >= $2
     ORDER BY Quality DESC;`
 
-	results, err := d.db.Query(ctx, query, corporation, minRecords)
+	results, err := d.db.Query(query, corporation, minRecords)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil

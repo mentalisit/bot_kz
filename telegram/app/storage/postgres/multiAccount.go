@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/mentalisit/restapi/models"
 	"go.uber.org/zap"
 )
@@ -15,7 +14,7 @@ const (
 	MASelect = `SELECT uuid, nickname, telegram_id, telegram_username, discord_id, discord_username, whatsapp_id, whatsapp_username, avatarurl, alts, created_at `
 )
 
-func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
+func scanMultiAccount(row *sql.Row) (*models.MultiAccount, error) {
 	var acc models.MultiAccount
 
 	// Используем NullString для тех, кто может быть NULL в БД
@@ -48,8 +47,6 @@ func scanMultiAccount(row pgx.Row) (*models.MultiAccount, error) {
 }
 
 func (d *Db) CreateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	// Логируем если никнейм пустой
 	if acc.Nickname == "" {
@@ -63,13 +60,13 @@ func (d *Db) CreateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, 
             discord_id, discord_username)
 			VALUES ($1, $2, $3, $4 ,$5)` + MAReturn
 
-	row := d.db.QueryRow(ctx, query, acc.Nickname,
+	row := d.db.QueryRow(query, acc.Nickname,
 		acc.TelegramID, acc.TelegramUsername,
 		acc.DiscordID, acc.DiscordUsername)
 
 	accNew, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)
@@ -79,17 +76,15 @@ func (d *Db) CreateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, 
 }
 
 func (d *Db) FindMultiAccountByTelegramID(telegramID string) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE telegram_id = $1`
 
-	row := d.db.QueryRow(ctx, selectQuery, telegramID)
+	row := d.db.QueryRow(selectQuery, telegramID)
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)
@@ -99,17 +94,15 @@ func (d *Db) FindMultiAccountByTelegramID(telegramID string) (*models.MultiAccou
 }
 
 func (d *Db) FindMultiAccountByDiscordID(discordID string) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	var selectQuery = MASelect + `FROM my_compendium.multi_accounts
 		WHERE discord_id = $1`
 
-	row := d.db.QueryRow(ctx, selectQuery, discordID)
+	row := d.db.QueryRow(selectQuery, discordID)
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)
@@ -119,14 +112,12 @@ func (d *Db) FindMultiAccountByDiscordID(discordID string) (*models.MultiAccount
 }
 
 func (d *Db) UpdateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	query := `UPDATE my_compendium.multi_accounts
 			SET discord_id = $1, discord_username = $2, nickname = $3, alts = $4
 			WHERE uuid = $5` + MAReturn
 
-	row := d.db.QueryRow(ctx, query, acc.DiscordID, acc.DiscordUsername, acc.Nickname, acc.Alts, acc.UUID)
+	row := d.db.QueryRow(query, acc.DiscordID, acc.DiscordUsername, acc.Nickname, acc.Alts, acc.UUID)
 
 	accNew, err := scanMultiAccount(row)
 
@@ -139,12 +130,10 @@ func (d *Db) UpdateMultiAccount(acc models.MultiAccount) (*models.MultiAccount, 
 }
 
 func (d *Db) DeleteMultiAccount(uuid uuid.UUID) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	query := `DELETE FROM my_compendium.multi_accounts WHERE uuid = $1`
 
-	_, err := d.db.Exec(ctx, query, uuid)
+	_, err := d.db.Exec(query, uuid)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return err

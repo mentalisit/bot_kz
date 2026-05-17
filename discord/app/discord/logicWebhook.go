@@ -201,12 +201,10 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 
 			points := rse.RSEventPoints / len(rse.Players)
 			for _, player := range rse.Players {
-				name := d.CombineNames(player.PlayerName)
-				fmt.Printf("name: %s CombineNames: %s\n", name, player.PlayerName)
 				err := d.storage.Battles.BattlesInsert(models.Battles{
 					EventId:  eventId,
 					CorpName: params.Name,
-					Name:     name,
+					Name:     d.CombineNames(player),
 					Level:    rse.StarLevel,
 					Points:   points,
 				}, rse.Timestamp)
@@ -219,7 +217,7 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 			for _, player := range rse.Players {
 				err := d.storage.Battles.BattlesTopInsert(models.BattlesTop{
 					CorpName: params.Name,
-					Name:     d.CombineNames(player.PlayerName),
+					Name:     d.CombineNames(player),
 					Level:    rse.StarLevel,
 					Count:    1, //+1
 				})
@@ -281,24 +279,21 @@ func (d *Discord) WhiteStarEnded(wse models.WhiteStarEnded, params *models.Score
 	d.WhiteStarEndedSaveToDB(wse)
 }
 
-func (d *Discord) CombineNames(input string) string {
-	if d.NameAliases == nil {
-		nameAliases, err := d.storage.Battles.LoadNameAliases()
-		if err != nil {
-			d.log.ErrorErr(err)
-			return input
-		}
-		d.NameAliases = nameAliases
-	}
-	if val, ok := d.NameAliases[input]; ok {
+func (d *Discord) CombineNames(p models.Participant) string {
+	if val, ok := d.NameAliases[p.PlayerID]; ok {
 		return val
 	}
-	return input
+	nickName, err := d.storage.Db.GetNickNameByMergedID(p.PlayerID)
+	if err != nil || nickName == "" {
+		return p.PlayerName
+	}
+	d.NameAliases[p.PlayerID] = nickName
+	return nickName
 }
 func (d *Discord) CombineNamesWithNameAliases(in []models.Participant) string {
 	var text string
 	for i, player := range in {
-		combineName := d.CombineNames(player.PlayerName)
+		combineName := d.CombineNames(player)
 		if combineName == player.PlayerName {
 			text = text + fmt.Sprintf("%d. %s\n", i+1, player.PlayerName)
 		} else {

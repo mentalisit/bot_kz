@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type techLevelArray map[int][2]int
@@ -29,15 +28,11 @@ type corpMember struct {
 }
 
 func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextender int) {
-	// Создаем контекст с тайм-аутом 2 секунды
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel() // Освобождаем ресурсы контекста после завершения функции
-
 	// Формирование URL-адреса
 	url := fmt.Sprintf("http://compendiumnew/compendium/api?userid=%s&guildid=%s", userID, guildid)
 
 	// Выполнение GET-запроса с контекстом
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, nil)
 	if err != nil {
 		fmt.Println("Ошибка при создании запроса:", err)
 		return
@@ -94,52 +89,4 @@ func Get2TechDataUserId(name, userID, guildid string) (genesis, enrich, rsextend
 	}
 
 	return
-}
-
-func Get2AltsUserId(userID string) (alts []string) {
-	// Создаем контекст с тайм-аутом 2 секунды
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel() // Освобождаем ресурсы контекста после завершения функции
-
-	// Формирование URL-адреса
-	url := fmt.Sprintf("http://compendiumnew/compendium/api/user?userid=%s", userID)
-
-	// Выполнение GET-запроса с контекстом
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		fmt.Println("Ошибка при создании запроса:", err)
-		return
-	}
-
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Println("Время ожидания запроса истекло")
-		} else {
-			fmt.Println("Ошибка при выполнении запроса:", err)
-		}
-		return
-	}
-	defer response.Body.Close()
-
-	// Проверка кода ответа
-	if response.StatusCode != http.StatusOK {
-		fmt.Printf("Неправильный статус код: %d\n", response.StatusCode)
-		return
-	}
-
-	// Чтение тела ответа
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Println("Ошибка при чтении ответа:", err)
-		return
-	}
-
-	// Декодирование JSON-данных в структуру TechnicalData
-	err = json.Unmarshal(body, &alts)
-	if err != nil {
-		fmt.Println("Ошибка при декодировании JSON:", err)
-		return
-	}
-	return alts
 }

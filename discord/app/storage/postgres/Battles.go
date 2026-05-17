@@ -21,10 +21,9 @@ import (
 */
 
 func (d *Db) BattlesInsert(b models.Battles, timestamp string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	insert := `INSERT INTO rs_bot.battles(eventid,corporation,name,level,points,created_at) VALUES ($1,$2,$3,$4,$5,$6)`
-	_, err := d.db.Exec(ctx, insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points, timestamp)
+	_, err := d.db.Exec(insert, b.EventId, b.CorpName, b.Name, b.Level, b.Points, timestamp)
 	if err != nil {
 		return err
 	}
@@ -32,8 +31,7 @@ func (d *Db) BattlesInsert(b models.Battles, timestamp string) error {
 }
 
 func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	query := `
 		SELECT name,
 		       SUM(points) AS total_points,
@@ -44,7 +42,7 @@ func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, er
 		GROUP BY name;
 	`
 
-	rows, err := d.db.Query(ctx, query, event, corpName)
+	rows, err := d.db.Query(query, event, corpName)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
 	}
@@ -67,10 +65,10 @@ func (d *Db) BattlesGetAll(corpName string, event int) ([]models.PlayerStats, er
 }
 
 //func (d *Db) BattlesUpdate(b models.Battles) error {
-//	ctx, cancel := d.getContext()
+//	cancel := d.getContext()
 //	defer cancel()
 //	sqlUpd := "update rs_bot.battles set points = $1 where name = $2 AND level = $3 AND eventid = $4 AND corporation = $5"
-//	_, err := d.db.Exec(ctx, sqlUpd, b.Points, b.Name, b.Level, b.EventId, b.CorpName)
+//	_, err := d.db.Exec(sqlUpd, b.Points, b.Name, b.Level, b.EventId, b.CorpName)
 //	if err != nil {
 //		return err
 //	}
@@ -91,10 +89,8 @@ func (d *Db) BattlesTopInsert(b models.BattlesTop) error {
 		return nil
 	}
 
-	ctx, cancel := d.getContext()
-	defer cancel()
 	insert := `INSERT INTO rs_bot.battlestop(corporation,name,level,count) VALUES ($1,$2,$3,$4)`
-	_, err := d.db.Exec(ctx, insert, b.CorpName, b.Name, b.Level, 1)
+	_, err := d.db.Exec(insert, b.CorpName, b.Name, b.Level, 1)
 	if err != nil {
 		return err
 	}
@@ -102,10 +98,9 @@ func (d *Db) BattlesTopInsert(b models.BattlesTop) error {
 }
 
 func (d *Db) BattlesTopUpdate(b models.BattlesTop) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	sqlUpd := "update rs_bot.battlestop set count = $1, level = $2 where id = $3 "
-	_, err := d.db.Exec(ctx, sqlUpd, b.Count, b.Level, b.Id)
+	_, err := d.db.Exec(sqlUpd, b.Count, b.Level, b.Id)
 	if err != nil {
 		return err
 	}
@@ -113,10 +108,9 @@ func (d *Db) BattlesTopUpdate(b models.BattlesTop) error {
 }
 
 func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	query := `SELECT * FROM rs_bot.battlestop where corporation=$1 `
-	rows, err := d.db.Query(ctx, query, corpName)
+	rows, err := d.db.Query(query, corpName)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка выполнения запроса: %v", err)
 	}
@@ -139,10 +133,9 @@ func (d *Db) BattlesTopGetAll(corpName string) ([]models.BattlesTop, error) {
 }
 
 func (d *Db) BattlesTopGet(b models.BattlesTop) (models.BattlesTop, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	query := `SELECT * FROM rs_bot.battlestop where name=$1 AND corporation=$2`
-	row := d.db.QueryRow(ctx, query, b.Name, b.CorpName)
+	row := d.db.QueryRow(query, b.Name, b.CorpName)
 
 	var ps models.BattlesTop
 	err := row.Scan(&ps.Id, &ps.CorpName, &ps.Name, &ps.Level, &ps.Count)

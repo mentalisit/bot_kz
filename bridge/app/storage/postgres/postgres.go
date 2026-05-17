@@ -2,15 +2,15 @@ package postgres
 
 import (
 	"bridge/config"
-	"database/sql"
 	"fmt"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
 )
 
 type Db struct {
-	db  *sql.DB
+	db  *sqlx.DB
 	log *logger.Logger
 }
 
@@ -19,7 +19,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
 	// Открытие соединения
-	conn, err := sql.Open("postgres", dns)
+	conn, err := sqlx.Open("postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
@@ -69,6 +69,6 @@ func (d *Db) createTable() {
 }
 
 // GetDB возвращает указатель на sql.DB для использования в других пакетах
-func (d *Db) GetDB() *sql.DB {
+func (d *Db) GetDB() *sqlx.DB {
 	return d.db
 }

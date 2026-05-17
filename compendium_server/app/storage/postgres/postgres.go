@@ -4,62 +4,59 @@ import (
 	"compendium_s/config"
 	"compendium_s/models"
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
-	db  Client
+	//db  Client
+	db  *sqlx.DB
 	log *logger.Logger
 }
 type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(ctx context.Context, sql string, arguments ...any) (sql.Result, error)
+	Query(ctx context.Context, sql string, args ...any) (*sql.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) *sql.Row
+	Begin(ctx context.Context) (*sql.Tx, error)
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
-		//return err
 	}
 
-	db := &Db{
-		db:  pool,
+	database := &Db{
+		db:  db,
 		log: log,
 	}
-	return db
-}
-
-func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 10*time.Second)
+	return database
 }
 
 func (d *Db) DeleteOldClient(userid string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	del := "delete from hs_compendium.corpmember where userid = $1"
-	_, _ = d.db.Exec(ctx, del, userid)
+	_, _ = d.db.ExecContext(ctx, del, userid)
 	del = "delete from hs_compendium.list_users where userid = $1"
-	_, _ = d.db.Exec(ctx, del, userid)
+	_, _ = d.db.ExecContext(ctx, del, userid)
 	del = "delete from hs_compendium.tech where userid = $1"
-	_, _ = d.db.Exec(ctx, del, userid)
+	_, _ = d.db.ExecContext(ctx, del, userid)
 	del = "delete from hs_compendium.users where userid = $1"
-	_, _ = d.db.Exec(ctx, del, userid)
+	_, _ = d.db.ExecContext(ctx, del, userid)
 }
 
 func (d *Db) SearchOldData(i models.Identity) (m models.Moving) {

@@ -5,44 +5,9 @@ import (
 	"time"
 )
 
-//func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
-//	var count int
-//	sel := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
-//	err := d.db.QueryRow(context.Background(), sel, cm.GuildId, cm.UserId).Scan(&count)
-//	if err != nil {
-//		return err
-//	}
-//	if count == 0 {
-//		insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-//		_, err = d.db.Exec(context.Background(), insert, cm.Name, cm.UserId, cm.GuildId, cm.Avatar, cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	techBytes, err := json.Marshal(cm.Tech)
-//	if err != nil {
-//		return err
-//	}
-//	if len(cm.Tech) == 0 {
-//		tech := make(map[int]models.TechLevel)
-//		tech[701] = models.TechLevel{
-//			Ts:    0,
-//			Level: 0,
-//		}
-//		techBytes, _ = json.Marshal(tech)
-//	}
-//	err = d.TechInsert(cm.Name, cm.UserId, cm.GuildId, techBytes)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(ctx, sel, guildid)
+	results, err := d.db.Query(sel, guildid)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -80,10 +45,8 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 }
 
 func (d *Db) CorpMemberRead(userid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1"
-	results, err := d.db.Query(ctx, sel, userid)
+	results, err := d.db.Query(sel, userid)
 	defer results.Close()
 	if err != nil {
 		return nil, err

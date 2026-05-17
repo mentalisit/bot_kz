@@ -1,19 +1,17 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ReadConfigRs() []models.CorporationConfig {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	var tt []models.CorporationConfig
-	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
+	results, err := d.db.Query("SELECT * FROM kzbot.config")
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -28,13 +26,12 @@ func (d *Db) ReadConfigRs() []models.CorporationConfig {
 	return tt
 }
 func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationConfig) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	sel := "SELECT * FROM kzbot.config WHERE tgchannel = $1"
-	results, err := d.db.Query(ctx, sel, tgChannel)
+	results, err := d.db.Query(sel, tgChannel)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			d.log.ErrorErr(err)
@@ -47,13 +44,12 @@ func (d *Db) ReadConfigForTgChannel(tgChannel string) (conf models.CorporationCo
 	return conf
 }
 func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	sel := "SELECT * FROM kzbot.config WHERE corpname = $1"
-	results, err := d.db.Query(ctx, sel, corpName)
+	results, err := d.db.Query(sel, corpName)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			d.log.ErrorErr(err)
@@ -66,46 +62,10 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 	return conf
 }
 
-//func (d *Db) DBReadBridgeConfig() []models.BridgeConfig {
-//	ctx, cancel := d.getContext()
-//	defer cancel()
-//	var cc []models.BridgeConfig
-//	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)
-//	if err != nil {
-//		d.log.ErrorErr(err)
-//		return cc
-//	}
-//	defer rows.Close()
-//	for rows.Next() {
-//		var config models.BridgeConfig
-//		var channelDs, channelTg []byte
-//		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channelDs, &channelTg, &config.ForbiddenPrefixes); err != nil {
-//			d.log.ErrorErr(err)
-//			return cc
-//		}
-//
-//		if err = json.Unmarshal(channelDs, &config.ChannelDs); err != nil {
-//			d.log.ErrorErr(err)
-//		}
-//
-//		if err = json.Unmarshal(channelTg, &config.ChannelTg); err != nil {
-//			d.log.ErrorErr(err)
-//		}
-//
-//		cc = append(cc, config)
-//	}
-//	if err = rows.Err(); err != nil {
-//		d.log.ErrorErr(err)
-//		return cc
-//	}
-//	return cc
-//}
-
 func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	var cc []models.Bridge2Config
-	ctx, cancel := d.getContext()
-	defer cancel()
-	rows, err := d.db.Query(ctx, `SELECT * FROM rs_bot.bridge_config`)
+
+	rows, err := d.db.Query(`SELECT * FROM rs_bot.bridge_config`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return cc
@@ -133,10 +93,9 @@ func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	return cc
 }
 func (d *Db) DeleteConfigRs(c models.CorporationConfig) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	del := "delete from kzbot.config where corpname = $1"
-	_, err := d.db.Exec(ctx, del, c.CorpName)
+	_, err := d.db.Exec(del, c.CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

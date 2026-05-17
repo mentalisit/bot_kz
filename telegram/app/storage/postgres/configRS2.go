@@ -7,10 +7,9 @@ import (
 )
 
 func (d *Db) ReadConfigV2() []models.CorporationConfigV2 {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	var tt []models.CorporationConfigV2
-	results, err := d.db.Query(ctx, "SELECT * FROM rs_bot.config_rs")
+	results, err := d.db.Query("SELECT * FROM rs_bot.config_rs")
 	if err != nil {
 		d.log.ErrorErr(err)
 		return tt

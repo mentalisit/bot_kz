@@ -1,14 +1,13 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"telegram/models2"
 	"time"
 )
 
 // GetChatRoles возвращает роли в чате с информацией о подписке пользователя
-func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.Role, error) {
+func (d *Db) GetChatRoles(chatID, userID int64) ([]models2.Role, error) {
 	// Сначала получаем роли из базы данных
 	query := `
         SELECT r.id, r.chat_id, r.name, r.created_by, r.created_at,
@@ -21,7 +20,7 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.
         ORDER BY r.created_at
     `
 
-	rows, err := d.db.Query(ctx, query, chatID, userID)
+	rows, err := d.db.Query(query, chatID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chat roles: %w", err)
 	}
@@ -54,7 +53,7 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.
 
 	// Если роли "all" нет - создаем ее
 	if !hasAllRole {
-		allRoleID, err = d.createAllRole(ctx, chatID)
+		allRoleID, err = d.createAllRole(chatID)
 		if err != nil {
 			fmt.Printf("Warning: failed to create 'all' role: %v", err)
 		} else {
@@ -75,7 +74,7 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.
 	// Обновляем количество участников для роли "all"
 	for i, role := range roles {
 		if role.Name == "all" {
-			memberCount, err := d.getAllRoleMemberCount(ctx, chatID)
+			memberCount, err := d.getAllRoleMemberCount(chatID)
 			if err != nil {
 				fmt.Printf("Warning: failed to get member count for 'all' role: %v", err)
 				memberCount = 0
@@ -90,11 +89,11 @@ func (d *Db) GetChatRoles(ctx context.Context, chatID, userID int64) ([]models2.
 }
 
 // JoinRole добавляет пользователя в роль
-func (d *Db) JoinRole(ctx context.Context, userID, roleID, chatID int64) error {
+func (d *Db) JoinRole(userID, roleID, chatID int64) error {
 	// Проверяем, не является ли роль "all"
 	var roleName string
 	checkQuery := `SELECT name FROM telegram.roles WHERE id = $1`
-	err := d.db.QueryRow(ctx, checkQuery, roleID).Scan(&roleName)
+	err := d.db.QueryRow(checkQuery, roleID).Scan(&roleName)
 	if err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
 	}
@@ -109,7 +108,7 @@ func (d *Db) JoinRole(ctx context.Context, userID, roleID, chatID int64) error {
         ON CONFLICT (user_id, role_id) DO NOTHING
     `
 
-	_, err = d.db.Exec(ctx, query, userID, roleID, chatID)
+	_, err = d.db.Exec(query, userID, roleID, chatID)
 	if err != nil {
 		return fmt.Errorf("failed to join role: %w", err)
 	}
@@ -118,11 +117,11 @@ func (d *Db) JoinRole(ctx context.Context, userID, roleID, chatID int64) error {
 }
 
 // LeaveRole удаляет пользователя из роли
-func (d *Db) LeaveRole(ctx context.Context, userID, roleID int64) error {
+func (d *Db) LeaveRole(userID, roleID int64) error {
 	// Проверяем, не является ли роль "all"
 	var roleName string
 	checkQuery := `SELECT name FROM telegram.roles WHERE id = $1`
-	err := d.db.QueryRow(ctx, checkQuery, roleID).Scan(&roleName)
+	err := d.db.QueryRow(checkQuery, roleID).Scan(&roleName)
 	if err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
 	}
@@ -132,7 +131,7 @@ func (d *Db) LeaveRole(ctx context.Context, userID, roleID int64) error {
 	}
 
 	query := `DELETE FROM telegram.user_roles WHERE user_id = $1 AND role_id = $2`
-	_, err = d.db.Exec(ctx, query, userID, roleID)
+	_, err = d.db.Exec(query, userID, roleID)
 	if err != nil {
 		return fmt.Errorf("failed to leave role: %w", err)
 	}
@@ -141,11 +140,11 @@ func (d *Db) LeaveRole(ctx context.Context, userID, roleID int64) error {
 }
 
 // IsUserSubscribedToRole проверяет, подписан ли пользователь на указанную роль
-func (d *Db) IsUserSubscribedToRole(ctx context.Context, userID, roleID int64) (bool, error) {
+func (d *Db) IsUserSubscribedToRole(userID, roleID int64) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM telegram.user_roles WHERE user_id = $1 AND role_id = $2)`
 
 	var isSubscribed bool
-	err := d.db.QueryRow(ctx, query, userID, roleID).Scan(&isSubscribed)
+	err := d.db.QueryRow(query, userID, roleID).Scan(&isSubscribed)
 	if err != nil {
 		return false, fmt.Errorf("failed to check user role subscription: %w", err)
 	}

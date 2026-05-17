@@ -1,17 +1,16 @@
 package postgres
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"telegram/models2"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 // getAllRoleMemberCount возвращает количество участников в роли "all" (все пользователи чата)
-func (d *Db) getAllRoleMemberCount(ctx context.Context, chatID int64) (int, error) {
+func (d *Db) getAllRoleMemberCount(chatID int64) (int, error) {
 	query := `
         SELECT COUNT(*) 
         FROM telegram.chat_members 
@@ -19,7 +18,7 @@ func (d *Db) getAllRoleMemberCount(ctx context.Context, chatID int64) (int, erro
     `
 
 	var count int
-	err := d.db.QueryRow(ctx, query, chatID).Scan(&count)
+	err := d.db.QueryRow(query, chatID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get member count: %w", err)
 	}
@@ -28,7 +27,7 @@ func (d *Db) getAllRoleMemberCount(ctx context.Context, chatID int64) (int, erro
 }
 
 // GetChatUsers возвращает пользователей чата с их ролями
-func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, error) {
+func (d *Db) GetChatUsers(chatID int64) ([]models2.User, error) {
 	query := `
         SELECT 
             cm.user_id,
@@ -41,7 +40,7 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, er
         ORDER BY cm.is_admin DESC, cm.first_name, cm.last_name
     `
 
-	rows, err := d.db.Query(ctx, query, chatID)
+	rows, err := d.db.Query(query, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chat users: %w", err)
 	}
@@ -76,8 +75,8 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, er
 	// Находим ID роли "all" для этого чата
 	var allRoleID int64
 	roleQuery := `SELECT id FROM telegram.roles WHERE chat_id = $1 AND name = 'all'`
-	err = d.db.QueryRow(ctx, roleQuery, chatID).Scan(&allRoleID)
-	if err != nil && err != pgx.ErrNoRows {
+	err = d.db.QueryRow(roleQuery, chatID).Scan(&allRoleID)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("failed to get 'all' role ID: %w", err)
 	}
 
@@ -96,7 +95,7 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, er
             WHERE chat_id = $1
         `
 
-		roleRows, err := d.db.Query(ctx, rolesQuery, chatID)
+		roleRows, err := d.db.Query(rolesQuery, chatID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to query user roles: %w", err)
 		}
@@ -121,25 +120,25 @@ func (d *Db) GetChatUsers(ctx context.Context, chatID int64) ([]models2.User, er
 }
 
 // IsChatAdmin проверяет, является ли пользователь администратором чата
-func (d *Db) IsChatAdmin(ctx context.Context, chatID, userID int64) (bool, error) {
+func (d *Db) IsChatAdmin(chatID, userID int64) (bool, error) {
 	// Сначала проверяем в таблице chat_permissions
 	query := `SELECT is_admin FROM telegram.chat_permissions WHERE chat_id = $1 AND user_id = $2`
 	var isAdmin bool
-	err := d.db.QueryRow(ctx, query, chatID, userID).Scan(&isAdmin)
+	err := d.db.QueryRow(query, chatID, userID).Scan(&isAdmin)
 
 	if err == nil {
 		return isAdmin, nil
 	}
 
-	if err != pgx.ErrNoRows {
+	if err != sql.ErrNoRows {
 		return false, fmt.Errorf("failed to check admin status: %w", err)
 	}
 
 	// Если записи нет, проверяем в таблице chat_members
 	query = `SELECT is_admin FROM telegram.chat_members WHERE chat_id = $1 AND user_id = $2`
-	err = d.db.QueryRow(ctx, query, chatID, userID).Scan(&isAdmin)
+	err = d.db.QueryRow(query, chatID, userID).Scan(&isAdmin)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return false, nil // Пользователь не найден в чате
 		}
 		return false, fmt.Errorf("failed to get user from chat_members: %w", err)
@@ -149,23 +148,23 @@ func (d *Db) IsChatAdmin(ctx context.Context, chatID, userID int64) (bool, error
 }
 
 // UpdateUserCache обновляет кэш пользователей чата
-func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]models2.User) error {
+func (d *Db) UpdateUserCache(chatID int64, users map[int64]models2.User) error {
 	// Начнем транзакцию
-	tx, err := d.db.Begin(ctx)
+	tx, err := d.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback()
 
 	// Очищаем старые данные для этого чата
-	_, err = tx.Exec(ctx, "DELETE FROM telegram.chat_members WHERE chat_id = $1", chatID)
+	_, err = tx.Exec("DELETE FROM telegram.chat_members WHERE chat_id = $1", chatID)
 	if err != nil {
 		return fmt.Errorf("failed to clear chat members: %w", err)
 	}
 
 	// Вставляем новых пользователей
 	for userID, user := range users {
-		_, err := tx.Exec(ctx, `
+		_, err := tx.Exec(`
             INSERT INTO telegram.chat_members (chat_id, user_id, first_name, last_name, user_name, is_admin)
             VALUES ($1, $2, $3, $4, $5, $6)
         `, chatID, userID, user.FirstName, user.LastName, user.UserName, user.IsAdmin)
@@ -176,7 +175,7 @@ func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]
 	}
 
 	// Коммитим транзакцию
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -184,19 +183,19 @@ func (d *Db) UpdateUserCache(ctx context.Context, chatID int64, users map[int64]
 }
 
 // RemoveUserFromChat удаляет пользователя из чата
-func (d *Db) RemoveUserFromChat(ctx context.Context, chatID, userID int64) error {
+func (d *Db) RemoveUserFromChat(chatID, userID int64) error {
 	query := `DELETE FROM telegram.chat_members WHERE chat_id = $1 AND user_id = $2`
 
-	_, err := d.db.Exec(ctx, query, chatID, userID)
+	_, err := d.db.Exec(query, chatID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to remove user from chat: %w", err)
 	}
 
 	query = `DELETE FROM telegram.chat_permissions WHERE chat_id = $1 AND user_id = $2`
-	_, _ = d.db.Exec(ctx, query, chatID, userID)
+	_, _ = d.db.Exec(query, chatID, userID)
 
 	query = `DELETE FROM telegram.user_roles WHERE chat_id = $1 AND user_id = $2`
-	_, _ = d.db.Exec(ctx, query, chatID, userID)
+	_, _ = d.db.Exec(query, chatID, userID)
 
 	_ = d.FindCorpMemberAndRemoveByUserId(strconv.FormatInt(userID, 10), strconv.FormatInt(chatID, 10))
 
@@ -204,19 +203,20 @@ func (d *Db) RemoveUserFromChat(ctx context.Context, chatID, userID int64) error
 }
 
 // UpdateUserInfo обновляет информацию о пользователе
-func (d *Db) UpdateUserInfo(ctx context.Context, userID int64, firstName, lastName, userName string) error {
+func (d *Db) UpdateUserInfo(userID int64, firstName, lastName, userName string) error {
 	query := `
         UPDATE telegram.chat_members 
         SET first_name = $1, last_name = $2, user_name = $3, last_updated = NOW()
         WHERE user_id = $4
     `
 
-	result, err := d.db.Exec(ctx, query, firstName, lastName, userName, userID)
+	result, err := d.db.Exec(query, firstName, lastName, userName, userID)
 	if err != nil {
 		return fmt.Errorf("failed to update user info: %w", err)
 	}
 
-	if result.RowsAffected() == 0 {
+	r, _ := result.RowsAffected()
+	if r == 0 {
 		return fmt.Errorf("user not found")
 	}
 
@@ -224,7 +224,7 @@ func (d *Db) UpdateUserInfo(ctx context.Context, userID int64, firstName, lastNa
 }
 
 // AddUserToChat добавляет пользователя в чат
-func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models2.User) error {
+func (d *Db) AddUserToChat(chatID int64, user models2.User) error {
 	query := `
         INSERT INTO telegram.chat_members (chat_id, user_id, first_name, last_name, user_name, is_admin)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -237,7 +237,7 @@ func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models2.User)
             last_updated = NOW()
     `
 
-	_, err := d.db.Exec(ctx, query, chatID, user.ID, user.FirstName, user.LastName, user.UserName, user.IsAdmin)
+	_, err := d.db.Exec(query, chatID, user.ID, user.FirstName, user.LastName, user.UserName, user.IsAdmin)
 	if err != nil {
 		return fmt.Errorf("failed to add user to chat: %w", err)
 	}
@@ -246,7 +246,7 @@ func (d *Db) AddUserToChat(ctx context.Context, chatID int64, user models2.User)
 }
 
 // GetChatAdmins возвращает список администраторов чата
-func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models2.User, error) {
+func (d *Db) GetChatAdmins(chatID int64) ([]models2.User, error) {
 	query := `
         SELECT cm.user_id, cm.first_name, cm.last_name, cm.user_name, cm.is_admin
         FROM telegram.chat_members cm
@@ -255,7 +255,7 @@ func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models2.User, e
         ORDER BY cm.first_name, cm.last_name
     `
 
-	rows, err := d.db.Query(ctx, query, chatID)
+	rows, err := d.db.Query(query, chatID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chat admins: %w", err)
 	}
@@ -284,7 +284,7 @@ func (d *Db) GetChatAdmins(ctx context.Context, chatID int64) ([]models2.User, e
 }
 
 // GetRolesUsers возвращает пользователей чата с определенной ролью
-func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]models2.User, error) {
+func (d *Db) GetRolesUsers(chatID int64, roleId int64) ([]models2.User, error) {
 	query := `
 		SELECT
 			cm.user_id,
@@ -298,7 +298,7 @@ func (d *Db) GetRolesUsers(ctx context.Context, chatID int64, roleId int64) ([]m
 		ORDER BY cm.is_admin DESC, cm.first_name, cm.last_name
 	`
 
-	rows, err := d.db.Query(ctx, query, chatID, roleId)
+	rows, err := d.db.Query(query, chatID, roleId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query role users: %w", err)
 	}
@@ -337,15 +337,15 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 	//получаем мультиюзера по юзерАйди
 	var uid uuid.UUID
 	query := `SELECT uuid  FROM my_compendium.multi_accounts WHERE telegram_id = $1`
-	err := d.db.QueryRow(context.Background(), query, userid).Scan(&uid)
+	err := d.db.QueryRow(query, userid).Scan(&uid)
 	if err != nil {
 		return err
 	}
 
 	//получаем список корпораций мультиюзера
-	var guilds []uuid.UUID
+	var guilds models2.UUIDArray
 	query = `SELECT guildIds FROM my_compendium.corpMember WHERE uid = $1`
-	err = d.db.QueryRow(context.Background(), query, uid).Scan(&guilds)
+	err = d.db.QueryRow(query, uid).Scan(&guilds)
 	if err != nil {
 		return err
 	}
@@ -357,12 +357,12 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 		    CROSS JOIN jsonb_array_elements_text(channels->k) AS v
 		    WHERE v = $1
 		)`
-	err = d.db.QueryRow(context.Background(), query, channelId).Scan(&gid)
+	err = d.db.QueryRow(query, channelId).Scan(&gid)
 	if err != nil {
 		return err
 	}
 
-	var newGuilds []uuid.UUID
+	var newGuilds models2.UUIDArray
 	for _, guild := range guilds {
 		if guild != gid {
 			newGuilds = append(newGuilds, guild)
@@ -371,7 +371,7 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 
 	//update
 	query = `UPDATE my_compendium.corpMember SET guildIds = $1 WHERE uid = $2`
-	_, err = d.db.Exec(context.Background(), query, newGuilds, uid)
+	_, err = d.db.Exec(query, newGuilds, uid)
 	if err != nil {
 		//d.log.ErrorErr(fmt.Errorf("failed to update corp member: %w", err))
 		return err
@@ -381,8 +381,8 @@ func (d *Db) FindCorpMemberAndRemoveByUserId(userid, channelId string) error {
 }
 
 // GetCorpMembersMyCompendium возвращает участников корпорации из my_compendium
-func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]models2.CompendiumCorpMember, error) {
-	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+func (d *Db) GetCorpMembersMyCompendium(chatID int64) ([]models2.CompendiumCorpMember, error) {
+	gid, err := d.GetGildUUIDMyCompendium(chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]mo
 		JOIN my_compendium.multi_accounts ma ON cm.uid = ma.uuid
 		WHERE $1 = ANY(cm.guildIds)`
 
-	rows, err := d.db.Query(ctx, corpMembersQuery, gid)
+	rows, err := d.db.Query(corpMembersQuery, gid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query corp members: %w", err)
 	}
@@ -420,15 +420,15 @@ func (d *Db) GetCorpMembersMyCompendium(ctx context.Context, chatID int64) ([]mo
 }
 
 // GetCorpMembersHSCompendium возвращает участников корпорации из hs_compendium
-func (d *Db) GetCorpMembersHSCompendium(ctx context.Context, chatID int64) ([]models2.CompendiumCorpMember, error) {
-	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+func (d *Db) GetCorpMembersHSCompendium(chatID int64) ([]models2.CompendiumCorpMember, error) {
+	gid, err := d.GetGildUUIDMyCompendium(chatID)
 	if err != nil {
 		return nil, err
 	}
 	guildId := gid.String()
 
 	sel := "SELECT username,userid,avatarurl FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(ctx, sel, guildId)
+	results, err := d.db.Query(sel, guildId)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -455,25 +455,85 @@ func changeName(m models2.CompendiumCorpMember) string {
 	return m.Username
 }
 
-func (d *Db) GetGildUUIDMyCompendium(ctx context.Context, chatID int64) (gid *uuid.UUID, err error) {
+func (d *Db) GetGildUUIDMyCompendium(chatID int64) (gid *uuid.UUID, err error) {
 	guildQuery := `SELECT gid FROM my_compendium.guilds WHERE EXISTS (
 		SELECT 1 FROM jsonb_object_keys(channels) AS k
 		CROSS JOIN jsonb_array_elements_text(channels->k) AS v
 		WHERE v = $1
 	)`
-	err = d.db.QueryRow(ctx, guildQuery, strconv.FormatInt(chatID, 10)).Scan(&gid)
+	err = d.db.QueryRow(guildQuery, strconv.FormatInt(chatID, 10)).Scan(&gid)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("guild not found for chat %d", chatID)
 		}
 		return nil, fmt.Errorf("failed to find guild: %w", err)
 	}
 	return gid, nil
 }
+func (d *Db) GuildSave(
+	g models2.MultiAccountGuildV2,
+) (*models2.MultiAccountGuildV2, error) {
+
+	/*
+		Если GId пустой —
+		генерируем
+	*/
+
+	if g.GId == uuid.Nil {
+		g.GId = uuid.New()
+	}
+
+	query := `
+		INSERT INTO my_compendium.guilds (
+			gid,
+			guildname,
+			channels,
+			avatarurl
+		)
+		VALUES (
+			$1,
+			$2,
+			$3,
+			$4
+		)
+		ON CONFLICT (gid)
+		DO UPDATE SET
+			guildname = EXCLUDED.guildname,
+			channels = EXCLUDED.channels,
+			avatarurl = EXCLUDED.avatarurl
+		RETURNING
+			gid,
+			guildname,
+			channels,
+			avatarurl
+	`
+
+	var res models2.MultiAccountGuildV2
+
+	err := d.db.QueryRow(
+		query,
+
+		g.GId,
+		g.GuildName,
+		g.Channels,
+		g.AvatarUrl,
+	).Scan(
+		&res.GId,
+		&res.GuildName,
+		&res.Channels,
+		&res.AvatarUrl,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
 
 // RemoveCorpMemberMyCompendium удаляет участника из корпорации my_compendium
-func (d *Db) RemoveCorpMemberMyCompendium(ctx context.Context, chatID int64, userID string) error {
-	gid, err := d.GetGildUUIDMyCompendium(ctx, chatID)
+func (d *Db) RemoveCorpMemberMyCompendium(chatID int64, userID string) error {
+	gid, err := d.GetGildUUIDMyCompendium(chatID)
 	if err != nil {
 		return err
 	}
@@ -485,18 +545,18 @@ func (d *Db) RemoveCorpMemberMyCompendium(ctx context.Context, chatID int64, use
 	}
 
 	// Получаем текущие guildIds для этого участника
-	var currentGuilds []uuid.UUID
+	var currentGuilds models2.UUIDArray
 	guildsQuery := `SELECT guildIds FROM my_compendium.corpmember WHERE uid = $1`
-	err = d.db.QueryRow(ctx, guildsQuery, userUUID).Scan(&currentGuilds)
+	err = d.db.QueryRow(guildsQuery, userUUID).Scan(&currentGuilds)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return fmt.Errorf("corp member not found for uid %s", userID)
 		}
 		return fmt.Errorf("failed to get current guilds: %w", err)
 	}
 
 	// Удаляем gid из массива guildIds
-	var newGuilds []uuid.UUID
+	var newGuilds models2.UUIDArray
 	for _, guild := range currentGuilds {
 		if guild != *gid {
 			newGuilds = append(newGuilds, guild)
@@ -506,14 +566,14 @@ func (d *Db) RemoveCorpMemberMyCompendium(ctx context.Context, chatID int64, use
 	// Если после удаления не осталось гильдий, удаляем запись целиком
 	if len(newGuilds) == 0 {
 		deleteQuery := `DELETE FROM my_compendium.corpmember WHERE uid = $1`
-		_, err = d.db.Exec(ctx, deleteQuery, userUUID)
+		_, err = d.db.Exec(deleteQuery, userUUID)
 		if err != nil {
 			return fmt.Errorf("failed to delete corp member: %w", err)
 		}
 	} else {
 		// Обновляем запись с оставшимися гильдиями
 		updateQuery := `UPDATE my_compendium.corpmember SET guildIds = $1 WHERE uid = $2`
-		_, err = d.db.Exec(ctx, updateQuery, newGuilds, userUUID)
+		_, err = d.db.Exec(updateQuery, newGuilds, userUUID)
 		if err != nil {
 			return fmt.Errorf("failed to update corp member: %w", err)
 		}
@@ -523,10 +583,10 @@ func (d *Db) RemoveCorpMemberMyCompendium(ctx context.Context, chatID int64, use
 }
 
 // RemoveCorpMemberHSCompendium удаляет участника из корпорации hs_compendium
-func (d *Db) RemoveCorpMemberHSCompendium(ctx context.Context, chatID int64, userID string) error {
-	gid, _ := d.GetGildUUIDMyCompendium(ctx, chatID)
+func (d *Db) RemoveCorpMemberHSCompendium(chatID int64, userID string) error {
+	gid, _ := d.GetGildUUIDMyCompendium(chatID)
 	deleteQuery := `DELETE FROM hs_compendium.corpmember WHERE userid = $1 and guildid = $2`
-	_, err := d.db.Exec(ctx, deleteQuery, userID, gid.String())
+	_, err := d.db.Exec(deleteQuery, userID, gid.String())
 	if err != nil {
 		return fmt.Errorf("failed to delete corp member: %w", err)
 	}

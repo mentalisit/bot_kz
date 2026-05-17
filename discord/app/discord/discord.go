@@ -21,10 +21,12 @@ type Discord struct {
 	storage *storage.Storage
 	//bridgeConfig           []models.Bridge2Config
 	//bridgeConfigUpdateTime int64
-	api         *restapi.Recover
-	re          *replace
-	NameAliases map[string]string
-	gameName    map[string]string
+	api              *restapi.Recover
+	re               *replace
+	NameAliases      map[string]string
+	gameName         map[string]string
+	channelNameCache map[string]string
+	guildNameCache   map[string]string
 }
 
 func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
@@ -48,13 +50,16 @@ func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) 
 	}
 	fmt.Println("Бот Дискорд загружен ")
 	DS := &Discord{
-		S:        ds,
-		webhook:  transmitter.New(ds, "KzBot", true, log),
-		log:      log,
-		storage:  st,
-		api:      restapi.NewRecover(log),
-		re:       newReplace(ds),
-		gameName: make(map[string]string),
+		S:                ds,
+		webhook:          transmitter.New(ds, "KzBot", true, log),
+		log:              log,
+		storage:          st,
+		api:              restapi.NewRecover(log),
+		re:               newReplace(ds),
+		NameAliases:      make(map[string]string),
+		gameName:         make(map[string]string),
+		channelNameCache: make(map[string]string),
+		guildNameCache:   make(map[string]string),
 	}
 	ds.AddHandler(DS.messageHandler)
 	ds.AddHandler(DS.messageUpdate)

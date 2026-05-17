@@ -1,19 +1,17 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"time"
 )
 
 func (d *Db) OptimizationSborkz() {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	// Подсчет активных записей и сортировка по имени
 	query := `SELECT mention,corpname,lvlkz, SUM(active) AS active_sum FROM kzbot.sborkz GROUP BY corpname, mention,lvlkz ORDER BY mention`
-	rows, err := d.db.Query(ctx, query)
+	rows, err := d.db.Query(query)
 	defer rows.Close()
 	if err != nil {
 		d.log.Info(err.Error())
@@ -30,7 +28,7 @@ func (d *Db) OptimizationSborkz() {
 		}
 		var countNames int
 		sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND lvlkz = $2 AND corpname = $3 AND active > 0"
-		row := d.db.QueryRow(ctx, sel, mention, level, corpname)
+		row := d.db.QueryRow(sel, mention, level, corpname)
 		err := row.Scan(&countNames)
 		if err != nil {
 			d.log.Info(err.Error())
@@ -38,7 +36,7 @@ func (d *Db) OptimizationSborkz() {
 		}
 		if countNames > 5 {
 			sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND mention = $3"
-			results, err := d.db.Query(ctx, sel, level, corpname, mention)
+			results, err := d.db.Query(sel, level, corpname, mention)
 			defer results.Close()
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -51,7 +49,7 @@ func (d *Db) OptimizationSborkz() {
 					&t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 			}
 			del := "delete from kzbot.sborkz where mention = $1 and corpname = $2 and lvlkz = $3"
-			_, err = d.db.Exec(ctx, del, mention, corpname, level)
+			_, err = d.db.Exec(del, mention, corpname, level)
 			if err != nil {
 				d.log.ErrorErr(err)
 			}
@@ -61,7 +59,7 @@ func (d *Db) OptimizationSborkz() {
 			insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
 		          numkzn,numberkz,numberevent,eventpoints,active,timedown)
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`
-			_, err = d.db.Exec(ctx, insertSborkztg1, t.Corpname, t.Name, t.Mention, t.Tip, t.Dsmesid, t.Tgmesid,
+			_, err = d.db.Exec(insertSborkztg1, t.Corpname, t.Name, t.Mention, t.Tip, t.Dsmesid, t.Tgmesid,
 				t.Wamesid, mtime, mdate, t.Lvlkz, t.Numkzn, t.Numberkz, t.Numberevent, t.Eventpoints, activeCount, t.Timedown)
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -76,12 +74,9 @@ func (d *Db) OptimizationSborkz() {
 	}
 }
 func (d *Db) СountName(userid, lvlkz, corpName string) (int, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var countNames int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND lvlkz = $2 AND corpname = $3 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, userid, lvlkz, corpName)
+	row := d.db.QueryRow(sel, userid, lvlkz, corpName)
 	err := row.Scan(&countNames)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -91,12 +86,9 @@ func (d *Db) СountName(userid, lvlkz, corpName string) (int, error) {
 	return countNames, nil
 }
 func (d *Db) CountQueue(lvlkz, CorpName string) (int, error) { //проверка сколько игровок в очереди
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var count int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	row := d.db.QueryRow(sel, lvlkz, CorpName)
 	err := row.Scan(&count)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -106,13 +98,10 @@ func (d *Db) CountQueue(lvlkz, CorpName string) (int, error) { //проверк�
 	return count, nil
 }
 func (d *Db) CountNumberNameActive1(lvlkz, CorpName, userid string) (int, error) { // выковыриваем из базы значение количества походов на кз
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var countNumberNameActive1 int
 	sel := "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND userid = $3"
 	//COALESCE(SUM(value), 0)
-	row := d.db.QueryRow(ctx, sel, lvlkz, CorpName, userid)
+	row := d.db.QueryRow(sel, lvlkz, CorpName, userid)
 	err := row.Scan(&countNumberNameActive1)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -122,10 +111,8 @@ func (d *Db) CountNumberNameActive1(lvlkz, CorpName, userid string) (int, error)
 }
 
 func (d *Db) CountNameQueue(userid string) (countNames int) { //проверяем есть ли игрок в других очередях
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, userid)
+	row := d.db.QueryRow(sel, userid)
 	err := row.Scan(&countNames)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -134,10 +121,8 @@ func (d *Db) CountNameQueue(userid string) (countNames int) { //проверяе
 	return countNames
 }
 func (d *Db) CountNameQueueCorp(userid, corp string) (countNames int) { //проверяем есть ли игрок в других очередях
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, userid, corp)
+	row := d.db.QueryRow(sel, userid, corp)
 	err := row.Scan(&countNames)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -147,8 +132,6 @@ func (d *Db) CountNameQueueCorp(userid, corp string) (countNames int) { //про
 	return countNames
 }
 func (d *Db) ReadTop5Level(corpname string) []string {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	query := `
         SELECT lvlkz, COUNT(*) AS lvlkz_count
         FROM kzbot.sborkz
@@ -160,7 +143,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
     `
 
 	// Выполнение запроса
-	rows, err := d.db.Query(ctx, query, corpname)
+	rows, err := d.db.Query(query, corpname)
 	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -184,37 +167,28 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 }
 
 func (d *Db) CountQueueNumberNameActive1QueueLvl(lvlkz, CorpName, userid string) (countQueue, countNumberName, NumRsLevel int, errorsAll error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	row := d.db.QueryRow(sel, lvlkz, CorpName)
 	err := row.Scan(&countQueue)
 	if err != nil {
 		errorsAll = fmt.Errorf("%+v\n", err)
 	}
 
-	ctx, cancel = d.getContext()
-	defer cancel()
-
 	sel = "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND userid = $3"
-	row = d.db.QueryRow(ctx, sel, lvlkz, CorpName, userid)
+	row = d.db.QueryRow(sel, lvlkz, CorpName, userid)
 	err = row.Scan(&countNumberName)
 	if err != nil {
 		errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
 	}
 
-	ctx, cancel = d.getContext()
-	defer cancel()
-
 	sel = "SELECT  number FROM kzbot.numkz WHERE lvlkz = $1 AND corpname = $2"
-	row = d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	row = d.db.QueryRow(sel, lvlkz, CorpName)
 	err = row.Scan(&NumRsLevel)
 	if err != nil {
 		NumRsLevel = 0
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			insertSmt := "INSERT INTO kzbot.numkz(lvlkz, number,corpname) VALUES ($1,$2,$3)"
-			_, err = d.db.Exec(ctx, insertSmt, lvlkz, NumRsLevel, CorpName)
+			_, err = d.db.Exec(insertSmt, lvlkz, NumRsLevel, CorpName)
 			if err != nil {
 				errorsAll = fmt.Errorf("%+v\n%+v\n", errorsAll, err)
 			}

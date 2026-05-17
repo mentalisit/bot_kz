@@ -1,9 +1,8 @@
 package postgres
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"rs/pkg/utils"
 	"strconv"
@@ -11,15 +10,12 @@ import (
 )
 
 func (d *Db) ReadAll(lvlkz, CorpName string) (users models.Users) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	u := models.Users{
 		User1: models.Sborkz{},
 	}
 	user := 1
 	sel := "SELECT * FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0"
-	results, err := d.db.Query(ctx, sel, lvlkz, CorpName)
+	results, err := d.db.Query(sel, lvlkz, CorpName)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -48,7 +44,7 @@ func (d *Db) ReadAllActive() (sb []models.Sborkz) {
 	sel := "SELECT id, corpname, name, COALESCE(date, '') AS date, COALESCE(lvlkz, '') AS lvlkz, " +
 		"numberevent, eventpoints FROM kzbot.sborkz WHERE active > 0"
 
-	results, err := d.db.Query(context.Background(), sel)
+	results, err := d.db.Query(sel)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -66,37 +62,28 @@ func (d *Db) ReadAllActive() (sb []models.Sborkz) {
 	return sb
 }
 func (d *Db) DeleteSborkzId(id int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	del := "delete from kzbot.sborkz where id = $1"
-	_, err := d.db.Exec(ctx, del, id)
+	_, err := d.db.Exec(del, id)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) UpdateSborkz(active string, id int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	upd := `update kzbot.sborkz set active = $1 where id = $2`
-	_, err := d.db.Exec(ctx, upd, active, id)
+	_, err := d.db.Exec(upd, active, id)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) UpdateSborkzPoints(active string, id int, points int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	upd := `update kzbot.sborkz set active = $1, eventpoints = $2 where id = $3`
-	_, err := d.db.Exec(ctx, upd, active, points, id)
+	_, err := d.db.Exec(upd, active, points, id)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
 func (d *Db) InsertQueueOld(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz, timekz string, tgmesid, numkzN int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
@@ -110,15 +97,13 @@ func (d *Db) InsertQueueOld(dsmesid, wamesid, CorpName, name, userid, nameMentio
 	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
                    numkzn,numberkz,numberevent,eventpoints,active,timedown) 
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
-	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
+	_, err := d.db.Exec(insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
 		wamesid, mtime, mdate, lvlkz, numkzN, 0, numevent, 0, 0, timekzz)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, timekz, tgmesid, numkzN int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	numevent := 0 // d.NumActiveEvent(CorpName)
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
@@ -127,15 +112,13 @@ func (d *Db) InsertQueue(dsmesid, wamesid, CorpName, name, userid, nameMention, 
 	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
                    numkzn,numberkz,numberevent,eventpoints,active,timedown) 
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
-	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
+	_, err := d.db.Exec(insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
 		wamesid, mtime, mdate, lvlkz, numkzN, 0, numevent, 0, 0, timekz)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMention, tip, lvlkz string, tgmesid, numevent, numberkz, numkzN, points int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	tm := time.Now().UTC()
 	mdate := (tm.Format("2006-01-02"))
 	mtime := (tm.Format("15:04"))
@@ -145,20 +128,20 @@ func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMenti
 	insertSborkztg1 := `INSERT INTO kzbot.sborkz(corpname,name,userid,mention,tip,dsmesid,tgmesid,wamesid,time,date,lvlkz,
                    numkzn,numberkz,numberevent,eventpoints,active,timedown) 
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`
-	_, err := d.db.Exec(ctx, insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
+	_, err := d.db.Exec(insertSborkztg1, CorpName, name, userid, nameMention, tip, dsmesid, tgmesid,
 		wamesid, mtime, mdate, lvlkz, numkzN, numberkz, numevent, points, 1, timekzz)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 
 	updN := `update kzbot.numkz set number=number+1 where lvlkz = $1 AND corpname = $2`
-	_, err = d.db.Exec(ctx, updN, lvlkz, CorpName)
+	_, err = d.db.Exec(updN, lvlkz, CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 	if numevent > 0 {
 		updE := `update kzbot.rsevent set number = number+1  where corpname = $1 AND activeevent = 1`
-		_, err = d.db.Exec(ctx, updE, CorpName)
+		_, err = d.db.Exec(updE, CorpName)
 		if err != nil {
 			d.log.ErrorErr(err)
 		}
@@ -166,11 +149,8 @@ func (d *Db) InsertQueueSolo(dsmesid, wamesid, CorpName, name, userid, nameMenti
 }
 
 func (d *Db) ElseTrue(userid string) []models.Sborkz {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, userid)
+	results, err := d.db.Query(sel, userid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -185,22 +165,16 @@ func (d *Db) ElseTrue(userid string) []models.Sborkz {
 	return tt
 }
 func (d *Db) DeleteQueue(userid, lvlkz, CorpName string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	del := "delete from kzbot.sborkz where userid = $1 AND lvlkz = $2 AND corpname = $3 AND active = 0"
-	_, err := d.db.Exec(ctx, del, userid, lvlkz, CorpName)
+	_, err := d.db.Exec(del, userid, lvlkz, CorpName)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
 func (d *Db) ReadMesIdDS(mesid string) (string, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, mesid)
+	results, err := d.db.Query(sel, mesid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -223,12 +197,9 @@ func (d *Db) ReadMesIdDS(mesid string) (string, error) {
 }
 
 func (d *Db) P30Pl(lvlkz, CorpName, userid string) int {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var timedown int
 	sel := "SELECT timedown FROM kzbot.sborkz WHERE lvlkz = $1 AND corpname = $2 AND active = 0 AND userid = $3"
-	results, err := d.db.Query(ctx, sel, lvlkz, CorpName, userid)
+	results, err := d.db.Query(sel, lvlkz, CorpName, userid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -240,21 +211,15 @@ func (d *Db) P30Pl(lvlkz, CorpName, userid string) int {
 	return timedown
 }
 func (d *Db) UpdateTimedown(lvlkz, CorpName, userid string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	upd := `update kzbot.sborkz set timedown = timedown+30 where lvlkz = $1 AND corpname = $2 AND userid = $3`
-	_, err := d.db.Exec(ctx, upd, lvlkz, CorpName, userid)
+	_, err := d.db.Exec(upd, lvlkz, CorpName, userid)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) Queue(corpname string) []string {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT lvlkz FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, corpname)
+	results, err := d.db.Query(sel, corpname)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -272,11 +237,9 @@ func (d *Db) Queue(corpname string) []string {
 }
 
 func (d *Db) OneMinutsTimer() []string {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int //количество активных игроков
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE active = 0"
-	row := d.db.QueryRow(ctx, sel)
+	row := d.db.QueryRow(sel)
 	err := row.Scan(&count)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -286,7 +249,7 @@ func (d *Db) OneMinutsTimer() []string {
 		a := []string{}
 		aa := []string{}
 		selC := "SELECT corpname FROM kzbot.sborkz WHERE active = 0"
-		results, err1 := d.db.Query(ctx, selC)
+		results, err1 := d.db.Query(selC)
 		defer results.Close()
 		if err1 != nil {
 			d.log.ErrorErr(err)
@@ -315,21 +278,18 @@ func (d *Db) OneMinutsTimer() []string {
 	return CorpActive0
 }
 func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var countCorp int
 	var ds []string
 	var tg []int
 	sel := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
-	row := d.db.QueryRow(ctx, sel, corpname)
+	row := d.db.QueryRow(sel, corpname)
 	err := row.Scan(&countCorp)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 	if countCorp > 0 {
 		selS := "SELECT dsmesid,tgmesid FROM kzbot.sborkz WHERE corpname = $1 AND active = 0"
-		results, err1 := d.db.Query(ctx, selS, corpname)
+		results, err1 := d.db.Query(selS, corpname)
 		defer results.Close()
 		if err1 != nil {
 			d.log.Error(err1.Error())
@@ -356,11 +316,8 @@ func (d *Db) MessageUpdateMin(corpname string) ([]string, []int) {
 	return ds, tg
 }
 func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) models.InMessage {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT * FROM kzbot.sborkz WHERE dsmesid = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, dsmesid)
+	results, err := d.db.Query(sel, dsmesid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -393,11 +350,8 @@ func (d *Db) MessageUpdateDS(dsmesid string, config models.CorporationConfig) mo
 
 }
 func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) models.InMessage {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT * FROM kzbot.sborkz WHERE tgmesid = $1 AND active = 0"
-	results, err := d.db.Query(ctx, sel, tgmesid)
+	results, err := d.db.Query(sel, tgmesid)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -425,18 +379,15 @@ func (d *Db) MessageUpdateTG(tgmesid int, config models.CorporationConfig) model
 	return in
 }
 func (d *Db) NumberQueueLvl(lvlkz, CorpName string) (int, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var number int
 	sel := "SELECT  number FROM kzbot.numkz WHERE lvlkz = $1 AND corpname = $2"
-	row := d.db.QueryRow(ctx, sel, lvlkz, CorpName)
+	row := d.db.QueryRow(sel, lvlkz, CorpName)
 	err := row.Scan(&number)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if err == sql.ErrNoRows {
 			number = 0
 			insertSmt := "INSERT INTO kzbot.numkz(lvlkz, number,corpname) VALUES ($1,$2,$3)"
-			_, err = d.db.Exec(ctx, insertSmt, lvlkz, number, CorpName)
+			_, err = d.db.Exec(insertSmt, lvlkz, number, CorpName)
 			if err != nil {
 				d.log.ErrorErr(err)
 			}

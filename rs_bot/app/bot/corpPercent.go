@@ -1,13 +1,12 @@
 package bot
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"rs/models"
 	"rs/pkg/utils"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (b *Bot) SendPercent(Config models.CorporationConfig) {
@@ -56,7 +55,7 @@ func (b *Bot) SendPercent(Config models.CorporationConfig) {
 func (b *Bot) GetTextPercent(Config models.CorporationConfig, dark bool) string {
 	currentCorp, err := b.storage.LevelCorp.ReadCorpLevelByCorpConf(Config.CorpName)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			twoYearsAgo := time.Now().AddDate(-2, 0, 0) // Отнимаем 2 года
 			hcorp := ""
 

@@ -2,18 +2,15 @@ package postgres
 
 import (
 	"compendium/models"
+	"database/sql"
 	"encoding/json"
 	"errors"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) TechInsert(username, userid string, tech []byte) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
-	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&count)
+	err := d.db.QueryRow(sel, userid, username).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -27,7 +24,7 @@ func (d *Db) TechInsert(username, userid string, tech []byte) error {
 			tech, _ = json.Marshal(techEmpty)
 		}
 		insert := `INSERT INTO hs_compendium.tech(username, userid, guildid, tech) VALUES ($1,$2,$3,$4)`
-		_, err = d.db.Exec(ctx, insert, username, userid, "all", tech)
+		_, err = d.db.Exec(insert, username, userid, "all", tech)
 		if err != nil {
 			return err
 		}
@@ -36,11 +33,9 @@ func (d *Db) TechInsert(username, userid string, tech []byte) error {
 }
 
 func (d *Db) TechGet(username, userid string) ([]byte, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var tech []byte
 	sel := "SELECT tech FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
-	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&tech)
+	err := d.db.QueryRow(sel, userid, username).Scan(&tech)
 	if err != nil {
 		return nil, err
 	}
@@ -48,14 +43,12 @@ func (d *Db) TechGet(username, userid string) ([]byte, error) {
 }
 
 func (d *Db) TechGetName(username string) ([]byte, string, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var tech []byte
 	var userid string
 	sel := "SELECT userid,tech FROM hs_compendium.tech WHERE username = $1"
-	err := d.db.QueryRow(ctx, sel, username).Scan(&userid, &tech)
+	err := d.db.QueryRow(sel, username).Scan(&userid, &tech)
 	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
+		if !errors.Is(err, sql.ErrNoRows) {
 			return nil, "", err
 		}
 	}
@@ -63,12 +56,10 @@ func (d *Db) TechGetName(username string) ([]byte, string, error) {
 }
 
 func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var acm []models.CorpMember
 	acmMap := make(map[string]models.CorpMember)
 	sel := "SELECT username,tech FROM hs_compendium.tech WHERE userid = $1"
-	q, err := d.db.Query(ctx, sel, cm.UserId)
+	q, err := d.db.Query(sel, cm.UserId)
 	defer q.Close()
 	if err != nil {
 		return acm, err
@@ -112,17 +103,15 @@ func (d *Db) TechGetAll(cm models.CorpMember) ([]models.CorpMember, error) {
 }
 
 func (d *Db) TechDelete(username, userid string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1 AND username = $2"
-	err := d.db.QueryRow(ctx, sel, userid, username).Scan(&count)
+	err := d.db.QueryRow(sel, userid, username).Scan(&count)
 	if err != nil {
 		return err
 	}
 	if count > 0 {
 		del := "delete from hs_compendium.tech where username = $1 and userid = $2"
-		_, err = d.db.Exec(ctx, del, username, userid)
+		_, err = d.db.Exec(del, username, userid)
 		if err != nil {
 			return err
 		}
@@ -131,11 +120,9 @@ func (d *Db) TechDelete(username, userid string) error {
 }
 
 func (d *Db) TechGetCount(userid string) (int, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.tech WHERE userid = $1"
-	err := d.db.QueryRow(ctx, sel, userid).Scan(&count)
+	err := d.db.QueryRow(sel, userid).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -143,11 +130,9 @@ func (d *Db) TechGetCount(userid string) (int, error) {
 }
 
 func (d *Db) TechGetAllUserId(userid string) ([]models.TechTable, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var acm []models.TechTable
 	sel := "SELECT * FROM hs_compendium.tech where userid = $1"
-	q, err := d.db.Query(ctx, sel, userid)
+	q, err := d.db.Query(sel, userid)
 	defer q.Close()
 	if err != nil {
 		return nil, err

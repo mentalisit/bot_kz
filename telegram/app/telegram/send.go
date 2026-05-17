@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -168,11 +167,11 @@ func (t *Telegram) SendBridgeFuncRest(in models.BridgeSendToMessenger) []models.
 			re := regexp.MustCompile(`@\S+`)
 			mentions := re.FindAllString(m.Text, -1)
 			if len(mentions) > 0 {
-				roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), chatId)
+				roles, _ := t.Storage.Db.GetChatsRoles(chatId)
 				if roles != nil {
 					rolesMap, rolesId := makeRolesMap(roles)
 					us := make(map[string][]models2.User)
-					users, _ := t.Storage.Db.GetChatUsers(context.Background(), chatId)
+					users, _ := t.Storage.Db.GetChatUsers(chatId)
 
 					for _, mention := range mentions {
 						roleName := strings.ToLower(mention[1:]) // убираем только "@" и регистр
@@ -385,7 +384,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 
 	if ok {
 		levels = t.Storage.Db.ReadTop5Level(config.CorpName)
-		fmt.Printf("SendHelp ReadTop5Level: %+v\n", levels)
+
 		if !ifUser && config.TgChannel != "" {
 			last := t.Storage.Db.ReadTelegramLastMessage(config.CorpName)
 			if last-5 < midHelpTg {
@@ -396,7 +395,7 @@ func (t *Telegram) SendHelp(chatid string, text string, midHelpTgString string, 
 	}
 	if ok2 {
 		levels = t.Storage.Db.ReadTop5LevelForV2(config2.Uid)
-		fmt.Printf("SendHelp ReadTop5LevelV2: %+v\n", levels)
+
 		if !ifUser {
 			last := t.Storage.Db.ReadTelegramLastMessageV2(config2.Uid, chatid)
 			if last-5 < midHelpTg {
@@ -501,6 +500,58 @@ func (t *Telegram) SendPoll(m models.Request) string {
 	mid := strconv.Itoa(message.MessageID)
 	return mid
 }
+
+//func (t *Telegram) SendPoll(m models.Request) string {
+//	chatid := m.Data["chatid"]
+//	question := m.Data["question"]
+//	url := m.Data["url"]
+//	author := m.Data["author"]
+//
+//	chatId, ThreadID := t.chat(chatid)
+//
+//	// 1. Преобразуем слайс строк m.Options в слайс структур InputPollOption
+//	pollOptions := make([]tgbotapi.InputPollOption, len(m.Options))
+//	for i, optText := range m.Options {
+//		pollOptions[i] = tgbotapi.InputPollOption{
+//			Text: optText,
+//		}
+//	}
+//
+//	// 2. Создаем заголовок (лимит 300 символов)
+//	pollTitle := fmt.Sprintf("%s\nСоздал: %s", question, author)
+//
+//	// 3. Формируем конфиг опроса
+//	poll := tgbotapi.NewPoll(chatId, pollTitle, pollOptions...)
+//	poll.IsAnonymous = false
+//	poll.MessageThreadID = ThreadID
+//
+//	// 4. Добавляем кнопку со ссылкой
+//	poll.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+//		tgbotapi.NewInlineKeyboardRow(
+//			tgbotapi.NewInlineKeyboardButtonURL("📊 Перейти к общим результатам", url),
+//		),
+//	)
+//
+//	// 5. Отправка
+//	message, err := t.t.Send(poll)
+//	if err != nil {
+//		t.log.ErrorErr(err)
+//		return ""
+//	}
+//
+//	// 6. Закрепление (Pin)
+//	pinConfig := tgbotapi.PinChatMessageConfig{
+//		BaseChatMessage: tgbotapi.BaseChatMessage{
+//			ChatConfig: tgbotapi.ChatConfig{ChatID: chatId},
+//			MessageID:  message.MessageID,
+//		},
+//	}
+//	_, _ = t.t.Send(pinConfig)
+//	fmt.Printf("sendPoll %+v\n", message.Poll)
+//	//return message.Poll.ID
+//	return strconv.Itoa(message.MessageID)
+//}
+
 func (t *Telegram) AddButtonPoll(createTime string, option []string) []tgbotapi.InlineKeyboardButton {
 	var btt []tgbotapi.InlineKeyboardButton
 	if len(option) > 0 {

@@ -78,11 +78,16 @@ func (t *TechLevels) Scan(src interface{}) error {
 		*t = make(TechLevels)
 		return nil
 	}
-	bytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("type assertion to []byte failed")
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for TechLevels: %T", src)
 	}
-	return json.Unmarshal(bytes, t)
+	return json.Unmarshal(data, t)
 }
 
 func (t *TechLevels) ConvertToTech(b []byte) map[int]TechLevel {

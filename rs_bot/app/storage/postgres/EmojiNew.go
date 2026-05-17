@@ -7,10 +7,8 @@ import (
 )
 
 func (d *Db) EmojiReadUUID(uid uuid.UUID, tip string) *models.Emoji {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	Emoji := "SELECT * FROM rs_bot.emoji WHERE uid = $1 AND tip = $2"
-	results, err := d.db.Query(ctx, Emoji, uid, tip)
+	results, err := d.db.Query(Emoji, uid, tip)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -25,20 +23,16 @@ func (d *Db) EmojiReadUUID(uid uuid.UUID, tip string) *models.Emoji {
 	return &t
 }
 func (d *Db) EmojiUpdateUUID(uid uuid.UUID, tip, slot, emo string) string {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sqlUpd := fmt.Sprintf("update rs_bot.emoji set em%s = $1 where uid = $2 AND tip = $3", slot)
-	_, err := d.db.Exec(ctx, sqlUpd, emo, uid, tip)
+	_, err := d.db.Exec(sqlUpd, emo, uid, tip)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 	return fmt.Sprintf("Слот %s обновлен\n%s", slot, emo)
 }
 func (d *Db) EmojiInsertEmptyUUID(uid uuid.UUID, tip string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	insert := `INSERT INTO rs_bot.emoji(uid,tip,em1,em2,em3,em4) VALUES ($1,$2,$3,$4,$5,$6)`
-	_, err := d.db.Exec(ctx, insert, uid, tip, "", "", "", "")
+	_, err := d.db.Exec(insert, uid, tip, "", "", "", "")
 	if err != nil {
 		d.log.ErrorErr(err)
 	}

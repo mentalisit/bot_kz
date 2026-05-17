@@ -1,11 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"whatsapp/models"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) ReadConfigRs() ([]models.CorporationConfig, error) {
@@ -32,7 +31,7 @@ func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationCo
 	results, err := d.db.Query(ctx, sel, dsChannel)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			return conf, nil
@@ -51,7 +50,7 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 	results, err := d.db.Query(ctx, sel, corpName)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			return conf, err

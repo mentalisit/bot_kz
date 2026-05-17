@@ -4,9 +4,9 @@ import (
 	ds "bridge/Discord"
 	tg "bridge/Telegram"
 	"bridge/config"
-	"bridge/matrix"
 	"bridge/models"
 	"bridge/storage"
+	"bridge/storage/postgres"
 	wa "bridge/whatsapp"
 	"fmt"
 	"runtime"
@@ -23,8 +23,8 @@ type Bridge struct {
 	discord  *ds.Client
 	telegram *tg.Client
 	storage  BridgeConfig
+	db       *postgres.Db
 	whatsapp *wa.Client
-	matrix   *matrix.Matrix
 }
 
 func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Bridge {
@@ -34,50 +34,15 @@ func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *
 		discord:  ds.NewClient(log),
 		telegram: tg.NewClient(log),
 		whatsapp: wa.NewClient(log),
-		matrix:   matrix.RunMatrixBridge(cfg, st.DB.GetDB()),
 		storage:  st.DB,
+		db:       st.DB,
 	}
-	bridge.matrix.OnMessage = bridge.Logic
 	bridge.LoadConfig()
 
 	//	go bridge.ServerRun()
 
 	return bridge
 }
-
-//func (b *Bridge) ServerRun() {
-//	gin.SetMode(gin.ReleaseMode)
-//	router := gin.Default()
-//	// Обработчик для принятия сообщений от DiscordService
-//	router.POST("/bridge/inbox", b.indoxBridge)
-//	//
-//	router.GET("/bridge/config", b.configBridge)
-//
-//	err := router.Run(":80")
-//	if err != nil {
-//		b.log.ErrorErr(err)
-//		os.Exit(1)
-//	}
-//}
-//func (b *Bridge) indoxBridge(c *gin.Context) {
-//	b.PrintGoroutine()
-//	var mes models.ToBridgeMessage
-//
-//	if err := c.ShouldBindJSON(&mes); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{"message": "Message received successfully"})
-//
-//	go b.Logic(mes)
-//}
-//
-//func (b *Bridge) configBridge(c *gin.Context) {
-//	b.PrintGoroutine()
-//	config := b.storage.DBReadBridgeConfig()
-//	c.JSON(http.StatusOK, config)
-//}
 
 type BridgeConfig interface {
 	DBReadBridgeConfig2() []models.Bridge2Config
@@ -108,11 +73,6 @@ func (b *Bridge) PrintGoroutine() {
 // Shutdown корректно завершает все модули bridge
 func (b *Bridge) Shutdown() {
 	b.log.Info("Bridge shutting down...")
-
-	// Shutdown Matrix (сохраняет кэш и останавливает горутины)
-	if b.matrix != nil {
-		b.matrix.Shutdown()
-	}
 
 	// Close gRPC connections
 	if b.discord != nil {

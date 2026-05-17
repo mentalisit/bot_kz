@@ -142,9 +142,9 @@ func addAvatars(dc *gg.Context, avatarURL string, centerX, centerY int) {
 	//var err error
 
 	// Если URL начинается с определенного префикса, открываем изображение локально
-	if strings.HasPrefix(avatarURL, "https://compendiumnew.mentalisit.myds.me/compendium/avatars") {
+	if strings.HasPrefix(avatarURL, "https://mentalisit.myds.me/web/img/avatars") {
 		// Преобразуем URL в локальный путь
-		localPath := strings.Replace(avatarURL, "https://compendiumnew.mentalisit.myds.me/", "", 1)
+		localPath := strings.Replace(avatarURL, "https://mentalisit.myds.me/", "", 1)
 		localPath = "docker/" + localPath
 
 		// Открываем локальный файл

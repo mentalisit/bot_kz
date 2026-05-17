@@ -8,64 +8,53 @@ import (
 	"telegram/config"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
 	"github.com/mentalisit/restapi/models"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
-	db  Client
+	db  *sqlx.DB
 	log *logger.Logger
 	sync.RWMutex
 	RsBotConfig  map[string]models.CorporationConfigV2
 	BridgeConfig map[string]models.Bridge2Config
 	KzBotConfig  map[string]models.CorporationConfig
-	pool         *pgxpool.Pool
-}
-type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
+	dns          string
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
-		//return err
 	}
-	db := &Db{
-		db:           pool,
+	database := &Db{
+		db:           db,
 		log:          log,
 		RsBotConfig:  make(map[string]models.CorporationConfigV2),
 		BridgeConfig: make(map[string]models.Bridge2Config),
 		KzBotConfig:  make(map[string]models.CorporationConfig),
-		pool:         pool,
+		dns:          dns,
 	}
-	db.CreateTables(context.Background())
+	database.CreateTables()
 
-	db.loadConfig()
-	go db.StartConfigWatcher(context.Background())
+	database.loadConfig()
+	go database.StartConfigWatcher(context.Background())
 
-	return db
-}
-
-func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 10*time.Second)
+	return database
 }
 
 // CreateTables создает необходимые таблицы в схеме telegram
-func (d *Db) CreateTables(ctx context.Context) error {
+func (d *Db) CreateTables() error {
 	// Сначала создаем схему если она не существует
 	queries := []string{
 		`CREATE SCHEMA IF NOT EXISTS telegram`,
@@ -129,7 +118,7 @@ func (d *Db) CreateTables(ctx context.Context) error {
 	}
 
 	for _, query := range queries {
-		_, err := d.db.Exec(ctx, query)
+		_, err := d.db.Exec(query)
 		if err != nil {
 			return fmt.Errorf("failed to create table: %w, query: %s", err, query)
 		}

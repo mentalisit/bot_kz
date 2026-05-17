@@ -408,7 +408,7 @@ func (d *Discord) filterNewsMessage(msg string) (en, ru, ua string) {
 	match := reRsEvent.FindStringSubmatch(msg)
 	if len(match) > 1 {
 		season, _ := strconv.Atoi(match[1])
-		d.storage.Db.SaveEventDate(msg)
+		d.storage.Db.SaveEventDate(msg, season)
 		en = fmt.Sprintf("Season %d of the Corporation Red Star event has just started! Help your Corporation climb the event leaderboard throughout the weekend, and earn free Crystals in the end. For more information, see the in game Leaderboards window.", season)
 		ru = fmt.Sprintf("Сезон %d события Корпорации Красная Звезда только что начался! Помогите своей Корпорации подняться в таблице лидеров события в течение выходных и получите бесплатные Кристаллы в конце. Для получения дополнительной информации см. игровое окно Таблицы лидеров.", season)
 		ua = fmt.Sprintf("%d-й сезон події «Червона Зірка корпорації» щойно розпочався! Допоможіть своїй корпорації піднятися в таблиці лідерів події протягом вихідних і заробляйте безкоштовні кристали в кінці. Для отримання додаткової інформації дивіться вікно таблиці лідерів у грі.", season)

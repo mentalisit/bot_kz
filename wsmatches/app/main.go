@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/mentalisit/logger"
 	"sort"
 	"time"
 	"ws/config"
 	"ws/hspublic"
 	"ws/server"
+
+	"github.com/mentalisit/logger"
 )
 
 var log *logger.Logger
@@ -16,7 +17,7 @@ func main() {
 	log = logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "WS")
 	hs := hspublic.NewHS(log, cfg.Postgress.Password)
 
-	go server.NewSrv(log)
+	go server.NewSrv(log, hs.Db)
 
 	newContent := hs.GetContentAll()
 	hs.DownloadFile("wsAll", newContent)

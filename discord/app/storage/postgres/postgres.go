@@ -9,74 +9,64 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
 	"github.com/mentalisit/restapi/models"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
-	db  Client
+	db  *sqlx.DB
 	log *logger.Logger
 	sync.RWMutex
 	RsBotConfig  map[string]models.CorporationConfigV2
 	BridgeConfig map[string]models.Bridge2Config
 	KzBotConfig  map[string]models.CorporationConfig
-	pool         *pgxpool.Pool
-}
-
-type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
+	pool         *sqlx.DB
+	dns          string
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		slog.Error(err.Error())
-		//log.ErrorErr(err)
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
-		//return err
 	}
-	db := &Db{
-		db:           pool,
+	database := &Db{
+		db:           db,
 		log:          log,
 		RsBotConfig:  make(map[string]models.CorporationConfigV2),
 		BridgeConfig: make(map[string]models.Bridge2Config),
 		KzBotConfig:  make(map[string]models.CorporationConfig),
-		pool:         pool,
+		pool:         db,
 	}
+	database.dns = dns
 
-	go db.createTable()
+	go database.createTable()
 
-	db.loadConfig()
-	go db.StartConfigWatcher(context.Background())
+	database.loadConfig()
+	go database.StartConfigWatcher(context.Background())
 
-	return db
+	return database
 }
-func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 5*time.Second)
-}
+
 func (d *Db) createTable() {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS kzbot")
+	fmt.Printf("lastEventId %d\n", d.readLastEvent())
+
 	// Создание таблиц
-	_, err := d.db.Exec(ctx,
-		`CREATE TABLE IF NOT EXISTS kzbot.event (
+	_, err := d.db.Exec(
+		`CREATE TABLE IF NOT EXISTS rs_bot2.event_schedule (
             id             BIGSERIAL PRIMARY KEY,
             dateStart      TEXT,
             dateStop       TEXT,
-            message        TEXT
+            season        integer
         );
     `)
 	if err != nil {
@@ -85,7 +75,7 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(ctx, `
+	_, err = d.db.Exec(`
 		CREATE TABLE IF NOT EXISTS rs_bot.battlestop
 	(
 		id     bigserial        primary key,
@@ -100,44 +90,4 @@ func (d *Db) createTable() {
 		return
 	}
 
-	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.scoreboard
-	(
-		id     bigserial        primary key,
-		Name text NOT NULL DEFAULT '',
-		WebhookChannel    text NOT NULL DEFAULT '',
-		ScoreChannel   text NOT NULL DEFAULT '',
-		LastMessage text NOT NULL DEFAULT ''
-	);`)
-	if err != nil {
-		slog.Error(err.Error())
-		//d.log.ErrorErr(err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS rs_bot.webhooks
-	(
-		id     bigserial        primary key,
-		TsUnix bigint NOT NULL DEFAULT 0,
-		corp    text NOT NULL DEFAULT '',
-		message   jsonb
-	);`)
-	if err != nil {
-		slog.Error(err.Error())
-		//d.log.ErrorErr(err)
-		return
-	}
-
-	//_, err = d.db.Exec(ctx, `
-	//	CREATE TABLE rs_bot.name_aliases (
-	//	alias TEXT PRIMARY KEY,
-	//	canonical_name TEXT NOT NULL
-	//);
-	//	CREATE INDEX idx_alias ON rs_bot.name_aliases(alias);`)
-	//if err != nil {
-	//	slog.Error(err.Error())
-	//	//d.log.ErrorErr(err)
-	//	return
-	//}
 }

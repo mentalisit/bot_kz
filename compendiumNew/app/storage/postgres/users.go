@@ -2,13 +2,12 @@ package postgres
 
 import (
 	"compendium/models"
+	"database/sql"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
 )
 
 func (d *Db) UsersInsert(u models.User) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	count, err := d.UserGetCountByUserId(u.ID)
 	if err != nil {
 		return err
@@ -27,7 +26,7 @@ func (d *Db) UsersInsert(u models.User) error {
 		}
 	} else {
 		insert := `INSERT INTO hs_compendium.users(userid, username, discriminator, avatar, avatarurl, alts,gamename) VALUES ($1,$2,$3,$4,$5,$6,$7)`
-		_, err = d.db.Exec(ctx, insert, u.ID, u.Username, "", "", u.AvatarURL, u.Alts, u.GameName)
+		_, err = d.db.Exec(insert, u.ID, u.Username, "", "", u.AvatarURL, pq.Array(u.Alts), u.GameName)
 		if err != nil {
 			return err
 		}
@@ -35,40 +34,34 @@ func (d *Db) UsersInsert(u models.User) error {
 	return nil
 }
 func (d *Db) UsersGetByUserId(userid string) (*models.User, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var u models.User
 	selectUser := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE userid = $1"
-	err := d.db.QueryRow(ctx, selectUser, userid).Scan(&u.ID, &u.Username, &u.AvatarURL, &u.Alts, &u.GameName)
+	err := d.db.QueryRow(selectUser, userid).Scan(&u.ID, &u.Username, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
-		return nil, pgx.ErrNoRows
+		return nil, sql.ErrNoRows
 	}
 	return &u, nil
 }
 func (d *Db) UsersGetByUserName(username string) (*models.User, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var u models.User
 	selectUser := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE username = $1 "
-	err := d.db.QueryRow(ctx, selectUser, username).Scan(&u.ID, &u.Username, &u.AvatarURL, &u.Alts, &u.GameName)
+	err := d.db.QueryRow(selectUser, username).Scan(&u.ID, &u.Username, &u.AvatarURL, pq.Array(&u.Alts), &u.GameName)
 	if err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var users []models.User
 	selectUsers := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users WHERE gamename = $1 "
-	results, err := d.db.Query(ctx, selectUsers, gameName)
+	results, err := d.db.Query(selectUsers, gameName)
 	if err != nil {
 		return nil, err
 	}
 	defer results.Close()
 	for results.Next() {
 		var t models.User
-		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, &t.Alts, &t.GameName)
+		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, pq.Array(&t.Alts), &t.GameName)
 
 		if err != nil {
 			return nil, err
@@ -80,39 +73,33 @@ func (d *Db) UsersFindByGameName(gameName string) ([]models.User, error) {
 }
 
 func (d *Db) UserGetCountByUserId(userid string) (int, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int
 	sel := "SELECT count(*) as count FROM hs_compendium.users WHERE userid = $1"
-	err := d.db.QueryRow(ctx, sel, userid).Scan(&count)
+	err := d.db.QueryRow(sel, userid).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 func (d *Db) UsersUpdate(u models.User) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	upd := `update hs_compendium.users set avatarurl = $1, alts = $2, gamename = $3, username = $4 where userid = $5`
-	_, err := d.db.Exec(ctx, upd, u.AvatarURL, u.Alts, u.GameName, u.Username, u.ID)
+	_, err := d.db.Exec(upd, u.AvatarURL, pq.Array(u.Alts), u.GameName, u.Username, u.ID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (d *Db) UsersGetAll() ([]models.User, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var users []models.User
 	selectUsers := "SELECT userid,username,avatarurl,alts,gamename FROM hs_compendium.users "
-	results, err := d.db.Query(ctx, selectUsers)
+	results, err := d.db.Query(selectUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer results.Close()
 	for results.Next() {
 		var t models.User
-		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, &t.Alts, &t.GameName)
+		err = results.Scan(&t.ID, &t.Username, &t.AvatarURL, pq.Array(&t.Alts), &t.GameName)
 
 		if err != nil {
 			return nil, err

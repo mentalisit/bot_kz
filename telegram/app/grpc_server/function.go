@@ -186,6 +186,22 @@ func (s *Server) Subscribe(ctx context.Context, req *SubscrRequest) (*IntRespons
 	return &IntResponse{Result: int32(code)}, nil
 }
 
+func (s *Server) GetChatsMember(ctx context.Context, req *GetChatsMemberReq) (*GetChatsMemberRes, error) {
+	chats := s.tg.GetChatsMember(req.GetUserid(), req.GetFull())
+	var res GetChatsMemberRes
+
+	for _, chat := range chats {
+		res.Chats = append(res.Chats, &ChatAccess{
+			ChatId:   chat.ChatID,
+			ChatName: chat.ChatName,
+			UserId:   chat.UserID,
+			Status:   chat.Status,
+		})
+	}
+
+	return &res, nil
+}
+
 func downloadFile(fi *models.FileInfo) error {
 	resp, err := http.Get(fi.URL)
 	if err != nil {

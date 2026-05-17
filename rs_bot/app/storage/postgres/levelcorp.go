@@ -1,25 +1,22 @@
 package postgres
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"rs/models"
 	"time"
 )
 
 func (d *Db) InsertUpdateCorpLevel(l models.LevelCorps) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	_, err := d.ReadCorpLevelByCorpConf(l.CorpName)
 	if err != nil {
 		switch {
-		case errors.Is(err, pgx.ErrNoRows):
+		case errors.Is(err, sql.ErrNoRows):
 			// Если записи нет, вставляем новую
 			insert := `INSERT INTO ws.corpslevel (corpname, level, enddate, hcorp, percent, last_update, relic) 
 					   VALUES ($1, $2, $3, $4, $5, $6, $7)`
-			_, err = d.db.Exec(ctx, insert,
+			_, err = d.db.Exec(insert,
 				l.CorpName,
 				l.Level,
 				l.EndDate.Format(time.RFC3339Nano), // Преобразуем в строку
@@ -42,7 +39,7 @@ func (d *Db) InsertUpdateCorpLevel(l models.LevelCorps) {
 	upd := `UPDATE ws.corpslevel 
 			SET level = $1, enddate = $2, hcorp = $3, percent = $4, last_update = $5, relic = $6 
 			WHERE corpname = $7`
-	_, err = d.db.Exec(ctx, upd,
+	_, err = d.db.Exec(upd,
 		l.Level,
 		l.EndDate.Format(time.RFC3339Nano), // Преобразуем в строку
 		l.HCorp,
@@ -56,13 +53,10 @@ func (d *Db) InsertUpdateCorpLevel(l models.LevelCorps) {
 	}
 }
 func (d *Db) ReadCorpLevelByCorpConf(Corp string) (models.LevelCorps, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var n models.LevelCorps
 	var endDateStr, lastUpdateStr string // Временные переменные для строковых дат
 
-	err := d.db.QueryRow(ctx, "SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel WHERE corpname = $1", Corp).
+	err := d.db.QueryRow("SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel WHERE corpname = $1", Corp).
 		Scan(&n.CorpName, &n.Level, &endDateStr, &n.HCorp, &n.Percent, &lastUpdateStr, &n.Relic)
 	if err != nil {
 		return models.LevelCorps{}, err
@@ -83,12 +77,9 @@ func (d *Db) ReadCorpLevelByCorpConf(Corp string) (models.LevelCorps, error) {
 }
 
 func (d *Db) ReadCorpLevelAll() ([]models.LevelCorps, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var nn []models.LevelCorps
 	sel := "SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel"
-	results, err := d.db.Query(ctx, sel)
+	results, err := d.db.Query(sel)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil, err

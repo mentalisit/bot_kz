@@ -65,10 +65,7 @@ func (s *Server) RunServer() {
 		r.GET("/compendium/api/tech", s.api)
 		r.GET("/links", s.links)
 		r.GET("/health", HealthCheckHandler)
-		r.Static("/compendium/avatars", "docker/compendium/avatars")
-		r.Static("/docker/compendium/avatars", "docker/compendium/avatars")
-		r.Static("/tv", "docker/compendium/tv")
-
+		r.Static("/compendium/avatars", "docker/web/img/avatars")
 	}
 
 	registerRoutes(router)

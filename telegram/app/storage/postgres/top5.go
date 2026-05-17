@@ -1,8 +1,7 @@
 package postgres
 
 func (d *Db) ReadTop5Level(corpname string) []string {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	query := `
         SELECT lvlkz, COUNT(*) AS lvlkz_count
         FROM kzbot.sborkz
@@ -14,7 +13,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
     `
 
 	// Выполнение запроса
-	rows, err := d.db.Query(ctx, query, corpname)
+	rows, err := d.db.Query(query, corpname)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
@@ -38,8 +37,7 @@ func (d *Db) ReadTop5Level(corpname string) []string {
 }
 
 func (d *Db) ReadTelegramLastMessage(corpname string) int {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	query := `
         SELECT MAX(tgmesid) FROM kzbot.sborkz
         WHERE corpname=$1 AND active > 0;
@@ -48,7 +46,7 @@ func (d *Db) ReadTelegramLastMessage(corpname string) int {
 	var mid int
 
 	// Выполнение запроса
-	err := d.db.QueryRow(ctx, query, corpname).Scan(&mid)
+	err := d.db.QueryRow(query, corpname).Scan(&mid)
 
 	if err != nil {
 		//fmt.Printf("ReadTelegramLastMessage corp:%s err %+v\n", corpname, err)
@@ -58,8 +56,6 @@ func (d *Db) ReadTelegramLastMessage(corpname string) int {
 }
 
 func (d *Db) ReadTop5LevelForV2(corpUid string) []string {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	query := `
         SELECT 
@@ -73,7 +69,7 @@ func (d *Db) ReadTop5LevelForV2(corpUid string) []string {
         LIMIT 5;
     `
 
-	rows, err := d.db.Query(ctx, query, corpUid)
+	rows, err := d.db.Query(query, corpUid)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil
@@ -102,8 +98,6 @@ func (d *Db) ReadTop5LevelForV2(corpUid string) []string {
 }
 
 func (d *Db) ReadTelegramLastMessageV2(corpUUID string, chatID string) int {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	query := `
         SELECT COALESCE(MAX((msg.value->>'message_id')::bigint), 0) AS max_mid
@@ -116,7 +110,7 @@ func (d *Db) ReadTelegramLastMessageV2(corpUUID string, chatID string) int {
 
 	var mid int
 
-	err := d.db.QueryRow(ctx, query, corpUUID, chatID).Scan(&mid)
+	err := d.db.QueryRow(query, corpUUID, chatID).Scan(&mid)
 	if err != nil {
 		return 0
 	}

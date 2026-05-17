@@ -7,117 +7,32 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
-	db  Client
+	db  *sqlx.DB
 	log *logger.Logger
-}
-type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelFunc()
 
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
-		//return err
 	}
-	db := &Db{
-		db:  pool,
+	database := &Db{
+		db:  db,
 		log: log,
 	}
-	go db.createTable()
-	return db
-}
-func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
-	return context.WithTimeout(context.Background(), 10*time.Second)
-}
 
-func (d *Db) createTable() {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	d.db.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS hs_compendium")
-
-	// Создание таблицы users
-	_, err := d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.users (
-        id            bigserial primary key,
-        userid        TEXT,
-        username      TEXT,
-        discriminator TEXT,
-        avatar        TEXT,
-        avatarurl     TEXT,
-        alts text[],
-        gamename      TEXT
-    )`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы users:", err)
-		return
-	}
-
-	// Создание таблицы list_users
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.list_users (
-	   id bigserial primary key,
-	   token   TEXT,
-	   userid    TEXT,
-	   guildid  TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы guilds:", err)
-		return
-	}
-
-	// Создание таблицы corpmember
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.corpmember (
-	id           bigserial primary key,
-	username     TEXT,
-	userid       TEXT,
-	guildid 	 TEXT,
-	avatar       TEXT,
-	avatarurl    TEXT,
-	timezona     TEXT,
-	zonaoffset   NUMERIC,
-	afkfor       TEXT
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы corpmember:", err)
-		return
-	}
-
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.tech (
-    id bigserial primary key,
-    username text,
-    userid text,
-    guildid text,
-    tech jsonb
-    )`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы tech:", err)
-		return
-	}
-
-	// Создание таблицы code
-	_, err = d.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS hs_compendium.codes (
-	id           bigserial primary key,
-	code    	 TEXT,
-	time 	     bigint,
-	identity     jsonb
-	)`)
-	if err != nil {
-		fmt.Println("Ошибка при создании таблицы codes:", err)
-		return
-	}
+	return database
 }

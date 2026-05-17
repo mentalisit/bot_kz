@@ -26,9 +26,9 @@ func (h *Helpers) CreateScoreboard(filename string, corpName string, eventId int
 	if corpName == "русь " {
 		allbest, _ := h.storage.Battles.BattlesGetAll("best", eventId)
 		allLegion, _ := h.storage.Battles.BattlesGetAll("IX Легион", eventId)
-		if eventId != 49 {
-			allLegion = []models.PlayerStats{}
-		}
+		//if eventId != 49 {
+		//	allLegion = []models.PlayerStats{}
+		//}
 		aa := make(map[string]models.PlayerStats)
 		for _, stats := range all {
 			aa[stats.Player] = stats

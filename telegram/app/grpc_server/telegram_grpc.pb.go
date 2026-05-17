@@ -37,6 +37,7 @@ const (
 	TelegramService_SendPicScoreboard_FullMethodName       = "/tg.TelegramService/SendPicScoreboard"
 	TelegramService_Subscribe_FullMethodName               = "/tg.TelegramService/Subscribe"
 	TelegramService_Unsubscribe_FullMethodName             = "/tg.TelegramService/Unsubscribe"
+	TelegramService_GetChatsMember_FullMethodName          = "/tg.TelegramService/GetChatsMember"
 )
 
 // TelegramServiceClient is the client API for TelegramService service.
@@ -61,6 +62,7 @@ type TelegramServiceClient interface {
 	SendPicScoreboard(ctx context.Context, in *ScoreboardRequest, opts ...grpc.CallOption) (*ScoreboardResponse, error)
 	Subscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error)
 	Unsubscribe(ctx context.Context, in *SubscrRequest, opts ...grpc.CallOption) (*IntResponse, error)
+	GetChatsMember(ctx context.Context, in *GetChatsMemberReq, opts ...grpc.CallOption) (*GetChatsMemberRes, error)
 }
 
 type telegramServiceClient struct {
@@ -251,6 +253,16 @@ func (c *telegramServiceClient) Unsubscribe(ctx context.Context, in *SubscrReque
 	return out, nil
 }
 
+func (c *telegramServiceClient) GetChatsMember(ctx context.Context, in *GetChatsMemberReq, opts ...grpc.CallOption) (*GetChatsMemberRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChatsMemberRes)
+	err := c.cc.Invoke(ctx, TelegramService_GetChatsMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TelegramServiceServer is the server API for TelegramService service.
 // All implementations must embed UnimplementedTelegramServiceServer
 // for forward compatibility.
@@ -273,6 +285,7 @@ type TelegramServiceServer interface {
 	SendPicScoreboard(context.Context, *ScoreboardRequest) (*ScoreboardResponse, error)
 	Subscribe(context.Context, *SubscrRequest) (*IntResponse, error)
 	Unsubscribe(context.Context, *SubscrRequest) (*IntResponse, error)
+	GetChatsMember(context.Context, *GetChatsMemberReq) (*GetChatsMemberRes, error)
 	mustEmbedUnimplementedTelegramServiceServer()
 }
 
@@ -336,6 +349,9 @@ func (UnimplementedTelegramServiceServer) Subscribe(context.Context, *SubscrRequ
 }
 func (UnimplementedTelegramServiceServer) Unsubscribe(context.Context, *SubscrRequest) (*IntResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
+}
+func (UnimplementedTelegramServiceServer) GetChatsMember(context.Context, *GetChatsMemberReq) (*GetChatsMemberRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatsMember not implemented")
 }
 func (UnimplementedTelegramServiceServer) mustEmbedUnimplementedTelegramServiceServer() {}
 func (UnimplementedTelegramServiceServer) testEmbeddedByValue()                         {}
@@ -682,6 +698,24 @@ func _TelegramService_Unsubscribe_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TelegramService_GetChatsMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatsMemberReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TelegramServiceServer).GetChatsMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TelegramService_GetChatsMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TelegramServiceServer).GetChatsMember(ctx, req.(*GetChatsMemberReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TelegramService_ServiceDesc is the grpc.ServiceDesc for TelegramService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -760,6 +794,10 @@ var TelegramService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Unsubscribe",
 			Handler:    _TelegramService_Unsubscribe_Handler,
+		},
+		{
+			MethodName: "GetChatsMember",
+			Handler:    _TelegramService_GetChatsMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

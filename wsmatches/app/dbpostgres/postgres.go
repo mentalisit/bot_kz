@@ -3,28 +3,31 @@ package dbpostgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mentalisit/logger"
 	"os"
 	"sync"
 	"time"
 	"ws/models"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/logger"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
 	log   *logger.Logger
-	pool  *pgxpool.Pool
+	pool  *sqlx.DB
 	cache map[string]models.CorporationsData
 	//cacheCorp map[string]models.Corporation
 	mu sync.RWMutex
 }
 
 func NewDb(log *logger.Logger, pass string) *Db {
-	dns := fmt.Sprintf("postgres://postgres:%s@postgres:5432/postgres", pass)
+	dns := fmt.Sprintf("postgres://postgres:%s@postgres:5432/postgres?sslmode=disable", pass)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
@@ -32,7 +35,7 @@ func NewDb(log *logger.Logger, pass string) *Db {
 
 	d := &Db{
 		log:   log,
-		pool:  pool,
+		pool:  db,
 		cache: make(map[string]models.CorporationsData),
 		//cacheCorp: make(map[string]models.Corporation),
 	}

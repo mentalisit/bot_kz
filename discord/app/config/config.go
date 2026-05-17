@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -46,3 +47,11 @@ func InitConfig(nameApp string) *ConfigBot {
 	}
 	return Instance
 }
+
+type MultiAccountGuildV2 struct {
+	GId       uuid.UUID
+	GuildName string
+	Channels  GuildChannels `db:"channels"` // Наш новый тип
+	AvatarUrl string
+}
+type GuildChannels map[string][]string

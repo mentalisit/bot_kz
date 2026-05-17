@@ -42,14 +42,15 @@ func (t *Transmitter) getWebhook(channel string) *discordgo.Webhook {
 			break
 		}
 
-		// Log the error with attempt info
-		t.log.ErrorErr(fmt.Errorf("Attempt %d/3 failed to get webhooks for channel %s: %w", attempt+1, channel, err))
-
 		if attempt < 2 {
 			// Exponential backoff with jitter: 1s, 2s, 4s
 			backoffDuration := time.Duration(1<<uint(attempt)) * time.Second
 			jitter := time.Duration(rand.Float64() * float64(backoffDuration) * 0.1) // 10% jitter
 			time.Sleep(backoffDuration + jitter)
+
+			// Log the error with attempt info
+			t.log.ErrorErr(fmt.Errorf("Attempt %d/3 failed to get webhooks for channel %s: %w", attempt+1, channel, err))
+
 		}
 	}
 

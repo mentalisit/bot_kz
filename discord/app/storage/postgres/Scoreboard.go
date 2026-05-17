@@ -1,37 +1,35 @@
 package postgres
 
 import (
-	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
 
 	"fmt"
-	"time"
 
 	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ScoreboardInsertParam(p models.ScoreboardParams) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	insert := `INSERT INTO rs_bot.scoreboard(name,webhookchannel,scorechannel,lastmessage) VALUES ($1,$2,$3,$4)`
-	_, err := d.db.Exec(ctx, insert, p.Name, p.ChannelWebhook, p.ChannelScoreboard, p.LastMessageID)
+	_, err := d.db.Exec(insert, p.Name, p.ChannelWebhook, p.ChannelScoreboard, p.LastMessageID)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) ScoreboardUpdateParamLastMessageId(p models.ScoreboardParams) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	update := `UPDATE rs_bot.scoreboard SET lastmessage = $1 where name = $2`
-	_, err := d.db.Exec(ctx, update, p.LastMessageID, p.Name)
+	_, err := d.db.Exec(update, p.LastMessageID, p.Name)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 func (d *Db) ScoreboardReadWebhookChannel(webhookChannel string) *models.ScoreboardParams {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	selectScoreboard := "SELECT name, webhookchannel, scorechannel,lastmessage FROM rs_bot.scoreboard WHERE webhookchannel = $1"
-	results, err := d.db.Query(ctx, selectScoreboard, webhookChannel)
+	results, err := d.db.Query(selectScoreboard, webhookChannel)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -49,10 +47,9 @@ func (d *Db) ScoreboardReadWebhookChannel(webhookChannel string) *models.Scorebo
 	return &s
 }
 func (d *Db) ScoreboardReadAll() []models.ScoreboardParams {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	selectScoreboard := "SELECT name, webhookchannel, scorechannel,lastmessage FROM rs_bot.scoreboard"
-	rows, err := d.db.Query(ctx, selectScoreboard)
+	rows, err := d.db.Query(selectScoreboard)
 	defer rows.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -70,11 +67,9 @@ func (d *Db) ScoreboardReadAll() []models.ScoreboardParams {
 }
 
 func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 
 	sel := "SELECT datestart,datestop,message FROM kzbot.event ORDER BY id DESC LIMIT 1"
-	err := d.db.QueryRow(ctx, sel).Scan(&nextDateStart, &nextDateStop, &message)
+	err := d.db.QueryRow(sel).Scan(&nextDateStart, &nextDateStop, &message)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return "", "", ""
@@ -83,59 +78,52 @@ func (d *Db) ReadEventScheduleAndMessage() (nextDateStart, nextDateStop, message
 }
 
 func (d *Db) InsertWebhook(ts int64, corp, message string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	insert := `INSERT INTO rs_bot.webhooks(tsunix,corp,message) VALUES ($1,$2,$3)`
-	_, err := d.db.Exec(ctx, insert, ts, corp, message)
+	_, err := d.db.Exec(insert, ts, corp, message)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
 func (d *Db) InsertWebhookType(ts int64, corpName, eventType, message string) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	insert := `INSERT INTO rs_bot.webhook_type(tsUnix,corpName,eventType,message) VALUES ($1,$2,$3,$4)`
-	_, err := d.db.Exec(ctx, insert, ts, corpName, eventType, message)
+	_, err := d.db.Exec(insert, ts, corpName, eventType, message)
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 }
 
-func (d *Db) LoadNameAliases() (map[string]string, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-	rows, err := d.db.Query(ctx, "SELECT alias, canonical_name FROM rs_bot.name_aliases")
+func (d *Db) GetNickNameByMergedID(targetID string) (string, error) {
+
+	// Формируем JSON-паттерн для поиска в массиве
+	searchPattern, err := json.Marshal([]map[string]string{
+		{"id": targetID},
+	})
 	if err != nil {
-		d.log.ErrorErr(err)
-	}
-	defer rows.Close()
-	m := make(map[string]string)
-	for rows.Next() {
-		var alias, canonical string
-		if err := rows.Scan(&alias, &canonical); err != nil {
-			return nil, err
-		}
-		m[alias] = canonical
+		return "", fmt.Errorf("ошибка маршалинга: %w", err)
 	}
 
-	return m, nil
-}
-func (d *Db) BattlesCheckNames() {
-	aliases, _ := d.LoadNameAliases()
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
-	defer cancel()
+	query := `
+		SELECT nickname 
+		FROM my_compendium.multi_accounts 
+		WHERE data->'Merged' @> $1::jsonb 
+		LIMIT 1
+	`
 
-	for name, generalName := range aliases {
-		// Выполняем UPDATE сразу. База сама поймет, есть ли такие строки.
-		query := `UPDATE rs_bot.battles SET name = $1 WHERE name = $2`
+	var nickName string
+	// Используем QueryRow, так как нам нужно одно значение
+	err = d.db.QueryRow(query, string(searchPattern)).Scan(&nickName)
 
-		r, err := d.db.Exec(ctx, query, generalName, name)
-		if err != nil {
-			d.log.ErrorErr(fmt.Errorf("failed to update name %s -> %s: %w", name, generalName, err))
+	if err != nil {
+		// Если запись не найдена, pgx возвращает sql.ErrNoRows или pgx.ErrNoRows
+		// В этом случае возвращаем пустую строку без ошибки
+		if !errors.Is(err, sql.ErrNoRows) {
+			d.log.ErrorErr(err)
 		}
-		if r.RowsAffected() != 0 {
-			fmt.Printf("Updated name %s -> %s\n", name, generalName)
-		}
+		return "", err
 	}
+
+	return nickName, nil
 }

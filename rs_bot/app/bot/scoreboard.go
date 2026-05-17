@@ -35,6 +35,7 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 				} else if s == "tg" {
 					mid, err := b.client.Tg.SendPicScoreboard(channel, title, filename)
 					if err != nil {
+						fmt.Println(s, channel)
 						b.log.ErrorErr(err)
 					}
 					if tn.Weekday() == time.Sunday && tn.Hour() == 23 && tn.Minute() == 59 {
@@ -42,14 +43,14 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 					} else {
 						b.client.Tg.DelMessageSecond(channel, mid, seconds)
 					}
-				} else if s == "wa" {
-					if tn.Minute() == 59 && (tn.Hour() == 5 || tn.Hour() == 11 || tn.Hour() == 17 || tn.Hour() == 23) {
-						_, err := b.client.Wa.SendPicScoreboard(channel, title, filename)
-						if err != nil {
-							b.log.ErrorErr(err)
-						}
-					}
-				}
+				} //else if s == "wa" {
+				//	if tn.Minute() == 59 && (tn.Hour() == 5 || tn.Hour() == 11 || tn.Hour() == 17 || tn.Hour() == 23) {
+				//		_, err := b.client.Wa.SendPicScoreboard(channel, title, filename)
+				//		if err != nil {
+				//			b.log.ErrorErr(err)
+				//		}
+				//	}
+				//}
 			}
 		}
 
@@ -58,7 +59,7 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 			if wh.ChannelScoreboardOrMap == "" {
 				continue
 			}
-			if eventId == 49 && wh.Name == "IX Легион" {
+			if wh.Name == "IX Легион" { //eventId == 50 &&
 				continue
 			}
 
@@ -70,7 +71,7 @@ func (b *Bot) ReadAndSendPic(tn time.Time) {
 			if scoreboard != "" {
 				if str == "" {
 					send(m, filename)
-					if eventId == 48 && wh.Name == "русь " {
+					if wh.Name == "русь " { //eventId == 48 &&
 						legion := map[string]string{
 							"ds": "1253851338408857641",
 							"tg": "-1002298028181/71634",

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/mentalisit/restapi/models"
 )
 
@@ -16,56 +17,73 @@ func (d *Db) loadConfig() {
 
 func (d *Db) StartConfigWatcher(ctx context.Context) {
 	for {
-		// Для LISTEN нужно отдельное соединение из пула на все время работы
-		err := func() error {
-			conn, err := d.pool.Acquire(ctx)
-			if err != nil {
-				return err
-			}
-			defer conn.Release()
-
-			// Регистрируем интерес к каналу
-			_, err = conn.Exec(ctx, "LISTEN config_updates")
-			if err != nil {
-				return err
-			}
-
-			fmt.Println("Успешно подписались на уведомления БД (канал: config_updates)")
-
-			for {
-				// WaitForNotification блокирует горутину, пока не придет сигнал
-				notification, err := conn.Conn().WaitForNotification(ctx)
+		listener := pq.NewListener(
+			d.dns,
+			10*time.Second,
+			time.Minute,
+			func(event pq.ListenerEventType, err error) {
 				if err != nil {
-					return err // Если ошибка (например, связь оборвалась), выходим во внешний цикл для реконнекта
+					fmt.Println("Listener error:", err)
+				}
+			},
+		)
+
+		err := listener.Listen("config_updates")
+		if err != nil {
+			fmt.Println("Ошибка LISTEN:", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		fmt.Println("Успешно подписались на уведомления БД (канал: config_updates)")
+
+	loop:
+		for {
+			select {
+			case <-ctx.Done():
+				_ = listener.Close()
+				return
+
+			case notification := <-listener.Notify:
+				if notification == nil {
+					continue
 				}
 
-				// В notification.Payload лежит то, что мы написали в триггере: "схема.таблица"
-				table := notification.Payload
+				table := notification.Extra
+
 				fmt.Printf("Получено уведомление об изменении в: %s\n", table)
 
-				// Обновляем только нужную часть кэша
 				switch table {
+
 				case "rs_bot.config_rs":
 					d.reloadRSBotConfig()
+
 				case "rs_bot.bridge_config":
 					d.reloadBridgeConfig()
+
 				case "kzbot.config":
 					d.reloadKZBotConfig()
+
 				default:
 					d.log.Info("Неизвестная таблица в уведомлении: " + table)
 				}
 			}
-		}()
 
-		if err != nil {
-			fmt.Printf("Ошибка ворчера: %v. Повторное подключение через 5 секунд...\n", err)
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(5 * time.Second):
-				// продолжаем внешний цикл for
+			// Проверка соединения
+			err = listener.Ping()
+			if err != nil {
+				fmt.Println("Потеряно соединение с PostgreSQL:", err)
+				break loop
 			}
+		}
+
+		fmt.Println("Переподключение через 5 секунд...")
+
+		select {
+		case <-ctx.Done():
+			return
+
+		case <-time.After(5 * time.Second):
 		}
 	}
 }

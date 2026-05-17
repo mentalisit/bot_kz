@@ -2,28 +2,25 @@ package postgres
 
 import (
 	"compendium/models"
+	"database/sql"
 	"encoding/json"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var count int
 	selCount := "SELECT count(*) as count FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
 	if len(cm.GuildId) < 24 {
-		_ = d.db.QueryRow(ctx, selCount, cm.GuildId, cm.UserId).Scan(&count)
+		_ = d.db.QueryRow(selCount, cm.GuildId, cm.UserId).Scan(&count)
 		if count != 0 {
 			sqlUpd := `update hs_compendium.corpmember set guildid = $1 where userid = $2 AND guildid = $3`
-			_, _ = d.db.Exec(ctx, sqlUpd, cm.MGuild.GuildId(), cm.UserId, cm.GuildId)
+			_, _ = d.db.Exec(sqlUpd, cm.MGuild.GuildId(), cm.UserId, cm.GuildId)
 		}
 	} else {
-		_ = d.db.QueryRow(ctx, selCount, cm.MGuild.GuildId(), cm.UserId).Scan(&count)
+		_ = d.db.QueryRow(selCount, cm.MGuild.GuildId(), cm.UserId).Scan(&count)
 		if count == 0 {
 			insert := `INSERT INTO hs_compendium.corpmember(username, userid, guildid, avatar, avatarurl, timezona, zonaoffset, afkfor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-			_, err := d.db.Exec(ctx, insert, cm.Name, cm.UserId, cm.MGuild.GuildId(), "", cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
+			_, err := d.db.Exec(insert, cm.Name, cm.UserId, cm.MGuild.GuildId(), "", cm.AvatarUrl, cm.TimeZone, cm.ZoneOffset, cm.AfkFor)
 			if err != nil {
 				return err
 			}
@@ -39,7 +36,7 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 		count, _ = d.TechGetCount(cm.UserId)
 		if count != 0 {
 			upd := `update hs_compendium.tech set guildid = $1 where userid = $2 and guildid = $3`
-			_, _ = d.db.Exec(ctx, upd, cm.MGuild.GuildId(), cm.UserId, cm.GuildId)
+			_, _ = d.db.Exec(upd, cm.MGuild.GuildId(), cm.UserId, cm.GuildId)
 			return nil
 		}
 	}
@@ -51,10 +48,8 @@ func (d *Db) CorpMemberInsert(cm models.CorpMember) error {
 	return nil
 }
 func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1"
-	results, err := d.db.Query(ctx, sel, guildid)
+	results, err := d.db.Query(sel, guildid)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -101,10 +96,8 @@ func (d *Db) CorpMembersRead(guildid string) ([]models.CorpMember, error) {
 }
 
 func (d *Db) CorpMembersApiRead(guildid, userid string) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2"
-	results, err := d.db.Query(ctx, sel, guildid, userid)
+	results, err := d.db.Query(sel, guildid, userid)
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -162,39 +155,38 @@ func getTimeStringsWithDST(timezone string, fallbackOffsetMinutes int) (string, 
 	return getTimeStrings(fallbackOffsetMinutes)
 }
 func (d *Db) CorpMemberTZUpdate(userid, guildid, timeZone string, offset int) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set zonaoffset = $1,timezona = $2 where userid = $3 AND guildid = $4`
-	row, err := d.db.Exec(ctx, sqlUpd, offset, timeZone, userid, guildid)
-	if row.RowsAffected() == 0 {
-		return pgx.ErrNoRows
+	row, err := d.db.Exec(sqlUpd, offset, timeZone, userid, guildid)
+	affected, err := row.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
 	}
 	return err
 }
 
 func (d *Db) CorpMemberByUserId(userId string) (*models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var u models.CorpMember
 	var id int
 	var garbich string
 	selectUser := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1 "
-	err := d.db.QueryRow(ctx, selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &garbich, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
+	err := d.db.QueryRow(selectUser, userId).Scan(&id, &u.Name, &u.UserId, &u.GuildId, &garbich, &u.AvatarUrl, &u.TimeZone, &u.ZoneOffset, &u.AfkFor)
 	if err != nil {
 		return nil, err
 	}
 	return &u, nil
 }
 func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sqlUpd := `update hs_compendium.corpmember set avatarurl = $1 where userid = $2 AND guildid = $3`
-	row, err := d.db.Exec(ctx, sqlUpd, avatarurl, userid, guildid)
-	if row.RowsAffected() == 0 {
-		return pgx.ErrNoRows
-	}
+	row, err := d.db.Exec(sqlUpd, avatarurl, userid, guildid)
+	affected, err := row.RowsAffected()
 	if err != nil {
 		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
 	}
 	user, err := d.UsersGetByUserId(userid)
 	if err != nil {
@@ -211,30 +203,24 @@ func (d *Db) CorpMemberAvatarUpdate(userid, guildid, avatarurl string) error {
 	return nil
 }
 func (d *Db) CorpMemberDelete(guildid string, nameId string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2`
-	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId)
+	_, err := d.db.Exec(deleteMember, guildid, nameId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (d *Db) CorpMemberDeleteAlt(guildid string, nameId string, name string) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	deleteMember := `DELETE FROM hs_compendium.corpmember WHERE guildid = $1 AND userid = $2 AND username = $3`
-	_, err := d.db.Exec(ctx, deleteMember, guildid, nameId, name)
+	_, err := d.db.Exec(deleteMember, guildid, nameId, name)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 func (d *Db) CorpMembersReadByUserId(UserId string) ([]models.CorpMember, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT * FROM hs_compendium.corpmember WHERE userid = $1"
-	results, err := d.db.Query(ctx, sel, UserId)
+	results, err := d.db.Query(sel, UserId)
 	defer results.Close()
 	if err != nil {
 		return nil, err

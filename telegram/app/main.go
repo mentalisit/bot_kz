@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +8,8 @@ import (
 	"telegram/grpc_server"
 	"telegram/storage"
 	"telegram/telegram"
+
+	"github.com/mentalisit/logger"
 )
 
 func main() {
@@ -32,3 +33,5 @@ func main() {
 	tg.Close()
 
 }
+
+//go:generate protoc --go_out=. --go-grpc_out=. telegram.proto

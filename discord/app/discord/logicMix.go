@@ -1,12 +1,14 @@
 package DiscordClient
 
 import (
+	"discord/config"
 	"discord/discord/helpers"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/mentalisit/restapi/models"
 )
 
@@ -20,6 +22,10 @@ const (
 )
 
 func (d *Discord) logicMix(m *discordgo.MessageCreate) {
+	// Получаем и кэшируем имена канала и гильдии
+	channelName := d.getChannelName(m.ChannelID)
+	guildName := d.getGuildName(m.GuildID)
+
 	if d.ifMentionBot(m) {
 		return
 	}
@@ -27,6 +33,9 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		return
 	}
 	go d.latinOrNot(m) //пытаемся переводить гостевой чат
+
+	// Сохраняем сообщение в БД
+	go d.saveMessageToStorage(m, channelName, guildName)
 
 	if m.Author != nil && m.Author.Locale != "" {
 		go d.log.Info(m.Author.Username + " " + m.Author.Locale)
@@ -62,6 +71,70 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 		d.SendToCompendium(m)
 		return
 	}
+}
+
+// saveMessageToStorage сохраняет сообщение Discord в БД
+func (d *Discord) saveMessageToStorage(m *discordgo.MessageCreate, channelName, guildName string) {
+	// Получаем communityID (UUID) для гильдии
+	communityID, err := d.storage.Db.GetGildUUIDMyCompendium(m.GuildID)
+	if err != nil {
+		mg := config.MultiAccountGuildV2{
+			GId:       uuid.New(),
+			GuildName: d.getGuildName(m.GuildID),
+			Channels:  make(config.GuildChannels),
+		}
+		mg.Channels["ds"] = append(mg.Channels["ds"], m.GuildID)
+		save, err := d.storage.Db.GuildSave(mg)
+		if err != nil {
+			d.log.ErrorErr(err)
+			return
+		}
+		if save.GId != uuid.Nil {
+			communityID = &save.GId
+		} else {
+			// Если не нашли guild, используем нулевой UUID или логируем
+			d.log.Info(fmt.Sprintf("Не удалось получить communityID для чата %s: %v", m.GuildID, err))
+			return
+		}
+
+	}
+
+	// Сохраняем сообщение с переданными именами канала и гильдии
+	if err := d.storage.Db.SaveDiscordMessageWithNames(*communityID, m, channelName, guildName); err != nil {
+		d.log.Error(fmt.Sprintf("Ошибка сохранения сообщения %s: %v", m.ID, err))
+	}
+}
+
+// getChannelName получает имя канала из кэша или API
+func (d *Discord) getChannelName(channelID string) string {
+	if name, exists := d.channelNameCache[channelID]; exists {
+		return name
+	}
+
+	channel, err := d.S.Channel(channelID)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return channelID // Возвращаем ID если не удалось получить имя
+	}
+
+	d.channelNameCache[channelID] = channel.Name
+	return channel.Name
+}
+
+// getGuildName получает имя гильдии из кэша или API
+func (d *Discord) getGuildName(guildID string) string {
+	if name, exists := d.guildNameCache[guildID]; exists {
+		return name
+	}
+
+	guild, err := d.S.Guild(guildID)
+	if err != nil {
+		d.log.ErrorErr(err)
+		return guildID // Возвращаем ID если не удалось получить имя
+	}
+
+	d.guildNameCache[guildID] = guild.Name
+	return guild.Name
 }
 
 func (d *Discord) SendToRs2Filter(m *discordgo.MessageCreate, config2 models.CorporationConfigV2) {
@@ -165,11 +238,8 @@ func (d *Discord) readReactionTranslate(r *discordgo.MessageReactionAdd, m *disc
 	}
 }
 func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
-	g, err := d.S.Guild(m.GuildID)
-	if err != nil {
-		d.log.ErrorErr(err)
-	}
-	channel, _ := d.S.Channel(m.ChannelID)
+	guildName := d.getGuildName(m.GuildID)
+	channelName := d.getChannelName(m.ChannelID)
 
 	user := m.Author
 	if m.Member != nil && m.Member.User != nil {
@@ -191,15 +261,15 @@ func (d *Discord) SendToCompendium(m *discordgo.MessageCreate) {
 		AvatarF:      user.Avatar,
 		ChannelId:    m.ChannelID,
 		GuildId:      m.GuildID,
-		GuildName:    g.Name,
-		GuildAvatar:  g.IconURL(""),
-		GuildAvatarF: g.Icon,
+		GuildName:    guildName,
+		GuildAvatar:  "", // TODO: добавить кэширование аватаров гильдий
+		GuildAvatarF: "", // TODO: добавить кэширование аватаров гильдий
 		Type:         "ds",
 	}
-	if channel != nil {
-		i.Language = helpers.DetectLanguage(g.Name + "/" + channel.Name)
+	if channelName != "" {
+		i.Language = helpers.DetectLanguage(guildName + "/" + channelName)
 	} else {
-		i.Language = helpers.DetectLanguage(g.Name)
+		i.Language = helpers.DetectLanguage(guildName)
 	}
 
 	d.api.SendCompendiumAppRecover(i)
@@ -247,15 +317,13 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		UserId:      m.Author.ID,
 		NameMention: m.Author.Mention(),
 		Messenger: models.Info{
-			TypeMessenger:  "ds",
-			MessageId:      m.ID,
-			ChannelId:      m.ChannelID,
-			ChannelName:    "",
-			GuildId:        m.GuildID,
-			GuildAvatarUrl: "",
-			UserAvatarUrl:  m.Author.AvatarURL("128"),
-			Language:       "ru",
-			CreatedAt:      time.Now(),
+			TypeMessenger: "ds",
+			MessageId:     m.ID,
+			ChannelId:     m.ChannelID,
+			GuildId:       m.GuildID,
+			UserAvatarUrl: m.Author.AvatarURL("128"),
+			Language:      "ru",
+			CreatedAt:     time.Now(),
 		},
 		Options: models.Options{models.OptionInClient},
 	}
@@ -264,25 +332,16 @@ func (d *Discord) ifPrefixPoint(m *discordgo.MessageCreate) {
 		in2.Config = config2
 	}
 
-	if m.Content == ".setup" || strings.HasPrefix(m.Content, ".invite ") {
+	if m.Content == ".setup" || strings.HasPrefix(m.Content, ".invite ") || strings.HasPrefix(m.Content, ".setting") {
 		in2.Config = models.CorporationConfigV2{
-			//Name:        d.GuildChatName(m.ChannelID, m.GuildID),
-			//Language:    "ru",
 			Channels:    make(models.ChannelsMap),
 			HelpMessage: make(models.HelpMessage),
 		}
-		g, _ := d.S.Guild(m.GuildID)
-		if g != nil {
-			in2.Messenger.GuildName = g.Name
-			in2.Messenger.GuildAvatarUrl = g.IconURL("128")
-		}
-		guildChannels, _ := d.S.GuildChannels(m.GuildID)
-		for _, ch := range guildChannels {
-			if ch.ID == m.ChannelID {
-				in2.Messenger.ChannelName = ch.Name
-				break
-			}
-		}
+		guildName := d.getGuildName(m.GuildID)
+		channelName := d.getChannelName(m.ChannelID)
+		in2.Messenger.GuildName = guildName
+		in2.Messenger.GuildAvatarUrl = "" // TODO: добавить кэширование аватаров гильдий
+		in2.Messenger.ChannelName = channelName
 		if in2.Config.Channels[m.ChannelID] == nil {
 			in2.Config.Channels[m.ChannelID] = &models.Info{}
 		}

@@ -328,7 +328,7 @@ func (b *Whatsapp) SaveAvatarLocalCache(userID, url string) (bool, string) {
 	if url == "" {
 		return false, ""
 	}
-	folder := "docker/compendium/avatars"
+	folder := "docker/web/img/avatars"
 
 	// Создаем HTTP-запрос
 	resp, err := http.Get(url)
@@ -362,7 +362,7 @@ func (b *Whatsapp) SaveAvatarLocalCache(userID, url string) (bool, string) {
 	filename := userID + fileExt
 	filePath := filepath.Join(folder, filename)
 
-	newUrl := "https://compendiumnew.mentalisit.myds.me/compendium/avatars/" + filename
+	newUrl := "https://mentalisit.pp.ua/web/img/avatars/" + filename
 
 	// Проверяем, существует ли файл
 	if fileInfo, err := os.Stat(filePath); err == nil {

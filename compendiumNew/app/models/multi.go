@@ -69,15 +69,51 @@ func (m *MultiAccountGuild) GetMapChannel() map[string][]string {
 // UUIDArray позволяет sqlx автоматически работать с UUID[] в Postgres
 type UUIDArray []uuid.UUID
 
-func (a UUIDArray) Value() (driver.Value, error) {
-	if a == nil {
+// Value: превращает слайс UUID в PostgreSQL array literal для базы (Valuer)
+func (u UUIDArray) Value() (driver.Value, error) {
+	if u == nil || len(u) == 0 {
 		return "{}", nil
 	}
-	return pq.Array(a).Value()
+	strs := make([]string, len(u))
+	for i, id := range u {
+		strs[i] = id.String()
+	}
+	return "{" + strings.Join(strs, ",") + "}", nil
 }
 
-func (a *UUIDArray) Scan(src interface{}) error {
-	return pq.Array(a).Scan(src)
+// Scan: читает PostgreSQL UUID[] массив из базы в слайс UUID (Scanner)
+func (u *UUIDArray) Scan(src interface{}) error {
+	if src == nil {
+		*u = make(UUIDArray, 0)
+		return nil
+	}
+	var source string
+	switch v := src.(type) {
+	case []byte:
+		source = string(v)
+	case string:
+		source = v
+	default:
+		return fmt.Errorf("unsupported type for UUIDArray: %T", src)
+	}
+	// PostgreSQL array format: {uuid1,uuid2,...}
+	s := strings.Trim(source, "{}")
+	if s == "" {
+		*u = make(UUIDArray, 0)
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	result := make(UUIDArray, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		id, err := uuid.Parse(p)
+		if err != nil {
+			return fmt.Errorf("failed to parse UUID %q: %w", p, err)
+		}
+		result = append(result, id)
+	}
+	*u = result
+	return nil
 }
 
 type MultiAccountCorpMember struct {

@@ -30,13 +30,19 @@ func (m GuildChannels) Value() (driver.Value, error) {
 // Scan преобразует JSON из базы данных в map
 func (m *GuildChannels) Scan(src interface{}) error {
 	if src == nil {
+		*m = make(GuildChannels)
 		return nil
 	}
-	bytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("type assertion to []byte failed")
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for GuildChannels: %T", src)
 	}
-	return json.Unmarshal(bytes, m)
+	return json.Unmarshal(data, m)
 }
 
 func (m *MultiAccountGuildV2) ChannelsBytes() []byte {

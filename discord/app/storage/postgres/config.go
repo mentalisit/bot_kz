@@ -1,18 +1,17 @@
 package postgres
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
 	"github.com/mentalisit/restapi/models"
 )
 
 func (d *Db) ReadConfigRs() ([]models.CorporationConfig, error) {
-	ctx, cancelFunc := d.getContext()
-	defer cancelFunc()
 	var tt []models.CorporationConfig
-	results, err := d.db.Query(ctx, "SELECT * FROM kzbot.config")
+	results, err := d.db.Query("SELECT * FROM kzbot.config")
 	defer results.Close()
 	if err != nil {
 		return nil, err
@@ -26,13 +25,12 @@ func (d *Db) ReadConfigRs() ([]models.CorporationConfig, error) {
 	return tt, nil
 }
 func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationConfig, err error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	sel := "SELECT * FROM kzbot.config WHERE dschannel = $1"
-	results, err := d.db.Query(ctx, sel, dsChannel)
+	results, err := d.db.Query(sel, dsChannel)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			return conf, nil
@@ -45,13 +43,12 @@ func (d *Db) ReadConfigForDsChannel(dsChannel string) (conf models.CorporationCo
 	return conf, nil
 }
 func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConfig, err error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
+
 	sel := "SELECT * FROM kzbot.config WHERE corpname = $1"
-	results, err := d.db.Query(ctx, sel, corpName)
+	results, err := d.db.Query(sel, corpName)
 	defer results.Close()
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return
 		} else {
 			return conf, err
@@ -65,10 +62,10 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 }
 
 //func (d *Db) DBReadBridgeConfig() ([]models.BridgeConfig, error) {
-//	ctx, cancel := d.getContext()
+//	cancel := d.getContext()
 //	defer cancel()
 //	var cc []models.BridgeConfig
-//	rows, err := d.db.Query(ctx, `SELECT * FROM kzbot.bridge_config`)
+//	rows, err := d.db.Query(`SELECT * FROM kzbot.bridge_config`)
 //	if err != nil {
 //		return cc, err
 //	}
@@ -99,9 +96,8 @@ func (d *Db) ReadConfigForCorpName(corpName string) (conf models.CorporationConf
 
 func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	var cc []models.Bridge2Config
-	ctx, cancel := d.getContext()
-	defer cancel()
-	rows, err := d.db.Query(ctx, `SELECT * FROM rs_bot.bridge_config`)
+
+	rows, err := d.db.Query(`SELECT * FROM rs_bot.bridge_config`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return cc
@@ -111,7 +107,7 @@ func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	for rows.Next() {
 		var config models.Bridge2Config
 		var channel []byte
-		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channel, &config.ForbiddenPrefixes); err != nil {
+		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, pq.Array(&config.Role), &channel, pq.Array(&config.ForbiddenPrefixes)); err != nil {
 			d.log.ErrorErr(err)
 			return cc
 		}

@@ -5,24 +5,6 @@ import (
 	"unicode"
 )
 
-//func (b *Bridge) Channels() (chatIdsTG, chatIdsDS []string) {
-//	for _, c := range b.in.Config.Channel["tg"] {
-//		if c.ChannelId != b.in.ChatId {
-//			if c.ChannelId != "" {
-//				chatIdsTG = append(chatIdsTG, c.ChannelId)
-//			}
-//		}
-//	}
-//	for _, d := range b.in.Config.Channel["ds"] {
-//		if d.ChannelId != b.in.ChatId {
-//			if d.ChannelId != "" {
-//				chatIdsDS = append(chatIdsDS, d.ChannelId)
-//			}
-//		}
-//	}
-//	return chatIdsTG, chatIdsDS
-//}
-
 func (b *Bridge) GetChannels() (chatIdsTG, chatIdsDS, chatIdsWa []string) {
 	for ClientType, Channels := range b.in.Config.Channel {
 		for _, channel := range Channels {

@@ -16,7 +16,7 @@ func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech mo
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(20) + 1
 
-	im, err := gg.LoadPNG(fmt.Sprintf("docker/compendium/template/%d.png", randomNumber))
+	im, err := gg.LoadPNG(fmt.Sprintf("docker/web/compendium/template/%d.png", randomNumber))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -25,7 +25,7 @@ func GenerateUser(avatarURL, corpAvararUrl, nikName, corporation string, tech mo
 	dc := gg.NewContextForImage(im)
 
 	// Устанавливаем параметры шрифта
-	err = dc.LoadFontFace("docker/compendium/font.ttf", 32)
+	err = dc.LoadFontFace("docker/web/compendium/font.ttf", 32)
 	if err != nil {
 		fmt.Println(err)
 	}

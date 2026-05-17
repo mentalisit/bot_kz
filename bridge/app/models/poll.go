@@ -20,3 +20,21 @@ type Request struct {
 	Data    map[string]string `json:"data"`
 	Options []string          `json:"options"`
 }
+
+type Poll2Struct struct { //data
+	Author      string            `json:"author"`
+	Question    string            `json:"question"`
+	Options     []string          `json:"options"`
+	CreateTime  int64             `json:"createTime"`
+	UrlPoll     string            `json:"urlPoll"`
+	Config      Bridge2Config     `json:"config"`
+	Gid         string            `json:"gid"`
+	PollMessage map[string]string `json:"pollMessage"`
+}
+type Votes2 struct { //votes
+	Type     string `json:"type"`
+	Channel  string `json:"channel"`
+	UserName string `json:"userName"`
+	Uid      string `json:"uid"`
+	Answer   string `json:"answer"`
+}

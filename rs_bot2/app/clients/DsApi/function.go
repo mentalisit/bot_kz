@@ -1,0 +1,405 @@
+package ds
+
+import (
+	"context"
+	"errors"
+	"rs/models"
+)
+
+func (c *Client) GetMembersRoles(guildId string) ([]models.DsMembersRoles, error) {
+	req := &GuildRequest{Guild: guildId}
+	roles, err := c.client.GetMembersRoles(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return nil, err
+	}
+	var roles2 []models.DsMembersRoles
+	for _, memberRole := range roles.Memberroles {
+		roles2 = append(roles2, models.DsMembersRoles{
+			Userid:  memberRole.Userid,
+			RolesId: memberRole.RolesId,
+		})
+	}
+	return roles2, nil
+}
+
+func (c *Client) GetRoles(guildId string) ([]models.CorpRole, error) {
+	req := &GuildRequest{Guild: guildId}
+	roles, err := c.client.GetRoles(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return nil, err
+	}
+	var roles2 []models.CorpRole
+	for _, role := range roles.Roles {
+		roles2 = append(roles2, models.CorpRole{
+			ID:   role.Id,
+			Name: role.Name,
+		})
+	}
+	return roles2, nil
+}
+
+func (c *Client) DeleteMessage(chatId, messageId string) {
+	req := &DeleteMessageRequest{
+		Chatid: chatId,
+		Mesid:  messageId,
+	}
+	_, err := c.client.DeleteMessage(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+func (c *Client) DeleteMessageSecond(chatId, messageId string, second int) {
+	req := &DeleteMessageSecondRequest{
+		Chatid: chatId,
+		Mesid:  messageId,
+		Second: int32(second),
+	}
+	_, err := c.client.DeleteMessageSecond(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+func (c *Client) SendChannelDelSecond(ChatId, text string, second int) {
+	req := &SendChannelDelSecondRequest{
+		Chatid: ChatId,
+		Text:   text,
+		Second: int32(second),
+	}
+
+	_, err := c.client.SendChannelDelSecond(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+
+func (c *Client) SendPollChannel(m map[string]string, options []string) string {
+	req := &SendPollRequest{
+		Data:    m,
+		Options: options,
+	}
+
+	pollMid, err := c.client.SendPoll(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return pollMid.Text
+}
+func (c *Client) SendHelp(chatid, title, description, oldMidHelps string, ifUser bool) string {
+	req := &SendHelpRequest{
+		Chatid:      chatid,
+		Title:       title,
+		Description: description,
+		OldMidHelps: oldMidHelps,
+		IfUser:      ifUser,
+	}
+	rR, err := c.client.SendHelp(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+	return rR.Text
+}
+func (c *Client) CleanOldMessageChannel(chatId, lim string) {
+	req := &CleanOldMessageChannelRequest{
+		ChatId: chatId,
+		Lim:    lim,
+	}
+	_, err := c.client.CleanOldMessageChannel(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+func (c *Client) CleanRsBotOtherMessage() {
+	req := &Empty{}
+	_, err := c.client.CleanRsBotOtherMessage(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+
+func (c *Client) SendComplexContent(chatid, text string) string {
+	req := &SendComplexContentRequest{
+		Chatid: chatid,
+		Text:   text,
+	}
+	tr, err := c.client.SendComplexContent(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+}
+func (c *Client) EditComplexButton(dsmesid, dschatid string, mapEmbed map[string]string) error {
+	req := &EditComplexButtonRequest{
+		Dsmesid:  dsmesid,
+		Dschatid: dschatid,
+		MapEmbed: mapEmbed,
+	}
+	er, err := c.client.EditComplexButton(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if er.ErrorMessage != "" {
+		return errors.New(er.ErrorMessage)
+	}
+	return nil
+}
+
+func (c *Client) SendWebhook(mtext string, username string, channel string, avatar string) string {
+	req := &SendWebhookRequest{
+		Text:     mtext,
+		Username: username,
+		Chatid:   channel,
+		Avatar:   avatar,
+	}
+	tR, err := c.client.SendWebhook(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tR.Text
+}
+func (c *Client) SendDmText(text string, id string) {
+	req := &SendDmTextRequest{
+		Text:     text,
+		AuthorID: id,
+	}
+	_, err := c.client.SendDmText(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return
+	}
+}
+func (c *Client) ReadNews() (en, ru, ua string) {
+	message, err := c.client.ReadNewsMessage(context.Background(), &Empty{})
+	if err != nil {
+		return "", "", ""
+	}
+	return message.En, message.Ru, message.Ua
+}
+func (c *Client) ReplaceTextMessage(text string, guildid string) string {
+	req := &ReplaceTextMessageRequest{
+		Text:    text,
+		Guildid: guildid,
+	}
+	tr, err := c.client.ReplaceTextMessage(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+}
+
+func (c *Client) CheckAdmin(id string, channel string) bool {
+	req := &CheckAdminRequest{
+		Nameid: id,
+		Chatid: channel,
+	}
+	fr, err := c.client.CheckAdmin(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return false
+	}
+	return fr.Flag
+}
+
+func (c *Client) Send(channel string, text string) string {
+	req := &SendRequest{
+		Chatid: channel,
+		Text:   text,
+	}
+	tr, err := c.client.Send(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+}
+
+func (c *Client) EditWebhook(text string, username string, channel string, dsmesid string, avatar string) {
+	req := &EditWebhookRequest{
+		Text:      text,
+		Username:  username,
+		ChatID:    channel,
+		MID:       dsmesid,
+		AvatarURL: avatar,
+	}
+	_, err := c.client.EditWebhook(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+
+func (c *Client) ChannelTyping(channel string) {
+	req := &ChannelTypingRequest{
+		ChannelID: channel,
+	}
+	_, err := c.client.ChannelTyping(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+	}
+}
+
+func (c *Client) RoleToIdPing(role string, guildID string) (string, error) {
+	// Проверяем наличие в кэше
+	if guildRoles, exists := c.rolePing[guildID]; exists {
+		if roleID, found := guildRoles[role]; found {
+			return roleID, nil
+		}
+	}
+
+	// Формируем запрос
+	req := &RoleToIdPingRequest{
+		RolePing: role,
+		Guildid:  guildID,
+	}
+
+	// Выполняем запрос
+	resp, err := c.client.RoleToIdPing(context.Background(), req)
+	if err != nil {
+		return role, err
+	}
+
+	// Обновляем кэш
+	if _, exists := c.rolePing[guildID]; !exists {
+		c.rolePing[guildID] = make(map[string]string)
+	}
+	c.rolePing[guildID][role] = resp.Text
+
+	return resp.Text, nil
+}
+
+func (c *Client) QueueSend(queue string) {
+	req := &QueueSendRequest{
+		Text: queue,
+	}
+	_, _ = c.client.QueueSend(context.Background(), req)
+}
+
+func (c *Client) SendEmbedTime(channel string, text string) string {
+	req := &SendEmbedTimeRequest{
+		Chatid: channel,
+		Text:   text,
+	}
+	tr, err := c.client.SendEmbedTime(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+
+}
+
+func (c *Client) SendComplex(channel string, n map[string]string) string {
+	req := &SendComplexRequest{
+		Chatid:    channel,
+		MapEmbeds: n,
+	}
+	tr, err := c.client.SendComplex(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+}
+
+func (c *Client) SendEmbedText(chatid, title, text string) string {
+	req := &SendEmbedTextRequest{
+		Chatid: chatid,
+		Title:  title,
+		Text:   text,
+	}
+	tr, err := c.client.SendEmbedText(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return ""
+	}
+	return tr.Text
+}
+
+func (c *Client) Subscribe(id string, roles string, guildid string) int {
+	req := &SubscrRequest{
+		Nameid:   id,
+		ArgRoles: roles,
+		Guildid:  guildid,
+	}
+	ir, err := c.client.Subscribe(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return -1
+	}
+	return int(ir.Result)
+}
+
+func (c *Client) Unsubscribe(id string, roles string, guildid string) int {
+	req := &SubscrRequest{
+		Nameid:   id,
+		ArgRoles: roles,
+		Guildid:  guildid,
+	}
+	ir, err := c.client.Unsubscribe(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return -1
+	}
+	return int(ir.Result)
+}
+
+func (c *Client) SendChannelPic(chatId, text string, pic []byte) error {
+	req := &SendPicRequest{
+		Chatid:     chatId,
+		Text:       text,
+		ImageBytes: pic,
+	}
+
+	errResponse, err := c.client.SendPic(context.Background(), req)
+	if err != nil {
+		c.log.ErrorErr(err)
+		return err
+	}
+	if errResponse.ErrorMessage != "" {
+		return errors.New(errResponse.ErrorMessage)
+	}
+	return nil
+}
+func (c *Client) SendOrEditEmbedImage(chatId, title, ImageUrl string) error {
+	req := &SendEmbedImageRequest{
+		Chatid:   chatId,
+		Title:    title,
+		Imageurl: ImageUrl,
+	}
+	errorResponse, err := c.client.SendOrEditEmbedImage(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if errorResponse.ErrorMessage != "" {
+		return errors.New(errorResponse.ErrorMessage)
+	}
+	return nil
+}
+func (c *Client) SendOrEditEmbedImageScoreboard(chatid, title, fileNameScoreboard string) error {
+	req := &SendEmbedImageFileNameRequest{
+		ChatId:             chatid,
+		Title:              title,
+		FileNameScoreboard: fileNameScoreboard,
+	}
+	errorResponse, err := c.client.SendOrEditEmbedImageFileName(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	if errorResponse.ErrorMessage != "" {
+		return errors.New(errorResponse.ErrorMessage)
+	}
+	return nil
+}
+
+func (c *Client) GetOrCreateWebhookGame(Name string) (string, string) {
+	g, err := c.client.GetOrCreateWebhookGame(context.Background(), &TextResponse{Text: Name})
+	if err != nil {
+		c.log.ErrorErr(err)
+		return "", ""
+	}
+	return g.Text, g.ChatId
+}

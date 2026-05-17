@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,10 +11,10 @@ import (
 	"whatsapp/config"
 	"whatsapp/models"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jmoiron/sqlx"
 	"github.com/mentalisit/logger"
+
+	_ "github.com/lib/pq"
 )
 
 type Db struct {
@@ -23,41 +24,39 @@ type Db struct {
 	RsBotConfig  map[string]models.CorporationConfigV2
 	BridgeConfig map[string]models.Bridge2Config
 	KzBotConfig  map[string]models.CorporationConfig
-	pool         *pgxpool.Pool
+	pool         *sqlx.DB
 }
 type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
-	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (sql.Result, error)
+	Query(ctx context.Context, sql string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) *sql.Row
+	Begin(ctx context.Context) (*sql.Tx, error)
 }
 
 func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	pool, err := pgxpool.New(ctx, dns)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
 	if err != nil {
 		slog.Error(err.Error())
-		//log.ErrorErr(err)
 		time.Sleep(5 * time.Second)
 		os.Exit(1)
-		//return err
 	}
-	db := &Db{
-		db:           pool,
+	database := &Db{
+		db:           db,
 		log:          log,
 		RsBotConfig:  make(map[string]models.CorporationConfigV2),
 		BridgeConfig: make(map[string]models.Bridge2Config),
 		KzBotConfig:  make(map[string]models.CorporationConfig),
-		pool:         pool,
+		pool:         db,
 	}
-	db.loadConfig()
-	go db.StartConfigWatcher(context.Background())
+	database.loadConfig()
+	go database.StartConfigWatcher(context.Background())
 
-	return db
+	return database
 }
 func (d *Db) getContext() (ctx context.Context, cancel context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 5*time.Second)

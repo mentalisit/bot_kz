@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -27,9 +26,9 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 		return false, nil
 	}
 	chat, threadID := t.chat(chatid)
-	roleId, _ := t.Storage.Db.GetRoleByName(context.Background(), RsTypeLevel, chat)
+	roleId, _ := t.Storage.Db.GetRoleByName(RsTypeLevel, chat)
 	if roleId == 0 {
-		_ = t.Storage.Db.CreateRole(context.Background(), &models2.Role{
+		_ = t.Storage.Db.CreateRole(&models2.Role{
 			ChatID:    chat,
 			Name:      RsTypeLevel,
 			CreatedBy: 1,
@@ -37,7 +36,7 @@ func (t *Telegram) SendChannelDelSecondRsMention(chatid string, text string, par
 		//t.SendChannelDelSecond(chatid, "роль не найдена, попроси админа создать роль "+RsTypeLevel, "", 60)
 		return true, nil
 	}
-	users, _ := t.Storage.Db.GetRolesUsers(context.Background(), chat, roleId)
+	users, _ := t.Storage.Db.GetRolesUsers(chat, roleId)
 	if len(users) == 0 {
 		t.SendChannelDelSecond(chatid, "не найдено желающих получать пинг на "+RsTypeLevel, "", 10)
 		return true, nil
@@ -115,19 +114,19 @@ func (t *Telegram) logicMention(m *tgbotapi.Message, edit bool) {
 				ThreadID = 0
 			}
 			ChatId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
-			roles, _ := t.Storage.Db.GetChatsRoles(context.Background(), m.Chat.ID)
+			roles, _ := t.Storage.Db.GetChatsRoles(m.Chat.ID)
 			if roles != nil {
 				us := make(map[string][]models2.User)
 				for _, mention := range mentions {
 					if mention[1:] == "all" && t.CheckAdminTg(ChatId, m.From.UserName) {
-						users, _ := t.Storage.Db.GetChatUsers(context.Background(), m.Chat.ID)
+						users, _ := t.Storage.Db.GetChatUsers(m.Chat.ID)
 						if len(users) > 0 {
 							us["all"] = users
 						}
 					} else {
 						for _, role := range roles {
 							if role.Name == mention[1:] {
-								users, _ := t.Storage.Db.GetRolesUsers(context.Background(), m.Chat.ID, role.ID)
+								users, _ := t.Storage.Db.GetRolesUsers(m.Chat.ID, role.ID)
 								if len(users) > 0 {
 									us[role.Name] = users
 								}
@@ -226,31 +225,31 @@ func (t *Telegram) MentionMembersRoles(ChatId string, replyId int, trackedMember
 	}
 }
 func (t *Telegram) Unsubscribe(userId int64, argRoles string, guildId int64) int {
-	roleId, err := t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
+	roleId, err := t.Storage.Db.RoleExists(guildId, argRoles)
 	if err != nil {
 		t.log.Info("role not found")
 		return 1
 	}
-	subscribedRole, _ := t.Storage.Db.IsUserSubscribedToRole(context.Background(), userId, roleId)
+	subscribedRole, _ := t.Storage.Db.IsUserSubscribedToRole(userId, roleId)
 	if !subscribedRole {
 		return 0
 	}
-	err = t.Storage.Db.LeaveRole(context.Background(), userId, roleId)
+	err = t.Storage.Db.LeaveRole(userId, roleId)
 	if err == nil {
 		return 2
 	}
 	return 3
 }
 func (t *Telegram) Subscribe(userId int64, argRoles string, guildId int64) int {
-	roleId, err := t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
+	roleId, err := t.Storage.Db.RoleExists(guildId, argRoles)
 	if err != nil && roleId == 0 {
-		_ = t.Storage.Db.CreateRole(context.Background(), &models2.Role{ChatID: guildId, Name: argRoles})
-		roleId, err = t.Storage.Db.RoleExists(context.Background(), guildId, argRoles)
+		_ = t.Storage.Db.CreateRole(&models2.Role{ChatID: guildId, Name: argRoles})
+		roleId, err = t.Storage.Db.RoleExists(guildId, argRoles)
 	}
 	if roleId == 0 {
 		return 2
 	}
-	err = t.Storage.Db.JoinRole(context.Background(), userId, roleId, guildId)
+	err = t.Storage.Db.JoinRole(userId, roleId, guildId)
 	if err != nil {
 		return 2
 	}

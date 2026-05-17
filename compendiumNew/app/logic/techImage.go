@@ -3,13 +3,12 @@ package logic
 import (
 	"compendium/logic/imageGenerator"
 	"compendium/models"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (c *Hs) sendPic(m models.IncomingMessage, userAvatar, guildAvatar, picName, guildName string, mBytes []byte) {
@@ -59,7 +58,7 @@ func (c *Hs) techImage(m models.IncomingMessage) (tech bool) {
 
 		user, err := c.users.UsersGetByUserId(m.NameId)
 		if err != nil {
-			if !errors.Is(err, pgx.ErrNoRows) {
+			if !errors.Is(err, sql.ErrNoRows) {
 				c.log.Error(fmt.Sprintf("UsersGetByUserId %s %s  err %+v", m.Name, m.NameId, err))
 				c.log.InfoStruct("techImage", m)
 			}
@@ -164,7 +163,7 @@ func (c *Hs) techImageName(m models.IncomingMessage) bool {
 				user, err = c.users.UsersGetByUserName(userName)
 			}
 			if err != nil || user == nil {
-				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				if err != nil && !errors.Is(err, sql.ErrNoRows) {
 					c.log.Info(err.Error())
 				}
 				c.sendChat(m, c.getText(m, "DATA_NOT_FOUND"))

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -76,7 +75,7 @@ func (h *WebAppHandler) GetUserChats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chats, err := h.storage.Db.GetUserChats(r.Context(), userID)
+	chats, err := h.storage.Db.GetUserChats(userID)
 	if err != nil {
 		log.Printf("Error getting user chats: %v", err)
 		h.sendError(w, "failed to get user chats", http.StatusInternalServerError)
@@ -87,13 +86,13 @@ func (h *WebAppHandler) GetUserChats(w http.ResponseWriter, r *http.Request) {
 			getChat, _ := h.bot.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: tgbotapi.ChatConfig{ChatID: chat.ChatID}})
 			if getChat.Title != "" {
 				chats[i].ChatName = getChat.Title
-				h.storage.Db.UpdateChatTitle(context.Background(), chat.ChatID, getChat.Title)
+				h.storage.Db.UpdateChatTitle(chat.ChatID, getChat.Title)
 			}
 		}
 		chatConfig := tgbotapi.ChatConfig{ChatID: chat.ChatID}
 		chatConf := tgbotapi.ChatAdministratorsConfig{ChatConfig: chatConfig}
 		admins, _ := h.bot.GetChatAdministrators(chatConf)
-		chatAdmins, _ := h.storage.Db.GetChatAdmins(context.Background(), chat.ChatID)
+		chatAdmins, _ := h.storage.Db.GetChatAdmins(chat.ChatID)
 		adminDB := make(map[int64]models2.User)
 		for _, admin := range chatAdmins {
 			adminDB[admin.ID] = admin
@@ -101,14 +100,14 @@ func (h *WebAppHandler) GetUserChats(w http.ResponseWriter, r *http.Request) {
 
 		for _, admin := range admins {
 			if admin.CanChangeInfo || admin.Status == "creator" || admin.CanRestrictMembers {
-				_ = h.storage.Db.SetChatAdmin(context.Background(), chat.ChatID, admin.User.ID, true)
+				_ = h.storage.Db.SetChatAdmin(chat.ChatID, admin.User.ID, true)
 				delete(adminDB, admin.User.ID)
 			}
 		}
 
 		if len(adminDB) != 0 {
 			for _, user := range adminDB {
-				_ = h.storage.Db.RemoveChatAdmin(context.Background(), chat.ChatID, user.ID)
+				_ = h.storage.Db.RemoveChatAdmin(chat.ChatID, user.ID)
 			}
 		}
 
@@ -140,7 +139,7 @@ func (h *WebAppHandler) GetChatRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles, err := h.storage.Db.GetChatRoles(r.Context(), chatID, userID)
+	roles, err := h.storage.Db.GetChatRoles(chatID, userID)
 	if err != nil {
 		log.Printf("Error getting chat roles: %v", err)
 		h.sendError(w, "failed to get chat roles", http.StatusInternalServerError)
@@ -175,7 +174,7 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Проверяем права администратора
-	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, userID)
+	isAdmin, err := h.storage.Db.IsChatAdmin(chatID, userID)
 	if err != nil {
 		log.Printf("Error checking admin status: %v", err)
 		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
@@ -209,7 +208,7 @@ func (h *WebAppHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		CreatedBy: userID,
 	}
 
-	if err := h.storage.Db.CreateRole(r.Context(), role); err != nil {
+	if err := h.storage.Db.CreateRole(role); err != nil {
 		log.Printf("Error creating role: %v", err)
 		h.sendError(w, "failed to create role", http.StatusInternalServerError)
 		return
@@ -251,7 +250,7 @@ func (h *WebAppHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, userID)
+	isAdmin, err := h.storage.Db.IsChatAdmin(chatID, userID)
 	if err != nil {
 		log.Printf("Error checking admin status: %v", err)
 		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
@@ -280,7 +279,7 @@ func (h *WebAppHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.storage.Db.UpdateRoleName(r.Context(), roleID, chatID, newName); err != nil {
+	if err := h.storage.Db.UpdateRoleName(roleID, chatID, newName); err != nil {
 		log.Printf("Error updating role: %v", err)
 		h.sendError(w, "failed to update role", http.StatusInternalServerError)
 		return
@@ -324,7 +323,7 @@ func (h *WebAppHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Проверяем права администратора
-	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, userID)
+	isAdmin, err := h.storage.Db.IsChatAdmin(chatID, userID)
 	if err != nil {
 		log.Printf("Error checking admin status: %v", err)
 		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
@@ -336,7 +335,7 @@ func (h *WebAppHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.storage.Db.DeleteRole(r.Context(), roleID, chatID); err != nil {
+	if err := h.storage.Db.DeleteRole(roleID, chatID); err != nil {
 		log.Printf("Error deleting role: %v", err)
 		h.sendError(w, "failed to delete role", http.StatusInternalServerError)
 		return
@@ -389,13 +388,13 @@ func (h *WebAppHandler) handleRoleMembership(w http.ResponseWriter, r *http.Requ
 	}
 
 	if join {
-		if err := h.storage.Db.JoinRole(r.Context(), userID, roleID, chatID); err != nil {
+		if err := h.storage.Db.JoinRole(userID, roleID, chatID); err != nil {
 			log.Printf("Error joining role: %v", err)
 			h.sendError(w, "failed to join role", http.StatusInternalServerError)
 			return
 		}
 	} else {
-		if err := h.storage.Db.LeaveRole(r.Context(), userID, roleID); err != nil {
+		if err := h.storage.Db.LeaveRole(userID, roleID); err != nil {
 			log.Printf("Error leaving role: %v", err)
 			h.sendError(w, "failed to leave role", http.StatusInternalServerError)
 			return
@@ -425,7 +424,7 @@ func (h *WebAppHandler) GetChatUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.storage.Db.GetChatUsers(r.Context(), chatID)
+	users, err := h.storage.Db.GetChatUsers(chatID)
 	if err != nil {
 		log.Printf("Error getting chat users: %v", err)
 		h.sendError(w, "failed to get chat users", http.StatusInternalServerError)
@@ -474,7 +473,7 @@ func (h *WebAppHandler) SetUserRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Проверяем права администратора
-	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, adminID)
+	isAdmin, err := h.storage.Db.IsChatAdmin(chatID, adminID)
 	if err != nil {
 		log.Printf("Error checking admin status: %v", err)
 		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
@@ -488,7 +487,7 @@ func (h *WebAppHandler) SetUserRole(w http.ResponseWriter, r *http.Request) {
 
 	assign := r.Method == "POST"
 
-	if err := h.storage.Db.SetUserRole(r.Context(), targetUserID, roleID, chatID, assign); err != nil {
+	if err := h.storage.Db.SetUserRole(targetUserID, roleID, chatID, assign); err != nil {
 		log.Printf("Error setting user role: %v", err)
 		h.sendError(w, "failed to set user role", http.StatusInternalServerError)
 		return
@@ -529,7 +528,7 @@ func (h *WebAppHandler) GetUserPermissions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	isAdmin, err := h.storage.Db.IsChatAdmin(r.Context(), chatID, userID)
+	isAdmin, err := h.storage.Db.IsChatAdmin(chatID, userID)
 	if err != nil {
 		log.Printf("Error checking permissions: %v", err)
 		h.sendError(w, "failed to check permissions", http.StatusInternalServerError)
@@ -577,7 +576,7 @@ func (h *WebAppHandler) GetRoleMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем всех пользователей чата
-	users, err := h.storage.Db.GetChatUsers(r.Context(), chatID)
+	users, err := h.storage.Db.GetChatUsers(chatID)
 	if err != nil {
 		log.Printf("Error getting chat users: %v", err)
 		h.sendError(w, "failed to get chat users", http.StatusInternalServerError)
@@ -586,7 +585,7 @@ func (h *WebAppHandler) GetRoleMembers(w http.ResponseWriter, r *http.Request) {
 
 	// Получаем информацию о роли
 	var roleName string
-	err = h.storage.Db.GetRoleName(r.Context(), roleID, &roleName)
+	err = h.storage.Db.GetRoleName(roleID, &roleName)
 	if err != nil {
 		log.Printf("Error getting role name: %v", err)
 		// Продолжаем выполнение, даже если не получили имя роли
@@ -1236,14 +1235,14 @@ func (h *WebAppHandler) GetCorpMembers(w http.ResponseWriter, r *http.Request) {
 	var allMembers []models2.CompendiumCorpMember
 
 	// My Compendium
-	if members, err := h.storage.Db.GetCorpMembersMyCompendium(r.Context(), chatID); err == nil {
+	if members, err := h.storage.Db.GetCorpMembersMyCompendium(chatID); err == nil {
 		allMembers = append(allMembers, members...)
 	} else {
 		log.Printf("Error getting corp members from my_compendium: %v", err)
 	}
 
 	// HS Compendium
-	if members, err := h.storage.Db.GetCorpMembersHSCompendium(r.Context(), chatID); err == nil {
+	if members, err := h.storage.Db.GetCorpMembersHSCompendium(chatID); err == nil {
 		allMembers = append(allMembers, members...)
 	} else {
 		log.Printf("Error getting corp members from hs_compendium: %v", err)
@@ -1275,9 +1274,9 @@ func (h *WebAppHandler) RemoveCorpMember(w http.ResponseWriter, r *http.Request)
 	var removeErr error
 	switch tableSource {
 	case "my_compendium":
-		removeErr = h.storage.Db.RemoveCorpMemberMyCompendium(r.Context(), chatID, userIDStr)
+		removeErr = h.storage.Db.RemoveCorpMemberMyCompendium(chatID, userIDStr)
 	case "hs_compendium":
-		removeErr = h.storage.Db.RemoveCorpMemberHSCompendium(r.Context(), chatID, userIDStr)
+		removeErr = h.storage.Db.RemoveCorpMemberHSCompendium(chatID, userIDStr)
 	default:
 		h.sendError(w, "invalid tableSource parameter", http.StatusBadRequest)
 		return

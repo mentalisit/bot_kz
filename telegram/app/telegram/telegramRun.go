@@ -42,10 +42,16 @@ func NewTelegram(log *logger.Logger, token string, st *storage.Storage) *Telegra
 
 	fmt.Printf("Authorized on account %s\n", t.t.Self.UserName)
 
-	go t.StartWebApp("8080")
+	//go t.StartWebApp("8080")
 
 	go t.update()
 	go t.DeleteMessageTimer()
+
+	go func() {
+		time.Sleep(30 * time.Second)
+		t.TestFunc()
+	}()
+
 	return t
 }
 

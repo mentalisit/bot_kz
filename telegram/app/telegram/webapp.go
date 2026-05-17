@@ -58,8 +58,7 @@ func (t *Telegram) UpdateChatMembersCache(chatID int64) error {
 	}
 
 	// Обновляем в хранилище
-	ctx := context.Background()
-	if err := t.Storage.Db.UpdateUserCache(ctx, chatID, users); err != nil {
+	if err := t.Storage.Db.UpdateUserCache(chatID, users); err != nil {
 		return fmt.Errorf("failed to update user cache: %w", err)
 	}
 

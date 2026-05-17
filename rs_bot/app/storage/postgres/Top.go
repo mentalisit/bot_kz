@@ -6,11 +6,9 @@ import (
 )
 
 func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var top []models.Top
 	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND numberevent = $4 GROUP BY mention LIMIT 50"
-	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, "d"+lvlkz, numEvent)
+	results, err := d.db.Query(sel, CorpName, lvlkz, "d"+lvlkz, numEvent)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -22,7 +20,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
 			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND (lvlkz = $4 OR lvlkz = $5)"
-			row := d.db.QueryRow(ctx, selC, u.Name, CorpName, numEvent, lvlkz, "d"+lvlkz)
+			row := d.db.QueryRow(selC, u.Name, CorpName, numEvent, lvlkz, "d"+lvlkz)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -30,7 +28,7 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 			}
 
 			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3 AND (lvlkz = $4 OR lvlkz = $5)"
-			row4 := d.db.QueryRow(ctx, selS, u.Name, CorpName, numEvent, lvlkz, "d"+lvlkz)
+			row4 := d.db.QueryRow(selS, u.Name, CorpName, numEvent, lvlkz, "d"+lvlkz)
 			err4 := row4.Scan(&u.Points)
 			if err4 != nil {
 				d.log.ErrorErr(err)
@@ -46,10 +44,8 @@ func (d *Db) TopEventLevelNew(CorpName, lvlkz string, numEvent int) []models.Top
 }
 
 func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT mention FROM kzbot.sborkz WHERE corpname=$1 AND numberevent = $2 AND active=1 GROUP BY mention"
-	results, err := d.db.Query(ctx, sel, CorpName, numberevent)
+	results, err := d.db.Query(sel, CorpName, numberevent)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -61,14 +57,14 @@ func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top)
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
 			selC := "SELECT  COUNT(*) as count FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
-			row := d.db.QueryRow(ctx, selC, u.Name, CorpName, numberevent)
+			row := d.db.QueryRow(selC, u.Name, CorpName, numberevent)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
 				d.log.ErrorErr(err)
 				continue
 			}
 			selS := "SELECT  SUM(eventpoints) FROM kzbot.sborkz WHERE mention = $1 AND corpname = $2 AND active = 1 AND numberevent = $3"
-			row4 := d.db.QueryRow(ctx, selS, u.Name, CorpName, numberevent)
+			row4 := d.db.QueryRow(selS, u.Name, CorpName, numberevent)
 			err4 := row4.Scan(&u.Points)
 			if err4 != nil {
 				d.log.ErrorErr(err)
@@ -84,10 +80,8 @@ func (d *Db) TopAllEventNew(CorpName string, numberevent int) (top []models.Top)
 }
 
 func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
-	results, err := d.db.Query(ctx, sel, CorpName)
+	results, err := d.db.Query(sel, CorpName)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -98,7 +92,7 @@ func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
 			selC := "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE corpname = $1 AND name = $2 AND active>0 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days'"
-			row := d.db.QueryRow(ctx, selC, CorpName, u.Name)
+			row := d.db.QueryRow(selC, CorpName, u.Name)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
 				d.log.ErrorErr(err)
@@ -114,11 +108,9 @@ func (d *Db) TopAllPerMonthNew(CorpName string) (top []models.Top) {
 }
 
 func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	var top []models.Top
 	sel := "SELECT name FROM kzbot.sborkz WHERE corpname=$1 AND active=1  AND (lvlkz = $2 OR lvlkz = $3) AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days' GROUP BY name LIMIT 50"
-	results, err := d.db.Query(ctx, sel, CorpName, lvlkz, "d"+lvlkz)
+	results, err := d.db.Query(sel, CorpName, lvlkz, "d"+lvlkz)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -129,7 +121,7 @@ func (d *Db) TopLevelPerMonthNew(CorpName, lvlkz string) []models.Top {
 		err = results.Scan(&u.Name)
 		if len(u.Name) > 0 {
 			sel = "SELECT COALESCE(SUM(active),0) FROM kzbot.sborkz WHERE (lvlkz = $1 OR lvlkz = $2) AND corpname = $3 AND name = $4 AND to_timestamp(date,'YYYY-MM-DD') >= CURRENT_DATE - INTERVAL '30 days'"
-			row := d.db.QueryRow(ctx, sel, lvlkz, "d"+lvlkz, CorpName, u.Name)
+			row := d.db.QueryRow(sel, lvlkz, "d"+lvlkz, CorpName, u.Name)
 			err = row.Scan(&u.Numkz)
 			if err != nil {
 				d.log.ErrorErr(err)

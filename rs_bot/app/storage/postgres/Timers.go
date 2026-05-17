@@ -5,24 +5,20 @@ import (
 )
 
 func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	sel := "SELECT * FROM kzbot.sborkz WHERE userid = $1 AND corpname = $2 AND active = 0"
-	results, err := d.db.Query(ctx, sel, userid, CorpName)
+	results, err := d.db.Query(sel, userid, CorpName)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)
 	}
 	var t models.Sborkz
 	for results.Next() {
-
 		err = results.Scan(&t.Id, &t.Corpname, &t.Name, &t.Mention, &t.Tip, &t.Dsmesid, &t.Tgmesid, &t.Wamesid, &t.Time,
 			&t.Date, &t.Lvlkz, &t.Numkzn, &t.Numberkz, &t.Numberevent, &t.Eventpoints, &t.Active, &t.Timedown, &t.UserId)
 
 		if t.UserId == userid && t.Timedown <= 3 {
 			upd := "update kzbot.sborkz set timedown = timedown + 30 where active = 0 AND userid = $1 AND corpname = $2"
-			_, err = d.db.Exec(ctx, upd, t.UserId, t.Corpname)
+			_, err = d.db.Exec(upd, t.UserId, t.Corpname)
 			if err != nil {
 				d.log.ErrorErr(err)
 			}
@@ -33,17 +29,15 @@ func (d *Db) UpdateMitutsQueue(userid, CorpName string) models.Sborkz {
 }
 
 func (d *Db) MinusMin() []models.Sborkz {
-	ctx, cancel := d.getContext()
-	defer cancel()
 	upd := `update kzbot.sborkz set timedown = timedown - 1 where active = 0`
-	_, err := d.db.Exec(ctx, upd)
+	_, err := d.db.Exec(upd)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return []models.Sborkz{}
 	}
 
 	sel := "SELECT * FROM kzbot.sborkz WHERE active = 0"
-	results, err := d.db.Query(ctx, sel)
+	results, err := d.db.Query(sel)
 	defer results.Close()
 	if err != nil {
 		d.log.ErrorErr(err)

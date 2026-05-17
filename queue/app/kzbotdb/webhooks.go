@@ -1,17 +1,12 @@
 package kzbotdb
 
 import (
-	"context"
 	"fmt"
 	"queue/models"
-	"time"
 )
 
 // RedStarStarted , RedStarEnded ...
 func (d *Db) GetWebhooksByEventTypeAndAfterTs(eventType string, afterTs int64) ([]models.Webhook, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	query := `
 		SELECT id, tsunix, corp, message
 		FROM rs_bot.webhooks
@@ -20,7 +15,7 @@ func (d *Db) GetWebhooksByEventTypeAndAfterTs(eventType string, afterTs int64) (
 	`
 	searchPattern := fmt.Sprintf("%%%q%%", eventType) // "%\"RedStarEnded\"%"
 
-	rows, err := d.db.Query(ctx, query, afterTs, searchPattern)
+	rows, err := d.db.Query(query, afterTs, searchPattern)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %w", err)
 	}
@@ -45,10 +40,7 @@ func (d *Db) GetWebhooksByEventTypeAndAfterTs(eventType string, afterTs int64) (
 }
 
 func (d *Db) GetWebhooksByAfter(afterTs int64) ([]models.Webhook, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	rows, err := d.db.Query(ctx, `
+	rows, err := d.db.Query(`
 		SELECT id, tsunix, corp, message
 		FROM rs_bot.webhooks
 		WHERE tsunix > $1
@@ -77,9 +69,6 @@ func (d *Db) GetWebhooksByAfter(afterTs int64) ([]models.Webhook, error) {
 }
 
 func (d *Db) BattlesGetSeasonAll(season int) ([]models.BattlesEvent, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	// Добавляем COUNT(*) в SELECT
 	query := `
         SELECT 
@@ -93,7 +82,7 @@ func (d *Db) BattlesGetSeasonAll(season int) ([]models.BattlesEvent, error) {
         GROUP BY name 
         ORDER BY SUM(points) DESC`
 
-	rows, err := d.db.Query(ctx, query, season)
+	rows, err := d.db.Query(query, season)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка SQL: %v", err)
 	}

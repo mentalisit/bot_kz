@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"ws/dbpostgres"
 	"ws/server/getCountry"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +14,16 @@ import (
 type Srv struct {
 	log      *logger.Logger
 	cache    *getCountry.Cache
+	Db       *dbpostgres.Db
 	certFile string
 	keyFile  string
 }
 
-func NewSrv(log *logger.Logger) *Srv {
+func NewSrv(log *logger.Logger, Db *dbpostgres.Db) *Srv {
 	server := &Srv{
 		log:      log,
 		cache:    getCountry.NewCache(),
+		Db:       Db,
 		certFile: "docker/cert/RSA-cert.pem",
 		keyFile:  "docker/cert/RSA-privkey.pem",
 	}
@@ -45,6 +48,7 @@ func (s *Srv) runServer() {
 		r.GET("/", s.docs)
 		r.GET("/corps", s.getWsCorps)
 		r.GET("/poll/:id", s.poll)
+		r.GET("/api/poll/:id", s.pollAPI)
 		r.GET("/health", HealthCheckHandler)
 	}
 

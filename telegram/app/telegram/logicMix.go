@@ -11,6 +11,8 @@ import (
 )
 
 func (t *Telegram) logicMix(m *tgbotapi.Message, edit bool) {
+	// Сохраняем сообщение в БД (async)
+	go t.saveMessageToStorage(m)
 	t.SaveMember(&m.Chat, m.From)
 	//go t.imHere(m.Chat.ID, m.Chat)
 
@@ -267,8 +269,9 @@ func (t *Telegram) ifPrefixPoint(m *tgbotapi.Message) {
 	if good2 {
 		in2.Config.Uid = config2.Uid
 	}
-	if m.Text == ".setup" || strings.HasPrefix(m.Text, ".invite ") {
+	if m.Text == ".setup" || strings.HasPrefix(m.Text, ".invite ") || strings.HasPrefix(m.Text, ".setting") {
 		chat, err := t.t.GetChat(tgbotapi.ChatInfoConfig{ChatConfig: tgbotapi.ChatConfig{ChatID: m.Chat.ID}})
+
 		if err != nil {
 			t.log.ErrorErr(err)
 		} else if chat.Photo != nil {

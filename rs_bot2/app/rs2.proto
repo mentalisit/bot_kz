@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package rs2;
+option go_package = "server/pb;rs2";
+
+// Определение сервиса и функции LogicRs
+service LogicService {
+  rpc OtherQueue(other) returns (Empty);
+  rpc LogicRs2(InMessageV2) returns (Empty);
+}
+message other {
+  repeated string UsersIds = 1;
+}
+
+// Пустое сообщение для ответов, не требующих данных
+message Empty {}
+
+message InMessageV2 {
+  string Text = 1;
+  string Tip = 2;
+  string NameNick = 3;
+  string UserName = 4;
+  string UserId = 5;
+  string NameMention = 6;
+  map<string, string> Messenger = 7;
+  CorporationConfigV2 Config = 8;
+  repeated string Options = 9;
+}
+message CorporationConfigV2 {
+  int32 Id = 1;
+  string Name = 2;
+  string Language = 3;
+
+  map<string, ChannelInfo> Channels = 4;
+  map<string, HelpMessageInfo> HelpMessage = 5;
+}
+
+message ChannelInfo {
+  map<string, string> Data = 1;
+}
+
+message HelpMessageInfo {
+  map<string, string> Data = 1;
+}
