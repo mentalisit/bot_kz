@@ -1,7 +1,6 @@
 package server
 
 import (
-	"compendium_s/config"
 	"compendium_s/models"
 	"compendium_s/server/getCountry"
 	"compendium_s/storage"
@@ -14,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Server struct {
@@ -29,7 +28,7 @@ type Server struct {
 	cacheMutex sync.Mutex
 }
 
-func NewServer(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Server {
+func NewServer(log *logger.Logger, st *storage.Storage) *Server {
 
 	s := &Server{
 		log:      log,

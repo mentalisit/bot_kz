@@ -329,3 +329,32 @@ type Studies struct {
 	Level    int    `json:"level"`
 	Name     string `json:"name"`
 }
+
+// TechLevelMap — кастомный тип для JSONB-обновлений в PostgreSQL
+type TechLevelMap map[string]TechLevel
+
+// Value реализует driver.Valuer для автоматической сериализации в JSON
+func (m TechLevelMap) Value() (driver.Value, error) {
+	if m == nil {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(m)
+}
+
+// Scan реализует sql.Scanner для чтения JSON из базы (опционально, если нужно)
+func (m *TechLevelMap) Scan(src interface{}) error {
+	if src == nil {
+		*m = make(TechLevelMap)
+		return nil
+	}
+	var data []byte
+	switch v := src.(type) {
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("unsupported type for TechLevelMap: %T", src)
+	}
+	return json.Unmarshal(data, m)
+}

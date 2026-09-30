@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Transmitter struct {

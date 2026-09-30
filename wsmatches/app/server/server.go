@@ -8,7 +8,7 @@ import (
 	"ws/server/getCountry"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Srv struct {

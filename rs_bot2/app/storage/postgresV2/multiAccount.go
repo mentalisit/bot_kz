@@ -98,7 +98,7 @@ func (d *Db) FindMultiAccountByUserId(userId string) (*models.MultiAccount, erro
 
 	acc, err := scanMultiAccount(row)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		d.log.ErrorErr(err)

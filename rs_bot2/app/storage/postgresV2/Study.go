@@ -92,18 +92,17 @@ func (d *Db) DeleteStudyRecord(s models.Study) error {
 }
 
 func (d *Db) SyncModuleStatus(s models.Study, m models.Studies) error {
-	// Подготавливаем фрагмент JSON для обновления одного модуля
-	updateData := map[string]models.TechLevel{
+	// Теперь используем TechLevelMap вместо обычного map
+	updateData := models.TechLevelMap{
 		m.ModuleId: models.TechLevel{
 			Level: m.Level,
 			Ts:    m.EndTime,
 		},
 	}
 
-	// Оператор || объединяет текущий JSON с новым, заменяя или добавляя ключи
 	query := `
         UPDATE my_compendium.technologies 
-        SET tech = COALESCE(tech, '{}'::jsonb) || $3 
+        SET tech = COALESCE(tech, '{}'::jsonb) || $3::jsonb 
         WHERE uid = $1 AND username = $2`
 
 	_, err := d.db.Exec(query, s.Uuid, s.Name, updateData)

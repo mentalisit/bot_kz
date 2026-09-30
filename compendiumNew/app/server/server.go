@@ -7,7 +7,7 @@ import (
 	"compendium/storage/postgres"
 	postgresv2 "compendium/storage/postgres/postgresV2"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Server struct {

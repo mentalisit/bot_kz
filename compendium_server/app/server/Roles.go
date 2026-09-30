@@ -2,8 +2,9 @@ package server
 
 import (
 	"compendium_s/server/ds"
-	"github.com/mentalisit/logger"
 	"time"
+
+	"github.com/mentalisit/conf/logger"
 )
 
 type Roles struct {

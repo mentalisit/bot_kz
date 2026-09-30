@@ -9,7 +9,7 @@ import (
 func (h *HS) getMapLevelCorpsV2() map[string]models.CorpInfo {
 	listCorp := make(map[string]models.CorpInfo)
 
-	all, err := h.p.GetAllCorpInfo()
+	all, err := h.Db.GetAllCorpInfo()
 	if err != nil {
 		h.log.ErrorErr(err)
 		return listCorp
@@ -25,23 +25,23 @@ func (h *HS) getMapLevelCorpsV2() map[string]models.CorpInfo {
 
 func (h *HS) RelicV2(list map[string]models.CorpInfo, corpData *models.CorporationsData) {
 	if list[corpData.Corporation1Id].CorpName != "" {
-		c, _ := h.p.ReadCorpInfoByCorpID(corpData.Corporation1Id)
+		c, _ := h.Db.ReadCorpInfoByCorpID(corpData.Corporation1Id)
 		if c.LastUpdate.Before(corpData.DateEnded) {
 			c.LastUpdate = corpData.DateEnded
 			c.XP = c.XP + 100
 
-			_ = h.p.UpdateCorpInfo(*c)
+			_ = h.Db.UpdateCorpInfo(*c)
 			fmt.Printf("UpdateCorpInfo %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}
 	}
 	if list[corpData.Corporation2Id].CorpName != "" {
-		c, _ := h.p.ReadCorpInfoByCorpID(corpData.Corporation2Id)
+		c, _ := h.Db.ReadCorpInfoByCorpID(corpData.Corporation2Id)
 		if c.LastUpdate.Before(corpData.DateEnded) {
 			c.LastUpdate = corpData.DateEnded
 			c.XP = c.XP + 40
 
-			_ = h.p.UpdateCorpInfo(*c)
+			_ = h.Db.UpdateCorpInfo(*c)
 			fmt.Printf("UpdateCorpInfo %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}
@@ -89,7 +89,7 @@ func (h *HS) recalculateCorpLevelV2() {
 	for _, info := range listCorpId {
 		if level(info.XP) != info.Level {
 			info.Level = level(info.XP)
-			_ = h.p.UpdateCorpInfo(info)
+			_ = h.Db.UpdateCorpInfo(info)
 			h.log.InfoStruct("recalculateCorpInfo", info)
 		}
 	}

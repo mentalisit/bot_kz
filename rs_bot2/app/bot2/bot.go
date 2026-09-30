@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 const (
@@ -23,16 +23,15 @@ const (
 )
 
 type Bot struct {
-	storage         *postgresV2.Db
-	Dictionary      *dictionary.Dictionary
-	client          *clients.Clients
-	Inbox           chan models.InMessageV2
-	log             *logger.Logger
-	wg              sync.WaitGroup
-	mu              sync.Mutex
-	helpers         *helpers.Helpers
-	otherQueue      *otherQueue.OtherQ
-	AddLinkCodeFunc func(code, userID, username, provider string)
+	storage    *postgresV2.Db
+	Dictionary *dictionary.Dictionary
+	client     *clients.Clients
+	Inbox      chan models.InMessageV2
+	log        *logger.Logger
+	wg         sync.WaitGroup
+	mu         sync.Mutex
+	helpers    *helpers.Helpers
+	otherQueue *otherQueue.OtherQ
 }
 
 func NewBot(storage *storage.Storage, client *clients.Clients, log *logger.Logger) *Bot {
@@ -62,6 +61,9 @@ func (b *Bot) loadInbox() {
 		}
 		if multiAccount != nil {
 			in.MAcc = multiAccount
+		}
+		if in.MAcc == nil {
+			b.log.InfoStruct("not MAcc", in)
 		}
 		b.LogicRs(&in)
 	}

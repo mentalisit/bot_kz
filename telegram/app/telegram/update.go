@@ -55,7 +55,7 @@ func (t *Telegram) update() {
 					}
 					m.Data["chatid"] = strconv.FormatInt(update.Message.Chat.ID, 10) + "/0"
 					m.Data["question"] = update.Message.Poll.Question
-					m.Data["url"] = "https://mentalisit.tsl.rocks/rs/settings/test/HadesTable.html"
+					m.Data["url"] = "https://mentalisit.pp.ua/rs/settings/test/HadesTable.html"
 					m.Data["author"] = update.Message.From.String()
 					for _, option := range update.Message.Poll.Options {
 						m.Options = append(m.Options, option.Text)
@@ -153,8 +153,20 @@ func (t *Telegram) updateMessage(m *tgbotapi.Message) {
 	}
 }
 
-// saveMessageToStorage сохраняет сообщение Telegram в БД
 func (t *Telegram) saveMessageToStorage(m *tgbotapi.Message) {
+	ThreadID := m.MessageThreadID
+	if !m.IsTopicMessage && ThreadID != 0 {
+		ThreadID = 0
+	}
+
+	channel, err := t.Storage.Db.GetDiscoveredChannel(m.Chat.ID, ThreadID)
+	if err != nil {
+		t.log.Error(err.Error())
+	}
+	if channel != nil && channel.ChannelName != "" {
+		return
+	}
+
 	// Получаем communityID (UUID) для чата
 	communityID, err := t.Storage.Db.GetGildUUIDMyCompendium(m.Chat.ID)
 	if err != nil {
@@ -175,27 +187,56 @@ func (t *Telegram) saveMessageToStorage(m *tgbotapi.Message) {
 
 	}
 
-	// Сохраняем сообщение
-	if err := t.Storage.Db.SaveTelegramMessage(*communityID, m); err != nil {
-		// Собираем информацию о вложениях для детализации ошибки
-		var attachmentInfo string
-		if m.Photo != nil {
-			attachmentInfo = fmt.Sprintf("Photo: %d sizes", len(m.Photo))
-		} else if m.Document != nil {
-			attachmentInfo = fmt.Sprintf("Document: %s (file_id: %s)", m.Document.FileName, m.Document.FileID)
-		} else if m.Video != nil {
-			attachmentInfo = fmt.Sprintf("Video: file_id=%s", m.Video.FileID)
-		} else if m.Audio != nil {
-			attachmentInfo = fmt.Sprintf("Audio: file_id=%s", m.Audio.FileID)
-		} else if m.Voice != nil {
-			attachmentInfo = fmt.Sprintf("Voice: file_id=%s", m.Voice.FileID)
-		} else if m.Sticker != nil {
-			attachmentInfo = fmt.Sprintf("Sticker: file_id=%s", m.Sticker.FileID)
-		}
+	channelId := strconv.FormatInt(m.Chat.ID, 10) + fmt.Sprintf("/%d", ThreadID)
+	channelName := ""
 
-		t.log.Error(fmt.Sprintf("Ошибка сохранения сообщения %d в чате %d (communityID: %s): %v | Вложения: %s | Текст: %q",
-			m.MessageID, m.Chat.ID, *communityID, err, attachmentInfo, m.Text))
+	// Проверяем если это создание топика - сохраняем в кэш
+	if m.IsTopicMessage && m.ReplyToMessage != nil && m.ReplyToMessage.ForumTopicCreated != nil {
+		channelName = m.ReplyToMessage.ForumTopicCreated.Name
+		_ = t.Storage.Db.SaveTopicCache(m.Chat.ID, m.MessageThreadID, channelName)
+	} else if m.IsTopicMessage && ThreadID != 0 {
+		// Пробуем получить имя из кэша
+		cachedName, err := t.Storage.Db.GetTopicNameFromCache(m.Chat.ID, ThreadID)
+		if err == nil {
+			channelName = cachedName
+		}
 	}
+
+	ch := models2.DiscoveredChannel{
+		CommunityId: *communityID,
+		GuildId:     fmt.Sprint(m.Chat.ID),
+		GuildName:   m.Chat.Title,
+		ChannelId:   channelId,
+		ChannelName: channelName,
+		UpdateAt:    time.Now(),
+	}
+
+	err = t.Storage.Db.SaveGuildChannelName(ch)
+	if err != nil {
+		t.log.ErrorErr(err)
+	}
+
+	//// Сохраняем сообщение
+	//if err := t.Storage.Db.SaveTelegramMessage(*communityID, m); err != nil {
+	//	// Собираем информацию о вложениях для детализации ошибки
+	//	var attachmentInfo string
+	//	if m.Photo != nil {
+	//		attachmentInfo = fmt.Sprintf("Photo: %d sizes", len(m.Photo))
+	//	} else if m.Document != nil {
+	//		attachmentInfo = fmt.Sprintf("Document: %s (file_id: %s)", m.Document.FileName, m.Document.FileID)
+	//	} else if m.Video != nil {
+	//		attachmentInfo = fmt.Sprintf("Video: file_id=%s", m.Video.FileID)
+	//	} else if m.Audio != nil {
+	//		attachmentInfo = fmt.Sprintf("Audio: file_id=%s", m.Audio.FileID)
+	//	} else if m.Voice != nil {
+	//		attachmentInfo = fmt.Sprintf("Voice: file_id=%s", m.Voice.FileID)
+	//	} else if m.Sticker != nil {
+	//		attachmentInfo = fmt.Sprintf("Sticker: file_id=%s", m.Sticker.FileID)
+	//	}
+	//
+	//	t.log.Error(fmt.Sprintf("Ошибка сохранения сообщения %d в чате %d (communityID: %s): %v | Вложения: %s | Текст: %q",
+	//		m.MessageID, m.Chat.ID, *communityID, err, attachmentInfo, m.Text))
+	//}
 }
 
 func (t *Telegram) SendWebAppButtonSmart(chatID int64) {
@@ -239,7 +280,7 @@ func (t *Telegram) openWebAppForGroup(userChatID int64, groupChatID int64) {
 		chatTitle = fmt.Sprintf("Группа ID: %d", groupChatID)
 	}
 	fmt.Printf("chatTitle %s ID %+v\n", chatTitle, groupChatID)
-	webAppURL := fmt.Sprintf("https://webapp.mentalisit.myds.me/?chat_id=%d", groupChatID)
+	webAppURL := fmt.Sprintf("https://webapp.mentalisit.pp.ua/?chat_id=%d", groupChatID)
 
 	msg := tgbotapi.NewMessage(userChatID,
 		fmt.Sprintf("🎭 *Управление ролями для \"%s\"*\n\nОткрываю панель управления...", chatTitle))

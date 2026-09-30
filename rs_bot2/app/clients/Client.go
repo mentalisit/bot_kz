@@ -6,7 +6,7 @@ import (
 	"rs/clients/WaApi"
 	"rs/storage"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Clients struct {

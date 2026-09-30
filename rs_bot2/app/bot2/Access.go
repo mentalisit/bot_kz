@@ -42,11 +42,11 @@ func (b *Bot) accessSetting(in *models.InMessageV2) {
 	}
 
 	// Формируем URL для мобильной веб-страницы
-	serverURL := "https://mentalisit.myds.me"
+	serverURL := "https://mentalisit.pp.ua"
 
 	// Проверяем доступность сайта перед отправкой
 	if !b.CheckSiteAvailability(serverURL) {
-		serverURL = "https://mentalisit.tsl.rocks"
+		serverURL = "https://mentalisit.myds.me"
 	}
 
 	setupURL := fmt.Sprintf("%s/rs/settings/settings.html?uuid=%s", serverURL, in.MAcc.UUID.String())
@@ -77,20 +77,20 @@ func (b *Bot) accessLinkCode(in *models.InMessageV2) {
 	// Генерируем 6-значный числовой код
 	code := fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
 
-	if b.AddLinkCodeFunc != nil {
-		// Передаем данные в веб-сервер
-		b.AddLinkCodeFunc(code, in.UserId, in.Username, in.Tip)
-
-		// Отправляем сообщение пользователю
-		msg := fmt.Sprintf("🔐 **Код для привязки аккаунта**\n\n"+
-			"Ваш код подтверждения: `%s`\n"+
-			"Введите его на странице настроек в течение 10 минут.", code)
-
-		// Отправляем личным сообщением или в чат (в зависимости от настроек)
-		b.sendTextAfterDeleteSecond(in, msg, 600) // Сообщение удалится через 10 минут
-	} else {
-		b.sendTextAfterDeleteSecond(in, "Ошибка: Веб-сервер не инициализирован", 30)
+	// Передаем данные в БД для веб-сервера
+	err := b.storage.SaveLinkCode(code, in.UserId, in.Username, in.Tip)
+	if err != nil {
+		b.sendTextAfterDeleteSecond(in, "Ошибка при генерации кода авторизации", 30)
+		return
 	}
+
+	// Отправляем сообщение пользователю
+	msg := fmt.Sprintf("🔐 **Код для привязки аккаунта**\n\n"+
+		"Ваш код подтверждения: `%s`\n"+
+		"Введите его на странице настроек в течение 10 минут.", code)
+
+	// Отправляем личным сообщением или в чат (в зависимости от настроек)
+	b.sendTextAfterDeleteSecond(in, msg, 600) // Сообщение удалится через 10 минут
 }
 
 // accessRSBot отправляет пользователю ссылку на мобильную веб-страницу настроек
@@ -145,11 +145,11 @@ func (b *Bot) accessRSBot(in *models.InMessageV2) {
 	}
 
 	// Формируем URL для мобильной веб-страницы
-	serverURL := "https://mentalisit.myds.me"
+	serverURL := "https://mentalisit.pp.ua"
 
 	// Проверяем доступность сайта перед отправкой
 	if !b.CheckSiteAvailability(serverURL) {
-		serverURL = "https://mentalisit.tsl.rocks"
+		serverURL = "https://mentalisit.myds.me"
 	}
 
 	setupURL := fmt.Sprintf("%s/rs/api/setup/config.html?uuid=%s", serverURL, p.Uuid)

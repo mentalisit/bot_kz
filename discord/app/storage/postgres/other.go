@@ -314,3 +314,54 @@ func (d *Db) SaveDiscordMessageWithNames(communityID uuid.UUID, m *discordgo.Mes
 
 	return d.saveDiscordAttachments(m)
 }
+
+func (d *Db) SaveGuildChannelName(ch config.DiscoveredChannel) error {
+	query := `
+		INSERT INTO rs_bot2.discovered_chats (
+			community_id, 
+			guild_id, 
+			guild_name, 
+			channel_id, 
+			channel_name, 
+			updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (guild_id, channel_id) 
+		DO UPDATE SET 
+			guild_name   = EXCLUDED.guild_name,
+			channel_name = EXCLUDED.channel_name,
+			updated_at   = EXCLUDED.updated_at;
+	`
+
+	_, err := d.db.Exec(
+		query,
+		ch.CommunityId,
+		ch.GuildId,
+		ch.GuildName,
+		ch.ChannelId,
+		ch.ChannelName,
+		ch.UpdateAt,
+	)
+
+	if err != nil {
+		d.log.ErrorErr(err)
+		return err
+	}
+
+	return nil
+}
+
+func (d *Db) GetDiscoveredChannel(guildId, channelId string) (ch *config.DiscoveredChannel, err error) {
+	ch = new(config.DiscoveredChannel)
+	chQuery := `SELECT community_id, guild_id, guild_name, channel_id, channel_name, updated_at 
+			FROM rs_bot2.discovered_chats
+            WHERE guild_id = $1 and channel_id = $2`
+	err = d.db.QueryRow(chQuery, guildId, channelId).Scan(&ch.CommunityId, &ch.GuildId, &ch.GuildName, &ch.ChannelId, &ch.ChannelName, &ch.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find guild: %w", err)
+	}
+	return ch, nil
+}

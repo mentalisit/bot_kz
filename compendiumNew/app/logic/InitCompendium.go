@@ -9,7 +9,7 @@ import (
 	"compendium/storage"
 	postgresv2 "compendium/storage/postgres/postgresV2"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Hs struct {

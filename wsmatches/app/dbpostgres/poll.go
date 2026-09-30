@@ -1,7 +1,6 @@
 package dbpostgres
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -27,7 +26,7 @@ func (d *Db) GetPollById(id string) (models.PollStruct, []models.Votes, error) {
 	// 3. Выполняем запрос через QueryRow
 	// Мы используем контекст (обычно передается сверху, здесь для примера Background)
 	query := `SELECT data, votes FROM rs_bot2.poll WHERE id = $1`
-	err = d.pool.QueryRow(context.Background(), query, intID).Scan(&rawData, &rawVotes)
+	err = d.pool.QueryRow(query, intID).Scan(&rawData, &rawVotes)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {

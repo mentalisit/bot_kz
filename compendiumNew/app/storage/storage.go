@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"compendium/config"
 	"compendium/storage/postgres"
 	postgresv2 "compendium/storage/postgres/postgresV2"
 
-	"github.com/mentalisit/logger"
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/conf/logger"
 	"go.uber.org/zap"
 )
 
@@ -16,10 +16,10 @@ type Storage struct {
 	V2    *postgresv2.Db
 }
 
-func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
+func NewStorage(log *logger.Logger, db *sqlx.DB) *Storage {
 	s := &Storage{
-		DB: postgres.NewDb(log, cfg),
-		V2: postgresv2.NewDb(log, cfg),
+		DB: postgres.NewDb(log, db),
+		V2: postgresv2.NewDb(log, db),
 	}
 
 	//go s.loadDbArray()

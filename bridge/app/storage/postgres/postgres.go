@@ -1,12 +1,10 @@
 package postgres
 
 import (
-	"bridge/config"
-	"fmt"
 	"os"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Db struct {
@@ -14,19 +12,19 @@ type Db struct {
 	log *logger.Logger
 }
 
-func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
-
-	// Открытие соединения
-	conn, err := sqlx.Open("postgres", dns)
-	if err != nil {
-		log.ErrorErr(err)
-		os.Exit(1)
-	}
+func NewDb(log *logger.Logger, conn *sqlx.DB) *Db {
+	//dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+	//	cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
+	//
+	//// Открытие соединения
+	//conn, err := sqlx.Open("postgres", dns)
+	//if err != nil {
+	//	log.ErrorErr(err)
+	//	os.Exit(1)
+	//}
 
 	// Проверка подключения
-	if err = conn.Ping(); err != nil {
+	if err := conn.Ping(); err != nil {
 		log.ErrorErr(err)
 		os.Exit(1)
 	}

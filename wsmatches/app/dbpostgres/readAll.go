@@ -9,12 +9,9 @@ import (
 )
 
 func (d *Db) ReadCorpsLevelAll() ([]models.LevelCorps, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var nn []models.LevelCorps
 	sel := "SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel"
-	results, err := d.pool.Query(ctx, sel)
+	results, err := d.pool.Query(sel)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil, err
@@ -51,13 +48,10 @@ func (d *Db) ReadCorpsLevelAll() ([]models.LevelCorps, error) {
 }
 
 func (d *Db) ReadCorpsLevel(hCorp string) (models.LevelCorps, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	var n models.LevelCorps
 	var endDateStr, lastUpdateStr string // Временные переменные для строковых дат
 
-	err := d.pool.QueryRow(ctx, "SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel WHERE hcorp = $1", hCorp).
+	err := d.pool.QueryRow("SELECT corpname, level, enddate, hcorp, percent, last_update, relic FROM ws.corpslevel WHERE hcorp = $1", hCorp).
 		Scan(&n.CorpName, &n.Level, &endDateStr, &n.HCorp, &n.Percent, &lastUpdateStr, &n.Relic)
 	if err != nil {
 		return models.LevelCorps{}, err
@@ -79,13 +73,10 @@ func (d *Db) ReadCorpsLevel(hCorp string) (models.LevelCorps, error) {
 
 // GetAllCorpInfo возвращает все записи о корпорациях
 func (d *Db) GetAllCorpInfo() ([]models.CorpInfo, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	query := `SELECT id, corp_name, corp_id, level, xp, webhook, last_win, date_ended, last_update 
 			  FROM ws.corps_info ORDER BY corp_name`
 
-	rows, err := d.pool.Query(ctx, query)
+	rows, err := d.pool.Query(query)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil, err
@@ -123,14 +114,11 @@ func (d *Db) GetAllCorpInfo() ([]models.CorpInfo, error) {
 
 // ReadCorpInfoByCorpID читает запись о корпорации по corp_id
 func (d *Db) ReadCorpInfoByCorpID(corpID string) (*models.CorpInfo, error) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	query := `SELECT id, corp_name, corp_id, level, xp, webhook, last_win, date_ended, last_update 
 			  FROM ws.corps_info WHERE corp_id = $1`
 
 	var corp models.CorpInfo
-	err := d.pool.QueryRow(ctx, query, corpID).Scan(
+	err := d.pool.QueryRow(query, corpID).Scan(
 		&corp.ID,
 		&corp.CorpName,
 		&corp.CorpID,

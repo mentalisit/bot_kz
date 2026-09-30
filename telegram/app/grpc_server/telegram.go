@@ -2,10 +2,11 @@ package grpc_server
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
-	"google.golang.org/grpc"
 	"net"
 	"telegram/telegram"
+
+	"github.com/mentalisit/conf/logger"
+	"google.golang.org/grpc"
 )
 
 type Server struct {

@@ -3,43 +3,14 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"log"
-	"net/http"
 	"telegram/models2"
-
-	"telegram/telegram/handlers"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 )
 
-// StartWebApp запускает веб-сервер для веб-приложения
-func (t *Telegram) StartWebApp(port string) {
-	router := handlers.SetupRouter(t.Storage, t.t, t.log)
-
-	t.server = &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
-	}
-
-	log.Printf("Starting web app server on port %s", port)
-
-	go func() {
-		if err := t.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start web server: %v", err)
-		}
-	}()
-}
-
-// StopWebApp останавливает веб-сервер
-func (t *Telegram) StopWebApp() {
-	if t.server != nil {
-		t.server.Shutdown(context.Background())
-	}
-}
-
 // UpdateChatMembersCache обновляет кэш участников чата
 func (t *Telegram) UpdateChatMembersCache(chatID int64) error {
-	chatConfig := tgbotapi.ChatAdministratorsConfig{tgbotapi.ChatConfig{ChatID: chatID}}
+	chatConfig := tgbotapi.ChatAdministratorsConfig{ChatConfig: tgbotapi.ChatConfig{ChatID: chatID}}
 	members, err := t.t.GetChatAdministrators(chatConfig)
 	if err != nil {
 		return fmt.Errorf("failed to get chat members: %w", err)

@@ -3,7 +3,7 @@ package helpers
 import (
 	"rs/storage/postgresV2"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 const ds = "ds"

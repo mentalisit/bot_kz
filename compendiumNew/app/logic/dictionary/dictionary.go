@@ -3,7 +3,8 @@ package dictionary
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mentalisit/logger"
+
+	"github.com/mentalisit/conf/logger"
 )
 
 type Dictionary struct {

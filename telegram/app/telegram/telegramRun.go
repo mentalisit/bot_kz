@@ -11,7 +11,7 @@ import (
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"github.com/mentalisit/restapi"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Telegram struct {

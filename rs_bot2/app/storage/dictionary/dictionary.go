@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	gt "github.com/bas24/googletranslatefree"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Dictionary struct {

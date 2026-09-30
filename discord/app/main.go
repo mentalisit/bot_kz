@@ -1,23 +1,20 @@
 package main
 
 import (
-	"discord/config"
 	DiscordClient "discord/discord"
-	"discord/grpc_server"
 	"discord/storage"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mentalisit/logger"
+	"discord/grpc_server"
+
+	"github.com/mentalisit/conf"
 )
 
 func main() {
-	cfg := config.InitConfig("DS")
-
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "DS")
-
-	st := storage.NewStorage(log, cfg)
+	cfg, log, db := conf.InitConf("DISCORD")
+	st := storage.NewStorage(log, db)
 
 	ds := DiscordClient.NewDiscord(log, st, cfg)
 	grpc_server.GrpcMain(ds, log)

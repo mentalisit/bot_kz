@@ -6,7 +6,7 @@ import (
 	"rs/storage"
 	"strings"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 const ds = "ds"

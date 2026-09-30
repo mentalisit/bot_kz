@@ -13,11 +13,11 @@ func (h *HS) SavePercent(newContent []models.Content) {
 
 	for _, cont := range newContent {
 		//corpData := h.r.ReadCorpData(cont.Key)
-		corpData := h.p.ReadCorpData(cont.Key)
+		corpData := h.Db.ReadCorpData(cont.Key)
 		if corpData == nil {
 			corpData = h.GetCorporationsData(cont.Key)
 			//h.r.SaveCorpDate(cont.Key, *corpData)
-			h.p.SaveCorpData(cont.Key, *corpData)
+			h.Db.SaveCorpData(cont.Key, *corpData)
 		}
 
 		f := corpData.SortWin()
@@ -26,7 +26,7 @@ func (h *HS) SavePercent(newContent []models.Content) {
 			c := listCorpId[f.Corporation1Id]
 			if c.DateEnded.Before(f.DateEnded) {
 				c.DateEnded = f.DateEnded
-				h.p.UpdateCorpInfo(c)
+				h.Db.UpdateCorpInfo(c)
 			}
 		}
 		if listHCorps[f.Corporation1Name].HCorp != "" {
@@ -37,7 +37,7 @@ func (h *HS) SavePercent(newContent []models.Content) {
 				c.EndDate = f.DateEnded
 				c.Percent = c.Level - 1
 
-				h.p.InsertUpdateCorpsLevel(c)
+				h.Db.InsertUpdateCorpsLevel(c)
 			}
 		}
 		h.Relic(listHCorps, f)
@@ -51,7 +51,7 @@ func (h *HS) SavePercent(newContent []models.Content) {
 func (h *HS) getMapLevelCorps() map[string]models.LevelCorps {
 	listHCorp := make(map[string]models.LevelCorps)
 
-	all, err := h.p.ReadCorpsLevelAll()
+	all, err := h.Db.ReadCorpsLevelAll()
 	if err != nil {
 		h.log.ErrorErr(err)
 		return listHCorp
@@ -104,30 +104,30 @@ func (h *HS) recalculateCorpLevel() {
 		if level(corps.Relic) != corps.Level {
 			corps.Level = level(corps.Relic)
 			corps.Percent = corps.Level - 1
-			h.p.InsertUpdateCorpsLevel(corps)
+			h.Db.InsertUpdateCorpsLevel(corps)
 			h.log.InfoStruct("recalculateCorpLevel", corps)
 		}
 	}
 }
 func (h *HS) Relic(list map[string]models.LevelCorps, corpData *models.CorporationsData) {
 	if list[corpData.Corporation1Name].HCorp != "" {
-		c, _ := h.p.ReadCorpsLevel(corpData.Corporation1Name)
+		c, _ := h.Db.ReadCorpsLevel(corpData.Corporation1Name)
 		if c.LastUpdate.Before(corpData.DateEnded) {
 			c.LastUpdate = corpData.DateEnded
 			c.Relic = c.Relic + 100
 
-			h.p.InsertUpdateCorpsLevel(c)
+			h.Db.InsertUpdateCorpsLevel(c)
 			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}
 	}
 	if list[corpData.Corporation2Name].HCorp != "" {
-		c, _ := h.p.ReadCorpsLevel(corpData.Corporation2Name)
+		c, _ := h.Db.ReadCorpsLevel(corpData.Corporation2Name)
 		if c.LastUpdate.Before(corpData.DateEnded) {
 			c.LastUpdate = corpData.DateEnded
 			c.Relic = c.Relic + 40
 
-			h.p.InsertUpdateCorpsLevel(c)
+			h.Db.InsertUpdateCorpsLevel(c)
 			fmt.Printf("InsertUpdateCorpsLevel %+v\n", c)
 			time.Sleep(1 * time.Second)
 		}

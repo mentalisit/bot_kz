@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -55,3 +56,12 @@ type MultiAccountGuildV2 struct {
 	AvatarUrl string
 }
 type GuildChannels map[string][]string
+
+type DiscoveredChannel struct {
+	CommunityId uuid.UUID
+	GuildId     string
+	GuildName   string
+	ChannelId   string
+	ChannelName string
+	UpdateAt    time.Time
+}

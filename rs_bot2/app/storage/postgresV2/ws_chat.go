@@ -2,8 +2,11 @@ package postgresV2
 
 import (
 	"database/sql"
+	"encoding/json"
 	"rs/models"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type WsMessage struct {
@@ -41,14 +44,53 @@ func (d *Db) SaveWsMessage(msg models.ChatMessage) (int, error) {
 func (d *Db) GetWsMessages(gid, room string, limit int) ([]models.ChatMessage, error) {
 
 	query := `
-		SELECT m.id, m.sender_uuid, m.sender_name, m.avatar_url, m.content_type, m.content, m.timestamp,
-		       m.reply_to_id, m.voice_duration,
-		       m.edited,
-		       r.sender_name as reply_sender, r.content as reply_text
+		SELECT 
+			'web' AS source,
+			m.id, 
+			m.sender_uuid::text, 
+			m.sender_name, 
+			m.avatar_url, 
+			m.content_type, 
+			m.content, 
+			m.timestamp,
+			m.reply_to_id, 
+			m.voice_duration,
+			m.edited,
+			r.sender_name as reply_sender, 
+			r.content as reply_text
 		FROM my_chat.messages m
 		LEFT JOIN my_chat.messages r ON m.reply_to_id = r.id
 		WHERE m.gid = $1 AND m.room = $2
-		ORDER BY m.timestamp DESC
+
+		UNION ALL
+
+		SELECT 
+			CASE WHEN o.platform = 1 THEN 'tg' ELSE 'ds' END AS source,
+			o.id + 1000000000 AS id,
+			o.user_id AS sender_uuid,
+			o.display_name AS sender_name,
+			COALESCE(
+				CASE 
+					WHEN o.platform = 2 AND o.raw_json->'author'->>'avatar' IS NOT NULL 
+					THEN 'https://cdn.discordapp.com/avatars/' || o.user_id || '/' || (o.raw_json->'author'->>'avatar') || '.png'
+					ELSE NULL
+				END,
+				''
+			) AS avatar_url,
+			'text' AS content_type,
+			o.message_text AS content,
+			o.created_at AS timestamp,
+			o.reply_to_db_id AS reply_to_id,
+			0 AS voice_duration,
+			(o.edited_at IS NOT NULL) AS edited,
+			p.display_name AS reply_sender,
+			p.message_text AS reply_text
+		FROM my_chat.other_messages o
+		LEFT JOIN my_chat.other_messages p ON o.reply_to_db_id = p.id
+		WHERE o.community_id = $1 
+		  AND (o.channel_name = $2 OR o.channel_id = $2 OR $2 = 'general')
+
+		ORDER BY timestamp DESC
 		LIMIT $3
 	`
 	rows, err := d.db.Query(query, gid, room, limit)
@@ -60,12 +102,13 @@ func (d *Db) GetWsMessages(gid, room string, limit int) ([]models.ChatMessage, e
 
 	var messages []models.ChatMessage
 	for rows.Next() {
+		var source string
 		var msg models.ChatMessage
 		var ts time.Time
 		var replyID *int
 		var replySender, replyText *string
 		var voiceDuration sql.NullInt32
-		err := rows.Scan(&msg.ID, &msg.SenderUUID, &msg.Sender, &msg.Avatar, &msg.Type, &msg.Text, &ts,
+		err := rows.Scan(&source, &msg.ID, &msg.SenderUUID, &msg.Sender, &msg.Avatar, &msg.Type, &msg.Text, &ts,
 			&replyID, &voiceDuration, &msg.Edited, &replySender, &replyText)
 		if err != nil {
 			return nil, err
@@ -76,6 +119,15 @@ func (d *Db) GetWsMessages(gid, room string, limit int) ([]models.ChatMessage, e
 			msg.VoiceDuration = int(voiceDuration.Int32)
 		} else {
 			msg.VoiceDuration = 0
+		}
+
+		if source != "web" {
+			msg.Action = source // "ds" or "tg"
+			if source == "ds" {
+				msg.Sender = msg.Sender + " [Discord]"
+			} else if source == "tg" {
+				msg.Sender = msg.Sender + " [Telegram]"
+			}
 		}
 
 		// Build reply reference if exists
@@ -207,7 +259,25 @@ func (d *Db) SaveChatChannel(ch models.ChatChannel) error {
 
 func (d *Db) GetChatChannels(gid string) ([]models.ChatChannel, error) {
 
-	query := `SELECT id, name, creator_uuid, created_at FROM my_chat.channels WHERE gid = $1 ORDER BY created_at ASC`
+	query := `
+		SELECT id, name, creator_uuid, created_at FROM (
+			SELECT id, name, creator_uuid::text, created_at 
+			FROM my_chat.channels 
+			WHERE gid = $1
+
+			UNION
+
+			SELECT 
+				channel_id AS id, 
+				MIN(channel_name) AS name, 
+				'' AS creator_uuid, 
+				MIN(created_at) AS created_at
+			FROM my_chat.other_messages 
+			WHERE community_id = $1
+			GROUP BY channel_id
+		) sub
+		ORDER BY created_at ASC
+	`
 	rows, err := d.db.Query(query, gid)
 	if err != nil {
 		d.log.ErrorErr(err)
@@ -222,6 +292,7 @@ func (d *Db) GetChatChannels(gid string) ([]models.ChatChannel, error) {
 		if err != nil {
 			return nil, err
 		}
+		ch.GID = gid
 		channels = append(channels, ch)
 	}
 	return channels, nil
@@ -299,4 +370,29 @@ func (d *Db) GetReactionsForMessages(msgIDs []int) (map[int]map[string][]string,
 		}
 	}
 	return result, nil
+}
+
+type GuildChannels struct {
+	Ds []string `json:"ds"`
+	Tg []string `json:"tg"`
+}
+
+func (d *Db) GetGuildBridgeChannels(gidStr string) (*GuildChannels, error) {
+	gid, err := uuid.Parse(gidStr)
+	if err != nil {
+		return nil, err
+	}
+
+	var channelsJSON []byte
+	query := `SELECT channels FROM my_compendium.guilds WHERE gid = $1`
+	err = d.db.QueryRow(query, gid).Scan(&channelsJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	var channels GuildChannels
+	if err := json.Unmarshal(channelsJSON, &channels); err != nil {
+		return nil, err
+	}
+	return &channels, nil
 }

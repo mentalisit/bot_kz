@@ -9,9 +9,6 @@ import (
 )
 
 func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	_, err := d.ReadCorpsLevel(l.HCorp)
 	if err != nil {
 		switch {
@@ -19,7 +16,7 @@ func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
 			// Если записи нет, вставляем новую
 			insert := `INSERT INTO ws.corpslevel (corpname, level, enddate, hcorp, percent, last_update, relic) 
 					   VALUES ($1, $2, $3, $4, $5, $6, $7)`
-			_, err = d.pool.Exec(ctx, insert,
+			_, err = d.pool.Exec(insert,
 				l.CorpName,
 				l.Level,
 				l.EndDate.Format(time.RFC3339Nano), // Преобразуем в строку
@@ -42,7 +39,7 @@ func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
 	upd := `UPDATE ws.corpslevel 
 			SET level = $1, enddate = $2, hcorp = $3, percent = $4, last_update = $5, relic = $6 
 			WHERE corpname = $7`
-	_, err = d.pool.Exec(ctx, upd,
+	_, err = d.pool.Exec(upd,
 		l.Level,
 		l.EndDate.Format(time.RFC3339Nano), // Преобразуем в строку
 		l.HCorp,
@@ -58,14 +55,11 @@ func (d *Db) InsertUpdateCorpsLevel(l models.LevelCorps) {
 
 // UpdateCorpInfo обновляет запись о корпорации
 func (d *Db) UpdateCorpInfo(corp models.CorpInfo) error {
-	ctx, cancel := d.getContext()
-	defer cancel()
-
 	query := `UPDATE ws.corps_info 
 			  SET level = $2, xp = $3, last_win = $4, date_ended = $5, last_update = $6 
 			  WHERE id = $1`
 
-	_, err := d.pool.Exec(ctx, query,
+	_, err := d.pool.Exec(query,
 		corp.ID,
 		corp.Level,
 		corp.XP,

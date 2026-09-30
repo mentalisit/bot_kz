@@ -4,20 +4,17 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"telegram/config"
 	"telegram/grpc_server"
 	"telegram/storage"
 	"telegram/telegram"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf"
 )
 
 func main() {
-	cfg := config.InitConfig()
+	cfg, log, db := conf.InitConf("TELEGRAM")
 
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "TG")
-
-	st := storage.NewStorage(log, cfg)
+	st := storage.NewStorage(log, db)
 
 	tg := telegram.NewTelegram(log, cfg.Token.TokenTelegram, st)
 

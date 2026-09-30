@@ -2,7 +2,8 @@ package ds
 
 import (
 	"fmt"
-	"github.com/mentalisit/logger"
+
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 

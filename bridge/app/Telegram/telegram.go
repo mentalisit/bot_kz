@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 
@@ -40,6 +40,7 @@ func (c *Client) DeleteMessage(ChatId string, messageID string) {
 		Mesid:  messageID,
 	})
 	if err != nil {
+		c.log.Info(fmt.Sprintf("delete message error: '%s'\n", err.Error()))
 		c.log.ErrorErr(err)
 	} else if er.GetErrorMessage() != "" {
 		c.log.Error(er.GetErrorMessage())

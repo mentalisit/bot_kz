@@ -1,17 +1,17 @@
 package server
 
 import (
-	"compendium_s/config"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/mentalisit/conf/config"
 )
 
 func parseToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return []byte(config.Instance.Postgress.Password), nil
+		return []byte(config.Instance.Postgres.Password), nil
 	})
 
 	if err != nil || !token.Valid {
@@ -73,7 +73,7 @@ func JWTGenerateToken(uid uuid.UUID, gid uuid.UUID) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(config.Instance.Postgress.Password))
+	signedToken, err := token.SignedString([]byte(config.Instance.Postgres.Password))
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func JWTGenerateTokenV2(uuid, gid uuid.UUID) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(config.Instance.Postgress.Password))
+	signedToken, err := token.SignedString([]byte(config.Instance.Postgres.Password))
 	if err != nil {
 		return "", err
 	}

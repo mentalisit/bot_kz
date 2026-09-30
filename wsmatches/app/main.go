@@ -3,19 +3,19 @@ package main
 import (
 	"sort"
 	"time"
-	"ws/config"
 	"ws/hspublic"
 	"ws/server"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf"
+	"github.com/mentalisit/conf/logger"
 )
 
 var log *logger.Logger
 
 func main() {
-	cfg := config.InitConfig()
-	log = logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "WS")
-	hs := hspublic.NewHS(log, cfg.Postgress.Password)
+	_, logg, db := conf.InitConf("WS")
+	log = logg
+	hs := hspublic.NewHS(log, db)
 
 	go server.NewSrv(log, hs.Db)
 

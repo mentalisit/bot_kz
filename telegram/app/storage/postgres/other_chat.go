@@ -12,10 +12,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"telegram/config"
 
 	tgbotapi "github.com/OvyFlash/telegram-bot-api"
 	"github.com/google/uuid"
+	"github.com/mentalisit/conf/config"
 )
 
 type Attachment struct {
@@ -356,12 +356,12 @@ func (d *Db) saveTelegramAttachments(msg *tgbotapi.Message) error {
 		}
 	}
 
-	// VIDEO
-	if msg.Video != nil {
-		if err := saveAttachment(msg.Video.FileID, "", "video", msg.Video.MimeType, int(msg.Video.FileSize), msg.Video.Width, msg.Video.Height, msg.Video.Duration); err != nil {
-			return err
-		}
-	}
+	//// VIDEO
+	//if msg.Video != nil {
+	//	if err := saveAttachment(msg.Video.FileID, "", "video", msg.Video.MimeType, int(msg.Video.FileSize), msg.Video.Width, msg.Video.Height, msg.Video.Duration); err != nil {
+	//		return err
+	//	}
+	//}
 
 	// VOICE
 	if msg.Voice != nil {

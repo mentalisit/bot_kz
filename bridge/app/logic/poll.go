@@ -101,7 +101,7 @@ func (b *Bridge) ifPoll() {
 			fmt.Printf("poll2 %+v\n %+v\n", p, p.Config)
 
 			// Генерация ссылки для результатов
-			p.UrlPoll = fmt.Sprintf("https://mentalisit.myds.me/web/poll.html?id=%d", p.CreateTime)
+			p.UrlPoll = fmt.Sprintf("https://mentalisit.pp.ua/web/poll.html?id=%d", p.CreateTime)
 
 			m := make(map[string]string)
 			m["author"] = p.Author

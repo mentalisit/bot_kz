@@ -37,8 +37,9 @@ func (h *HS) GetContentSevenDays() []models.Content {
 
 		// Распарсиваем XML-данные
 		err = xml.Unmarshal(xmlData, &listBucketResult)
-		if err != nil {
-			h.log.ErrorErr(err)
+		if err != nil && err.Error() != "expected element type <ListBucketResult> but have <Error>" {
+			h.log.Error(fmt.Sprintf(" '%s' ", err.Error()))
+			break
 		}
 
 		if listBucketResult.NextMarker != "" {

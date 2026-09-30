@@ -75,6 +75,15 @@ func (d *Discord) logicMix(m *discordgo.MessageCreate) {
 
 // saveMessageToStorage сохраняет сообщение Discord в БД
 func (d *Discord) saveMessageToStorage(m *discordgo.MessageCreate, channelName, guildName string) {
+
+	channel, err := d.storage.Db.GetDiscoveredChannel(m.GuildID, m.ChannelID)
+	if err != nil {
+		d.log.Error(err.Error())
+	}
+	if channel != nil && channel.ChannelName != "" {
+		return
+	}
+
 	// Получаем communityID (UUID) для гильдии
 	communityID, err := d.storage.Db.GetGildUUIDMyCompendium(m.GuildID)
 	if err != nil {
@@ -99,10 +108,25 @@ func (d *Discord) saveMessageToStorage(m *discordgo.MessageCreate, channelName, 
 
 	}
 
-	// Сохраняем сообщение с переданными именами канала и гильдии
-	if err := d.storage.Db.SaveDiscordMessageWithNames(*communityID, m, channelName, guildName); err != nil {
-		d.log.Error(fmt.Sprintf("Ошибка сохранения сообщения %s: %v", m.ID, err))
+	//Сохраняем/обновляем имя канала
+
+	ch := config.DiscoveredChannel{
+		CommunityId: *communityID,
+		GuildId:     m.GuildID,
+		GuildName:   guildName,
+		ChannelId:   m.ChannelID,
+		ChannelName: channelName,
+		UpdateAt:    time.Now(),
 	}
+	err = d.storage.Db.SaveGuildChannelName(ch)
+	if err != nil {
+		d.log.ErrorErr(err)
+	}
+
+	//// Сохраняем сообщение с переданными именами канала и гильдии
+	//if err := d.storage.Db.SaveDiscordMessageWithNames(*communityID, m, channelName, guildName); err != nil {
+	//	d.log.Error(fmt.Sprintf("Ошибка сохранения сообщения %s: %v", m.ID, err))
+	//}
 }
 
 // getChannelName получает имя канала из кэша или API

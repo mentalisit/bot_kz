@@ -16,11 +16,11 @@ func (h *HS) DownloadFile(fileName string, newContent []models.Content) {
 	for _, cont := range newContent {
 		count++
 		//corpData := h.r.ReadCorpData(cont.Key)
-		corpData := h.p.ReadCorpData(cont.Key)
+		corpData := h.Db.ReadCorpData(cont.Key)
 		if corpData == nil {
 			corpData = h.GetCorporationsData(cont.Key)
 			//h.r.SaveCorpDate(cont.Key, *corpData)
-			h.p.SaveCorpData(cont.Key, *corpData)
+			h.Db.SaveCorpData(cont.Key, *corpData)
 		}
 		corpData = corpData.SortWin()
 		mid := models.Match{

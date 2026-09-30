@@ -3,9 +3,10 @@ package grpc_server
 import (
 	DiscordClient "discord/discord"
 	"fmt"
-	"github.com/mentalisit/logger"
-	"google.golang.org/grpc"
 	"net"
+
+	"github.com/mentalisit/conf/logger"
+	"google.golang.org/grpc"
 )
 
 type Server struct {

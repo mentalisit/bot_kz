@@ -1,17 +1,13 @@
 package postgres
 
 import (
-	"compendium_s/config"
 	"compendium_s/models"
 	"context"
-	"database/sql"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 
 	_ "github.com/lib/pq"
 )
@@ -21,23 +17,24 @@ type Db struct {
 	db  *sqlx.DB
 	log *logger.Logger
 }
-type Client interface {
-	Exec(ctx context.Context, sql string, arguments ...any) (sql.Result, error)
-	Query(ctx context.Context, sql string, args ...any) (*sql.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) *sql.Row
-	Begin(ctx context.Context) (*sql.Tx, error)
-}
 
-func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelFunc()
-	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
-	if err != nil {
-		log.ErrorErr(err)
-		os.Exit(1)
-	}
+//type Client interface {
+//	Exec(ctx context.Context, sql string, arguments ...any) (sql.Result, error)
+//	Query(ctx context.Context, sql string, args ...any) (*sql.Rows, error)
+//	QueryRow(ctx context.Context, sql string, args ...interface{}) *sql.Row
+//	Begin(ctx context.Context) (*sql.Tx, error)
+//}
+
+func NewDb(log *logger.Logger, db *sqlx.DB) *Db {
+	//dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+	//	cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
+	//ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancelFunc()
+	//db, err := sqlx.ConnectContext(ctx, "postgres", dns)
+	//if err != nil {
+	//	log.ErrorErr(err)
+	//	os.Exit(1)
+	//}
 
 	database := &Db{
 		db:  db,

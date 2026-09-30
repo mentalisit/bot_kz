@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"rs/config"
 	"rs/storage/dictionary"
 	"rs/storage/postgres"
 
-	"github.com/mentalisit/logger"
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Storage struct {
@@ -28,12 +28,12 @@ type Storage struct {
 	postgres   *postgres.Db
 }
 
-func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
+func NewStorage(log *logger.Logger, db *sqlx.DB) *Storage {
 	//add language packages
 	d := dictionary.NewDictionary(log)
 
 	//Initializing a local repository
-	local := postgres.NewDb(log, cfg)
+	local := postgres.NewDb(log, db)
 
 	s := &Storage{
 		log: log,

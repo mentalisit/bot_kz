@@ -3,8 +3,10 @@ package dictionary
 import (
 	"encoding/json"
 	"fmt"
+
 	gt "github.com/bas24/googletranslatefree"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
+
 	"os"
 	"path/filepath"
 	"strings"

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 

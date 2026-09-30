@@ -116,7 +116,7 @@ func (s *Srv) poll(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "not found id")
 		return
 	}
-	targetURL := fmt.Sprintf("https://mentalisit.myds.me/web/poll.html?id=%s", id)
+	targetURL := fmt.Sprintf("https://mentalisit.pp.ua/web/poll.html?id=%s", id)
 
 	// Выполняем переадресацию (302 Found)
 	c.Redirect(http.StatusFound, targetURL)

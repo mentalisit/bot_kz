@@ -2,15 +2,13 @@ package postgres
 
 import (
 	"context"
-	"discord/config"
 	"fmt"
 	"log/slog"
-	"os"
 	"sync"
-	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/config"
+	"github.com/mentalisit/conf/logger"
 	"github.com/mentalisit/restapi/models"
 
 	_ "github.com/lib/pq"
@@ -27,18 +25,18 @@ type Db struct {
 	dns          string
 }
 
-func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
-	if err != nil {
-		slog.Error(err.Error())
-		time.Sleep(5 * time.Second)
-		os.Exit(1)
-	}
+func NewDb(log *logger.Logger, db *sqlx.DB) *Db {
+	//dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+	//	cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
+	//
+	//ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	//defer cancel()
+	//db, err := sqlx.ConnectContext(ctx, "postgres", dns)
+	//if err != nil {
+	//	slog.Error(err.Error())
+	//	time.Sleep(5 * time.Second)
+	//	os.Exit(1)
+	//}
 	database := &Db{
 		db:           db,
 		log:          log,
@@ -47,7 +45,7 @@ func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
 		KzBotConfig:  make(map[string]models.CorporationConfig),
 		pool:         db,
 	}
-	database.dns = dns
+	database.dns = config.Instance.GetDNS()
 
 	go database.createTable()
 

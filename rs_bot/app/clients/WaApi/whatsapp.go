@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 

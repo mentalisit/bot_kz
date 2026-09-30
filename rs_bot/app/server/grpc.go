@@ -10,7 +10,7 @@ import (
 	servprof "rs/server/serv"
 	"strconv"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 

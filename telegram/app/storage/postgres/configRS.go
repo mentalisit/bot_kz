@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/lib/pq"
 	"github.com/mentalisit/restapi/models"
 )
 
@@ -75,7 +76,7 @@ func (d *Db) DBReadBridgeConfig() []models.Bridge2Config {
 	for rows.Next() {
 		var config models.Bridge2Config
 		var channel []byte
-		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, &config.Role, &channel, &config.ForbiddenPrefixes); err != nil {
+		if err = rows.Scan(&config.Id, &config.NameRelay, &config.HostRelay, pq.Array(&config.Role), &channel, pq.Array(&config.ForbiddenPrefixes)); err != nil {
 			d.log.ErrorErr(err)
 			return cc
 		}

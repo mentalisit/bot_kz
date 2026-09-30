@@ -1,8 +1,7 @@
 package DiscordClient
 
 import (
-	"discord/config"
-
+	"github.com/mentalisit/conf/config"
 	"github.com/mentalisit/restapi"
 
 	"discord/discord/transmitter"
@@ -11,7 +10,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Discord struct {
@@ -29,7 +28,7 @@ type Discord struct {
 	guildNameCache   map[string]string
 }
 
-func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Discord {
+func NewDiscord(log *logger.Logger, st *storage.Storage, cfg *config.BotConfig) *Discord {
 	ds, err := discordgo.New("Bot " + cfg.Token.TokenDiscord)
 	if err != nil {
 		log.Panic("Ошибка запуска дискорда" + err.Error())

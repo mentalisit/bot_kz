@@ -1,20 +1,19 @@
 package main
 
 import (
-	"compendium/config"
 	"compendium/logic"
 	"compendium/server"
 	"compendium/storage"
-	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/mentalisit/conf"
 )
 
 func main() {
-	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "CompendiumLogic")
-	st := storage.NewStorage(log, cfg)
+	_, log, db := conf.InitConf("COMPENDIUM")
+	st := storage.NewStorage(log, db)
 
 	s := server.NewServer(log, st)
 	logic.NewCompendium(log, s.In, st)

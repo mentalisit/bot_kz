@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 const (

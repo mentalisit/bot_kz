@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"bridge/config"
 	"bridge/storage/postgres"
-	"github.com/mentalisit/logger"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/conf/logger"
 	"go.uber.org/zap"
 )
 
@@ -13,8 +14,8 @@ type Storage struct {
 	DB    *postgres.Db
 }
 
-func NewStorage(log *logger.Logger, cfg *config.ConfigBot) *Storage {
-	local := postgres.NewDb(log, cfg)
+func NewStorage(log *logger.Logger, db *sqlx.DB) *Storage {
+	local := postgres.NewDb(log, db)
 
 	s := &Storage{
 		DB: local,

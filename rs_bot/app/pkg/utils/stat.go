@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 var log *logger.Logger

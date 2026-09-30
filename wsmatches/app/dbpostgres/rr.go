@@ -1,19 +1,14 @@
 package dbpostgres
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 	"ws/models"
 )
 
 // Загружаем все данные в кэш
 func (d *Db) LoadAllData() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	rows, err := d.pool.Query(ctx, `SELECT id, data FROM ws.corporations`)
+	rows, err := d.pool.Query(`SELECT id, data FROM ws.corporations`)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return
@@ -57,12 +52,9 @@ func (d *Db) ReadCorpData(key string) *models.CorporationsData {
 	}
 
 	// Если в кэше нет, ищем в БД
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	var jsonData string
 	query := `SELECT data FROM ws.corporations WHERE id = $1`
-	err := d.pool.QueryRow(ctx, query, key).Scan(&jsonData)
+	err := d.pool.QueryRow(query, key).Scan(&jsonData)
 	if err != nil {
 		return nil // Не нашли
 	}
@@ -98,13 +90,10 @@ func (d *Db) SaveCorpData(key string, corp models.CorporationsData) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	query := `INSERT INTO ws.corporations (id, data)
 			  VALUES ($1, $2)
 			  ON CONFLICT (id) DO NOTHING`
-	_, err = d.pool.Exec(ctx, query, key, jsonData)
+	_, err = d.pool.Exec(query, key, jsonData)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return

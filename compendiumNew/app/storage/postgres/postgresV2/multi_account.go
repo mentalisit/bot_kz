@@ -196,7 +196,7 @@ func (d *Db) UpdateMultiAccountNickname(m models.MultiAccount) (*models.MultiAcc
        WHERE uuid = $2` + MAReturn
 
 	var acc models.MultiAccount
-	err := d.db.Get(&acc, query, m.AvatarURL, m.UUID)
+	err := d.db.Get(&acc, query, m.Nickname, m.UUID)
 	if err != nil {
 		d.log.ErrorErr(err)
 		return nil, err

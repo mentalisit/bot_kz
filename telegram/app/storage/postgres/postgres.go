@@ -3,13 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
-	"telegram/config"
-	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/config"
+	"github.com/mentalisit/conf/logger"
 	"github.com/mentalisit/restapi/models"
 
 	_ "github.com/lib/pq"
@@ -25,25 +23,15 @@ type Db struct {
 	dns          string
 }
 
-func NewDb(log *logger.Logger, cfg *config.ConfigBot) *Db {
-	dns := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-		cfg.Postgress.Username, cfg.Postgress.Password, cfg.Postgress.Host, cfg.Postgress.Name)
+func NewDb(log *logger.Logger, db *sqlx.DB) *Db {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	db, err := sqlx.ConnectContext(ctx, "postgres", dns)
-	if err != nil {
-		log.ErrorErr(err)
-		time.Sleep(5 * time.Second)
-		os.Exit(1)
-	}
 	database := &Db{
 		db:           db,
 		log:          log,
 		RsBotConfig:  make(map[string]models.CorporationConfigV2),
 		BridgeConfig: make(map[string]models.Bridge2Config),
 		KzBotConfig:  make(map[string]models.CorporationConfig),
-		dns:          dns,
+		dns:          config.Instance.GetDNS(),
 	}
 	database.CreateTables()
 
@@ -71,12 +59,18 @@ func (d *Db) CreateTables() error {
 		`CREATE TABLE IF NOT EXISTS telegram.chat_members (
 			chat_id BIGINT NOT NULL,
 			user_id BIGINT NOT NULL,
+			last_updated TIMESTAMP DEFAULT NOW(),
+			PRIMARY KEY (chat_id, user_id)
+		)`,
+
+		// Таблица участников чатов
+		`CREATE TABLE IF NOT EXISTS telegram.members (
+			user_id BIGINT NOT NULL,
 			first_name VARCHAR(255),
 			last_name VARCHAR(255),
 			user_name VARCHAR(255),
-			is_admin BOOLEAN DEFAULT FALSE,
 			last_updated TIMESTAMP DEFAULT NOW(),
-			PRIMARY KEY (chat_id, user_id)
+			PRIMARY KEY (user_id)
 		)`,
 
 		// Таблица ролей
@@ -106,6 +100,15 @@ func (d *Db) CreateTables() error {
 			user_id BIGINT NOT NULL,
 			is_admin BOOLEAN DEFAULT FALSE,
 			PRIMARY KEY (chat_id, user_id)
+		)`,
+
+		// Таблица прав доступа
+		`CREATE TABLE IF NOT EXISTS telegram.topic_cache (
+			chat_id BIGINT NOT NULL,
+			thread_id INTEGER NOT NULL,
+			topic_name TEXT NOT NULL,
+			updated_at TIMESTAMP NOT NULL DEFAULT now(),
+		PRIMARY KEY ("chat_id", "thread_id")
 		)`,
 
 		// Индексы для оптимизации

@@ -1,19 +1,18 @@
 package main
 
 import (
-	"github.com/mentalisit/logger"
 	"os"
 	"os/signal"
-	"queue/config"
 	"queue/server"
 	"syscall"
+
+	"github.com/mentalisit/conf"
 )
 
 func main() {
-	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "queue")
+	_, log, db := conf.InitConf("QUEUE")
 
-	server.NewServer(log, cfg)
+	server.NewServer(log, db)
 
 	log.Info("Service queue load")
 

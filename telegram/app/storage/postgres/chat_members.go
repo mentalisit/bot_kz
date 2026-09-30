@@ -592,3 +592,56 @@ func (d *Db) RemoveCorpMemberHSCompendium(chatID int64, userID string) error {
 	}
 	return nil
 }
+
+func (d *Db) SaveGuildChannelName(ch models2.DiscoveredChannel) error {
+	query := `
+		INSERT INTO rs_bot2.discovered_chats (
+			community_id, 
+			guild_id, 
+			guild_name, 
+			channel_id, 
+			channel_name, 
+			updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (guild_id, channel_id) 
+		DO UPDATE SET 
+			guild_name   = EXCLUDED.guild_name,
+			channel_name = EXCLUDED.channel_name,
+			updated_at   = EXCLUDED.updated_at;
+	`
+
+	_, err := d.db.Exec(
+		query,
+		ch.CommunityId,
+		ch.GuildId,
+		ch.GuildName,
+		ch.ChannelId,
+		ch.ChannelName,
+		ch.UpdateAt,
+	)
+
+	if err != nil {
+		d.log.ErrorErr(err)
+		return err
+	}
+
+	return nil
+}
+
+func (d *Db) GetDiscoveredChannel(chatID int64, ThreadID int) (ch *models2.DiscoveredChannel, err error) {
+	ch = &models2.DiscoveredChannel{}
+	channelId := strconv.FormatInt(chatID, 10) + fmt.Sprintf("/%d", ThreadID)
+
+	chQuery := `SELECT community_id, guild_id, guild_name, channel_id, channel_name, updated_at 
+			FROM rs_bot2.discovered_chats
+            WHERE channel_id = $1`
+	err = d.db.QueryRow(chQuery, channelId).Scan(&ch.CommunityId, &ch.GuildId, &ch.GuildName, &ch.ChannelId, &ch.ChannelName, &ch.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to find guild: %w", err)
+	}
+	return ch, nil
+}

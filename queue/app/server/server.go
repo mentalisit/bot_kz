@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"queue/config"
 	"queue/kzbotdb"
 	"queue/rsbotbd"
 	"queue/server/getCountry"
@@ -12,7 +11,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mentalisit/logger"
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Server struct {
@@ -23,11 +23,11 @@ type Server struct {
 	cache *getCountry.Cache
 }
 
-func NewServer(log *logger.Logger, cfg *config.ConfigBot) *Server {
+func NewServer(log *logger.Logger, db *sqlx.DB) *Server {
 	s := &Server{
 		log:   log,
 		queue: rsbotbd.NewQueue(log),
-		kzbot: kzbotdb.NewDb(log, cfg),
+		kzbot: kzbotdb.NewDb(log, db),
 		rs:    rs_bot.NewClient(log),
 		cache: getCountry.NewCache(),
 	}

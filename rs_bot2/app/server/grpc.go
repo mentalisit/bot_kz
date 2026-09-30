@@ -10,7 +10,7 @@ import (
 	"rs/storage"
 	"rs/storage/postgresV2"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"google.golang.org/grpc"
 )
 

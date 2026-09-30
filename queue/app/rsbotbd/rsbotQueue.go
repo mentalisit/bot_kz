@@ -2,7 +2,7 @@ package rsbotbd
 
 import (
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 	"strconv"
 )
 

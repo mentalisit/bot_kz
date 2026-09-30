@@ -6,14 +6,12 @@ import (
 	"os/signal"
 	"rs/bot2"
 	"rs/clients"
-	"rs/config"
 	"rs/server"
 	"rs/storage"
-	"rs/webServer"
 	"syscall"
 	"time"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf"
 )
 
 func main() {
@@ -30,23 +28,15 @@ func main() {
 }
 
 func RunNew(ctx context.Context) error {
-	//читаем конфигурацию с ENV
-	cfg := config.InitConfig()
-
-	//создаем логгер
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "RS2")
+	_, log, db := conf.InitConf("RS 2")
 
 	//storage
-	st := storage.NewStorage(log, cfg)
+	st := storage.NewStorage(log, db)
 
 	//clients Discord, Telegram
 	cl := clients.NewClients(log, st)
 
 	b := bot2.NewBot(st, cl, log)
-
-	ws := webServer.NewServer(log, st, cl, b)
-
-	b.AddLinkCodeFunc = ws.AddLinkCode
 
 	g, _ := server.GrpcMain(b, log, st)
 

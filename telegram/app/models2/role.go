@@ -218,3 +218,12 @@ func (u *UUIDArray) Scan(src interface{}) error {
 	*u = result
 	return nil
 }
+
+type DiscoveredChannel struct {
+	CommunityId uuid.UUID
+	GuildId     string
+	GuildName   string
+	ChannelId   string
+	ChannelName string
+	UpdateAt    time.Time
+}

@@ -3,24 +3,21 @@ package hspublic
 import (
 	"ws/dbpostgres"
 
-	"github.com/mentalisit/logger"
+	"github.com/jmoiron/sqlx"
+	"github.com/mentalisit/conf/logger"
 )
 
 type HS struct {
 	log *logger.Logger
-	//r   *dbredis.Db
-	p  *dbpostgres.Db
-	Db *dbpostgres.Db
+	Db  *dbpostgres.Db
 }
 
-func NewHS(log *logger.Logger, passDb string) *HS {
+func NewHS(log *logger.Logger, db *sqlx.DB) *HS {
 
-	db := dbpostgres.NewDb(log, passDb)
+	st := dbpostgres.NewDb(log, db)
 
 	return &HS{
 		log: log,
-		//r:   dbredis.NewDb(log),
-		p:  db,
-		Db: db,
+		Db:  st,
 	}
 }

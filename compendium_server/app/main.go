@@ -1,22 +1,20 @@
 package main
 
 import (
-	"compendium_s/config"
 	"compendium_s/server"
 	"compendium_s/storage"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf"
 )
 
 func main() {
-	cfg := config.InitConfig()
-	log := logger.LoggerZap(cfg.Logger.Token, cfg.Logger.ChatId, cfg.Logger.Webhook, "CompendiumS")
-	st := storage.NewStorage(log, cfg)
+	_, log, db := conf.InitConf("CompendiumServer")
+	st := storage.NewStorage(log, db)
 
-	server.NewServer(log, st, cfg)
+	server.NewServer(log, st)
 
 	log.Info("Service compendium server load")
 	//ожидаем сигнала завершения

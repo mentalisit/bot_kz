@@ -3,8 +3,6 @@ package DiscordClient
 import (
 	"bytes"
 	"context"
-	"discord/config"
-
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/mentalisit/conf/config"
 	"github.com/mentalisit/restapi/models"
 )
 
@@ -189,7 +188,7 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 	} else {
 		d.SendWebhook(rse.EventType+" \nучастники не обнаружены", rse.Corporation.CorporationName, params.ChannelWebhook, rse.Corporation.GetAvatar())
 	}
-	if params.Name == "best" || params.ChannelScoreboard != "" {
+	if params.Name != "" {
 		if rse.RSEventPoints != 0 {
 			nextDateStart, nextDateStop, message := d.storage.Scoreboard.ReadEventScheduleAndMessage()
 			date1 := time.Now().UTC().Format("02-01-2006")
@@ -197,6 +196,8 @@ func (d *Discord) RedStarEnded(rse models.RedStarEvent, params *models.Scoreboar
 			eventId := 0
 			if date1 == nextDateStart || date2 == nextDateStop {
 				eventId = getSeasonNumber(message)
+			} else {
+				eventId = getSeasonNumber(message) + 1
 			}
 
 			points := rse.RSEventPoints / len(rse.Players)
@@ -336,7 +337,7 @@ func (d *Discord) saveWebhook(params *models.ScoreboardParams, tsUnix int64, bod
 
 // send WhiteStarData to statistic bot
 func (d *Discord) sendWhiteStarData(data []byte) error {
-	url := "https://api.tsl.rocks/datajson?token=" + config.Instance.WsToken
+	url := "https://api.tsl.rocks/datajson?token=" + config.Instance.Token.WhiteStarStatistic
 	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancelFunc()
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(data))

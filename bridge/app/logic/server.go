@@ -3,7 +3,6 @@ package logic
 import (
 	ds "bridge/Discord"
 	tg "bridge/Telegram"
-	"bridge/config"
 	"bridge/models"
 	"bridge/storage"
 	"bridge/storage/postgres"
@@ -12,7 +11,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/mentalisit/logger"
+	"github.com/mentalisit/conf/logger"
 )
 
 type Bridge struct {
@@ -27,7 +26,7 @@ type Bridge struct {
 	whatsapp *wa.Client
 }
 
-func NewBridge(log *logger.Logger, st *storage.Storage, cfg *config.ConfigBot) *Bridge {
+func NewBridge(log *logger.Logger, st *storage.Storage) *Bridge {
 	bridge := &Bridge{
 		log:      log,
 		configs:  make(map[string]models.Bridge2Config),
